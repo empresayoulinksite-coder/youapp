@@ -1,4 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
 
 import {
   MapPin,
@@ -58,6 +60,7 @@ const categories: Category[] = [
 
 type Restaurant = {
   name: string;
+  slug?: string;
   emoji: string;
   rating: number;
   category: string;
@@ -69,17 +72,20 @@ type Restaurant = {
 };
 
 const restaurants: Restaurant[] = [
-  { name: "Burger Habits", emoji: "🍔", rating: 4.8, category: "Lanches", distance: "1,2 km", time: "25-35 min", fee: "Grátis", free: true, promo: "20% OFF" },
+  { name: "Burger Habits", slug: "burger-habits", emoji: "🍔", rating: 4.8, category: "Lanches", distance: "1,2 km", time: "25-35 min", fee: "Grátis", free: true, promo: "20% OFF" },
   { name: "Sabor da Casa", emoji: "🍛", rating: 4.7, category: "Brasileira", distance: "2,1 km", time: "30-40 min", fee: "R$ 6,99" },
-  { name: "Sushi Kyoto", emoji: "🍣", rating: 4.9, category: "Japonesa", distance: "3,4 km", time: "40-55 min", fee: "R$ 9,90", promo: "Leve+ Pague-" },
-  { name: "Pizzaria Bella", emoji: "🍕", rating: 4.6, category: "Pizza", distance: "1,8 km", time: "35-45 min", fee: "Grátis", free: true },
+  { name: "Sushi Kyoto", slug: "sushi-kyoto", emoji: "🍣", rating: 4.9, category: "Japonesa", distance: "3,4 km", time: "40-55 min", fee: "R$ 9,90", promo: "Leve+ Pague-" },
+  { name: "Pizzaria Bella", slug: "pizzaria-bella", emoji: "🍕", rating: 4.6, category: "Pizza", distance: "1,8 km", time: "35-45 min", fee: "Grátis", free: true },
   { name: "Açaí da Praia", emoji: "🍧", rating: 4.8, category: "Sorvetes", distance: "0,9 km", time: "15-25 min", fee: "R$ 4,99" },
-  { name: "Verde & Leve", emoji: "🥗", rating: 4.7, category: "Saudável", distance: "2,7 km", time: "30-40 min", fee: "Grátis", free: true, promo: "Cupom R$10" },
+  { name: "Verde & Leve", slug: "verde-leve", emoji: "🥗", rating: 4.7, category: "Saudável", distance: "2,7 km", time: "30-40 min", fee: "Grátis", free: true, promo: "Cupom R$10" },
   { name: "Padaria Central", emoji: "🥐", rating: 4.5, category: "Padaria", distance: "0,6 km", time: "20-30 min", fee: "R$ 3,99" },
   { name: "Cantina Italiana", emoji: "🍝", rating: 4.6, category: "Italiana", distance: "2,9 km", time: "40-50 min", fee: "R$ 7,90" },
 ];
 
 function Index() {
+  const { user } = useAuth();
+  const { count: cartCount } = useCart();
+
   return (
     <div className="min-h-screen bg-surface pb-24">
       {/* Top bar */}
@@ -101,7 +107,17 @@ function Index() {
           </button>
           <div className="flex items-center gap-4 shrink-0">
             <Heart className="h-5 w-5 text-foreground" />
-            <ShoppingBag className="h-5 w-5 text-foreground" />
+            <Link to="/sacola" className="relative">
+              <ShoppingBag className="h-5 w-5 text-foreground" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-brand text-brand-foreground text-[10px] font-bold rounded-full h-4 min-w-[16px] px-1 flex items-center justify-center">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+            {!user && (
+              <Link to="/auth" className="text-xs font-semibold text-brand">Entrar</Link>
+            )}
           </div>
         </div>
 
@@ -229,9 +245,15 @@ function Index() {
           </div>
 
           <div className="space-y-3">
-            {restaurants.map((r) => (
+            {restaurants.map((r) => {
+              const Wrapper = r.slug
+                ? ({ children }: { children: React.ReactNode }) => (
+                    <Link to="/loja/$slug" params={{ slug: r.slug! }} className="block">{children}</Link>
+                  )
+                : ({ children }: { children: React.ReactNode }) => <>{children}</>;
+              return (
+              <Wrapper key={r.name}>
               <article
-                key={r.name}
                 className="bg-card rounded-2xl p-3 flex items-center gap-3 shadow-[var(--shadow-card)] hover:translate-y-[-1px] transition-transform"
               >
                 <div className="h-16 w-16 rounded-xl bg-brand-soft flex items-center justify-center text-3xl shrink-0">
@@ -264,7 +286,9 @@ function Index() {
                   </div>
                 </div>
               </article>
-            ))}
+              </Wrapper>
+              );
+            })}
           </div>
         </section>
       </main>

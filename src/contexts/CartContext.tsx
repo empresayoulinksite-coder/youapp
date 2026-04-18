@@ -1,0 +1,116 @@
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "./AuthContext";
+
+export interface CartItemRow {
+  id: string;
+  user_id: string;
+  store_id: string;
+  menu_item_id: string;
+  quantity: number;
+  notes: string | null;
+  menu_items: {
+    id: string;
+    name: string;
+    price: number;
+    emoji: string;
+  } | null;
+  stores: {
+    id: string;
+    name: string;
+    slug: string;
+    emoji: string;
+  } | null;
+}
+
+interface CartContextValue {
+  items: CartItemRow[];
+  count: number;
+  total: number;
+  loading: boolean;
+  addItem: (storeId: string, menuItemId: string) => Promise<void>;
+  updateQuantity: (id: string, quantity: number) => Promise<void>;
+  removeItem: (id: string) => Promise<void>;
+  clear: () => Promise<void>;
+  refresh: () => Promise<void>;
+}
+
+const CartContext = createContext<CartContextValue | undefined>(undefined);
+
+export function CartProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  const [items, setItems] = useState<CartItemRow[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const refresh = useCallback(async () => {
+    if (!user) {
+      setItems([]);
+      return;
+    }
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("cart_items")
+      .select("id, user_id, store_id, menu_item_id, quantity, notes, menu_items(id, name, price, emoji), stores(id, name, slug, emoji)")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: true });
+    if (!error && data) {
+      setItems(data as unknown as CartItemRow[]);
+    }
+    setLoading(false);
+  }, [user]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const addItem = async (storeId: string, menuItemId: string) => {
+    if (!user) return;
+    const existing = items.find((i) => i.menu_item_id === menuItemId);
+    if (existing) {
+      await updateQuantity(existing.id, existing.quantity + 1);
+      return;
+    }
+    const { error } = await supabase.from("cart_items").insert({
+      user_id: user.id,
+      store_id: storeId,
+      menu_item_id: menuItemId,
+      quantity: 1,
+    });
+    if (!error) await refresh();
+  };
+
+  const updateQuantity = async (id: string, quantity: number) => {
+    if (quantity <= 0) {
+      await removeItem(id);
+      return;
+    }
+    const { error } = await supabase.from("cart_items").update({ quantity }).eq("id", id);
+    if (!error) await refresh();
+  };
+
+  const removeItem = async (id: string) => {
+    const { error } = await supabase.from("cart_items").delete().eq("id", id);
+    if (!error) await refresh();
+  };
+
+  const clear = async () => {
+    if (!user) return;
+    const { error } = await supabase.from("cart_items").delete().eq("user_id", user.id);
+    if (!error) await refresh();
+  };
+
+  const count = items.reduce((sum, i) => sum + i.quantity, 0);
+  const total = items.reduce((sum, i) => sum + (i.menu_items ? Number(i.menu_items.price) * i.quantity : 0), 0);
+
+  return (
+    <CartContext.Provider value={{ items, count, total, loading, addItem, updateQuantity, removeItem, clear, refresh }}>
+      {children}
+    </CartContext.Provider>
+  );
+}
+
+export function useCart() {
+  const ctx = useContext(CartContext);
+  if (!ctx) throw new Error("useCart must be used within CartProvider");
+  return ctx;
+}
