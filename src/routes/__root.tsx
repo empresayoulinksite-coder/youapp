@@ -1,6 +1,4 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { CartProvider } from "@/contexts/CartContext";
 
 import appCss from "../styles.css?url";
 
@@ -31,14 +29,18 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "Youapp" },
+      { name: "description", content: "estamos em criação" },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "Youapp" },
+      { property: "og:description", content: "estamos em criação" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Youapp" },
+      { name: "twitter:description", content: "estamos em criação" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/58nlr8VEgOMAeioAq1bXrdk4ZHr2/social-images/social-1776538558351-Youlink_(2).webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/58nlr8VEgOMAeioAq1bXrdk4ZHr2/social-images/social-1776538558351-Youlink_(2).webp" },
     ],
     links: [
       {
@@ -67,11 +69,5 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
-  return (
-    <AuthProvider>
-      <CartProvider>
-        <Outlet />
-      </CartProvider>
-    </AuthProvider>
-  );
+  return <Outlet />;
 }
