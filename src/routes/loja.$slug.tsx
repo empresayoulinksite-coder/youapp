@@ -122,6 +122,7 @@ function StorePage() {
   const { user } = useAuth();
   const { items: cartItems, addItem, count: cartCount } = useCart();
   const [tab, setTab] = useState<"menu" | "info" | "reviews">("menu");
+  const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
 
   const itemQty = (id: string) => cartItems.find((c) => c.menu_item_id === id)?.quantity ?? 0;
 
