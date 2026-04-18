@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Star, Clock, Bike, MapPin, CreditCard, Tag, Plus, Minus, ShoppingBag, MessageSquare } from "lucide-react";
+import { ArrowLeft, Star, Clock, Bike, MapPin, CreditCard, Tag, Plus, Minus, ShoppingBag, MessageSquare, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
@@ -120,8 +120,9 @@ function StorePage() {
     reviews: Review[];
   };
   const { user } = useAuth();
-  const { items: cartItems, addItem, count: cartCount } = useCart();
+  const { items: cartItems, addItem, updateQuantity, count: cartCount } = useCart();
   const [tab, setTab] = useState<"menu" | "info" | "reviews">("menu");
+  const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
 
   const itemQty = (id: string) => cartItems.find((c) => c.menu_item_id === id)?.quantity ?? 0;
 
@@ -221,7 +222,11 @@ function StorePage() {
                     {catItems.map((item) => {
                       const qty = itemQty(item.id);
                       return (
-                        <article key={item.id} className="bg-card rounded-2xl p-3 flex gap-3 shadow-[var(--shadow-card)]">
+                        <article
+                          key={item.id}
+                          onClick={() => setSelectedItem(item)}
+                          className="bg-card rounded-2xl p-3 flex gap-3 shadow-[var(--shadow-card)] cursor-pointer active:scale-[0.99] transition-transform"
+                        >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <h4 className="font-semibold truncate">{item.name}</h4>
@@ -239,19 +244,12 @@ function StorePage() {
                               )}
                             </div>
                           </div>
-                          <div className="flex flex-col items-center gap-2 shrink-0">
+                          <div className="flex flex-col items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                             <div className="h-16 w-16 rounded-xl bg-brand-soft flex items-center justify-center text-3xl">{item.emoji}</div>
                             {user ? (
                               qty > 0 ? (
                                 <div className="flex items-center gap-2 bg-brand text-brand-foreground rounded-full px-2 py-1">
-                                  <button
-                                    onClick={() => {
-                                      const ci = cartItems.find((c) => c.menu_item_id === item.id);
-                                      if (ci) ci.quantity > 1 ? null : null;
-                                    }}
-                                    className="p-0.5"
-                                    aria-label="Diminuir"
-                                  >
+                                  <button className="p-0.5" aria-label="Diminuir">
                                     <QtyDecrement itemId={item.id} />
                                   </button>
                                   <span className="text-xs font-bold min-w-[14px] text-center">{qty}</span>
@@ -337,6 +335,90 @@ function StorePage() {
           </span>
           <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-bold">{cartCount} {cartCount === 1 ? "item" : "itens"}</span>
         </Link>
+      )}
+
+      {/* Item details modal */}
+      {selectedItem && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center"
+          onClick={() => setSelectedItem(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-card w-full max-w-md rounded-t-3xl sm:rounded-3xl max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom duration-200"
+          >
+            <div className="relative h-56 flex items-center justify-center text-7xl" style={{ backgroundImage: "var(--gradient-promo)" }}>
+              <span>{selectedItem.emoji}</span>
+              <button
+                onClick={() => setSelectedItem(null)}
+                className="absolute top-3 right-3 bg-card rounded-full p-2 shadow-md"
+                aria-label="Fechar"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              {selectedItem.promo && (
+                <span className="absolute top-3 left-3 bg-brand text-brand-foreground text-xs font-bold px-2.5 py-1 rounded-full">
+                  {selectedItem.promo}
+                </span>
+              )}
+            </div>
+            <div className="p-5">
+              <h2 className="text-xl font-bold">{selectedItem.name}</h2>
+              {selectedItem.description && (
+                <p className="text-sm text-muted-foreground mt-2">{selectedItem.description}</p>
+              )}
+              <div className="flex items-baseline gap-2 mt-4">
+                <span className="text-2xl font-bold">R$ {selectedItem.price.toFixed(2).replace(".", ",")}</span>
+                {selectedItem.original_price && (
+                  <span className="text-sm text-muted-foreground line-through">
+                    R$ {selectedItem.original_price.toFixed(2).replace(".", ",")}
+                  </span>
+                )}
+              </div>
+
+              <div className="mt-6 flex items-center gap-3">
+                {user ? (
+                  <>
+                    {itemQty(selectedItem.id) > 0 ? (
+                      <div className="flex items-center gap-3 bg-brand-soft rounded-full px-3 py-2">
+                        <button
+                          onClick={() => {
+                            const ci = cartItems.find((c) => c.menu_item_id === selectedItem.id);
+                            if (ci) updateQuantity(ci.id, ci.quantity - 1);
+                          }}
+                          className="text-brand"
+                          aria-label="Diminuir"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </button>
+                        <span className="font-bold text-sm min-w-[20px] text-center">{itemQty(selectedItem.id)}</span>
+                        <button onClick={() => addItem(store.id, selectedItem.id)} className="text-brand" aria-label="Aumentar">
+                          <Plus className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : null}
+                    <button
+                      onClick={() => {
+                        addItem(store.id, selectedItem.id);
+                        setSelectedItem(null);
+                      }}
+                      className="flex-1 bg-brand text-brand-foreground font-bold py-3 rounded-full"
+                    >
+                      Adicionar à sacola
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    to="/auth"
+                    className="flex-1 bg-brand text-brand-foreground font-bold py-3 rounded-full text-center"
+                  >
+                    Entrar para pedir
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
