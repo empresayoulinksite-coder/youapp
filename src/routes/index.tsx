@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import youlinkLogo from "@/assets/youlink-logo.png";
 import {
   MapPin,
   ChevronDown,
@@ -83,7 +84,12 @@ function Index() {
       {/* Top bar */}
       <header className="sticky top-0 z-30 bg-card border-b border-border">
         <div className="mx-auto max-w-5xl px-4 py-3 flex items-center gap-3">
-          <button className="flex items-center gap-1.5 text-left">
+          <img
+            src={youlinkLogo}
+            alt="Youlink"
+            className="h-9 w-auto shrink-0"
+          />
+          <button className="flex items-center gap-1.5 text-left mx-auto">
             <MapPin className="h-5 w-5 text-brand" />
             <div className="flex flex-col leading-tight">
               <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Entregar em</span>
@@ -92,7 +98,7 @@ function Index() {
               </span>
             </div>
           </button>
-          <div className="ml-auto flex items-center gap-4">
+          <div className="flex items-center gap-4 shrink-0">
             <Heart className="h-5 w-5 text-foreground" />
             <ShoppingBag className="h-5 w-5 text-foreground" />
           </div>
