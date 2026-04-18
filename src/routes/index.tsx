@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import youlinkLogo from "@/assets/youlink-logo.png";
+
 import {
   MapPin,
   ChevronDown,
