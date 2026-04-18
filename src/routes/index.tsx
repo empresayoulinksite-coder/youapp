@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import youlinkLogo from "@/assets/youlink-logo.png";
+
 import {
   MapPin,
   ChevronDown,
@@ -85,7 +85,7 @@ function Index() {
       <header className="sticky top-0 z-30 bg-card border-b border-border">
         <div className="mx-auto max-w-5xl px-4 py-3 flex items-center gap-3">
           <img
-            src={youlinkLogo}
+            src="/fe9f7ef1-e88c-46e8-9138-bd1aeadbab22.png"
             alt="Youlink"
             className="h-9 w-auto shrink-0"
           />
