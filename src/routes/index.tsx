@@ -245,9 +245,15 @@ function Index() {
           </div>
 
           <div className="space-y-3">
-            {restaurants.map((r) => (
+            {restaurants.map((r) => {
+              const Wrapper = r.slug
+                ? ({ children }: { children: React.ReactNode }) => (
+                    <Link to="/loja/$slug" params={{ slug: r.slug! }} className="block">{children}</Link>
+                  )
+                : ({ children }: { children: React.ReactNode }) => <>{children}</>;
+              return (
+              <Wrapper key={r.name}>
               <article
-                key={r.name}
                 className="bg-card rounded-2xl p-3 flex items-center gap-3 shadow-[var(--shadow-card)] hover:translate-y-[-1px] transition-transform"
               >
                 <div className="h-16 w-16 rounded-xl bg-brand-soft flex items-center justify-center text-3xl shrink-0">
