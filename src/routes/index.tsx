@@ -24,6 +24,7 @@ import {
   Clock,
   Bike,
 } from "lucide-react";
+import youlinkLogo from "@/assets/youlink-logo.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -85,9 +86,9 @@ function Index() {
       <header className="sticky top-0 z-30 bg-card border-b border-border">
         <div className="mx-auto max-w-5xl px-4 py-3 flex items-center gap-3">
           <img
-            src="/fe9f7ef1-e88c-46e8-9138-bd1aeadbab22.png"
+            src={youlinkLogo}
             alt="Youlink"
-            className="h-9 w-auto shrink-0"
+            className="h-9 w-auto shrink-0 object-contain"
           />
           <button className="flex items-center gap-1.5 text-left mx-auto">
             <MapPin className="h-5 w-5 text-brand" />
