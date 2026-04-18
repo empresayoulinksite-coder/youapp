@@ -384,10 +384,7 @@ function StorePage() {
                         <button
                           onClick={() => {
                             const ci = cartItems.find((c) => c.menu_item_id === selectedItem.id);
-                            if (ci) {
-                              const { updateQuantity } = useCart();
-                              updateQuantity(ci.id, ci.quantity - 1);
-                            }
+                            if (ci) updateQuantity(ci.id, ci.quantity - 1);
                           }}
                           className="text-brand"
                           aria-label="Diminuir"
