@@ -336,6 +336,93 @@ function StorePage() {
           <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-bold">{cartCount} {cartCount === 1 ? "item" : "itens"}</span>
         </Link>
       )}
+
+      {/* Item details modal */}
+      {selectedItem && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center"
+          onClick={() => setSelectedItem(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-card w-full max-w-md rounded-t-3xl sm:rounded-3xl max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom duration-200"
+          >
+            <div className="relative h-56 flex items-center justify-center text-7xl" style={{ backgroundImage: "var(--gradient-promo)" }}>
+              <span>{selectedItem.emoji}</span>
+              <button
+                onClick={() => setSelectedItem(null)}
+                className="absolute top-3 right-3 bg-card rounded-full p-2 shadow-md"
+                aria-label="Fechar"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              {selectedItem.promo && (
+                <span className="absolute top-3 left-3 bg-brand text-brand-foreground text-xs font-bold px-2.5 py-1 rounded-full">
+                  {selectedItem.promo}
+                </span>
+              )}
+            </div>
+            <div className="p-5">
+              <h2 className="text-xl font-bold">{selectedItem.name}</h2>
+              {selectedItem.description && (
+                <p className="text-sm text-muted-foreground mt-2">{selectedItem.description}</p>
+              )}
+              <div className="flex items-baseline gap-2 mt-4">
+                <span className="text-2xl font-bold">R$ {selectedItem.price.toFixed(2).replace(".", ",")}</span>
+                {selectedItem.original_price && (
+                  <span className="text-sm text-muted-foreground line-through">
+                    R$ {selectedItem.original_price.toFixed(2).replace(".", ",")}
+                  </span>
+                )}
+              </div>
+
+              <div className="mt-6 flex items-center gap-3">
+                {user ? (
+                  <>
+                    {itemQty(selectedItem.id) > 0 ? (
+                      <div className="flex items-center gap-3 bg-brand-soft rounded-full px-3 py-2">
+                        <button
+                          onClick={() => {
+                            const ci = cartItems.find((c) => c.menu_item_id === selectedItem.id);
+                            if (ci) {
+                              const { updateQuantity } = useCart();
+                              updateQuantity(ci.id, ci.quantity - 1);
+                            }
+                          }}
+                          className="text-brand"
+                          aria-label="Diminuir"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </button>
+                        <span className="font-bold text-sm min-w-[20px] text-center">{itemQty(selectedItem.id)}</span>
+                        <button onClick={() => addItem(store.id, selectedItem.id)} className="text-brand" aria-label="Aumentar">
+                          <Plus className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : null}
+                    <button
+                      onClick={() => {
+                        addItem(store.id, selectedItem.id);
+                        setSelectedItem(null);
+                      }}
+                      className="flex-1 bg-brand text-brand-foreground font-bold py-3 rounded-full"
+                    >
+                      Adicionar à sacola
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    to="/auth"
+                    className="flex-1 bg-brand text-brand-foreground font-bold py-3 rounded-full text-center"
+                  >
+                    Entrar para pedir
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
