@@ -83,6 +83,9 @@ const restaurants: Restaurant[] = [
 ];
 
 function Index() {
+  const { user } = useAuth();
+  const { count: cartCount } = useCart();
+
   return (
     <div className="min-h-screen bg-surface pb-24">
       {/* Top bar */}
@@ -104,7 +107,17 @@ function Index() {
           </button>
           <div className="flex items-center gap-4 shrink-0">
             <Heart className="h-5 w-5 text-foreground" />
-            <ShoppingBag className="h-5 w-5 text-foreground" />
+            <Link to="/sacola" className="relative">
+              <ShoppingBag className="h-5 w-5 text-foreground" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-brand text-brand-foreground text-[10px] font-bold rounded-full h-4 min-w-[16px] px-1 flex items-center justify-center">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+            {!user && (
+              <Link to="/auth" className="text-xs font-semibold text-brand">Entrar</Link>
+            )}
           </div>
         </div>
 
