@@ -222,7 +222,11 @@ function StorePage() {
                     {catItems.map((item) => {
                       const qty = itemQty(item.id);
                       return (
-                        <article key={item.id} className="bg-card rounded-2xl p-3 flex gap-3 shadow-[var(--shadow-card)]">
+                        <article
+                          key={item.id}
+                          onClick={() => setSelectedItem(item)}
+                          className="bg-card rounded-2xl p-3 flex gap-3 shadow-[var(--shadow-card)] cursor-pointer active:scale-[0.99] transition-transform"
+                        >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <h4 className="font-semibold truncate">{item.name}</h4>
@@ -240,19 +244,12 @@ function StorePage() {
                               )}
                             </div>
                           </div>
-                          <div className="flex flex-col items-center gap-2 shrink-0">
+                          <div className="flex flex-col items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                             <div className="h-16 w-16 rounded-xl bg-brand-soft flex items-center justify-center text-3xl">{item.emoji}</div>
                             {user ? (
                               qty > 0 ? (
                                 <div className="flex items-center gap-2 bg-brand text-brand-foreground rounded-full px-2 py-1">
-                                  <button
-                                    onClick={() => {
-                                      const ci = cartItems.find((c) => c.menu_item_id === item.id);
-                                      if (ci) ci.quantity > 1 ? null : null;
-                                    }}
-                                    className="p-0.5"
-                                    aria-label="Diminuir"
-                                  >
+                                  <button className="p-0.5" aria-label="Diminuir">
                                     <QtyDecrement itemId={item.id} />
                                   </button>
                                   <span className="text-xs font-bold min-w-[14px] text-center">{qty}</span>
