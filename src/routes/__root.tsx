@@ -68,6 +68,15 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+import { AuthProvider } from "@/contexts/AuthContext";
+import { CartProvider } from "@/contexts/CartContext";
+
 function RootComponent() {
-  return <Outlet />;
+  return (
+    <AuthProvider>
+      <CartProvider>
+        <Outlet />
+      </CartProvider>
+    </AuthProvider>
+  );
 }
