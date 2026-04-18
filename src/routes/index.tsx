@@ -286,7 +286,9 @@ function Index() {
                   </div>
                 </div>
               </article>
-            ))}
+              </Wrapper>
+              );
+            })}
           </div>
         </section>
       </main>
