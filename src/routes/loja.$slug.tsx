@@ -112,7 +112,13 @@ export const Route = createFileRoute("/loja/$slug")({
 });
 
 function StorePage() {
-  const { store, categories, items, coupons, reviews } = Route.useLoaderData();
+  const { store, categories, items, coupons, reviews } = Route.useLoaderData() as {
+    store: Store;
+    categories: MenuCategory[];
+    items: MenuItem[];
+    coupons: Coupon[];
+    reviews: Review[];
+  };
   const { user } = useAuth();
   const { items: cartItems, addItem, count: cartCount } = useCart();
   const [tab, setTab] = useState<"menu" | "info" | "reviews">("menu");
