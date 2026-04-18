@@ -149,9 +149,9 @@ function Index() {
         </section>
 
         {/* Promo banners */}
-        <section className="grid grid-cols-2 gap-3">
+        <section className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 snap-x snap-mandatory">
           <div
-            className="rounded-2xl p-5 text-brand-foreground relative overflow-hidden shadow-[var(--shadow-card)]"
+            className="shrink-0 w-[85%] sm:w-[420px] snap-start rounded-2xl p-5 text-brand-foreground relative overflow-hidden shadow-[var(--shadow-card)]"
             style={{ backgroundImage: "var(--gradient-promo)" }}
           >
             <span className="text-[11px] font-bold uppercase tracking-wide bg-white/20 px-2 py-0.5 rounded-full">
@@ -164,7 +164,7 @@ function Index() {
             </button>
             <div className="absolute -right-4 -bottom-4 text-7xl opacity-30 select-none">🛵</div>
           </div>
-          <div className="rounded-2xl p-5 bg-accent text-foreground relative overflow-hidden shadow-[var(--shadow-card)]">
+          <div className="shrink-0 w-[85%] sm:w-[420px] snap-start rounded-2xl p-5 bg-accent text-foreground relative overflow-hidden shadow-[var(--shadow-card)]">
             <span className="text-[11px] font-bold uppercase tracking-wide bg-brand/10 text-brand px-2 py-0.5 rounded-full">
               Cupons
             </span>
@@ -174,6 +174,17 @@ function Index() {
               Ver cupons
             </button>
             <div className="absolute -right-2 -bottom-2 text-7xl opacity-30 select-none">🎟️</div>
+          </div>
+          <div className="shrink-0 w-[85%] sm:w-[420px] snap-start rounded-2xl p-5 bg-brand-soft text-foreground relative overflow-hidden shadow-[var(--shadow-card)]">
+            <span className="text-[11px] font-bold uppercase tracking-wide bg-brand/10 text-brand px-2 py-0.5 rounded-full">
+              Frete grátis
+            </span>
+            <h3 className="mt-3 text-2xl font-extrabold leading-tight">Entrega por R$ 0</h3>
+            <p className="text-sm text-muted-foreground mt-1">Em lojas selecionadas perto de você</p>
+            <button className="mt-4 bg-brand text-brand-foreground text-sm font-bold px-4 py-2 rounded-full">
+              Aproveitar
+            </button>
+            <div className="absolute -right-2 -bottom-2 text-7xl opacity-30 select-none">🛍️</div>
           </div>
         </section>
 
