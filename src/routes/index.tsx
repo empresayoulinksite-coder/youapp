@@ -41,7 +41,7 @@ export const Route = createFileRoute("/")({
 type Category = { label: string; Icon: typeof Pizza; tint: string };
 
 const categories: Category[] = [
-  { label: "Restaurantes", Icon: UtensilsCrossed, tint: "bg-red-50 text-red-600" },
+  { label: "Restaurantes", Icon: UtensilsCrossed, tint: "bg-brand-soft text-brand" },
   { label: "Mercado", Icon: Apple, tint: "bg-green-50 text-green-600" },
   { label: "Lanches", Icon: Sandwich, tint: "bg-amber-50 text-amber-600" },
   { label: "Pizza", Icon: Pizza, tint: "bg-orange-50 text-orange-600" },
