@@ -120,7 +120,7 @@ function StorePage() {
     reviews: Review[];
   };
   const { user } = useAuth();
-  const { items: cartItems, addItem, count: cartCount } = useCart();
+  const { items: cartItems, addItem, updateQuantity, count: cartCount } = useCart();
   const [tab, setTab] = useState<"menu" | "info" | "reviews">("menu");
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
 
