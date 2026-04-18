@@ -246,47 +246,47 @@ function Index() {
 
           <div className="space-y-3">
             {restaurants.map((r) => {
-              const Wrapper = r.slug
-                ? ({ children }: { children: React.ReactNode }) => (
-                    <Link to="/loja/$slug" params={{ slug: r.slug! }} className="block">{children}</Link>
-                  )
-                : ({ children }: { children: React.ReactNode }) => <>{children}</>;
-              return (
-              <Wrapper key={r.name}>
-              <article
-                className="bg-card rounded-2xl p-3 flex items-center gap-3 shadow-[var(--shadow-card)] hover:translate-y-[-1px] transition-transform"
-              >
-                <div className="h-16 w-16 rounded-xl bg-brand-soft flex items-center justify-center text-3xl shrink-0">
-                  {r.emoji}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold truncate">{r.name}</h3>
-                    {r.promo && (
-                      <span className="text-[10px] font-bold text-brand bg-brand-soft px-1.5 py-0.5 rounded">
-                        {r.promo}
+              const card = (
+                <article
+                  className="bg-card rounded-2xl p-3 flex items-center gap-3 shadow-[var(--shadow-card)] hover:translate-y-[-1px] transition-transform"
+                >
+                  <div className="h-16 w-16 rounded-xl bg-brand-soft flex items-center justify-center text-3xl shrink-0">
+                    {r.emoji}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold truncate">{r.name}</h3>
+                      {r.promo && (
+                        <span className="text-[10px] font-bold text-brand bg-brand-soft px-1.5 py-0.5 rounded">
+                          {r.promo}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+                      <Star className="h-3.5 w-3.5 fill-warning text-warning" />
+                      <span className="font-semibold text-foreground">{r.rating.toFixed(1)}</span>
+                      <span>•</span>
+                      <span className="truncate">{r.category}</span>
+                      <span>•</span>
+                      <span>{r.distance}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs mt-1.5">
+                      <span className="flex items-center gap-1 text-muted-foreground">
+                        <Clock className="h-3.5 w-3.5" /> {r.time}
                       </span>
-                    )}
+                      <span className={`flex items-center gap-1 ${r.free ? "text-success font-semibold" : "text-muted-foreground"}`}>
+                        <Bike className="h-3.5 w-3.5" /> {r.fee}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-                    <Star className="h-3.5 w-3.5 fill-warning text-warning" />
-                    <span className="font-semibold text-foreground">{r.rating.toFixed(1)}</span>
-                    <span>•</span>
-                    <span className="truncate">{r.category}</span>
-                    <span>•</span>
-                    <span>{r.distance}</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-xs mt-1.5">
-                    <span className="flex items-center gap-1 text-muted-foreground">
-                      <Clock className="h-3.5 w-3.5" /> {r.time}
-                    </span>
-                    <span className={`flex items-center gap-1 ${r.free ? "text-success font-semibold" : "text-muted-foreground"}`}>
-                      <Bike className="h-3.5 w-3.5" /> {r.fee}
-                    </span>
-                  </div>
-                </div>
-              </article>
-              </Wrapper>
+                </article>
+              );
+              return r.slug ? (
+                <Link key={r.name} to="/loja/$slug" params={{ slug: r.slug }} className="block">
+                  {card}
+                </Link>
+              ) : (
+                <div key={r.name}>{card}</div>
               );
             })}
           </div>
