@@ -49,7 +49,7 @@
   --card-foreground: oklch(0.16 0.01 250);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.16 0.01 250);
-  --primary: oklch(0.62 0.22 27);
+  --primary: oklch(0.42 0.19 312);
   --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.96 0.005 250);
   --secondary-foreground: oklch(0.2 0.01 250);
@@ -57,16 +57,16 @@
   --muted-foreground: oklch(0.5 0.01 250);
   --accent: oklch(0.96 0.01 60);
   --accent-foreground: oklch(0.2 0.01 250);
-  --destructive: oklch(0.62 0.22 27);
+  --destructive: oklch(0.42 0.19 312);
   --destructive-foreground: oklch(1 0 0);
   --border: oklch(0.92 0.005 250);
   --input: oklch(0.92 0.005 250);
-  --ring: oklch(0.62 0.22 27);
+  --ring: oklch(0.42 0.19 312);
 
-  /* iFood brand */
-  --brand: oklch(0.62 0.22 27);
+  /* Brand */
+  --brand: oklch(0.42 0.19 312);
   --brand-foreground: oklch(1 0 0);
-  --brand-soft: oklch(0.96 0.04 27);
+  --brand-soft: oklch(0.96 0.04 312);
   --success: oklch(0.62 0.16 150);
   --warning: oklch(0.78 0.16 80);
   --surface: oklch(0.98 0.003 250);
@@ -74,8 +74,8 @@
 
   --shadow-card: 0 1px 2px oklch(0 0 0 / 0.04), 0 4px 12px oklch(0 0 0 / 0.06);
   --shadow-soft: 0 2px 8px oklch(0 0 0 / 0.05);
-  --gradient-brand: linear-gradient(135deg, oklch(0.65 0.22 27), oklch(0.58 0.23 18));
-  --gradient-promo: linear-gradient(120deg, oklch(0.62 0.22 27), oklch(0.55 0.2 5));
+  --gradient-brand: linear-gradient(135deg, oklch(0.45 0.2 312), oklch(0.38 0.18 305));
+  --gradient-promo: linear-gradient(120deg, oklch(0.45 0.2 312), oklch(0.35 0.17 300));
 }
 
 .dark {
@@ -85,7 +85,7 @@
   --card-foreground: oklch(0.98 0 0);
   --popover: oklch(0.18 0.01 250);
   --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.65 0.22 27);
+  --primary: oklch(0.5 0.2 312);
   --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.22 0.01 250);
   --secondary-foreground: oklch(0.98 0 0);
@@ -93,14 +93,14 @@
   --muted-foreground: oklch(0.65 0.01 250);
   --accent: oklch(0.22 0.01 250);
   --accent-foreground: oklch(0.98 0 0);
-  --destructive: oklch(0.65 0.22 27);
+  --destructive: oklch(0.5 0.2 312);
   --destructive-foreground: oklch(1 0 0);
   --border: oklch(0.25 0.01 250);
   --input: oklch(0.25 0.01 250);
-  --ring: oklch(0.65 0.22 27);
-  --brand: oklch(0.65 0.22 27);
+  --ring: oklch(0.5 0.2 312);
+  --brand: oklch(0.5 0.2 312);
   --brand-foreground: oklch(1 0 0);
-  --brand-soft: oklch(0.25 0.05 27);
+  --brand-soft: oklch(0.25 0.05 312);
   --surface: oklch(0.18 0.01 250);
   --surface-foreground: oklch(0.98 0 0);
 }
