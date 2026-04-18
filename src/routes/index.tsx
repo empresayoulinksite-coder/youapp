@@ -149,7 +149,7 @@ function Index() {
         </section>
 
         {/* Promo banners */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <section className="grid grid-cols-2 gap-3">
           <div
             className="rounded-2xl p-5 text-brand-foreground relative overflow-hidden shadow-[var(--shadow-card)]"
             style={{ backgroundImage: "var(--gradient-promo)" }}
