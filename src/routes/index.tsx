@@ -94,6 +94,47 @@ function Index() {
   const { count: cartCount } = useCart();
   const { stores } = Route.useLoaderData() as { stores: StoreRow[] };
 
+  const [query, setQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [freeOnly, setFreeOnly] = useState(false);
+  const [sortBy, setSortBy] = useState<"relevance" | "rating" | "delivery">("relevance");
+  const [sortOpen, setSortOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+
+  const norm = (s: string) =>
+    s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  const filteredStores = useMemo(() => {
+    const q = norm(query.trim());
+    let list = stores.filter((s) => {
+      if (q && !norm(s.name).includes(q) && !norm(s.category).includes(q)) return false;
+      if (activeCategory && norm(s.category) !== norm(activeCategory)) return false;
+      if (freeOnly && !s.free_delivery) return false;
+      return true;
+    });
+    if (sortBy === "rating") {
+      list = [...list].sort((a, b) => Number(b.rating) - Number(a.rating));
+    } else if (sortBy === "delivery") {
+      const mins = (t: string) => parseInt(t.match(/\d+/)?.[0] ?? "999", 10);
+      list = [...list].sort((a, b) => mins(a.delivery_time) - mins(b.delivery_time));
+    }
+    return list;
+  }, [stores, query, activeCategory, freeOnly, sortBy]);
+
+  const featured = useMemo(
+    () => [...filteredStores].sort((a, b) => Number(b.rating) - Number(a.rating)).slice(0, 6),
+    [filteredStores],
+  );
+
+  const hasActiveFilters = !!(query || activeCategory || freeOnly || sortBy !== "relevance");
+
+  const clearAll = () => {
+    setQuery("");
+    setActiveCategory(null);
+    setFreeOnly(false);
+    setSortBy("relevance");
+  };
+
   return (
     <div className="min-h-screen bg-surface pb-24">
       {/* Top bar */}
