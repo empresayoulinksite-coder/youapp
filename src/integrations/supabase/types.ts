@@ -101,6 +101,7 @@ export type Database = {
           description: string | null
           emoji: string
           id: string
+          image_url: string | null
           name: string
           original_price: number | null
           position: number
@@ -115,6 +116,7 @@ export type Database = {
           description?: string | null
           emoji?: string
           id?: string
+          image_url?: string | null
           name: string
           original_price?: number | null
           position?: number
@@ -129,6 +131,7 @@ export type Database = {
           description?: string | null
           emoji?: string
           id?: string
+          image_url?: string | null
           name?: string
           original_price?: number | null
           position?: number
@@ -249,6 +252,7 @@ export type Database = {
           free_delivery: boolean
           hours: string | null
           id: string
+          image_url: string | null
           min_order: number
           name: string
           payment_methods: string | null
@@ -269,6 +273,7 @@ export type Database = {
           free_delivery?: boolean
           hours?: string | null
           id?: string
+          image_url?: string | null
           min_order?: number
           name: string
           payment_methods?: string | null
@@ -289,6 +294,7 @@ export type Database = {
           free_delivery?: boolean
           hours?: string | null
           id?: string
+          image_url?: string | null
           min_order?: number
           name?: string
           payment_methods?: string | null
