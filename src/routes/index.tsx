@@ -218,14 +218,27 @@ function Index() {
         {/* Categories grid */}
         <section>
           <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-y-5 gap-x-2">
-            {categories.map(({ label, Icon, tint }) => (
-              <button key={label} className="flex flex-col items-center gap-2 group">
-                <span className={`h-14 w-14 rounded-2xl flex items-center justify-center ${tint} transition-transform group-hover:scale-105`}>
-                  <Icon className="h-6 w-6" />
-                </span>
-                <span className="text-[11px] text-foreground text-center leading-tight">{label}</span>
-              </button>
-            ))}
+            {categories.map(({ label, Icon, tint }) => {
+              const isActive = activeCategory === label;
+              return (
+                <button
+                  key={label}
+                  onClick={() => setActiveCategory(isActive ? null : label)}
+                  className="flex flex-col items-center gap-2 group"
+                >
+                  <span
+                    className={`h-14 w-14 rounded-2xl flex items-center justify-center ${tint} transition-transform group-hover:scale-105 ${
+                      isActive ? "ring-2 ring-brand ring-offset-2 ring-offset-surface" : ""
+                    }`}
+                  >
+                    <Icon className="h-6 w-6" />
+                  </span>
+                  <span className={`text-[11px] text-center leading-tight ${isActive ? "text-brand font-semibold" : "text-foreground"}`}>
+                    {label}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </section>
 
