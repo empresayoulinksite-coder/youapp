@@ -515,3 +515,72 @@ function Chip({ children, onRemove }: { children: React.ReactNode; onRemove: () 
     </span>
   );
 }
+
+function StoreCard({
+  store: r,
+  isFav,
+  onToggleFav,
+}: {
+  store: StoreRow;
+  isFav: boolean;
+  onToggleFav: () => void;
+}) {
+  return (
+    <div className="relative">
+      <Link to="/loja/$slug" params={{ slug: r.slug }} className="block">
+        <article className="bg-card rounded-2xl p-3 flex items-center gap-3 shadow-[var(--shadow-card)] hover:translate-y-[-1px] transition-transform">
+          <div className="h-16 w-16 rounded-xl overflow-hidden bg-muted flex items-center justify-center text-3xl shrink-0">
+            {r.image_url ? (
+              <img
+                src={r.image_url}
+                alt={`Logo ${r.name}`}
+                loading="lazy"
+                width={64}
+                height={64}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <span>{r.emoji}</span>
+            )}
+          </div>
+          <div className="flex-1 min-w-0 pr-8">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold truncate">{r.name}</h3>
+              {r.promo && (
+                <span className="text-[10px] font-bold text-brand bg-brand-soft px-1.5 py-0.5 rounded">
+                  {r.promo}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+              <Star className="h-3.5 w-3.5 fill-warning text-warning" />
+              <span className="font-semibold text-foreground">{Number(r.rating).toFixed(1)}</span>
+              <span>•</span>
+              <span className="truncate">{r.category}</span>
+              <span>•</span>
+              <span>{r.distance}</span>
+            </div>
+            <div className="flex items-center gap-3 text-xs mt-1.5">
+              <span className="flex items-center gap-1 text-muted-foreground">
+                <Clock className="h-3.5 w-3.5" /> {r.delivery_time}
+              </span>
+              <span className={`flex items-center gap-1 ${r.free_delivery ? "text-success font-semibold" : "text-muted-foreground"}`}>
+                <Bike className="h-3.5 w-3.5" /> {r.delivery_fee}
+              </span>
+            </div>
+          </div>
+        </article>
+      </Link>
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          onToggleFav();
+        }}
+        aria-label={isFav ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+        className="absolute top-3 right-3 p-2 rounded-full bg-card/80 hover:bg-muted"
+      >
+        <Heart className={`h-4 w-4 ${isFav ? "fill-brand text-brand" : "text-muted-foreground"}`} />
+      </button>
+    </div>
+  );
+}
