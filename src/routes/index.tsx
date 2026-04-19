@@ -64,23 +64,6 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-type Category = { label: string; Icon: typeof Pizza; tint: string; matches: string[] };
-
-// matches: lista de valores aceitos no campo stores.category (case/acentos ignorados).
-// Vazio = casa com qualquer loja (ex.: Restaurantes mostra todos os restaurantes).
-const categories: Category[] = [
-  { label: "Restaurantes", Icon: UtensilsCrossed, tint: "bg-brand-soft text-brand", matches: ["Lanches", "Pizza", "Japonesa", "Brasileira", "Saudável", "Italiana", "Mexicana", "Árabe", "Vegetariana"] },
-  { label: "Mercado", Icon: Apple, tint: "bg-green-50 text-green-600", matches: ["Mercado"] },
-  { label: "Lanches", Icon: Sandwich, tint: "bg-amber-50 text-amber-600", matches: ["Lanches"] },
-  { label: "Pizza", Icon: Pizza, tint: "bg-orange-50 text-orange-600", matches: ["Pizza"] },
-  { label: "Brasileira", Icon: Beef, tint: "bg-rose-50 text-rose-600", matches: ["Brasileira"] },
-  { label: "Japonesa", Icon: Soup, tint: "bg-pink-50 text-pink-600", matches: ["Japonesa"] },
-  { label: "Saudável", Icon: Salad, tint: "bg-emerald-50 text-emerald-600", matches: ["Saudável"] },
-  { label: "Doces", Icon: Cookie, tint: "bg-yellow-50 text-yellow-700", matches: ["Doces", "Confeitaria"] },
-  { label: "Sorvetes", Icon: IceCream, tint: "bg-sky-50 text-sky-600", matches: ["Sorvetes", "Açaí"] },
-  { label: "Café", Icon: Coffee, tint: "bg-stone-100 text-stone-700", matches: ["Café", "Cafeteria"] },
-  { label: "Bebidas", Icon: Beer, tint: "bg-indigo-50 text-indigo-600", matches: ["Bebidas", "Adega"] },
-];
 
 function Index() {
   const { user } = useAuth();
@@ -100,8 +83,7 @@ function Index() {
     setTimeout(() => searchInputRef.current?.focus(), 250);
   };
 
-  const norm = (s: string) =>
-    s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const norm = normalize;
 
   const filteredStores = useMemo(() => {
     const q = norm(query.trim());
