@@ -57,7 +57,7 @@ export const Route = createFileRoute("/categoria/$slug")({
 });
 
 function CategoryPage() {
-  const { category, stores } = Route.useLoaderData();
+  const { category, stores } = Route.useLoaderData() as { category: ReturnType<typeof findCategoryBySlug> & {}; stores: StoreRow[] };
   const Icon = category.Icon;
 
   return (
