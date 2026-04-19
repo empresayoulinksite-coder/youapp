@@ -90,7 +90,7 @@ const categories: Category[] = [
 function Index() {
   const { user } = useAuth();
   const { count: cartCount } = useCart();
-  const { stores } = Route.useLoaderData();
+  const { stores } = Route.useLoaderData() as { stores: StoreRow[] };
 
   return (
     <div className="min-h-screen bg-surface pb-24">
