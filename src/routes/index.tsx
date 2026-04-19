@@ -69,6 +69,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   const { user } = useAuth();
   const { count: cartCount } = useCart();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const { stores } = Route.useLoaderData() as { stores: StoreRow[] };
 
   const [query, setQuery] = useState("");
@@ -139,7 +140,7 @@ function Index() {
             </div>
           </button>
           <div className="flex items-center gap-4 shrink-0">
-            <Heart className="h-5 w-5 text-foreground" />
+            <Link to={user ? "/favoritos" : "/auth"} aria-label="Favoritos"><Heart className="h-5 w-5 text-foreground" /></Link>
             <Link to="/sacola" className="relative">
               <ShoppingBag className="h-5 w-5 text-foreground" />
               {cartCount > 0 && (
@@ -470,7 +471,7 @@ function Index() {
             { Icon: Home, label: "Início", active: true, to: "/" as const, onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }) },
             { Icon: Search, label: "Busca", active: false, onClick: focusSearch },
             { Icon: Receipt, label: "Pedidos", active: false, onClick: focusSearch },
-            { Icon: Heart, label: "Favoritos", active: false, onClick: focusSearch },
+            { Icon: Heart, label: "Favoritos", active: false, to: (user ? "/favoritos" : "/auth") as "/favoritos" | "/auth" },
             { Icon: User, label: "Perfil", active: false, to: (user ? "/perfil" : "/auth") as "/perfil" | "/auth" },
           ].map(({ Icon, label, active, onClick, to }) => {
             const inner = (
