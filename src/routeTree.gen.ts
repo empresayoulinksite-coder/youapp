@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SacolaRouteImport } from './routes/sacola'
 import { Route as PerfilRouteImport } from './routes/perfil'
+import { Route as FavoritosRouteImport } from './routes/favoritos'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LojaSlugRouteImport } from './routes/loja.$slug'
@@ -24,6 +25,11 @@ const SacolaRoute = SacolaRouteImport.update({
 const PerfilRoute = PerfilRouteImport.update({
   id: '/perfil',
   path: '/perfil',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FavoritosRoute = FavoritosRouteImport.update({
+  id: '/favoritos',
+  path: '/favoritos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -50,6 +56,7 @@ const CategoriaSlugRoute = CategoriaSlugRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/favoritos': typeof FavoritosRoute
   '/perfil': typeof PerfilRoute
   '/sacola': typeof SacolaRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/favoritos': typeof FavoritosRoute
   '/perfil': typeof PerfilRoute
   '/sacola': typeof SacolaRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
@@ -67,6 +75,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/favoritos': typeof FavoritosRoute
   '/perfil': typeof PerfilRoute
   '/sacola': typeof SacolaRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
@@ -77,16 +86,25 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/favoritos'
     | '/perfil'
     | '/sacola'
     | '/categoria/$slug'
     | '/loja/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/perfil' | '/sacola' | '/categoria/$slug' | '/loja/$slug'
+  to:
+    | '/'
+    | '/auth'
+    | '/favoritos'
+    | '/perfil'
+    | '/sacola'
+    | '/categoria/$slug'
+    | '/loja/$slug'
   id:
     | '__root__'
     | '/'
     | '/auth'
+    | '/favoritos'
     | '/perfil'
     | '/sacola'
     | '/categoria/$slug'
@@ -96,6 +114,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  FavoritosRoute: typeof FavoritosRoute
   PerfilRoute: typeof PerfilRoute
   SacolaRoute: typeof SacolaRoute
   CategoriaSlugRoute: typeof CategoriaSlugRoute
@@ -116,6 +135,13 @@ declare module '@tanstack/react-router' {
       path: '/perfil'
       fullPath: '/perfil'
       preLoaderRoute: typeof PerfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/favoritos': {
+      id: '/favoritos'
+      path: '/favoritos'
+      fullPath: '/favoritos'
+      preLoaderRoute: typeof FavoritosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -152,6 +178,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  FavoritosRoute: FavoritosRoute,
   PerfilRoute: PerfilRoute,
   SacolaRoute: SacolaRoute,
   CategoriaSlugRoute: CategoriaSlugRoute,
@@ -160,3 +187,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

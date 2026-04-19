@@ -70,13 +70,16 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
+import { FavoritesProvider } from "@/contexts/FavoritesContext";
 
 function RootComponent() {
   return (
     <AuthProvider>
-      <CartProvider>
-        <Outlet />
-      </CartProvider>
+      <FavoritesProvider>
+        <CartProvider>
+          <Outlet />
+        </CartProvider>
+      </FavoritesProvider>
     </AuthProvider>
   );
 }
