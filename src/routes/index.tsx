@@ -272,18 +272,16 @@ function Index() {
         </section>
 
         {/* Featured stores */}
-        <section>
-          <div className="flex items-end justify-between mb-3">
-            <div>
-              <h2 className="text-lg font-bold">Lojas em destaque</h2>
-              <p className="text-xs text-muted-foreground">As mais bem avaliadas perto de você</p>
+        {featured.length > 0 && (
+          <section>
+            <div className="flex items-end justify-between mb-3">
+              <div>
+                <h2 className="text-lg font-bold">Lojas em destaque</h2>
+                <p className="text-xs text-muted-foreground">As mais bem avaliadas perto de você</p>
+              </div>
             </div>
-          </div>
-          <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 snap-x snap-mandatory">
-            {[...stores]
-              .sort((a, b) => Number(b.rating) - Number(a.rating))
-              .slice(0, 6)
-              .map((r) => (
+            <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 snap-x snap-mandatory">
+              {featured.map((r) => (
                 <Link
                   key={`featured-${r.id}`}
                   to="/loja/$slug"
@@ -320,8 +318,9 @@ function Index() {
                   </article>
                 </Link>
               ))}
-          </div>
-        </section>
+            </div>
+          </section>
+        )}
 
         {/* Restaurants list */}
         <section>
