@@ -199,6 +199,58 @@ function Index() {
           </div>
         </section>
 
+        {/* Featured stores */}
+        <section>
+          <div className="flex items-end justify-between mb-3">
+            <div>
+              <h2 className="text-lg font-bold">Lojas em destaque</h2>
+              <p className="text-xs text-muted-foreground">As mais bem avaliadas perto de você</p>
+            </div>
+          </div>
+          <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 snap-x snap-mandatory">
+            {[...stores]
+              .sort((a, b) => Number(b.rating) - Number(a.rating))
+              .slice(0, 6)
+              .map((r) => (
+                <Link
+                  key={`featured-${r.id}`}
+                  to="/loja/$slug"
+                  params={{ slug: r.slug }}
+                  className="shrink-0 w-44 snap-start"
+                >
+                  <article className="bg-card rounded-2xl overflow-hidden shadow-[var(--shadow-card)] hover:translate-y-[-1px] transition-transform">
+                    <div className="relative h-24 bg-muted flex items-center justify-center text-4xl">
+                      {r.image_url ? (
+                        <img
+                          src={r.image_url}
+                          alt={`Logo ${r.name}`}
+                          loading="lazy"
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span>{r.emoji}</span>
+                      )}
+                      {r.promo && (
+                        <span className="absolute top-2 left-2 text-[10px] font-bold text-brand-foreground bg-brand px-1.5 py-0.5 rounded">
+                          {r.promo}
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <h3 className="font-semibold text-sm truncate">{r.name}</h3>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                        <Star className="h-3 w-3 fill-warning text-warning" />
+                        <span className="font-semibold text-foreground">{Number(r.rating).toFixed(1)}</span>
+                        <span>•</span>
+                        <span className="truncate">{r.delivery_time}</span>
+                      </div>
+                    </div>
+                  </article>
+                </Link>
+              ))}
+          </div>
+        </section>
+
         {/* Restaurants list */}
         <section>
           <div className="flex items-end justify-between mb-3">
