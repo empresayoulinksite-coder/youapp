@@ -175,26 +175,42 @@ function Index() {
           <div className="flex items-center gap-2 rounded-full bg-muted px-4 py-2.5">
             <Search className="h-4 w-4 text-muted-foreground" />
             <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
               className="bg-transparent outline-none text-sm w-full placeholder:text-muted-foreground"
               placeholder="Busque por item ou loja"
             />
+            {query && (
+              <button
+                onClick={() => setQuery("")}
+                aria-label="Limpar busca"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
         </div>
 
         {/* Tabs */}
         <nav className="mx-auto max-w-5xl px-4 pb-2 flex gap-6 overflow-x-auto no-scrollbar text-sm">
-          {["Restaurantes", "Mercado", "Bebidas", "Farmácia", "Pet", "Shopping"].map((t, i) => (
-            <button
-              key={t}
-              className={`shrink-0 pb-2 border-b-2 transition-colors ${
-                i === 0
-                  ? "border-brand text-brand font-semibold"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
+          {["Todos", "Restaurantes", "Mercado", "Bebidas", "Farmácia", "Pet", "Shopping"].map((t) => {
+            const isAll = t === "Todos";
+            const isActive = isAll ? activeCategory === null : activeCategory === t;
+            return (
+              <button
+                key={t}
+                onClick={() => setActiveCategory(isAll ? null : t)}
+                className={`shrink-0 pb-2 border-b-2 transition-colors ${
+                  isActive
+                    ? "border-brand text-brand font-semibold"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {t}
+              </button>
+            );
+          })}
         </nav>
       </header>
 
