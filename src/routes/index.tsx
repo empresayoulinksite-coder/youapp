@@ -14,22 +14,13 @@ import {
   User,
   Home,
   Receipt,
-  UtensilsCrossed,
-  Pizza,
-  Beef,
-  IceCream,
-  Coffee,
-  Sandwich,
-  Soup,
-  Salad,
-  Cookie,
-  Beer,
-  Apple,
   Star,
   Clock,
   Bike,
+  Pizza,
 } from "lucide-react";
 import youlinkLogo from "@/assets/youlink-logo.png";
+import { categories, norm as normalize } from "@/lib/categories";
 
 interface StoreRow {
   id: string;
@@ -73,23 +64,6 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-type Category = { label: string; Icon: typeof Pizza; tint: string; matches: string[] };
-
-// matches: lista de valores aceitos no campo stores.category (case/acentos ignorados).
-// Vazio = casa com qualquer loja (ex.: Restaurantes mostra todos os restaurantes).
-const categories: Category[] = [
-  { label: "Restaurantes", Icon: UtensilsCrossed, tint: "bg-brand-soft text-brand", matches: ["Lanches", "Pizza", "Japonesa", "Brasileira", "Saudável", "Italiana", "Mexicana", "Árabe", "Vegetariana"] },
-  { label: "Mercado", Icon: Apple, tint: "bg-green-50 text-green-600", matches: ["Mercado"] },
-  { label: "Lanches", Icon: Sandwich, tint: "bg-amber-50 text-amber-600", matches: ["Lanches"] },
-  { label: "Pizza", Icon: Pizza, tint: "bg-orange-50 text-orange-600", matches: ["Pizza"] },
-  { label: "Brasileira", Icon: Beef, tint: "bg-rose-50 text-rose-600", matches: ["Brasileira"] },
-  { label: "Japonesa", Icon: Soup, tint: "bg-pink-50 text-pink-600", matches: ["Japonesa"] },
-  { label: "Saudável", Icon: Salad, tint: "bg-emerald-50 text-emerald-600", matches: ["Saudável"] },
-  { label: "Doces", Icon: Cookie, tint: "bg-yellow-50 text-yellow-700", matches: ["Doces", "Confeitaria"] },
-  { label: "Sorvetes", Icon: IceCream, tint: "bg-sky-50 text-sky-600", matches: ["Sorvetes", "Açaí"] },
-  { label: "Café", Icon: Coffee, tint: "bg-stone-100 text-stone-700", matches: ["Café", "Cafeteria"] },
-  { label: "Bebidas", Icon: Beer, tint: "bg-indigo-50 text-indigo-600", matches: ["Bebidas", "Adega"] },
-];
 
 function Index() {
   const { user } = useAuth();
@@ -109,8 +83,7 @@ function Index() {
     setTimeout(() => searchInputRef.current?.focus(), 250);
   };
 
-  const norm = (s: string) =>
-    s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const norm = normalize;
 
   const filteredStores = useMemo(() => {
     const q = norm(query.trim());
@@ -229,27 +202,23 @@ function Index() {
         {/* Categories grid */}
         <section>
           <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-y-5 gap-x-2">
-            {categories.map(({ label, Icon, tint }) => {
-              const isActive = activeCategory === label;
-              return (
-                <button
-                  key={label}
-                  onClick={() => setActiveCategory(isActive ? null : label)}
-                  className="flex flex-col items-center gap-2 group"
+            {categories.map(({ slug, label, Icon, tint }) => (
+              <Link
+                key={slug}
+                to="/categoria/$slug"
+                params={{ slug }}
+                className="flex flex-col items-center gap-2 group"
+              >
+                <span
+                  className={`h-14 w-14 rounded-2xl flex items-center justify-center ${tint} transition-transform group-hover:scale-105`}
                 >
-                  <span
-                    className={`h-14 w-14 rounded-2xl flex items-center justify-center ${tint} transition-transform group-hover:scale-105 ${
-                      isActive ? "ring-2 ring-brand ring-offset-2 ring-offset-surface" : ""
-                    }`}
-                  >
-                    <Icon className="h-6 w-6" />
-                  </span>
-                  <span className={`text-[11px] text-center leading-tight ${isActive ? "text-brand font-semibold" : "text-foreground"}`}>
-                    {label}
-                  </span>
-                </button>
-              );
-            })}
+                  <Icon className="h-6 w-6" />
+                </span>
+                <span className="text-[11px] text-center leading-tight text-foreground">
+                  {label}
+                </span>
+              </Link>
+            ))}
           </div>
         </section>
 
