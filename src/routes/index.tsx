@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
+import { supabase } from "@/integrations/supabase/client";
 
 import {
   MapPin,
@@ -28,14 +29,42 @@ import {
 } from "lucide-react";
 import youlinkLogo from "@/assets/youlink-logo.png";
 
+interface StoreRow {
+  id: string;
+  slug: string;
+  name: string;
+  emoji: string;
+  image_url: string | null;
+  category: string;
+  rating: number;
+  distance: string;
+  delivery_time: string;
+  delivery_fee: string;
+  free_delivery: boolean;
+  promo: string | null;
+}
+
 export const Route = createFileRoute("/")({
+  loader: async () => {
+    const { data, error } = await supabase
+      .from("stores")
+      .select("id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, promo")
+      .order("name");
+    if (error) throw error;
+    return { stores: (data ?? []) as StoreRow[] };
+  },
+  errorComponent: ({ error }) => (
+    <div className="min-h-screen flex items-center justify-center p-6 text-center text-sm text-muted-foreground">
+      {error.message}
+    </div>
+  ),
   head: () => ({
     meta: [
-      { title: "iFood — Comida, mercado e farmácia em casa" },
+      { title: "Youlink — Comida em casa, rápido" },
       {
         name: "description",
         content:
-          "Peça comida, mercado, farmácia e mais com entrega rápida. Os melhores restaurantes da sua região no iFood.",
+          "Peça comida com entrega rápida. Os melhores restaurantes da sua região no Youlink.",
       },
     ],
   }),
@@ -58,33 +87,10 @@ const categories: Category[] = [
   { label: "Bebidas", Icon: Beer, tint: "bg-indigo-50 text-indigo-600" },
 ];
 
-type Restaurant = {
-  name: string;
-  slug?: string;
-  emoji: string;
-  rating: number;
-  category: string;
-  distance: string;
-  time: string;
-  fee: string;
-  free?: boolean;
-  promo?: string;
-};
-
-const restaurants: Restaurant[] = [
-  { name: "Burger Habits", slug: "burger-habits", emoji: "🍔", rating: 4.8, category: "Lanches", distance: "1,2 km", time: "25-35 min", fee: "Grátis", free: true, promo: "20% OFF" },
-  { name: "Sabor da Casa", emoji: "🍛", rating: 4.7, category: "Brasileira", distance: "2,1 km", time: "30-40 min", fee: "R$ 6,99" },
-  { name: "Sushi Kyoto", slug: "sushi-kyoto", emoji: "🍣", rating: 4.9, category: "Japonesa", distance: "3,4 km", time: "40-55 min", fee: "R$ 9,90", promo: "Leve+ Pague-" },
-  { name: "Pizzaria Bella", slug: "pizzaria-bella", emoji: "🍕", rating: 4.6, category: "Pizza", distance: "1,8 km", time: "35-45 min", fee: "Grátis", free: true },
-  { name: "Açaí da Praia", emoji: "🍧", rating: 4.8, category: "Sorvetes", distance: "0,9 km", time: "15-25 min", fee: "R$ 4,99" },
-  { name: "Verde & Leve", slug: "verde-leve", emoji: "🥗", rating: 4.7, category: "Saudável", distance: "2,7 km", time: "30-40 min", fee: "Grátis", free: true, promo: "Cupom R$10" },
-  { name: "Padaria Central", emoji: "🥐", rating: 4.5, category: "Padaria", distance: "0,6 km", time: "20-30 min", fee: "R$ 3,99" },
-  { name: "Cantina Italiana", emoji: "🍝", rating: 4.6, category: "Italiana", distance: "2,9 km", time: "40-50 min", fee: "R$ 7,90" },
-];
-
 function Index() {
   const { user } = useAuth();
   const { count: cartCount } = useCart();
+  const { stores } = Route.useLoaderData() as { stores: StoreRow[] };
 
   return (
     <div className="min-h-screen bg-surface pb-24">
@@ -171,7 +177,7 @@ function Index() {
             style={{ backgroundImage: "var(--gradient-promo)" }}
           >
             <span className="text-[11px] font-bold uppercase tracking-wide bg-white/20 px-2 py-0.5 rounded-full">
-              Clube iFood
+              Clube Youlink
             </span>
             <h3 className="mt-3 text-2xl font-extrabold leading-tight">Entrega grátis ilimitada</h3>
             <p className="text-sm opacity-90 mt-1">Em milhares de restaurantes perto de você</p>
@@ -191,44 +197,6 @@ function Index() {
             </button>
             <div className="absolute -right-2 -bottom-2 text-7xl opacity-30 select-none">🎟️</div>
           </div>
-          <div className="shrink-0 w-[85%] sm:w-[420px] snap-start rounded-2xl p-5 bg-brand-soft text-foreground relative overflow-hidden shadow-[var(--shadow-card)]">
-            <span className="text-[11px] font-bold uppercase tracking-wide bg-brand/10 text-brand px-2 py-0.5 rounded-full">
-              Frete grátis
-            </span>
-            <h3 className="mt-3 text-2xl font-extrabold leading-tight">Entrega por R$ 0</h3>
-            <p className="text-sm text-muted-foreground mt-1">Em lojas selecionadas perto de você</p>
-            <button className="mt-4 bg-brand text-brand-foreground text-sm font-bold px-4 py-2 rounded-full">
-              Aproveitar
-            </button>
-            <div className="absolute -right-2 -bottom-2 text-7xl opacity-30 select-none">🛍️</div>
-          </div>
-        </section>
-
-        {/* Famous brands */}
-        <section>
-          <div className="flex items-end justify-between mb-3">
-            <h2 className="text-lg font-bold">Famosos no iFood</h2>
-            <button className="text-sm text-brand font-semibold">Ver mais</button>
-          </div>
-          <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
-            {[
-              { name: "McDonald's", emoji: "🍟", tint: "bg-yellow-100" },
-              { name: "Burger King", emoji: "👑", tint: "bg-orange-100" },
-              { name: "Subway", emoji: "🥪", tint: "bg-green-100" },
-              { name: "KFC", emoji: "🍗", tint: "bg-red-100" },
-              { name: "Habib's", emoji: "🥙", tint: "bg-rose-100" },
-              { name: "Outback", emoji: "🥩", tint: "bg-amber-100" },
-              { name: "Bob's", emoji: "🍔", tint: "bg-red-50" },
-              { name: "Domino's", emoji: "🍕", tint: "bg-blue-100" },
-            ].map((b) => (
-              <div key={b.name} className="shrink-0 w-20 flex flex-col items-center gap-2">
-                <div className={`h-16 w-16 rounded-full flex items-center justify-center text-2xl ${b.tint} shadow-[var(--shadow-soft)]`}>
-                  {b.emoji}
-                </div>
-                <span className="text-[11px] text-center leading-tight">{b.name}</span>
-              </div>
-            ))}
-          </div>
         </section>
 
         {/* Restaurants list */}
@@ -236,7 +204,7 @@ function Index() {
           <div className="flex items-end justify-between mb-3">
             <div>
               <h2 className="text-lg font-bold">Lojas</h2>
-              <p className="text-xs text-muted-foreground">Mais de 200 lojas perto de você</p>
+              <p className="text-xs text-muted-foreground">Lojas perto de você</p>
             </div>
             <div className="flex gap-2">
               <button className="text-xs font-semibold border border-border rounded-full px-3 py-1.5">Ordenar</button>
@@ -245,13 +213,27 @@ function Index() {
           </div>
 
           <div className="space-y-3">
-            {restaurants.map((r) => {
-              const card = (
-                <article
-                  className="bg-card rounded-2xl p-3 flex items-center gap-3 shadow-[var(--shadow-card)] hover:translate-y-[-1px] transition-transform"
-                >
-                  <div className="h-16 w-16 rounded-xl bg-brand-soft flex items-center justify-center text-3xl shrink-0">
-                    {r.emoji}
+            {stores.map((r) => (
+              <Link
+                key={r.id}
+                to="/loja/$slug"
+                params={{ slug: r.slug }}
+                className="block"
+              >
+                <article className="bg-card rounded-2xl p-3 flex items-center gap-3 shadow-[var(--shadow-card)] hover:translate-y-[-1px] transition-transform">
+                  <div className="h-16 w-16 rounded-xl overflow-hidden bg-muted flex items-center justify-center text-3xl shrink-0">
+                    {r.image_url ? (
+                      <img
+                        src={r.image_url}
+                        alt={`Logo ${r.name}`}
+                        loading="lazy"
+                        width={64}
+                        height={64}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span>{r.emoji}</span>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -264,7 +246,7 @@ function Index() {
                     </div>
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
                       <Star className="h-3.5 w-3.5 fill-warning text-warning" />
-                      <span className="font-semibold text-foreground">{r.rating.toFixed(1)}</span>
+                      <span className="font-semibold text-foreground">{Number(r.rating).toFixed(1)}</span>
                       <span>•</span>
                       <span className="truncate">{r.category}</span>
                       <span>•</span>
@@ -272,23 +254,16 @@ function Index() {
                     </div>
                     <div className="flex items-center gap-3 text-xs mt-1.5">
                       <span className="flex items-center gap-1 text-muted-foreground">
-                        <Clock className="h-3.5 w-3.5" /> {r.time}
+                        <Clock className="h-3.5 w-3.5" /> {r.delivery_time}
                       </span>
-                      <span className={`flex items-center gap-1 ${r.free ? "text-success font-semibold" : "text-muted-foreground"}`}>
-                        <Bike className="h-3.5 w-3.5" /> {r.fee}
+                      <span className={`flex items-center gap-1 ${r.free_delivery ? "text-success font-semibold" : "text-muted-foreground"}`}>
+                        <Bike className="h-3.5 w-3.5" /> {r.delivery_fee}
                       </span>
                     </div>
                   </div>
                 </article>
-              );
-              return r.slug ? (
-                <Link key={r.name} to="/loja/$slug" params={{ slug: r.slug }} className="block">
-                  {card}
-                </Link>
-              ) : (
-                <div key={r.name}>{card}</div>
-              );
-            })}
+              </Link>
+            ))}
           </div>
         </section>
       </main>
