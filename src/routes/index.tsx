@@ -324,70 +324,153 @@ function Index() {
 
         {/* Restaurants list */}
         <section>
-          <div className="flex items-end justify-between mb-3">
-            <div>
+          <div className="flex items-end justify-between mb-3 gap-2">
+            <div className="min-w-0">
               <h2 className="text-lg font-bold">Lojas</h2>
-              <p className="text-xs text-muted-foreground">Lojas perto de você</p>
+              <p className="text-xs text-muted-foreground">
+                {filteredStores.length} {filteredStores.length === 1 ? "resultado" : "resultados"}
+              </p>
             </div>
-            <div className="flex gap-2">
-              <button className="text-xs font-semibold border border-border rounded-full px-3 py-1.5">Ordenar</button>
-              <button className="text-xs font-semibold border border-border rounded-full px-3 py-1.5">Filtrar</button>
+            <div className="flex gap-2 relative">
+              <div className="relative">
+                <button
+                  onClick={() => { setSortOpen((v) => !v); setFilterOpen(false); }}
+                  className={`text-xs font-semibold border rounded-full px-3 py-1.5 ${sortBy !== "relevance" ? "border-brand text-brand bg-brand-soft" : "border-border"}`}
+                >
+                  Ordenar
+                </button>
+                {sortOpen && (
+                  <div className="absolute right-0 mt-2 w-52 bg-card border border-border rounded-xl shadow-lg z-20 p-1">
+                    {([
+                      ["relevance", "Relevância"],
+                      ["rating", "Melhor avaliado"],
+                      ["delivery", "Entrega mais rápida"],
+                    ] as const).map(([val, label]) => (
+                      <button
+                        key={val}
+                        onClick={() => { setSortBy(val); setSortOpen(false); }}
+                        className={`w-full text-left text-sm px-3 py-2 rounded-lg hover:bg-muted ${sortBy === val ? "text-brand font-semibold" : "text-foreground"}`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="relative">
+                <button
+                  onClick={() => { setFilterOpen((v) => !v); setSortOpen(false); }}
+                  className={`text-xs font-semibold border rounded-full px-3 py-1.5 ${freeOnly ? "border-brand text-brand bg-brand-soft" : "border-border"}`}
+                >
+                  Filtrar
+                </button>
+                {filterOpen && (
+                  <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-xl shadow-lg z-20 p-3 space-y-2">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={freeOnly}
+                        onChange={(e) => setFreeOnly(e.target.checked)}
+                        className="accent-[hsl(var(--brand))]"
+                      />
+                      Apenas entrega grátis
+                    </label>
+                    <button
+                      onClick={() => { clearAll(); setFilterOpen(false); }}
+                      className="w-full text-xs text-muted-foreground hover:text-foreground pt-1 border-t border-border"
+                    >
+                      Limpar todos os filtros
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="space-y-3">
-            {stores.map((r) => (
-              <Link
-                key={r.id}
-                to="/loja/$slug"
-                params={{ slug: r.slug }}
-                className="block"
-              >
-                <article className="bg-card rounded-2xl p-3 flex items-center gap-3 shadow-[var(--shadow-card)] hover:translate-y-[-1px] transition-transform">
-                  <div className="h-16 w-16 rounded-xl overflow-hidden bg-muted flex items-center justify-center text-3xl shrink-0">
-                    {r.image_url ? (
-                      <img
-                        src={r.image_url}
-                        alt={`Logo ${r.name}`}
-                        loading="lazy"
-                        width={64}
-                        height={64}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span>{r.emoji}</span>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold truncate">{r.name}</h3>
-                      {r.promo && (
-                        <span className="text-[10px] font-bold text-brand bg-brand-soft px-1.5 py-0.5 rounded">
-                          {r.promo}
-                        </span>
+          {hasActiveFilters && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {query && (
+                <Chip onRemove={() => setQuery("")}>Busca: "{query}"</Chip>
+              )}
+              {activeCategory && (
+                <Chip onRemove={() => setActiveCategory(null)}>{activeCategory}</Chip>
+              )}
+              {freeOnly && <Chip onRemove={() => setFreeOnly(false)}>Entrega grátis</Chip>}
+              {sortBy !== "relevance" && (
+                <Chip onRemove={() => setSortBy("relevance")}>
+                  {sortBy === "rating" ? "Melhor avaliado" : "Entrega rápida"}
+                </Chip>
+              )}
+              <button onClick={clearAll} className="text-xs text-brand font-semibold px-2 py-1">
+                Limpar tudo
+              </button>
+            </div>
+          )}
+
+          {filteredStores.length === 0 ? (
+            <div className="bg-card rounded-2xl p-8 text-center shadow-[var(--shadow-card)]">
+              <div className="text-4xl mb-2">🔍</div>
+              <p className="font-semibold">Nenhuma loja encontrada</p>
+              <p className="text-sm text-muted-foreground mt-1">Tente ajustar a busca ou os filtros.</p>
+              <button onClick={clearAll} className="mt-4 text-sm font-semibold text-brand">
+                Limpar filtros
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredStores.map((r) => (
+                <Link
+                  key={r.id}
+                  to="/loja/$slug"
+                  params={{ slug: r.slug }}
+                  className="block"
+                >
+                  <article className="bg-card rounded-2xl p-3 flex items-center gap-3 shadow-[var(--shadow-card)] hover:translate-y-[-1px] transition-transform">
+                    <div className="h-16 w-16 rounded-xl overflow-hidden bg-muted flex items-center justify-center text-3xl shrink-0">
+                      {r.image_url ? (
+                        <img
+                          src={r.image_url}
+                          alt={`Logo ${r.name}`}
+                          loading="lazy"
+                          width={64}
+                          height={64}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span>{r.emoji}</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-                      <Star className="h-3.5 w-3.5 fill-warning text-warning" />
-                      <span className="font-semibold text-foreground">{Number(r.rating).toFixed(1)}</span>
-                      <span>•</span>
-                      <span className="truncate">{r.category}</span>
-                      <span>•</span>
-                      <span>{r.distance}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold truncate">{r.name}</h3>
+                        {r.promo && (
+                          <span className="text-[10px] font-bold text-brand bg-brand-soft px-1.5 py-0.5 rounded">
+                            {r.promo}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+                        <Star className="h-3.5 w-3.5 fill-warning text-warning" />
+                        <span className="font-semibold text-foreground">{Number(r.rating).toFixed(1)}</span>
+                        <span>•</span>
+                        <span className="truncate">{r.category}</span>
+                        <span>•</span>
+                        <span>{r.distance}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs mt-1.5">
+                        <span className="flex items-center gap-1 text-muted-foreground">
+                          <Clock className="h-3.5 w-3.5" /> {r.delivery_time}
+                        </span>
+                        <span className={`flex items-center gap-1 ${r.free_delivery ? "text-success font-semibold" : "text-muted-foreground"}`}>
+                          <Bike className="h-3.5 w-3.5" /> {r.delivery_fee}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3 text-xs mt-1.5">
-                      <span className="flex items-center gap-1 text-muted-foreground">
-                        <Clock className="h-3.5 w-3.5" /> {r.delivery_time}
-                      </span>
-                      <span className={`flex items-center gap-1 ${r.free_delivery ? "text-success font-semibold" : "text-muted-foreground"}`}>
-                        <Bike className="h-3.5 w-3.5" /> {r.delivery_fee}
-                      </span>
-                    </div>
-                  </div>
-                </article>
-              </Link>
-            ))}
-          </div>
+                  </article>
+                </Link>
+              ))}
+            </div>
+          )}
         </section>
       </main>
 
