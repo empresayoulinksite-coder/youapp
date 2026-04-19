@@ -14,22 +14,13 @@ import {
   User,
   Home,
   Receipt,
-  UtensilsCrossed,
-  Pizza,
-  Beef,
-  IceCream,
-  Coffee,
-  Sandwich,
-  Soup,
-  Salad,
-  Cookie,
-  Beer,
-  Apple,
   Star,
   Clock,
   Bike,
+  Pizza,
 } from "lucide-react";
 import youlinkLogo from "@/assets/youlink-logo.png";
+import { categories, norm as normalize } from "@/lib/categories";
 
 interface StoreRow {
   id: string;
