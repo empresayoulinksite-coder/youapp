@@ -10,6 +10,7 @@ interface Store {
   slug: string;
   name: string;
   emoji: string;
+  image_url: string | null;
   category: string;
   rating: number;
   distance: string;
@@ -38,6 +39,7 @@ interface MenuItem {
   price: number;
   original_price: number | null;
   emoji: string;
+  image_url: string | null;
   promo: string | null;
 }
 
@@ -144,10 +146,20 @@ function StorePage() {
 
       {/* Cover */}
       <div
-        className="h-32 flex items-center justify-center text-6xl"
+        className="h-40 flex items-center justify-center relative overflow-hidden"
         style={{ backgroundImage: "var(--gradient-promo)" }}
       >
-        <span>{store.emoji}</span>
+        {store.image_url ? (
+          <img
+            src={store.image_url}
+            alt={`Logo ${store.name}`}
+            width={160}
+            height={160}
+            className="h-28 w-28 object-contain bg-white rounded-2xl p-2 shadow-md"
+          />
+        ) : (
+          <span className="text-6xl">{store.emoji}</span>
+        )}
       </div>
 
       {/* Store info card */}
@@ -245,7 +257,20 @@ function StorePage() {
                             </div>
                           </div>
                           <div className="flex flex-col items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-                            <div className="h-16 w-16 rounded-xl bg-brand-soft flex items-center justify-center text-3xl">{item.emoji}</div>
+                            <div className="h-20 w-20 rounded-xl overflow-hidden bg-brand-soft flex items-center justify-center text-3xl">
+                              {item.image_url ? (
+                                <img
+                                  src={item.image_url}
+                                  alt={item.name}
+                                  loading="lazy"
+                                  width={80}
+                                  height={80}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <span>{item.emoji}</span>
+                              )}
+                            </div>
                             {user ? (
                               qty > 0 ? (
                                 <div className="flex items-center gap-2 bg-brand text-brand-foreground rounded-full px-2 py-1">
@@ -347,8 +372,18 @@ function StorePage() {
             onClick={(e) => e.stopPropagation()}
             className="bg-card w-full max-w-md rounded-t-3xl sm:rounded-3xl max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom duration-200"
           >
-            <div className="relative h-56 flex items-center justify-center text-7xl" style={{ backgroundImage: "var(--gradient-promo)" }}>
-              <span>{selectedItem.emoji}</span>
+            <div className="relative h-64 flex items-center justify-center overflow-hidden bg-muted" style={{ backgroundImage: !selectedItem.image_url ? "var(--gradient-promo)" : undefined }}>
+              {selectedItem.image_url ? (
+                <img
+                  src={selectedItem.image_url}
+                  alt={selectedItem.name}
+                  width={512}
+                  height={512}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-7xl">{selectedItem.emoji}</span>
+              )}
               <button
                 onClick={() => setSelectedItem(null)}
                 className="absolute top-3 right-3 bg-card rounded-full p-2 shadow-md"
