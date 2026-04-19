@@ -496,3 +496,18 @@ function Index() {
     </div>
   );
 }
+
+function Chip({ children, onRemove }: { children: React.ReactNode; onRemove: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1 text-xs font-medium bg-brand-soft text-brand rounded-full pl-3 pr-1 py-1">
+      {children}
+      <button
+        onClick={onRemove}
+        aria-label="Remover filtro"
+        className="h-5 w-5 rounded-full hover:bg-brand/10 flex items-center justify-center"
+      >
+        <X className="h-3 w-3" />
+      </button>
+    </span>
+  );
+}
