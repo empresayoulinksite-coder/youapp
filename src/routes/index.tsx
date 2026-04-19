@@ -73,20 +73,22 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-type Category = { label: string; Icon: typeof Pizza; tint: string };
+type Category = { label: string; Icon: typeof Pizza; tint: string; matches: string[] };
 
+// matches: lista de valores aceitos no campo stores.category (case/acentos ignorados).
+// Vazio = casa com qualquer loja (ex.: Restaurantes mostra todos os restaurantes).
 const categories: Category[] = [
-  { label: "Restaurantes", Icon: UtensilsCrossed, tint: "bg-brand-soft text-brand" },
-  { label: "Mercado", Icon: Apple, tint: "bg-green-50 text-green-600" },
-  { label: "Lanches", Icon: Sandwich, tint: "bg-amber-50 text-amber-600" },
-  { label: "Pizza", Icon: Pizza, tint: "bg-orange-50 text-orange-600" },
-  { label: "Brasileira", Icon: Beef, tint: "bg-rose-50 text-rose-600" },
-  { label: "Japonesa", Icon: Soup, tint: "bg-pink-50 text-pink-600" },
-  { label: "Saudável", Icon: Salad, tint: "bg-emerald-50 text-emerald-600" },
-  { label: "Doces", Icon: Cookie, tint: "bg-yellow-50 text-yellow-700" },
-  { label: "Sorvetes", Icon: IceCream, tint: "bg-sky-50 text-sky-600" },
-  { label: "Café", Icon: Coffee, tint: "bg-stone-100 text-stone-700" },
-  { label: "Bebidas", Icon: Beer, tint: "bg-indigo-50 text-indigo-600" },
+  { label: "Restaurantes", Icon: UtensilsCrossed, tint: "bg-brand-soft text-brand", matches: ["Lanches", "Pizza", "Japonesa", "Brasileira", "Saudável", "Italiana", "Mexicana", "Árabe", "Vegetariana"] },
+  { label: "Mercado", Icon: Apple, tint: "bg-green-50 text-green-600", matches: ["Mercado"] },
+  { label: "Lanches", Icon: Sandwich, tint: "bg-amber-50 text-amber-600", matches: ["Lanches"] },
+  { label: "Pizza", Icon: Pizza, tint: "bg-orange-50 text-orange-600", matches: ["Pizza"] },
+  { label: "Brasileira", Icon: Beef, tint: "bg-rose-50 text-rose-600", matches: ["Brasileira"] },
+  { label: "Japonesa", Icon: Soup, tint: "bg-pink-50 text-pink-600", matches: ["Japonesa"] },
+  { label: "Saudável", Icon: Salad, tint: "bg-emerald-50 text-emerald-600", matches: ["Saudável"] },
+  { label: "Doces", Icon: Cookie, tint: "bg-yellow-50 text-yellow-700", matches: ["Doces", "Confeitaria"] },
+  { label: "Sorvetes", Icon: IceCream, tint: "bg-sky-50 text-sky-600", matches: ["Sorvetes", "Açaí"] },
+  { label: "Café", Icon: Coffee, tint: "bg-stone-100 text-stone-700", matches: ["Café", "Cafeteria"] },
+  { label: "Bebidas", Icon: Beer, tint: "bg-indigo-50 text-indigo-600", matches: ["Bebidas", "Adega"] },
 ];
 
 function Index() {
@@ -112,9 +114,11 @@ function Index() {
 
   const filteredStores = useMemo(() => {
     const q = norm(query.trim());
+    const cat = activeCategory ? categories.find((c) => c.label === activeCategory) : null;
+    const catMatches = cat ? cat.matches.map(norm) : null;
     let list = stores.filter((s) => {
       if (q && !norm(s.name).includes(q) && !norm(s.category).includes(q)) return false;
-      if (activeCategory && norm(s.category) !== norm(activeCategory)) return false;
+      if (catMatches && !catMatches.includes(norm(s.category))) return false;
       if (freeOnly && !s.free_delivery) return false;
       return true;
     });
