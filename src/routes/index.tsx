@@ -20,7 +20,7 @@ import {
   Pizza,
 } from "lucide-react";
 import youlinkLogo from "@/assets/youlink-logo.png";
-import { categories, norm as normalize } from "@/lib/categories";
+import { categories as categoryList, norm as normalize } from "@/lib/categories";
 
 interface StoreRow {
   id: string;
@@ -87,7 +87,7 @@ function Index() {
 
   const filteredStores = useMemo(() => {
     const q = norm(query.trim());
-    const cat = activeCategory ? categories.find((c) => c.label === activeCategory) : null;
+    const cat = activeCategory ? categoryList.find((c) => c.label === activeCategory) : null;
     const catMatches = cat ? cat.matches.map(norm) : null;
     let list = stores.filter((s) => {
       if (q && !norm(s.name).includes(q) && !norm(s.category).includes(q)) return false;
@@ -202,7 +202,7 @@ function Index() {
         {/* Categories grid */}
         <section>
           <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-y-5 gap-x-2">
-            {categories.map(({ slug, label, Icon, tint }) => (
+            {categoryList.map(({ slug, label, Icon, tint }) => (
               <Link
                 key={slug}
                 to="/categoria/$slug"
