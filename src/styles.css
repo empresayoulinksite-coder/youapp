@@ -120,3 +120,32 @@
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 }
+
+/* Bolinha azul de localização do usuário (estilo Google Maps) */
+.user-location-dot { position: relative; }
+.user-location-dot .ulb-dot {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: #1a73e8;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.15), 0 1px 3px rgba(0,0,0,0.3);
+}
+.user-location-dot .ulb-pulse {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: #1a73e8;
+  opacity: 0.45;
+  animation: ulb-pulse 1.8s ease-out infinite;
+}
+@keyframes ulb-pulse {
+  0%   { transform: scale(1);   opacity: 0.45; }
+  100% { transform: scale(3.2); opacity: 0;    }
+}
