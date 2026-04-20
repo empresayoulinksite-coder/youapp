@@ -74,6 +74,8 @@ function Index() {
   const { count: cartCount } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { stores } = Route.useLoaderData() as { stores: StoreRow[] };
+  const { location, status: locStatus, detect: detectLocation } = useUserLocation();
+  const [nearbyOnly, setNearbyOnly] = useState(true);
 
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
