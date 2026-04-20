@@ -106,7 +106,7 @@ export const Route = createFileRoute("/loja/$slug")({
   ),
   head: ({ loaderData }) => ({
     meta: [
-      { title: loaderData ? `${loaderData.store.name} — Youlink` : "Loja — Youlink" },
+      { title: loaderData ? `${loaderData.store.name} — Youapp` : "Loja — Youapp" },
       { name: "description", content: loaderData?.store.about ?? "Veja o cardápio e faça seu pedido." },
     ],
   }),

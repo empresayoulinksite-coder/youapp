@@ -89,15 +89,15 @@ export const Route = createFileRoute("/categoria/$slug")({
   ),
   head: ({ params }) => {
     const cat = findCategoryBySlug(params.slug);
-    const title = cat ? `${cat.label} — Youlink` : "Categoria — Youlink";
+    const title = cat ? `${cat.label} — Youapp` : "Categoria — Youapp";
     return {
       meta: [
         { title },
         {
           name: "description",
           content: cat
-            ? `Lojas e produtos da categoria ${cat.label} com entrega no Youlink.`
-            : "Categoria no Youlink.",
+            ? `Lojas e produtos da categoria ${cat.label} com entrega no Youapp.`
+            : "Categoria no Youapp.",
         },
         { property: "og:title", content: title },
       ],

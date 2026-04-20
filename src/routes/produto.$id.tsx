@@ -77,10 +77,10 @@ export const Route = createFileRoute("/produto/$id")({
     const name = loaderData?.product?.name ?? "Produto";
     return {
       meta: [
-        { title: `${name} — Youlink` },
+        { title: `${name} — Youapp` },
         {
           name: "description",
-          content: loaderData?.product?.description ?? `${name} disponível na vitrine Youlink.`,
+          content: loaderData?.product?.description ?? `${name} disponível na vitrine Youapp.`,
         },
         { property: "og:title", content: name },
         ...(loaderData?.product?.image_url

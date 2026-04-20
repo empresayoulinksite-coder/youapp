@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/favoritos")({
   head: () => ({
     meta: [
-      { title: "Meus Favoritos — Youlink" },
+      { title: "Meus Favoritos — Youapp" },
       { name: "description", content: "Suas lojas favoritas em um só lugar." },
     ],
   }),

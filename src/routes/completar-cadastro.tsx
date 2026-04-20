@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/completar-cadastro")({
   head: () => ({
     meta: [
-      { title: "Completar cadastro — Youlink" },
+      { title: "Completar cadastro — Youapp" },
       { name: "description", content: "Complete seu cadastro para começar a pedir." },
     ],
   }),
