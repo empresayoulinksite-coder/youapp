@@ -10,6 +10,9 @@ import {
   Cookie,
   Beer,
   Apple,
+  Pill,
+  Dog,
+  ShoppingBag,
 } from "lucide-react";
 
 export type Category = {
