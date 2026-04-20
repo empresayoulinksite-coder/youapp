@@ -17,6 +17,7 @@ import { Route as BuscaRouteImport } from './routes/busca'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as VitrineSlugRouteImport } from './routes/vitrine.$slug'
+import { Route as ProdutoIdRouteImport } from './routes/produto.$id'
 import { Route as LojaSlugRouteImport } from './routes/loja.$slug'
 import { Route as CategoriaSlugRouteImport } from './routes/categoria.$slug'
 
@@ -60,6 +61,11 @@ const VitrineSlugRoute = VitrineSlugRouteImport.update({
   path: '/vitrine/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProdutoIdRoute = ProdutoIdRouteImport.update({
+  id: '/produto/$id',
+  path: '/produto/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LojaSlugRoute = LojaSlugRouteImport.update({
   id: '/loja/$slug',
   path: '/loja/$slug',
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/sacola': typeof SacolaRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/loja/$slug': typeof LojaSlugRoute
+  '/produto/$id': typeof ProdutoIdRoute
   '/vitrine/$slug': typeof VitrineSlugRoute
 }
 export interface FileRoutesByTo {
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/sacola': typeof SacolaRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/loja/$slug': typeof LojaSlugRoute
+  '/produto/$id': typeof ProdutoIdRoute
   '/vitrine/$slug': typeof VitrineSlugRoute
 }
 export interface FileRoutesById {
@@ -106,6 +114,7 @@ export interface FileRoutesById {
   '/sacola': typeof SacolaRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/loja/$slug': typeof LojaSlugRoute
+  '/produto/$id': typeof ProdutoIdRoute
   '/vitrine/$slug': typeof VitrineSlugRoute
 }
 export interface FileRouteTypes {
@@ -120,6 +129,7 @@ export interface FileRouteTypes {
     | '/sacola'
     | '/categoria/$slug'
     | '/loja/$slug'
+    | '/produto/$id'
     | '/vitrine/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -132,6 +142,7 @@ export interface FileRouteTypes {
     | '/sacola'
     | '/categoria/$slug'
     | '/loja/$slug'
+    | '/produto/$id'
     | '/vitrine/$slug'
   id:
     | '__root__'
@@ -144,6 +155,7 @@ export interface FileRouteTypes {
     | '/sacola'
     | '/categoria/$slug'
     | '/loja/$slug'
+    | '/produto/$id'
     | '/vitrine/$slug'
   fileRoutesById: FileRoutesById
 }
@@ -157,6 +169,7 @@ export interface RootRouteChildren {
   SacolaRoute: typeof SacolaRoute
   CategoriaSlugRoute: typeof CategoriaSlugRoute
   LojaSlugRoute: typeof LojaSlugRoute
+  ProdutoIdRoute: typeof ProdutoIdRoute
   VitrineSlugRoute: typeof VitrineSlugRoute
 }
 
@@ -218,6 +231,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VitrineSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/produto/$id': {
+      id: '/produto/$id'
+      path: '/produto/$id'
+      fullPath: '/produto/$id'
+      preLoaderRoute: typeof ProdutoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/loja/$slug': {
       id: '/loja/$slug'
       path: '/loja/$slug'
@@ -245,8 +265,18 @@ const rootRouteChildren: RootRouteChildren = {
   SacolaRoute: SacolaRoute,
   CategoriaSlugRoute: CategoriaSlugRoute,
   LojaSlugRoute: LojaSlugRoute,
+  ProdutoIdRoute: ProdutoIdRoute,
   VitrineSlugRoute: VitrineSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
