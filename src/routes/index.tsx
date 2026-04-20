@@ -8,6 +8,7 @@ import { AddressPicker } from "@/components/AddressPicker";
 import { supabase } from "@/integrations/supabase/client";
 import { X } from "lucide-react";
 import { normalizeText } from "@/hooks/use-location";
+import { StoriesBar } from "@/components/StoriesBar";
 
 import {
   MapPin,
@@ -259,45 +260,8 @@ function Index() {
           </div>
         </div>
 
-        {/* Tabs */}
-        <nav className="mx-auto max-w-5xl px-4 pb-2 flex gap-6 overflow-x-auto no-scrollbar text-sm">
-          {([
-            { label: "Todos", slug: null },
-            { label: "Restaurantes", slug: "restaurantes" },
-            { label: "Mercado", slug: "mercado" },
-            { label: "Bebidas", slug: "bebidas" },
-            { label: "Farmácia", slug: "farmacia" },
-            { label: "Pet", slug: "pet" },
-            { label: "Shopping", slug: "shopping" },
-          ] as const).map((t) => {
-            if (t.slug === null) {
-              const isActive = activeCategory === null;
-              return (
-                <button
-                  key={t.label}
-                  onClick={() => setActiveCategory(null)}
-                  className={`shrink-0 pb-2 border-b-2 transition-colors ${
-                    isActive
-                      ? "border-brand text-brand font-semibold"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {t.label}
-                </button>
-              );
-            }
-            return (
-              <Link
-                key={t.label}
-                to="/categoria/$slug"
-                params={{ slug: t.slug }}
-                className="shrink-0 pb-2 border-b-2 border-transparent text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {t.label}
-              </Link>
-            );
-          })}
-        </nav>
+        {/* Stories — empresas em destaque */}
+        <StoriesBar />
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-5 space-y-8">
