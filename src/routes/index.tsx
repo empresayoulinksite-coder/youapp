@@ -41,6 +41,17 @@ interface StoreRow {
   city: string | null;
 }
 
+interface MenuItemRow {
+  id: string;
+  store_id: string;
+  name: string;
+  price: number;
+  original_price: number | null;
+  emoji: string;
+  promo: string | null;
+  image_url: string | null;
+}
+
 export const Route = createFileRoute("/")({
   loader: async () => {
     const { data, error } = await supabase
@@ -48,7 +59,20 @@ export const Route = createFileRoute("/")({
       .select("id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, promo, neighborhood, city")
       .order("name");
     if (error) throw error;
-    return { stores: (data ?? []) as StoreRow[] };
+    const stores = (data ?? []) as StoreRow[];
+
+    let items: MenuItemRow[] = [];
+    if (stores.length > 0) {
+      const { data: itemsData, error: itemsErr } = await supabase
+        .from("menu_items")
+        .select("id, store_id, name, price, original_price, emoji, promo, image_url")
+        .in("store_id", stores.map((s) => s.id))
+        .order("position", { ascending: true });
+      if (itemsErr) throw itemsErr;
+      items = (itemsData ?? []) as MenuItemRow[];
+    }
+
+    return { stores, items };
   },
   errorComponent: ({ error }) => (
     <div className="min-h-screen flex items-center justify-center p-6 text-center text-sm text-muted-foreground">
@@ -73,7 +97,7 @@ function Index() {
   const { user } = useAuth();
   const { count: cartCount } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { stores } = Route.useLoaderData() as { stores: StoreRow[] };
+  const { stores, items } = Route.useLoaderData() as { stores: StoreRow[]; items: MenuItemRow[] };
   const { location, status: locStatus, detect: detectLocation } = useUserLocation();
   const [nearbyOnly, setNearbyOnly] = useState(true);
 
@@ -471,18 +495,24 @@ function Index() {
               </button>
             </div>
           ) : (
-            <div className="space-y-3">
-              {filteredStores.map((r) => (
-                <StoreCard
-                  key={r.id}
-                  store={r}
-                  isFav={isFavorite(r.id)}
-                  onToggleFav={() => {
-                    if (!user) { window.location.href = "/auth"; return; }
-                    toggleFavorite(r.id);
-                  }}
-                />
-              ))}
+            <div className="space-y-4">
+              {filteredStores.map((r) => {
+                const storeItems = [...items.filter((it) => it.store_id === r.id)]
+                  .sort((a, b) => Number(!!b.promo) - Number(!!a.promo))
+                  .slice(0, 4);
+                return (
+                  <StoreWithItemsCard
+                    key={r.id}
+                    store={r}
+                    items={storeItems}
+                    isFav={isFavorite(r.id)}
+                    onToggleFav={() => {
+                      if (!user) { window.location.href = "/auth"; return; }
+                      toggleFavorite(r.id);
+                    }}
+                  />
+                );
+              })}
             </div>
 
           )}
@@ -607,5 +637,110 @@ function StoreCard({
         <Heart className={`h-4 w-4 ${isFav ? "fill-brand text-brand" : "text-muted-foreground"}`} />
       </button>
     </div>
+  );
+}
+
+function StoreWithItemsCard({
+  store: r,
+  items,
+  isFav,
+  onToggleFav,
+}: {
+  store: StoreRow;
+  items: MenuItemRow[];
+  isFav: boolean;
+  onToggleFav: () => void;
+}) {
+  return (
+    <article className="relative bg-card rounded-2xl shadow-[var(--shadow-card)] overflow-hidden">
+      <Link
+        to="/loja/$slug"
+        params={{ slug: r.slug }}
+        className="flex items-center gap-3 p-3 pr-12 hover:bg-muted/40 transition-colors"
+      >
+        <div className="h-14 w-14 rounded-xl overflow-hidden bg-muted flex items-center justify-center text-3xl shrink-0">
+          {r.image_url ? (
+            <img src={r.image_url} alt={r.name} loading="lazy" className="h-full w-full object-cover" />
+          ) : (
+            <span>{r.emoji}</span>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold truncate">{r.name}</h3>
+            {r.promo && (
+              <span className="text-[10px] font-bold text-brand bg-brand-soft px-1.5 py-0.5 rounded shrink-0">
+                {r.promo}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+            <Star className="h-3.5 w-3.5 fill-warning text-warning" />
+            <span className="font-semibold text-foreground">{Number(r.rating).toFixed(1)}</span>
+            <span>•</span>
+            <span className="truncate">{r.category}</span>
+          </div>
+          <div className="flex items-center gap-3 text-xs mt-1">
+            <span className="flex items-center gap-1 text-muted-foreground">
+              <Clock className="h-3.5 w-3.5" /> {r.delivery_time}
+            </span>
+            <span className={`flex items-center gap-1 ${r.free_delivery ? "text-success font-semibold" : "text-muted-foreground"}`}>
+              <Bike className="h-3.5 w-3.5" /> {r.delivery_fee}
+            </span>
+          </div>
+        </div>
+      </Link>
+
+      <button
+        onClick={onToggleFav}
+        aria-label={isFav ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+        className="absolute top-3 right-3 p-2 rounded-full bg-card/80 hover:bg-muted"
+      >
+        <Heart className={`h-4 w-4 ${isFav ? "fill-brand text-brand" : "text-muted-foreground"}`} />
+      </button>
+
+      {items.length > 0 && (
+        <div className="px-3 pb-3 -mt-1">
+          <div className="flex gap-2 overflow-x-auto no-scrollbar snap-x snap-mandatory">
+            {items.map((it) => (
+              <Link
+                key={it.id}
+                to="/loja/$slug"
+                params={{ slug: r.slug }}
+                className="shrink-0 w-32 snap-start bg-surface rounded-xl overflow-hidden border border-border hover:border-brand/40 transition-colors"
+              >
+                <div className="relative h-20 bg-muted flex items-center justify-center text-3xl">
+                  {it.image_url ? (
+                    <img src={it.image_url} alt={it.name} loading="lazy" className="h-full w-full object-cover" />
+                  ) : (
+                    <span>{it.emoji}</span>
+                  )}
+                  {it.promo && (
+                    <span className="absolute top-1 left-1 text-[9px] font-bold text-brand-foreground bg-brand px-1 py-0.5 rounded">
+                      {it.promo}
+                    </span>
+                  )}
+                </div>
+                <div className="p-2">
+                  <p className="text-[11px] font-semibold leading-tight line-clamp-2 min-h-[28px]">
+                    {it.name}
+                  </p>
+                  <div className="mt-1 flex items-baseline gap-1">
+                    <span className="text-xs font-bold">
+                      R$ {Number(it.price).toFixed(2).replace(".", ",")}
+                    </span>
+                    {it.original_price && (
+                      <span className="text-[10px] text-muted-foreground line-through">
+                        R$ {Number(it.original_price).toFixed(2).replace(".", ",")}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+    </article>
   );
 }
