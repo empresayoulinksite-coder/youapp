@@ -155,12 +155,31 @@ function Index() {
             alt="Youlink"
             className="h-9 w-auto shrink-0 object-contain"
           />
-          <button className="flex items-center gap-1.5 text-left mx-auto">
-            <MapPin className="h-5 w-5 text-brand" />
-            <div className="flex flex-col leading-tight">
-              <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Entregar em</span>
-              <span className="text-sm font-semibold text-foreground flex items-center gap-1">
-                Rua das Flores, 123 <ChevronDown className="h-4 w-4" />
+          <button
+            onClick={detectLocation}
+            className="flex items-center gap-1.5 text-left mx-auto min-w-0 max-w-[55%]"
+            title="Atualizar localização"
+          >
+            {locStatus === "loading" ? (
+              <Loader2 className="h-5 w-5 text-brand animate-spin shrink-0" />
+            ) : (
+              <MapPin className="h-5 w-5 text-brand shrink-0" />
+            )}
+            <div className="flex flex-col leading-tight min-w-0">
+              <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                Entregar em
+              </span>
+              <span className="text-sm font-semibold text-foreground flex items-center gap-1 truncate">
+                <span className="truncate">
+                  {locStatus === "loading"
+                    ? "Detectando..."
+                    : location
+                      ? location.label
+                      : locStatus === "denied"
+                        ? "Permitir localização"
+                        : "Definir localização"}
+                </span>
+                <ChevronDown className="h-4 w-4 shrink-0" />
               </span>
             </div>
           </button>
