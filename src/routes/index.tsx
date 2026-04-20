@@ -22,7 +22,7 @@ import {
   Pizza,
 } from "lucide-react";
 import youlinkLogo from "@/assets/youlink-logo.png";
-import { categories as categoryList, norm as normalize } from "@/lib/categories";
+import { categories as categoryList, norm as normalize, isEcommerceStoreCategory, ECOMMERCE_CATEGORY_SLUGS } from "@/lib/categories";
 
 interface StoreRow {
   id: string;
@@ -159,6 +159,23 @@ function Index() {
     () => [...filteredStores].sort((a, b) => Number(b.rating) - Number(a.rating)).slice(0, 6),
     [filteredStores],
   );
+
+  // Vitrine: produtos das lojas e-commerce (Moda, Calçados, Acessórios, Beleza)
+  const ecomStoreMap = useMemo(() => {
+    const map = new Map<string, StoreRow>();
+    for (const s of stores) {
+      if (isEcommerceStoreCategory(s.category)) map.set(s.id, s);
+    }
+    return map;
+  }, [stores]);
+
+  const vitrineProducts = useMemo(() => {
+    const list = items.filter((it) => ecomStoreMap.has(it.store_id));
+    // Promo first, depois 12 em destaque
+    return list
+      .sort((a, b) => Number(!!b.promo) - Number(!!a.promo))
+      .slice(0, 12);
+  }, [items, ecomStoreMap]);
 
   const hasActiveFilters = !!(query || activeCategory || freeOnly || sortBy !== "relevance");
 
@@ -350,13 +367,9 @@ function Index() {
               </div>
             </div>
             <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 snap-x snap-mandatory">
-              {featured.map((r) => (
-                <Link
-                  key={`featured-${r.id}`}
-                  to="/loja/$slug"
-                  params={{ slug: r.slug }}
-                  className="shrink-0 w-44 snap-start"
-                >
+              {featured.map((r) => {
+                const ecom = isEcommerceStoreCategory(r.category);
+                const inner = (
                   <article className="bg-card rounded-2xl overflow-hidden shadow-[var(--shadow-card)] hover:translate-y-[-1px] transition-transform">
                     <div className="relative h-24 bg-muted flex items-center justify-center text-4xl">
                       {r.image_url ? (
@@ -381,12 +394,107 @@ function Index() {
                         <Star className="h-3 w-3 fill-warning text-warning" />
                         <span className="font-semibold text-foreground">{Number(r.rating).toFixed(1)}</span>
                         <span>•</span>
-                        <span className="truncate">{r.delivery_time}</span>
+                        <span className="truncate">{ecom ? "Vitrine" : r.delivery_time}</span>
                       </div>
                     </div>
                   </article>
-                </Link>
-              ))}
+                );
+                return ecom ? (
+                  <Link
+                    key={`featured-${r.id}`}
+                    to="/vitrine/$slug"
+                    params={{ slug: r.slug }}
+                    className="shrink-0 w-44 snap-start"
+                  >
+                    {inner}
+                  </Link>
+                ) : (
+                  <Link
+                    key={`featured-${r.id}`}
+                    to="/loja/$slug"
+                    params={{ slug: r.slug }}
+                    className="shrink-0 w-44 snap-start"
+                  >
+                    {inner}
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* Vitrine — e-commerce (Moda, Calçados, Acessórios, Beleza) */}
+        {vitrineProducts.length > 0 && (
+          <section>
+            <div className="flex items-end justify-between mb-3">
+              <div>
+                <h2 className="text-lg font-bold">Vitrine</h2>
+                <p className="text-xs text-muted-foreground">Moda, calçados, acessórios e beleza</p>
+              </div>
+              <div className="flex gap-1.5">
+                {ECOMMERCE_CATEGORY_SLUGS.map((s) => {
+                  const cat = categoryList.find((c) => c.slug === s);
+                  if (!cat) return null;
+                  return (
+                    <Link
+                      key={s}
+                      to="/categoria/$slug"
+                      params={{ slug: s }}
+                      className="text-[11px] font-semibold border border-border rounded-full px-2.5 py-1 hover:border-brand hover:text-brand"
+                    >
+                      {cat.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 snap-x snap-mandatory">
+              {vitrineProducts.map((p) => {
+                const s = ecomStoreMap.get(p.store_id);
+                if (!s) return null;
+                const hasDiscount =
+                  !!p.original_price && Number(p.original_price) > Number(p.price);
+                const discountPct = hasDiscount
+                  ? Math.round((1 - Number(p.price) / Number(p.original_price)) * 100)
+                  : 0;
+                return (
+                  <Link
+                    key={p.id}
+                    to="/produto/$id"
+                    params={{ id: p.id }}
+                    className="shrink-0 w-40 snap-start bg-card rounded-2xl overflow-hidden shadow-[var(--shadow-card)] hover:translate-y-[-1px] transition-transform"
+                  >
+                    <div className="relative aspect-square bg-muted flex items-center justify-center text-4xl">
+                      {p.image_url ? (
+                        <img src={p.image_url} alt={p.name} loading="lazy" className="h-full w-full object-cover" />
+                      ) : (
+                        <span>{p.emoji}</span>
+                      )}
+                      {hasDiscount && (
+                        <span className="absolute top-2 left-2 text-[10px] font-bold text-brand-foreground bg-brand px-1.5 py-0.5 rounded">
+                          -{discountPct}%
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-2.5">
+                      <p className="text-[11px] text-muted-foreground truncate">{s.name}</p>
+                      <p className="text-xs font-medium leading-tight line-clamp-2 min-h-[32px] mt-0.5">
+                        {p.name}
+                      </p>
+                      <div className="flex items-baseline gap-1.5 mt-1">
+                        <span className="text-sm font-bold">
+                          R$ {Number(p.price).toFixed(2).replace(".", ",")}
+                        </span>
+                        {hasDiscount && (
+                          <span className="text-[10px] text-muted-foreground line-through">
+                            R$ {Number(p.original_price).toFixed(2).replace(".", ",")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </section>
         )}
@@ -651,45 +759,81 @@ function StoreWithItemsCard({
   isFav: boolean;
   onToggleFav: () => void;
 }) {
+  const isEcom = isEcommerceStoreCategory(r.category);
   return (
     <article className="relative bg-card rounded-2xl shadow-[var(--shadow-card)] overflow-hidden">
-      <Link
-        to="/loja/$slug"
-        params={{ slug: r.slug }}
-        className="flex items-center gap-3 p-3 pr-12 hover:bg-muted/40 transition-colors"
-      >
-        <div className="h-14 w-14 rounded-xl overflow-hidden bg-muted flex items-center justify-center text-3xl shrink-0">
-          {r.image_url ? (
-            <img src={r.image_url} alt={r.name} loading="lazy" className="h-full w-full object-cover" />
-          ) : (
-            <span>{r.emoji}</span>
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h3 className="font-semibold truncate">{r.name}</h3>
-            {r.promo && (
-              <span className="text-[10px] font-bold text-brand bg-brand-soft px-1.5 py-0.5 rounded shrink-0">
-                {r.promo}
-              </span>
+      {isEcom ? (
+        <Link
+          to="/vitrine/$slug"
+          params={{ slug: r.slug }}
+          className="flex items-center gap-3 p-3 pr-12 hover:bg-muted/40 transition-colors"
+        >
+          <div className="h-14 w-14 rounded-xl overflow-hidden bg-muted flex items-center justify-center text-3xl shrink-0">
+            {r.image_url ? (
+              <img src={r.image_url} alt={r.name} loading="lazy" className="h-full w-full object-cover" />
+            ) : (
+              <span>{r.emoji}</span>
             )}
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-            <Star className="h-3.5 w-3.5 fill-warning text-warning" />
-            <span className="font-semibold text-foreground">{Number(r.rating).toFixed(1)}</span>
-            <span>•</span>
-            <span className="truncate">{r.category}</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold truncate">{r.name}</h3>
+              {r.promo && (
+                <span className="text-[10px] font-bold text-brand bg-brand-soft px-1.5 py-0.5 rounded shrink-0">
+                  {r.promo}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+              <Star className="h-3.5 w-3.5 fill-warning text-warning" />
+              <span className="font-semibold text-foreground">{Number(r.rating).toFixed(1)}</span>
+              <span>•</span>
+              <span className="truncate">{r.category}</span>
+            </div>
+            <div className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-brand bg-brand-soft px-2 py-0.5 rounded-full">
+              Vitrine · ver loja →
+            </div>
           </div>
-          <div className="flex items-center gap-3 text-xs mt-1">
-            <span className="flex items-center gap-1 text-muted-foreground">
-              <Clock className="h-3.5 w-3.5" /> {r.delivery_time}
-            </span>
-            <span className={`flex items-center gap-1 ${r.free_delivery ? "text-success font-semibold" : "text-muted-foreground"}`}>
-              <Bike className="h-3.5 w-3.5" /> {r.delivery_fee}
-            </span>
+        </Link>
+      ) : (
+        <Link
+          to="/loja/$slug"
+          params={{ slug: r.slug }}
+          className="flex items-center gap-3 p-3 pr-12 hover:bg-muted/40 transition-colors"
+        >
+          <div className="h-14 w-14 rounded-xl overflow-hidden bg-muted flex items-center justify-center text-3xl shrink-0">
+            {r.image_url ? (
+              <img src={r.image_url} alt={r.name} loading="lazy" className="h-full w-full object-cover" />
+            ) : (
+              <span>{r.emoji}</span>
+            )}
           </div>
-        </div>
-      </Link>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold truncate">{r.name}</h3>
+              {r.promo && (
+                <span className="text-[10px] font-bold text-brand bg-brand-soft px-1.5 py-0.5 rounded shrink-0">
+                  {r.promo}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+              <Star className="h-3.5 w-3.5 fill-warning text-warning" />
+              <span className="font-semibold text-foreground">{Number(r.rating).toFixed(1)}</span>
+              <span>•</span>
+              <span className="truncate">{r.category}</span>
+            </div>
+            <div className="flex items-center gap-3 text-xs mt-1">
+              <span className="flex items-center gap-1 text-muted-foreground">
+                <Clock className="h-3.5 w-3.5" /> {r.delivery_time}
+              </span>
+              <span className={`flex items-center gap-1 ${r.free_delivery ? "text-success font-semibold" : "text-muted-foreground"}`}>
+                <Bike className="h-3.5 w-3.5" /> {r.delivery_fee}
+              </span>
+            </div>
+          </div>
+        </Link>
+      )}
 
       <button
         onClick={onToggleFav}
@@ -702,42 +846,49 @@ function StoreWithItemsCard({
       {items.length > 0 && (
         <div className="px-3 pb-3 -mt-1">
           <div className="flex gap-2 overflow-x-auto no-scrollbar snap-x snap-mandatory">
-            {items.map((it) => (
-              <Link
-                key={it.id}
-                to="/loja/$slug"
-                params={{ slug: r.slug }}
-                className="shrink-0 w-32 snap-start bg-surface rounded-xl overflow-hidden border border-border hover:border-brand/40 transition-colors"
-              >
-                <div className="relative h-20 bg-muted flex items-center justify-center text-3xl">
-                  {it.image_url ? (
-                    <img src={it.image_url} alt={it.name} loading="lazy" className="h-full w-full object-cover" />
-                  ) : (
-                    <span>{it.emoji}</span>
-                  )}
-                  {it.promo && (
-                    <span className="absolute top-1 left-1 text-[9px] font-bold text-brand-foreground bg-brand px-1 py-0.5 rounded">
-                      {it.promo}
-                    </span>
-                  )}
-                </div>
-                <div className="p-2">
-                  <p className="text-[11px] font-semibold leading-tight line-clamp-2 min-h-[28px]">
-                    {it.name}
-                  </p>
-                  <div className="mt-1 flex items-baseline gap-1">
-                    <span className="text-xs font-bold">
-                      R$ {Number(it.price).toFixed(2).replace(".", ",")}
-                    </span>
-                    {it.original_price && (
-                      <span className="text-[10px] text-muted-foreground line-through">
-                        R$ {Number(it.original_price).toFixed(2).replace(".", ",")}
+            {items.map((it) => {
+              const inner = (
+                <>
+                  <div className={`relative ${isEcom ? "aspect-square" : "h-20"} bg-muted flex items-center justify-center text-3xl`}>
+                    {it.image_url ? (
+                      <img src={it.image_url} alt={it.name} loading="lazy" className="h-full w-full object-cover" />
+                    ) : (
+                      <span>{it.emoji}</span>
+                    )}
+                    {it.promo && (
+                      <span className="absolute top-1 left-1 text-[9px] font-bold text-brand-foreground bg-brand px-1 py-0.5 rounded">
+                        {it.promo}
                       </span>
                     )}
                   </div>
-                </div>
-              </Link>
-            ))}
+                  <div className="p-2">
+                    <p className="text-[11px] font-semibold leading-tight line-clamp-2 min-h-[28px]">
+                      {it.name}
+                    </p>
+                    <div className="mt-1 flex items-baseline gap-1">
+                      <span className="text-xs font-bold">
+                        R$ {Number(it.price).toFixed(2).replace(".", ",")}
+                      </span>
+                      {it.original_price && (
+                        <span className="text-[10px] text-muted-foreground line-through">
+                          R$ {Number(it.original_price).toFixed(2).replace(".", ",")}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </>
+              );
+              const cls = "shrink-0 w-32 snap-start bg-surface rounded-xl overflow-hidden border border-border hover:border-brand/40 transition-colors";
+              return isEcom ? (
+                <Link key={it.id} to="/produto/$id" params={{ id: it.id }} className={cls}>
+                  {inner}
+                </Link>
+              ) : (
+                <Link key={it.id} to="/loja/$slug" params={{ slug: r.slug }} className={cls}>
+                  {inner}
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}
