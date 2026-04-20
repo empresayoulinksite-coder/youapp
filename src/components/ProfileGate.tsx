@@ -3,8 +3,11 @@ import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
-// Rotas onde NÃO devemos forçar o redirect (a própria tela de cadastro e auth)
+// Rotas onde NÃO devemos forçar o redirect
 const ALLOWED_INCOMPLETE = ["/completar-cadastro", "/auth"];
+
+// Cache em memória por sessão: evita refetch a cada navegação
+const completedCache = new Map<string, boolean>();
 
 export function ProfileGate({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -23,6 +26,12 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    // Hit do cache: pula a query
+    if (completedCache.get(user.id) === true) {
+      setChecked(true);
+      return;
+    }
+
     let cancelled = false;
     (async () => {
       const { data } = await supabase
@@ -34,8 +43,10 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
       if (cancelled) return;
 
       if (!data?.profile_completed) {
+        completedCache.set(user.id, false);
         navigate({ to: "/completar-cadastro" });
       } else {
+        completedCache.set(user.id, true);
         setChecked(true);
       }
     })();

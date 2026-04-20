@@ -68,6 +68,8 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+import { useState } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
@@ -77,20 +79,37 @@ import { ProfileGate } from "@/components/ProfileGate";
 import { Toaster } from "@/components/ui/sonner";
 
 function RootComponent() {
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 30_000,
+            gcTime: 5 * 60_000,
+            refetchOnWindowFocus: false,
+            refetchOnMount: false,
+            retry: 1,
+          },
+        },
+      }),
+  );
+
   return (
-    <AuthProvider>
-      <ProfileGate>
-        <AddressProvider>
-          <FavoritesProvider>
-            <CouponProvider>
-              <CartProvider>
-                <Outlet />
-                <Toaster />
-              </CartProvider>
-            </CouponProvider>
-          </FavoritesProvider>
-        </AddressProvider>
-      </ProfileGate>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <ProfileGate>
+          <AddressProvider>
+            <FavoritesProvider>
+              <CouponProvider>
+                <CartProvider>
+                  <Outlet />
+                  <Toaster />
+                </CartProvider>
+              </CouponProvider>
+            </FavoritesProvider>
+          </AddressProvider>
+        </ProfileGate>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
