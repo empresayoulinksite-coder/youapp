@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, LogOut, User as UserIcon, Mail, Save } from "lucide-react";
+import { ArrowLeft, LogOut, User as UserIcon, Mail, Save, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsAdmin } from "@/hooks/use-admin";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/perfil")({
@@ -22,6 +23,7 @@ interface ProfileRow {
 
 function ProfilePage() {
   const { user, loading, signOut } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [displayName, setDisplayName] = useState("");
@@ -139,6 +141,16 @@ function ProfilePage() {
             {saving ? "Salvando..." : "Salvar alterações"}
           </button>
         </div>
+
+        {isAdmin && (
+          <Link
+            to="/admin"
+            className="w-full bg-primary/10 border border-primary/30 text-primary font-semibold py-3 rounded-full flex items-center justify-center gap-2 hover:bg-primary/20"
+          >
+            <Shield className="h-4 w-4" />
+            Painel Admin
+          </Link>
+        )}
 
         <button
           onClick={handleLogout}
