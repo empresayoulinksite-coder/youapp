@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SacolaRouteImport } from './routes/sacola'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as FavoritosRouteImport } from './routes/favoritos'
+import { Route as CompletarCadastroRouteImport } from './routes/completar-cadastro'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LojaSlugRouteImport } from './routes/loja.$slug'
@@ -30,6 +31,11 @@ const PerfilRoute = PerfilRouteImport.update({
 const FavoritosRoute = FavoritosRouteImport.update({
   id: '/favoritos',
   path: '/favoritos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompletarCadastroRoute = CompletarCadastroRouteImport.update({
+  id: '/completar-cadastro',
+  path: '/completar-cadastro',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -56,6 +62,7 @@ const CategoriaSlugRoute = CategoriaSlugRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/completar-cadastro': typeof CompletarCadastroRoute
   '/favoritos': typeof FavoritosRoute
   '/perfil': typeof PerfilRoute
   '/sacola': typeof SacolaRoute
@@ -65,6 +72,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/completar-cadastro': typeof CompletarCadastroRoute
   '/favoritos': typeof FavoritosRoute
   '/perfil': typeof PerfilRoute
   '/sacola': typeof SacolaRoute
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/completar-cadastro': typeof CompletarCadastroRoute
   '/favoritos': typeof FavoritosRoute
   '/perfil': typeof PerfilRoute
   '/sacola': typeof SacolaRoute
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/completar-cadastro'
     | '/favoritos'
     | '/perfil'
     | '/sacola'
@@ -95,6 +105,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/completar-cadastro'
     | '/favoritos'
     | '/perfil'
     | '/sacola'
@@ -104,6 +115,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/completar-cadastro'
     | '/favoritos'
     | '/perfil'
     | '/sacola'
@@ -114,6 +126,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  CompletarCadastroRoute: typeof CompletarCadastroRoute
   FavoritosRoute: typeof FavoritosRoute
   PerfilRoute: typeof PerfilRoute
   SacolaRoute: typeof SacolaRoute
@@ -142,6 +155,13 @@ declare module '@tanstack/react-router' {
       path: '/favoritos'
       fullPath: '/favoritos'
       preLoaderRoute: typeof FavoritosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/completar-cadastro': {
+      id: '/completar-cadastro'
+      path: '/completar-cadastro'
+      fullPath: '/completar-cadastro'
+      preLoaderRoute: typeof CompletarCadastroRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -178,6 +198,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  CompletarCadastroRoute: CompletarCadastroRoute,
   FavoritosRoute: FavoritosRoute,
   PerfilRoute: PerfilRoute,
   SacolaRoute: SacolaRoute,
