@@ -70,8 +70,7 @@ export function StoriesBar() {
               <span
                 className="h-16 w-16 rounded-full p-[2.5px] transition-transform group-active:scale-95"
                 style={{
-                  background:
-                    "conic-gradient(from 180deg at 50% 50%, hsl(45 100% 60%), hsl(330 90% 55%), hsl(280 85% 55%), hsl(45 100% 60%))",
+                  background: "var(--brand)",
                 }}
               >
                 <span className="block h-full w-full rounded-full bg-card p-[2px]">
