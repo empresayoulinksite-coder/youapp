@@ -50,20 +50,43 @@ export function AddressPicker({
     gpsStatus,
     detectGps,
     selectSaved,
-    useGps,
   } = useAddress();
   const [editing, setEditing] = useState<SavedAddress | null>(null);
   const [creating, setCreating] = useState(false);
+  const [adjusting, setAdjusting] = useState(false);
+  const [adjusted, setAdjusted] = useState<AdjustedLocation | null>(null);
 
   const closeForm = () => {
     setEditing(null);
     setCreating(false);
+    setAdjusted(null);
   };
+
+  const startAdjust = () => {
+    if (!gpsLocation && gpsStatus !== "loading") detectGps();
+    setAdjusting(true);
+  };
+
+  // Quando o sheet fecha, resetamos estados internos
+  useEffect(() => {
+    if (!open) {
+      setAdjusting(false);
+      setAdjusted(null);
+      setEditing(null);
+      setCreating(false);
+    }
+  }, [open]);
+
+  const showList = !editing && !creating && !adjusting;
+  const showAdjuster = adjusting && !creating;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-3xl p-0 max-h-[85vh] overflow-y-auto">
-        {!editing && !creating ? (
+      <SheetContent
+        side="bottom"
+        className="rounded-t-3xl p-0 max-h-[90vh] overflow-y-auto"
+      >
+        {showList && (
           <>
             <SheetHeader className="px-5 pt-5 pb-3 text-left">
               <SheetTitle>Onde entregar?</SheetTitle>
@@ -71,11 +94,7 @@ export function AddressPicker({
 
             <div className="px-5 pb-2">
               <button
-                onClick={() => {
-                  if (gpsStatus !== "loading") detectGps();
-                  useGps();
-                  if (gpsLocation) onOpenChange(false);
-                }}
+                onClick={startAdjust}
                 className="w-full flex items-center gap-3 p-3 rounded-2xl border border-border hover:bg-accent transition-colors"
               >
                 <span className="h-10 w-10 rounded-full bg-brand-soft flex items-center justify-center text-brand">
@@ -86,12 +105,12 @@ export function AddressPicker({
                   )}
                 </span>
                 <div className="flex-1 text-left min-w-0">
-                  <p className="font-semibold text-sm">Usar localização atual</p>
+                  <p className="font-semibold text-sm">Usar minha localização</p>
                   <p className="text-xs text-muted-foreground truncate">
                     {gpsLocation?.label ??
                       (gpsStatus === "denied"
                         ? "Permissão negada — toque para tentar"
-                        : "Detectar via GPS")}
+                        : "Ajustar no mapa e completar endereço")}
                   </p>
                 </div>
                 {active?.source === "gps" && <Check className="h-5 w-5 text-brand" />}
@@ -162,9 +181,26 @@ export function AddressPicker({
               })}
             </div>
           </>
-        ) : (
+        )}
+
+        {showAdjuster && (
+          <AdjusterGate
+            initialLat={gpsLocation?.lat}
+            initialLng={gpsLocation?.lng}
+            gpsStatus={gpsStatus}
+            onCancel={() => setAdjusting(false)}
+            onConfirm={(loc) => {
+              setAdjusted(loc);
+              setAdjusting(false);
+              setCreating(true);
+            }}
+          />
+        )}
+
+        {(editing || creating) && !adjusting && (
           <AddressForm
             initial={editing ?? undefined}
+            prefill={adjusted ?? undefined}
             onClose={closeForm}
             onSaved={() => {
               closeForm();
@@ -174,6 +210,59 @@ export function AddressPicker({
         )}
       </SheetContent>
     </Sheet>
+  );
+}
+
+function AdjusterGate({
+  initialLat,
+  initialLng,
+  gpsStatus,
+  onCancel,
+  onConfirm,
+}: {
+  initialLat?: number;
+  initialLng?: number;
+  gpsStatus: string;
+  onCancel: () => void;
+  onConfirm: (loc: AdjustedLocation) => void;
+}) {
+  if (initialLat == null || initialLng == null) {
+    return (
+      <div className="h-[60vh] flex flex-col items-center justify-center gap-3 px-6 text-center">
+        {gpsStatus === "loading" ? (
+          <>
+            <Loader2 className="h-8 w-8 animate-spin text-brand" />
+            <p className="text-sm text-muted-foreground">Detectando sua localização...</p>
+          </>
+        ) : (
+          <>
+            <MapPin className="h-8 w-8 text-muted-foreground" />
+            <p className="text-sm font-semibold">
+              {gpsStatus === "denied"
+                ? "Permissão de localização negada"
+                : "Não conseguimos detectar sua localização"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Você pode adicionar o endereço manualmente.
+            </p>
+            <button
+              onClick={onCancel}
+              className="mt-2 px-5 py-2 rounded-full bg-brand text-brand-foreground font-semibold text-sm"
+            >
+              Voltar
+            </button>
+          </>
+        )}
+      </div>
+    );
+  }
+  return (
+    <LocationAdjuster
+      initialLat={initialLat}
+      initialLng={initialLng}
+      onCancel={onCancel}
+      onConfirm={onConfirm}
+    />
   );
 }
 
