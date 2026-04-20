@@ -37,13 +37,15 @@ interface StoreRow {
   delivery_fee: string;
   free_delivery: boolean;
   promo: string | null;
+  neighborhood: string | null;
+  city: string | null;
 }
 
 export const Route = createFileRoute("/")({
   loader: async () => {
     const { data, error } = await supabase
       .from("stores")
-      .select("id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, promo")
+      .select("id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, promo, neighborhood, city")
       .order("name");
     if (error) throw error;
     return { stores: (data ?? []) as StoreRow[] };
