@@ -212,13 +212,14 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
       {current.store?.slug && (
         <div
           className="absolute inset-x-0 z-30 flex justify-center px-4 pointer-events-none"
-          style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)" }}
+          style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 96px)" }}
         >
           <Link
             to="/loja/$slug"
             params={{ slug: current.store.slug }}
             onClick={onClose}
-            className="pointer-events-auto bg-white text-black font-bold text-sm px-6 py-3 rounded-full shadow-2xl active:scale-95 transition-transform flex items-center gap-2"
+            className="pointer-events-auto font-bold text-sm px-6 py-3 rounded-full shadow-2xl active:scale-95 transition-transform flex items-center gap-2"
+            style={{ background: "var(--brand)", color: "var(--brand-foreground)" }}
           >
             {current.cta_label ?? "Ver loja"}
             <ChevronRight className="h-4 w-4" />
