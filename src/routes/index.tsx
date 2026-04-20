@@ -160,6 +160,23 @@ function Index() {
     [filteredStores],
   );
 
+  // Vitrine: produtos das lojas e-commerce (Moda, Calçados, Acessórios, Beleza)
+  const ecomStoreMap = useMemo(() => {
+    const map = new Map<string, StoreRow>();
+    for (const s of stores) {
+      if (isEcommerceStoreCategory(s.category)) map.set(s.id, s);
+    }
+    return map;
+  }, [stores]);
+
+  const vitrineProducts = useMemo(() => {
+    const list = items.filter((it) => ecomStoreMap.has(it.store_id));
+    // Promo first, depois 12 em destaque
+    return list
+      .sort((a, b) => Number(!!b.promo) - Number(!!a.promo))
+      .slice(0, 12);
+  }, [items, ecomStoreMap]);
+
   const hasActiveFilters = !!(query || activeCategory || freeOnly || sortBy !== "relevance");
 
   const clearAll = () => {
