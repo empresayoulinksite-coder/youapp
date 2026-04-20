@@ -4,7 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { supabase } from "@/integrations/supabase/client";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
+import { useLocation as useUserLocation, normalizeText } from "@/hooks/use-location";
 
 import {
   MapPin,
@@ -36,13 +37,15 @@ interface StoreRow {
   delivery_fee: string;
   free_delivery: boolean;
   promo: string | null;
+  neighborhood: string | null;
+  city: string | null;
 }
 
 export const Route = createFileRoute("/")({
   loader: async () => {
     const { data, error } = await supabase
       .from("stores")
-      .select("id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, promo")
+      .select("id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, promo, neighborhood, city")
       .order("name");
     if (error) throw error;
     return { stores: (data ?? []) as StoreRow[] };
@@ -71,6 +74,8 @@ function Index() {
   const { count: cartCount } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { stores } = Route.useLoaderData() as { stores: StoreRow[] };
+  const { location, status: locStatus, detect: detectLocation } = useUserLocation();
+  const [nearbyOnly, setNearbyOnly] = useState(true);
 
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -87,11 +92,31 @@ function Index() {
 
   const norm = normalize;
 
+  // Lojas próximas: bairro do cliente; se vazio, cai pra cidade; se vazio, todas.
+  const nearbyStores = useMemo(() => {
+    if (!nearbyOnly || !location) return stores;
+    const userHood = normalizeText(location.neighborhood);
+    const userCity = normalizeText(location.city);
+    if (userHood) {
+      const sameHood = stores.filter(
+        (s) => normalizeText(s.neighborhood) === userHood,
+      );
+      if (sameHood.length > 0) return sameHood;
+    }
+    if (userCity) {
+      const sameCity = stores.filter(
+        (s) => normalizeText(s.city) === userCity,
+      );
+      if (sameCity.length > 0) return sameCity;
+    }
+    return stores;
+  }, [stores, location, nearbyOnly]);
+
   const filteredStores = useMemo(() => {
     const q = norm(query.trim());
     const cat = activeCategory ? categoryList.find((c) => c.label === activeCategory) : null;
     const catMatches = cat ? cat.matches.map(norm) : null;
-    let list = stores.filter((s) => {
+    let list = nearbyStores.filter((s) => {
       if (q && !norm(s.name).includes(q) && !norm(s.category).includes(q)) return false;
       if (catMatches && !catMatches.includes(norm(s.category))) return false;
       if (freeOnly && !s.free_delivery) return false;
@@ -104,7 +129,7 @@ function Index() {
       list = [...list].sort((a, b) => mins(a.delivery_time) - mins(b.delivery_time));
     }
     return list;
-  }, [stores, query, activeCategory, freeOnly, sortBy]);
+  }, [nearbyStores, query, activeCategory, freeOnly, sortBy]);
 
   const featured = useMemo(
     () => [...filteredStores].sort((a, b) => Number(b.rating) - Number(a.rating)).slice(0, 6),
@@ -130,12 +155,31 @@ function Index() {
             alt="Youlink"
             className="h-9 w-auto shrink-0 object-contain"
           />
-          <button className="flex items-center gap-1.5 text-left mx-auto">
-            <MapPin className="h-5 w-5 text-brand" />
-            <div className="flex flex-col leading-tight">
-              <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Entregar em</span>
-              <span className="text-sm font-semibold text-foreground flex items-center gap-1">
-                Rua das Flores, 123 <ChevronDown className="h-4 w-4" />
+          <button
+            onClick={detectLocation}
+            className="flex items-center gap-1.5 text-left mx-auto min-w-0 max-w-[55%]"
+            title="Atualizar localização"
+          >
+            {locStatus === "loading" ? (
+              <Loader2 className="h-5 w-5 text-brand animate-spin shrink-0" />
+            ) : (
+              <MapPin className="h-5 w-5 text-brand shrink-0" />
+            )}
+            <div className="flex flex-col leading-tight min-w-0">
+              <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                Entregar em
+              </span>
+              <span className="text-sm font-semibold text-foreground flex items-center gap-1 truncate">
+                <span className="truncate">
+                  {locStatus === "loading"
+                    ? "Detectando..."
+                    : location
+                      ? location.label
+                      : locStatus === "denied"
+                        ? "Permitir localização"
+                        : "Definir localização"}
+                </span>
+                <ChevronDown className="h-4 w-4 shrink-0" />
               </span>
             </div>
           </button>
@@ -367,6 +411,15 @@ function Index() {
                 </button>
                 {filterOpen && (
                   <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-xl shadow-lg z-20 p-3 space-y-2">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={nearbyOnly}
+                        onChange={(e) => setNearbyOnly(e.target.checked)}
+                        className="accent-[hsl(var(--brand))]"
+                      />
+                      Apenas próximas a mim
+                    </label>
                     <label className="flex items-center gap-2 text-sm cursor-pointer">
                       <input
                         type="checkbox"
