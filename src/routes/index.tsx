@@ -414,6 +414,15 @@ function Index() {
                     <label className="flex items-center gap-2 text-sm cursor-pointer">
                       <input
                         type="checkbox"
+                        checked={nearbyOnly}
+                        onChange={(e) => setNearbyOnly(e.target.checked)}
+                        className="accent-[hsl(var(--brand))]"
+                      />
+                      Apenas próximas a mim
+                    </label>
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input
+                        type="checkbox"
                         checked={freeOnly}
                         onChange={(e) => setFreeOnly(e.target.checked)}
                         className="accent-[hsl(var(--brand))]"
