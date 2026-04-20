@@ -3,9 +3,11 @@ import { useMemo, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { useFavorites } from "@/contexts/FavoritesContext";
+import { useAddress } from "@/contexts/AddressContext";
+import { AddressPicker } from "@/components/AddressPicker";
 import { supabase } from "@/integrations/supabase/client";
-import { X, Loader2 } from "lucide-react";
-import { useLocation as useUserLocation, normalizeText } from "@/hooks/use-location";
+import { X } from "lucide-react";
+import { normalizeText } from "@/hooks/use-location";
 
 import {
   MapPin,
