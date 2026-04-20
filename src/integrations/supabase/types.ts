@@ -392,6 +392,59 @@ export type Database = {
         }
         Relationships: []
       }
+      stories: {
+        Row: {
+          created_at: string
+          cta_label: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          media_type: string
+          media_url: string
+          position: number
+          store_id: string | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          cta_label?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          media_type?: string
+          media_url: string
+          position?: number
+          store_id?: string | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          cta_label?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          media_type?: string
+          media_url?: string
+          position?: number
+          store_id?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stories_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_addresses: {
         Row: {
           cep: string | null
