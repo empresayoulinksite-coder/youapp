@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { StoriesViewer } from "./StoriesViewer";
 
@@ -15,29 +16,19 @@ export interface StoryRow {
 }
 
 export function StoriesBar() {
-  const [stories, setStories] = useState<StoryRow[]>([]);
-  const [loading, setLoading] = useState(true);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
-  useEffect(() => {
-    let mounted = true;
-    supabase
-      .from("stories")
-      .select("id, store_id, title, media_url, media_type, thumbnail_url, cta_label, position, stores(slug, name, image_url, emoji)")
-      .order("position", { ascending: true })
-      .then(({ data }) => {
-        if (!mounted) return;
-        const rows = (data ?? []).map((r: any) => ({
-          ...r,
-          store: r.stores ?? null,
-        })) as StoryRow[];
-        setStories(rows);
-        setLoading(false);
-      });
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  const { data: stories = [], isLoading: loading } = useQuery({
+    queryKey: ["stories"],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("stories")
+        .select("id, store_id, title, media_url, media_type, thumbnail_url, cta_label, position, stores(slug, name, image_url, emoji)")
+        .order("position", { ascending: true });
+      return (data ?? []).map((r: any) => ({ ...r, store: r.stores ?? null })) as StoryRow[];
+    },
+  });
 
   if (loading) {
     return (
