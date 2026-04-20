@@ -408,6 +408,82 @@ function Index() {
           </section>
         )}
 
+        {/* Vitrine — e-commerce (Moda, Calçados, Acessórios, Beleza) */}
+        {vitrineProducts.length > 0 && (
+          <section>
+            <div className="flex items-end justify-between mb-3">
+              <div>
+                <h2 className="text-lg font-bold">Vitrine</h2>
+                <p className="text-xs text-muted-foreground">Moda, calçados, acessórios e beleza</p>
+              </div>
+              <div className="flex gap-1.5">
+                {ECOMMERCE_CATEGORY_SLUGS.map((s) => {
+                  const cat = categoryList.find((c) => c.slug === s);
+                  if (!cat) return null;
+                  return (
+                    <Link
+                      key={s}
+                      to="/categoria/$slug"
+                      params={{ slug: s }}
+                      className="text-[11px] font-semibold border border-border rounded-full px-2.5 py-1 hover:border-brand hover:text-brand"
+                    >
+                      {cat.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 snap-x snap-mandatory">
+              {vitrineProducts.map((p) => {
+                const s = ecomStoreMap.get(p.store_id);
+                if (!s) return null;
+                const hasDiscount =
+                  !!p.original_price && Number(p.original_price) > Number(p.price);
+                const discountPct = hasDiscount
+                  ? Math.round((1 - Number(p.price) / Number(p.original_price)) * 100)
+                  : 0;
+                return (
+                  <Link
+                    key={p.id}
+                    to="/produto/$id"
+                    params={{ id: p.id }}
+                    className="shrink-0 w-40 snap-start bg-card rounded-2xl overflow-hidden shadow-[var(--shadow-card)] hover:translate-y-[-1px] transition-transform"
+                  >
+                    <div className="relative aspect-square bg-muted flex items-center justify-center text-4xl">
+                      {p.image_url ? (
+                        <img src={p.image_url} alt={p.name} loading="lazy" className="h-full w-full object-cover" />
+                      ) : (
+                        <span>{p.emoji}</span>
+                      )}
+                      {hasDiscount && (
+                        <span className="absolute top-2 left-2 text-[10px] font-bold text-brand-foreground bg-brand px-1.5 py-0.5 rounded">
+                          -{discountPct}%
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-2.5">
+                      <p className="text-[11px] text-muted-foreground truncate">{s.name}</p>
+                      <p className="text-xs font-medium leading-tight line-clamp-2 min-h-[32px] mt-0.5">
+                        {p.name}
+                      </p>
+                      <div className="flex items-baseline gap-1.5 mt-1">
+                        <span className="text-sm font-bold">
+                          R$ {Number(p.price).toFixed(2).replace(".", ",")}
+                        </span>
+                        {hasDiscount && (
+                          <span className="text-[10px] text-muted-foreground line-through">
+                            R$ {Number(p.original_price).toFixed(2).replace(".", ",")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         {/* Restaurants list */}
         <section>
           <div className="flex items-end justify-between mb-3 gap-2">
