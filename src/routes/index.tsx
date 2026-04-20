@@ -92,11 +92,31 @@ function Index() {
 
   const norm = normalize;
 
+  // Lojas próximas: bairro do cliente; se vazio, cai pra cidade; se vazio, todas.
+  const nearbyStores = useMemo(() => {
+    if (!nearbyOnly || !location) return stores;
+    const userHood = normalizeText(location.neighborhood);
+    const userCity = normalizeText(location.city);
+    if (userHood) {
+      const sameHood = stores.filter(
+        (s) => normalizeText(s.neighborhood) === userHood,
+      );
+      if (sameHood.length > 0) return sameHood;
+    }
+    if (userCity) {
+      const sameCity = stores.filter(
+        (s) => normalizeText(s.city) === userCity,
+      );
+      if (sameCity.length > 0) return sameCity;
+    }
+    return stores;
+  }, [stores, location, nearbyOnly]);
+
   const filteredStores = useMemo(() => {
     const q = norm(query.trim());
     const cat = activeCategory ? categoryList.find((c) => c.label === activeCategory) : null;
     const catMatches = cat ? cat.matches.map(norm) : null;
-    let list = stores.filter((s) => {
+    let list = nearbyStores.filter((s) => {
       if (q && !norm(s.name).includes(q) && !norm(s.category).includes(q)) return false;
       if (catMatches && !catMatches.includes(norm(s.category))) return false;
       if (freeOnly && !s.free_delivery) return false;
@@ -109,7 +129,7 @@ function Index() {
       list = [...list].sort((a, b) => mins(a.delivery_time) - mins(b.delivery_time));
     }
     return list;
-  }, [stores, query, activeCategory, freeOnly, sortBy]);
+  }, [nearbyStores, query, activeCategory, freeOnly, sortBy]);
 
   const featured = useMemo(
     () => [...filteredStores].sort((a, b) => Number(b.rating) - Number(a.rating)).slice(0, 6),
