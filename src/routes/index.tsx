@@ -4,7 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { supabase } from "@/integrations/supabase/client";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
+import { useLocation as useUserLocation, normalizeText } from "@/hooks/use-location";
 
 import {
   MapPin,
