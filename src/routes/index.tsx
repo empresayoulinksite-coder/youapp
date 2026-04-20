@@ -524,7 +524,7 @@ function Index() {
         <div className="mx-auto max-w-5xl grid grid-cols-5 px-2 py-2">
           {[
             { Icon: Home, label: "Início", active: true, to: "/" as const, onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }) },
-            { Icon: Search, label: "Busca", active: false, onClick: focusSearch },
+            { Icon: Search, label: "Busca", active: false, to: "/busca" as const },
             { Icon: Receipt, label: "Pedidos", active: false, onClick: focusSearch },
             { Icon: Heart, label: "Favoritos", active: false, to: (user ? "/favoritos" : "/auth") as "/favoritos" | "/auth" },
             { Icon: User, label: "Perfil", active: false, to: (user ? "/perfil" : "/auth") as "/perfil" | "/auth" },
