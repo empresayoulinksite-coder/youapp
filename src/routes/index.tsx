@@ -367,13 +367,9 @@ function Index() {
               </div>
             </div>
             <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 snap-x snap-mandatory">
-              {featured.map((r) => (
-                <Link
-                  key={`featured-${r.id}`}
-                  to="/loja/$slug"
-                  params={{ slug: r.slug }}
-                  className="shrink-0 w-44 snap-start"
-                >
+              {featured.map((r) => {
+                const ecom = isEcommerceStoreCategory(r.category);
+                const inner = (
                   <article className="bg-card rounded-2xl overflow-hidden shadow-[var(--shadow-card)] hover:translate-y-[-1px] transition-transform">
                     <div className="relative h-24 bg-muted flex items-center justify-center text-4xl">
                       {r.image_url ? (
@@ -398,12 +394,31 @@ function Index() {
                         <Star className="h-3 w-3 fill-warning text-warning" />
                         <span className="font-semibold text-foreground">{Number(r.rating).toFixed(1)}</span>
                         <span>•</span>
-                        <span className="truncate">{r.delivery_time}</span>
+                        <span className="truncate">{ecom ? "Vitrine" : r.delivery_time}</span>
                       </div>
                     </div>
                   </article>
-                </Link>
-              ))}
+                );
+                return ecom ? (
+                  <Link
+                    key={`featured-${r.id}`}
+                    to="/vitrine/$slug"
+                    params={{ slug: r.slug }}
+                    className="shrink-0 w-44 snap-start"
+                  >
+                    {inner}
+                  </Link>
+                ) : (
+                  <Link
+                    key={`featured-${r.id}`}
+                    to="/loja/$slug"
+                    params={{ slug: r.slug }}
+                    className="shrink-0 w-44 snap-start"
+                  >
+                    {inner}
+                  </Link>
+                );
+              })}
             </div>
           </section>
         )}
