@@ -1,4 +1,5 @@
 import { createRouter, useRouter } from "@tanstack/react-router";
+import { QueryClient } from "@tanstack/react-query";
 import { routeTree } from "./routeTree.gen";
 
 function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
@@ -55,11 +56,29 @@ function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => vo
 }
 
 export const getRouter = () => {
+  // Fresh QueryClient por request (SSR-safe)
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 30_000, // 30s "fresco" — sem refetch
+        gcTime: 5 * 60_000, // mantém em cache por 5min
+        refetchOnWindowFocus: false,
+        refetchOnMount: false,
+        retry: 1,
+      },
+    },
+  });
+
   const router = createRouter({
     routeTree,
-    context: {},
+    context: { queryClient },
     scrollRestoration: true,
-    defaultPreloadStaleTime: 0,
+    // Preload no toque/hover do <Link>: dispara loader antes do clique
+    defaultPreload: "intent",
+    defaultPreloadStaleTime: 30_000, // mantém preload "fresco" por 30s
+    // Cache de loaders entre navegações (volta instantâneo)
+    defaultStaleTime: 30_000,
+    defaultGcTime: 5 * 60_000,
     defaultErrorComponent: DefaultErrorComponent,
   });
 
