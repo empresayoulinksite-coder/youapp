@@ -22,7 +22,7 @@ import {
   Pizza,
 } from "lucide-react";
 import youlinkLogo from "@/assets/youlink-logo.png";
-import { categories as categoryList, norm as normalize } from "@/lib/categories";
+import { categories as categoryList, norm as normalize, isEcommerceStoreCategory, ECOMMERCE_CATEGORY_SLUGS } from "@/lib/categories";
 
 interface StoreRow {
   id: string;
