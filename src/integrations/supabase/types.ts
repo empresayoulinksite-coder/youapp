@@ -181,28 +181,58 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          cep: string | null
+          city: string | null
+          complement: string | null
+          cpf: string | null
           created_at: string
           display_name: string | null
           email: string | null
           id: string
+          neighborhood: string | null
+          number: string | null
+          phone: string | null
+          profile_completed: boolean
+          state: string | null
+          street: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           avatar_url?: string | null
+          cep?: string | null
+          city?: string | null
+          complement?: string | null
+          cpf?: string | null
           created_at?: string
           display_name?: string | null
           email?: string | null
           id?: string
+          neighborhood?: string | null
+          number?: string | null
+          phone?: string | null
+          profile_completed?: boolean
+          state?: string | null
+          street?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           avatar_url?: string | null
+          cep?: string | null
+          city?: string | null
+          complement?: string | null
+          cpf?: string | null
           created_at?: string
           display_name?: string | null
           email?: string | null
           id?: string
+          neighborhood?: string | null
+          number?: string | null
+          phone?: string | null
+          profile_completed?: boolean
+          state?: string | null
+          street?: string | null
           updated_at?: string
           user_id?: string
         }
