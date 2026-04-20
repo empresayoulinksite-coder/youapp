@@ -203,28 +203,18 @@ function Index() {
             className="h-9 w-auto shrink-0 object-contain"
           />
           <button
-            onClick={detectLocation}
+            onClick={() => setPickerOpen(true)}
             className="flex items-center gap-1.5 text-left mx-auto min-w-0 max-w-[55%]"
-            title="Atualizar localização"
+            title="Trocar endereço"
           >
-            {locStatus === "loading" ? (
-              <Loader2 className="h-5 w-5 text-brand animate-spin shrink-0" />
-            ) : (
-              <MapPin className="h-5 w-5 text-brand shrink-0" />
-            )}
+            <MapPin className="h-5 w-5 text-brand shrink-0" />
             <div className="flex flex-col leading-tight min-w-0">
               <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                Entregar em
+                {active?.label ?? "Entregar em"}
               </span>
               <span className="text-sm font-semibold text-foreground flex items-center gap-1 truncate">
                 <span className="truncate">
-                  {locStatus === "loading"
-                    ? "Detectando..."
-                    : location
-                      ? location.label
-                      : locStatus === "denied"
-                        ? "Permitir localização"
-                        : "Definir localização"}
+                  {active ? active.shortLabel : "Definir localização"}
                 </span>
                 <ChevronDown className="h-4 w-4 shrink-0" />
               </span>
