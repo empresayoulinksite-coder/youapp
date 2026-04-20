@@ -33,7 +33,7 @@ interface Product {
 }
 
 export const Route = createFileRoute("/vitrine/$slug")({
-  loader: async ({ params }) => {
+  loader: async ({ params }): Promise<{ store: Store; products: Product[] }> => {
     const { data: store, error } = await supabase
       .from("stores")
       .select("id, slug, name, emoji, image_url, category, rating, about, delivery_time, delivery_fee, free_delivery, promo")
