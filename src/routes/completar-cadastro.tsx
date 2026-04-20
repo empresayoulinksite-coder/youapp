@@ -161,26 +161,40 @@ function CompletarCadastroPage() {
     if (!form.state.trim()) return setError("Informe o estado.");
 
     setSaving(true);
-    const { error: upErr } = await supabase
+    const payload = {
+      user_id: user.id,
+      email: user.email ?? null,
+      display_name: form.display_name.trim(),
+      phone: form.phone.replace(/\D/g, ""),
+      cpf: form.cpf.replace(/\D/g, ""),
+      cep: form.cep.replace(/\D/g, ""),
+      street: form.street.trim(),
+      number: form.number.trim(),
+      complement: form.complement.trim() || null,
+      neighborhood: form.neighborhood.trim(),
+      city: form.city.trim(),
+      state: form.state.trim().toUpperCase().slice(0, 2),
+      profile_completed: true,
+    };
+
+    // Tenta UPDATE primeiro
+    const { data: updated, error: upErr } = await supabase
       .from("profiles")
-      .update({
-        display_name: form.display_name.trim(),
-        phone: form.phone.replace(/\D/g, ""),
-        cpf: form.cpf.replace(/\D/g, ""),
-        cep: form.cep.replace(/\D/g, ""),
-        street: form.street.trim(),
-        number: form.number.trim(),
-        complement: form.complement.trim() || null,
-        neighborhood: form.neighborhood.trim(),
-        city: form.city.trim(),
-        state: form.state.trim().toUpperCase().slice(0, 2),
-        profile_completed: true,
-      })
-      .eq("user_id", user.id);
+      .update(payload)
+      .eq("user_id", user.id)
+      .select("user_id");
+
+    let finalErr = upErr;
+    // Se não atualizou nenhuma linha, faz INSERT
+    if (!upErr && (!updated || updated.length === 0)) {
+      const { error: insErr } = await supabase.from("profiles").insert(payload);
+      finalErr = insErr;
+    }
     setSaving(false);
 
-    if (upErr) {
-      setError(upErr.message);
+    if (finalErr) {
+      console.error("[completar-cadastro] save error:", finalErr);
+      setError(finalErr.message);
       return;
     }
     navigate({ to: "/" });
