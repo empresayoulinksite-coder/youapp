@@ -54,3 +54,19 @@ export const norm = (s: string) =>
 
 export const findCategoryBySlug = (slug: string) =>
   categories.find((c) => c.slug === slug);
+
+// Categorias que usam o layout de vitrine (e-commerce) em vez do delivery clássico.
+export const ECOMMERCE_CATEGORY_SLUGS = ["moda", "calcados", "acessorios", "beleza"] as const;
+const ECOM_SET = new Set<string>(ECOMMERCE_CATEGORY_SLUGS);
+
+export const isEcommerceCategorySlug = (slug: string | null | undefined) =>
+  !!slug && ECOM_SET.has(slug);
+
+// Verifica se uma loja (pelo seu campo `category`) pertence ao mundo e-commerce.
+export const isEcommerceStoreCategory = (storeCategory: string) => {
+  const n = norm(storeCategory);
+  return categories.some(
+    (c) => ECOM_SET.has(c.slug) && c.matches.map(norm).includes(n),
+  );
+};
+
