@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { useAddress, type SavedAddress } from "@/contexts/AddressContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { LocationAdjuster, type AdjustedLocation } from "@/components/LocationAdjuster";
 
 const ICONS = [
   { id: "home", label: "Casa", Icon: Home },
