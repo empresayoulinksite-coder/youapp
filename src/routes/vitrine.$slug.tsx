@@ -81,7 +81,7 @@ export const Route = createFileRoute("/vitrine/$slug")({
 type SortKey = "relevance" | "price-asc" | "price-desc" | "promo";
 
 function VitrinePage() {
-  const { store, products } = Route.useLoaderData();
+  const { store, products } = Route.useLoaderData() as { store: Store; products: Product[] };
   const { user } = useAuth();
   const { count: cartCount, addItem } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
