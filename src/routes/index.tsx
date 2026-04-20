@@ -3,9 +3,11 @@ import { useMemo, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { useFavorites } from "@/contexts/FavoritesContext";
+import { useAddress } from "@/contexts/AddressContext";
+import { AddressPicker } from "@/components/AddressPicker";
 import { supabase } from "@/integrations/supabase/client";
-import { X, Loader2 } from "lucide-react";
-import { useLocation as useUserLocation, normalizeText } from "@/hooks/use-location";
+import { X } from "lucide-react";
+import { normalizeText } from "@/hooks/use-location";
 
 import {
   MapPin,
@@ -98,8 +100,12 @@ function Index() {
   const { count: cartCount } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { stores, items } = Route.useLoaderData() as { stores: StoreRow[]; items: MenuItemRow[] };
-  const { location, status: locStatus, detect: detectLocation } = useUserLocation();
-  const [nearbyOnly, setNearbyOnly] = useState(true);
+  const { active } = useAddress();
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const location = active
+    ? { neighborhood: active.neighborhood, city: active.city }
+    : null;
+  const nearbyOnly = true;
 
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -197,28 +203,18 @@ function Index() {
             className="h-9 w-auto shrink-0 object-contain"
           />
           <button
-            onClick={detectLocation}
+            onClick={() => setPickerOpen(true)}
             className="flex items-center gap-1.5 text-left mx-auto min-w-0 max-w-[55%]"
-            title="Atualizar localização"
+            title="Trocar endereço"
           >
-            {locStatus === "loading" ? (
-              <Loader2 className="h-5 w-5 text-brand animate-spin shrink-0" />
-            ) : (
-              <MapPin className="h-5 w-5 text-brand shrink-0" />
-            )}
+            <MapPin className="h-5 w-5 text-brand shrink-0" />
             <div className="flex flex-col leading-tight min-w-0">
               <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                Entregar em
+                {active?.label ?? "Entregar em"}
               </span>
               <span className="text-sm font-semibold text-foreground flex items-center gap-1 truncate">
                 <span className="truncate">
-                  {locStatus === "loading"
-                    ? "Detectando..."
-                    : location
-                      ? location.label
-                      : locStatus === "denied"
-                        ? "Permitir localização"
-                        : "Definir localização"}
+                  {active ? active.shortLabel : "Definir localização"}
                 </span>
                 <ChevronDown className="h-4 w-4 shrink-0" />
               </span>
@@ -547,11 +543,11 @@ function Index() {
                 </button>
                 {filterOpen && (
                   <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-xl shadow-lg z-20 p-3 space-y-2">
-                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer opacity-70">
                       <input
                         type="checkbox"
                         checked={nearbyOnly}
-                        onChange={(e) => setNearbyOnly(e.target.checked)}
+                        readOnly
                         className="accent-[hsl(var(--brand))]"
                       />
                       Apenas próximas a mim
@@ -664,6 +660,7 @@ function Index() {
           })}
         </div>
       </nav>
+      <AddressPicker open={pickerOpen} onOpenChange={setPickerOpen} />
     </div>
   );
 }
