@@ -100,12 +100,14 @@ function Index() {
   const { count: cartCount } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { stores, items } = Route.useLoaderData() as { stores: StoreRow[]; items: MenuItemRow[] };
-  const { active, addresses } = useAddress();
+  const { active } = useAddress();
   const [pickerOpen, setPickerOpen] = useState(false);
   const location = active
     ? { neighborhood: active.neighborhood, city: active.city }
     : null;
   const nearbyOnly = true;
+
+  const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [freeOnly, setFreeOnly] = useState(false);
   const [sortBy, setSortBy] = useState<"relevance" | "rating" | "delivery">("relevance");
