@@ -367,8 +367,9 @@ function Index() {
               </div>
             </div>
             <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 snap-x snap-mandatory">
-              {featured.map((r) => {
+              {featured.map((r, idx) => {
                 const ecom = isEcommerceStoreCategory(r.category);
+                const isLcp = idx === 0;
                 const inner = (
                   <article className="bg-card rounded-2xl overflow-hidden shadow-[var(--shadow-card)] hover:translate-y-[-1px] transition-transform">
                     <div className="relative h-24 bg-muted flex items-center justify-center text-4xl">
@@ -376,7 +377,10 @@ function Index() {
                         <img
                           src={r.image_url}
                           alt={`Logo ${r.name}`}
-                          loading="lazy"
+                          loading={isLcp ? "eager" : "lazy"}
+                          // @ts-expect-error fetchpriority is a valid HTML attribute
+                          fetchpriority={isLcp ? "high" : undefined}
+                          decoding={isLcp ? "sync" : "async"}
                           className="h-full w-full object-cover"
                         />
                       ) : (
