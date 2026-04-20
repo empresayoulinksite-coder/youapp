@@ -744,45 +744,81 @@ function StoreWithItemsCard({
   isFav: boolean;
   onToggleFav: () => void;
 }) {
+  const isEcom = isEcommerceStoreCategory(r.category);
   return (
     <article className="relative bg-card rounded-2xl shadow-[var(--shadow-card)] overflow-hidden">
-      <Link
-        to="/loja/$slug"
-        params={{ slug: r.slug }}
-        className="flex items-center gap-3 p-3 pr-12 hover:bg-muted/40 transition-colors"
-      >
-        <div className="h-14 w-14 rounded-xl overflow-hidden bg-muted flex items-center justify-center text-3xl shrink-0">
-          {r.image_url ? (
-            <img src={r.image_url} alt={r.name} loading="lazy" className="h-full w-full object-cover" />
-          ) : (
-            <span>{r.emoji}</span>
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h3 className="font-semibold truncate">{r.name}</h3>
-            {r.promo && (
-              <span className="text-[10px] font-bold text-brand bg-brand-soft px-1.5 py-0.5 rounded shrink-0">
-                {r.promo}
-              </span>
+      {isEcom ? (
+        <Link
+          to="/vitrine/$slug"
+          params={{ slug: r.slug }}
+          className="flex items-center gap-3 p-3 pr-12 hover:bg-muted/40 transition-colors"
+        >
+          <div className="h-14 w-14 rounded-xl overflow-hidden bg-muted flex items-center justify-center text-3xl shrink-0">
+            {r.image_url ? (
+              <img src={r.image_url} alt={r.name} loading="lazy" className="h-full w-full object-cover" />
+            ) : (
+              <span>{r.emoji}</span>
             )}
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-            <Star className="h-3.5 w-3.5 fill-warning text-warning" />
-            <span className="font-semibold text-foreground">{Number(r.rating).toFixed(1)}</span>
-            <span>•</span>
-            <span className="truncate">{r.category}</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold truncate">{r.name}</h3>
+              {r.promo && (
+                <span className="text-[10px] font-bold text-brand bg-brand-soft px-1.5 py-0.5 rounded shrink-0">
+                  {r.promo}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+              <Star className="h-3.5 w-3.5 fill-warning text-warning" />
+              <span className="font-semibold text-foreground">{Number(r.rating).toFixed(1)}</span>
+              <span>•</span>
+              <span className="truncate">{r.category}</span>
+            </div>
+            <div className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-brand bg-brand-soft px-2 py-0.5 rounded-full">
+              Vitrine · ver loja →
+            </div>
           </div>
-          <div className="flex items-center gap-3 text-xs mt-1">
-            <span className="flex items-center gap-1 text-muted-foreground">
-              <Clock className="h-3.5 w-3.5" /> {r.delivery_time}
-            </span>
-            <span className={`flex items-center gap-1 ${r.free_delivery ? "text-success font-semibold" : "text-muted-foreground"}`}>
-              <Bike className="h-3.5 w-3.5" /> {r.delivery_fee}
-            </span>
+        </Link>
+      ) : (
+        <Link
+          to="/loja/$slug"
+          params={{ slug: r.slug }}
+          className="flex items-center gap-3 p-3 pr-12 hover:bg-muted/40 transition-colors"
+        >
+          <div className="h-14 w-14 rounded-xl overflow-hidden bg-muted flex items-center justify-center text-3xl shrink-0">
+            {r.image_url ? (
+              <img src={r.image_url} alt={r.name} loading="lazy" className="h-full w-full object-cover" />
+            ) : (
+              <span>{r.emoji}</span>
+            )}
           </div>
-        </div>
-      </Link>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold truncate">{r.name}</h3>
+              {r.promo && (
+                <span className="text-[10px] font-bold text-brand bg-brand-soft px-1.5 py-0.5 rounded shrink-0">
+                  {r.promo}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+              <Star className="h-3.5 w-3.5 fill-warning text-warning" />
+              <span className="font-semibold text-foreground">{Number(r.rating).toFixed(1)}</span>
+              <span>•</span>
+              <span className="truncate">{r.category}</span>
+            </div>
+            <div className="flex items-center gap-3 text-xs mt-1">
+              <span className="flex items-center gap-1 text-muted-foreground">
+                <Clock className="h-3.5 w-3.5" /> {r.delivery_time}
+              </span>
+              <span className={`flex items-center gap-1 ${r.free_delivery ? "text-success font-semibold" : "text-muted-foreground"}`}>
+                <Bike className="h-3.5 w-3.5" /> {r.delivery_fee}
+              </span>
+            </div>
+          </div>
+        </Link>
+      )}
 
       <button
         onClick={onToggleFav}
@@ -798,11 +834,11 @@ function StoreWithItemsCard({
             {items.map((it) => (
               <Link
                 key={it.id}
-                to="/loja/$slug"
-                params={{ slug: r.slug }}
+                to={isEcom ? "/produto/$id" : "/loja/$slug"}
+                params={isEcom ? { id: it.id } : { slug: r.slug }}
                 className="shrink-0 w-32 snap-start bg-surface rounded-xl overflow-hidden border border-border hover:border-brand/40 transition-colors"
               >
-                <div className="relative h-20 bg-muted flex items-center justify-center text-3xl">
+                <div className={`relative ${isEcom ? "aspect-square" : "h-20"} bg-muted flex items-center justify-center text-3xl`}>
                   {it.image_url ? (
                     <img src={it.image_url} alt={it.name} loading="lazy" className="h-full w-full object-cover" />
                   ) : (
