@@ -72,7 +72,9 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
 import { AddressProvider } from "@/contexts/AddressContext";
+import { CouponProvider } from "@/contexts/CouponContext";
 import { ProfileGate } from "@/components/ProfileGate";
+import { Toaster } from "@/components/ui/sonner";
 
 function RootComponent() {
   return (
@@ -80,9 +82,12 @@ function RootComponent() {
       <ProfileGate>
         <AddressProvider>
           <FavoritesProvider>
-            <CartProvider>
-              <Outlet />
-            </CartProvider>
+            <CouponProvider>
+              <CartProvider>
+                <Outlet />
+                <Toaster />
+              </CartProvider>
+            </CouponProvider>
           </FavoritesProvider>
         </AddressProvider>
       </ProfileGate>

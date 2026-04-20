@@ -1,8 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
-import { ArrowLeft, Plus, Minus, Trash2, ShoppingBag } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeft, Plus, Minus, Trash2, ShoppingBag, Ticket, X, Check } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
+import { useCoupon } from "@/contexts/CouponContext";
+import { supabase } from "@/integrations/supabase/client";
+import { calculateDiscount, formatCouponLabel, type CouponLike } from "@/lib/coupons";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/sacola")({
   head: () => ({
@@ -14,7 +18,11 @@ export const Route = createFileRoute("/sacola")({
 function CartPage() {
   const { user, loading } = useAuth();
   const { items, total, updateQuantity, removeItem, clear } = useCart();
+  const { applied, apply, clear: clearCoupon } = useCoupon();
   const navigate = useNavigate();
+
+  const [code, setCode] = useState("");
+  const [validating, setValidating] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
@@ -22,6 +30,29 @@ function CartPage() {
 
   const storeName = items[0]?.stores?.name;
   const storeSlug = items[0]?.stores?.slug;
+  const storeId = items[0]?.store_id ?? null;
+
+  const { discount, reason } = calculateDiscount(applied, total, storeId);
+  const grandTotal = Math.max(0, total - discount);
+
+  const applyCode = async (codeToTry?: string) => {
+    const c = (codeToTry ?? code).trim().toUpperCase();
+    if (!c) return;
+    setValidating(true);
+    const { data, error } = await supabase
+      .from("coupons")
+      .select("id, code, title, description, discount_type, discount_value, min_order, max_discount, store_ids, expires_at")
+      .eq("code", c)
+      .maybeSingle();
+    setValidating(false);
+    if (error || !data) {
+      toast.error("Cupom inválido");
+      return;
+    }
+    apply(data as CouponLike);
+    setCode("");
+    toast.success(`Cupom ${data.code} aplicado!`);
+  };
 
   return (
     <div className="min-h-screen bg-surface pb-32">
@@ -80,18 +111,76 @@ function CartPage() {
               ))}
             </div>
 
-            <div className="bg-card rounded-2xl p-4 mt-5 shadow-[var(--shadow-card)] space-y-2">
+            {/* Coupon */}
+            <div className="bg-card rounded-2xl p-4 mt-5 shadow-[var(--shadow-card)]">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-bold text-sm flex items-center gap-2">
+                  <Ticket className="h-4 w-4 text-brand" /> Cupom de desconto
+                </h3>
+                <Link to="/cupons" className="text-xs font-semibold text-brand">Ver cupons</Link>
+              </div>
+
+              {applied ? (
+                <div className="flex items-center gap-3 rounded-xl bg-brand-soft p-3">
+                  <div className="h-9 w-9 rounded-full bg-brand text-brand-foreground flex items-center justify-center">
+                    <Check className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold truncate">{applied.code}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">
+                      {discount > 0
+                        ? `Desconto de ${formatCouponLabel(applied)} aplicado`
+                        : reason ?? "Cupom não aplicável agora"}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => clearCoupon()}
+                    aria-label="Remover cupom"
+                    className="p-1.5 rounded-full hover:bg-card"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <form
+                  onSubmit={(e) => { e.preventDefault(); applyCode(); }}
+                  className="flex items-center gap-2"
+                >
+                  <input
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.toUpperCase())}
+                    placeholder="DIGITE O CÓDIGO"
+                    className="flex-1 rounded-full bg-muted px-4 py-2.5 text-sm outline-none placeholder:text-muted-foreground font-mono"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!code.trim() || validating}
+                    className="bg-brand text-brand-foreground font-bold text-sm px-4 py-2.5 rounded-full disabled:opacity-50"
+                  >
+                    {validating ? "..." : "Aplicar"}
+                  </button>
+                </form>
+              )}
+            </div>
+
+            <div className="bg-card rounded-2xl p-4 mt-3 shadow-[var(--shadow-card)] space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span className="font-semibold">R$ {total.toFixed(2).replace(".", ",")}</span>
               </div>
+              {discount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Cupom {applied?.code}</span>
+                  <span className="font-semibold text-success">- R$ {discount.toFixed(2).replace(".", ",")}</span>
+                </div>
+              )}
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Entrega</span>
                 <span className="font-semibold text-success">Grátis</span>
               </div>
               <div className="border-t border-border pt-2 flex justify-between">
                 <span className="font-bold">Total</span>
-                <span className="font-bold text-lg">R$ {total.toFixed(2).replace(".", ",")}</span>
+                <span className="font-bold text-lg">R$ {grandTotal.toFixed(2).replace(".", ",")}</span>
               </div>
             </div>
           </>

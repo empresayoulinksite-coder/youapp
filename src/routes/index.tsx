@@ -290,8 +290,9 @@ function Index() {
 
         {/* Promo banners */}
         <section className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 snap-x snap-mandatory">
-          <div
-            className="shrink-0 w-[85%] sm:w-[420px] snap-start rounded-2xl p-5 text-brand-foreground relative overflow-hidden shadow-[var(--shadow-card)]"
+          <Link
+            to="/clube"
+            className="shrink-0 w-[85%] sm:w-[420px] snap-start rounded-2xl p-5 text-brand-foreground relative overflow-hidden shadow-[var(--shadow-card)] block"
             style={{ backgroundImage: "var(--gradient-promo)" }}
           >
             <span className="text-[11px] font-bold uppercase tracking-wide bg-white/20 px-2 py-0.5 rounded-full">
@@ -299,22 +300,25 @@ function Index() {
             </span>
             <h3 className="mt-3 text-2xl font-extrabold leading-tight">Entrega grátis ilimitada</h3>
             <p className="text-sm opacity-90 mt-1">Em milhares de restaurantes perto de você</p>
-            <button className="mt-4 bg-white text-brand text-sm font-bold px-4 py-2 rounded-full">
+            <span className="mt-4 inline-block bg-white text-brand text-sm font-bold px-4 py-2 rounded-full">
               Assinar agora
-            </button>
+            </span>
             <div className="absolute -right-4 -bottom-4 text-7xl opacity-30 select-none">🛵</div>
-          </div>
-          <div className="shrink-0 w-[85%] sm:w-[420px] snap-start rounded-2xl p-5 bg-accent text-foreground relative overflow-hidden shadow-[var(--shadow-card)]">
+          </Link>
+          <Link
+            to="/cupons"
+            className="shrink-0 w-[85%] sm:w-[420px] snap-start rounded-2xl p-5 bg-accent text-foreground relative overflow-hidden shadow-[var(--shadow-card)] block"
+          >
             <span className="text-[11px] font-bold uppercase tracking-wide bg-brand/10 text-brand px-2 py-0.5 rounded-full">
               Cupons
             </span>
             <h3 className="mt-3 text-2xl font-extrabold leading-tight">Até 50% OFF</h3>
             <p className="text-sm text-muted-foreground mt-1">Em pedidos selecionados hoje</p>
-            <button className="mt-4 bg-brand text-brand-foreground text-sm font-bold px-4 py-2 rounded-full">
+            <span className="mt-4 inline-block bg-brand text-brand-foreground text-sm font-bold px-4 py-2 rounded-full">
               Ver cupons
-            </button>
+            </span>
             <div className="absolute -right-2 -bottom-2 text-7xl opacity-30 select-none">🎟️</div>
-          </div>
+          </Link>
         </section>
 
         {/* Featured stores */}

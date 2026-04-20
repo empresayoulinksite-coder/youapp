@@ -13,7 +13,9 @@ import { Route as SacolaRouteImport } from './routes/sacola'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as PedidosRouteImport } from './routes/pedidos'
 import { Route as FavoritosRouteImport } from './routes/favoritos'
+import { Route as CuponsRouteImport } from './routes/cupons'
 import { Route as CompletarCadastroRouteImport } from './routes/completar-cadastro'
+import { Route as ClubeRouteImport } from './routes/clube'
 import { Route as BuscaRouteImport } from './routes/busca'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
@@ -42,9 +44,19 @@ const FavoritosRoute = FavoritosRouteImport.update({
   path: '/favoritos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CuponsRoute = CuponsRouteImport.update({
+  id: '/cupons',
+  path: '/cupons',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CompletarCadastroRoute = CompletarCadastroRouteImport.update({
   id: '/completar-cadastro',
   path: '/completar-cadastro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClubeRoute = ClubeRouteImport.update({
+  id: '/clube',
+  path: '/clube',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BuscaRoute = BuscaRouteImport.update({
@@ -87,7 +99,9 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/busca': typeof BuscaRoute
+  '/clube': typeof ClubeRoute
   '/completar-cadastro': typeof CompletarCadastroRoute
+  '/cupons': typeof CuponsRoute
   '/favoritos': typeof FavoritosRoute
   '/pedidos': typeof PedidosRoute
   '/perfil': typeof PerfilRoute
@@ -101,7 +115,9 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/busca': typeof BuscaRoute
+  '/clube': typeof ClubeRoute
   '/completar-cadastro': typeof CompletarCadastroRoute
+  '/cupons': typeof CuponsRoute
   '/favoritos': typeof FavoritosRoute
   '/pedidos': typeof PedidosRoute
   '/perfil': typeof PerfilRoute
@@ -116,7 +132,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/busca': typeof BuscaRoute
+  '/clube': typeof ClubeRoute
   '/completar-cadastro': typeof CompletarCadastroRoute
+  '/cupons': typeof CuponsRoute
   '/favoritos': typeof FavoritosRoute
   '/pedidos': typeof PedidosRoute
   '/perfil': typeof PerfilRoute
@@ -132,7 +150,9 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/busca'
+    | '/clube'
     | '/completar-cadastro'
+    | '/cupons'
     | '/favoritos'
     | '/pedidos'
     | '/perfil'
@@ -146,7 +166,9 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/busca'
+    | '/clube'
     | '/completar-cadastro'
+    | '/cupons'
     | '/favoritos'
     | '/pedidos'
     | '/perfil'
@@ -160,7 +182,9 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/busca'
+    | '/clube'
     | '/completar-cadastro'
+    | '/cupons'
     | '/favoritos'
     | '/pedidos'
     | '/perfil'
@@ -175,7 +199,9 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   BuscaRoute: typeof BuscaRoute
+  ClubeRoute: typeof ClubeRoute
   CompletarCadastroRoute: typeof CompletarCadastroRoute
+  CuponsRoute: typeof CuponsRoute
   FavoritosRoute: typeof FavoritosRoute
   PedidosRoute: typeof PedidosRoute
   PerfilRoute: typeof PerfilRoute
@@ -216,11 +242,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FavoritosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cupons': {
+      id: '/cupons'
+      path: '/cupons'
+      fullPath: '/cupons'
+      preLoaderRoute: typeof CuponsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/completar-cadastro': {
       id: '/completar-cadastro'
       path: '/completar-cadastro'
       fullPath: '/completar-cadastro'
       preLoaderRoute: typeof CompletarCadastroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clube': {
+      id: '/clube'
+      path: '/clube'
+      fullPath: '/clube'
+      preLoaderRoute: typeof ClubeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/busca': {
@@ -279,7 +319,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   BuscaRoute: BuscaRoute,
+  ClubeRoute: ClubeRoute,
   CompletarCadastroRoute: CompletarCadastroRoute,
+  CuponsRoute: CuponsRoute,
   FavoritosRoute: FavoritosRoute,
   PedidosRoute: PedidosRoute,
   PerfilRoute: PerfilRoute,
