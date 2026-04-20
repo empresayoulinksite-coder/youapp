@@ -41,6 +41,17 @@ interface StoreRow {
   city: string | null;
 }
 
+interface MenuItemRow {
+  id: string;
+  store_id: string;
+  name: string;
+  price: number;
+  original_price: number | null;
+  emoji: string;
+  promo: string | null;
+  image_url: string | null;
+}
+
 export const Route = createFileRoute("/")({
   loader: async () => {
     const { data, error } = await supabase
@@ -48,7 +59,20 @@ export const Route = createFileRoute("/")({
       .select("id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, promo, neighborhood, city")
       .order("name");
     if (error) throw error;
-    return { stores: (data ?? []) as StoreRow[] };
+    const stores = (data ?? []) as StoreRow[];
+
+    let items: MenuItemRow[] = [];
+    if (stores.length > 0) {
+      const { data: itemsData, error: itemsErr } = await supabase
+        .from("menu_items")
+        .select("id, store_id, name, price, original_price, emoji, promo, image_url")
+        .in("store_id", stores.map((s) => s.id))
+        .order("position", { ascending: true });
+      if (itemsErr) throw itemsErr;
+      items = (itemsData ?? []) as MenuItemRow[];
+    }
+
+    return { stores, items };
   },
   errorComponent: ({ error }) => (
     <div className="min-h-screen flex items-center justify-center p-6 text-center text-sm text-muted-foreground">
