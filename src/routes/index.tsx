@@ -495,18 +495,24 @@ function Index() {
               </button>
             </div>
           ) : (
-            <div className="space-y-3">
-              {filteredStores.map((r) => (
-                <StoreCard
-                  key={r.id}
-                  store={r}
-                  isFav={isFavorite(r.id)}
-                  onToggleFav={() => {
-                    if (!user) { window.location.href = "/auth"; return; }
-                    toggleFavorite(r.id);
-                  }}
-                />
-              ))}
+            <div className="space-y-4">
+              {filteredStores.map((r) => {
+                const storeItems = [...items.filter((it) => it.store_id === r.id)]
+                  .sort((a, b) => Number(!!b.promo) - Number(!!a.promo))
+                  .slice(0, 4);
+                return (
+                  <StoreWithItemsCard
+                    key={r.id}
+                    store={r}
+                    items={storeItems}
+                    isFav={isFavorite(r.id)}
+                    onToggleFav={() => {
+                      if (!user) { window.location.href = "/auth"; return; }
+                      toggleFavorite(r.id);
+                    }}
+                  />
+                );
+              })}
             </div>
 
           )}
