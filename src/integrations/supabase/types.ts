@@ -392,6 +392,66 @@ export type Database = {
         }
         Relationships: []
       }
+      user_addresses: {
+        Row: {
+          cep: string | null
+          city: string | null
+          complement: string | null
+          created_at: string
+          icon: string
+          id: string
+          is_default: boolean
+          label: string
+          lat: number | null
+          lng: number | null
+          neighborhood: string | null
+          number: string | null
+          reference: string | null
+          state: string | null
+          street: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cep?: string | null
+          city?: string | null
+          complement?: string | null
+          created_at?: string
+          icon?: string
+          id?: string
+          is_default?: boolean
+          label?: string
+          lat?: number | null
+          lng?: number | null
+          neighborhood?: string | null
+          number?: string | null
+          reference?: string | null
+          state?: string | null
+          street: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cep?: string | null
+          city?: string | null
+          complement?: string | null
+          created_at?: string
+          icon?: string
+          id?: string
+          is_default?: boolean
+          label?: string
+          lat?: number | null
+          lng?: number | null
+          neighborhood?: string | null
+          number?: string | null
+          reference?: string | null
+          state?: string | null
+          street?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
