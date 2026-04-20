@@ -59,8 +59,48 @@ export function LocationAdjuster({
 }) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
+  const userMarkerRef = useRef<L.Marker | null>(null);
+  const userAccuracyRef = useRef<L.Circle | null>(null);
+  const watchIdRef = useRef<number | null>(null);
   const [current, setCurrent] = useState<AdjustedLocation | null>(null);
   const [resolving, setResolving] = useState(false);
+
+  const renderUserPosition = (lat: number, lng: number, accuracy?: number) => {
+    const map = mapInstance.current;
+    if (!map) return;
+    const userIcon = L.divIcon({
+      className: "user-location-dot",
+      html: `<div class="ulb-pulse"></div><div class="ulb-dot"></div>`,
+      iconSize: [22, 22],
+      iconAnchor: [11, 11],
+    });
+    if (!userMarkerRef.current) {
+      userMarkerRef.current = L.marker([lat, lng], {
+        icon: userIcon,
+        interactive: false,
+        keyboard: false,
+        zIndexOffset: 1000,
+      }).addTo(map);
+    } else {
+      userMarkerRef.current.setLatLng([lat, lng]);
+    }
+    if (accuracy && accuracy > 0) {
+      if (!userAccuracyRef.current) {
+        userAccuracyRef.current = L.circle([lat, lng], {
+          radius: accuracy,
+          color: "#1a73e8",
+          fillColor: "#1a73e8",
+          fillOpacity: 0.15,
+          weight: 1,
+          opacity: 0.4,
+          interactive: false,
+        }).addTo(map);
+      } else {
+        userAccuracyRef.current.setLatLng([lat, lng]);
+        userAccuracyRef.current.setRadius(accuracy);
+      }
+    }
+  };
 
   useEffect(() => {
     if (!mapRef.current || mapInstance.current) return;
@@ -98,8 +138,30 @@ export function LocationAdjuster({
     handleMove();
     map.on("moveend", handleMove);
 
+    // Bolinha azul de posição real (estilo Google Maps)
+    renderUserPosition(initialLat, initialLng);
+    if ("geolocation" in navigator) {
+      watchIdRef.current = navigator.geolocation.watchPosition(
+        (pos) => {
+          renderUserPosition(
+            pos.coords.latitude,
+            pos.coords.longitude,
+            pos.coords.accuracy,
+          );
+        },
+        undefined,
+        { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 },
+      );
+    }
+
     return () => {
       map.off("moveend", handleMove);
+      if (watchIdRef.current !== null && "geolocation" in navigator) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+      userMarkerRef.current = null;
+      userAccuracyRef.current = null;
       map.remove();
       mapInstance.current = null;
     };
@@ -109,12 +171,21 @@ export function LocationAdjuster({
   const recenter = () => {
     if (!mapInstance.current) return;
     if (!("geolocation" in navigator)) return;
-    navigator.geolocation.getCurrentPosition((pos) => {
-      mapInstance.current?.setView(
-        [pos.coords.latitude, pos.coords.longitude],
-        17,
-      );
-    });
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        mapInstance.current?.setView(
+          [pos.coords.latitude, pos.coords.longitude],
+          17,
+        );
+        renderUserPosition(
+          pos.coords.latitude,
+          pos.coords.longitude,
+          pos.coords.accuracy,
+        );
+      },
+      undefined,
+      { enableHighAccuracy: true },
+    );
   };
 
   return (
