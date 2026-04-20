@@ -216,22 +216,6 @@ function Index() {
               </Link>
             );
           })}
-            const isAll = t === "Todos";
-            const isActive = isAll ? activeCategory === null : activeCategory === t;
-            return (
-              <button
-                key={t}
-                onClick={() => setActiveCategory(isAll ? null : t)}
-                className={`shrink-0 pb-2 border-b-2 transition-colors ${
-                  isActive
-                    ? "border-brand text-brand font-semibold"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {t}
-              </button>
-            );
-          })}
         </nav>
       </header>
 
