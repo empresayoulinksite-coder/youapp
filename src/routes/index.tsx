@@ -846,42 +846,49 @@ function StoreWithItemsCard({
       {items.length > 0 && (
         <div className="px-3 pb-3 -mt-1">
           <div className="flex gap-2 overflow-x-auto no-scrollbar snap-x snap-mandatory">
-            {items.map((it) => (
-              <Link
-                key={it.id}
-                to={isEcom ? "/produto/$id" : "/loja/$slug"}
-                params={isEcom ? { id: it.id } : { slug: r.slug }}
-                className="shrink-0 w-32 snap-start bg-surface rounded-xl overflow-hidden border border-border hover:border-brand/40 transition-colors"
-              >
-                <div className={`relative ${isEcom ? "aspect-square" : "h-20"} bg-muted flex items-center justify-center text-3xl`}>
-                  {it.image_url ? (
-                    <img src={it.image_url} alt={it.name} loading="lazy" className="h-full w-full object-cover" />
-                  ) : (
-                    <span>{it.emoji}</span>
-                  )}
-                  {it.promo && (
-                    <span className="absolute top-1 left-1 text-[9px] font-bold text-brand-foreground bg-brand px-1 py-0.5 rounded">
-                      {it.promo}
-                    </span>
-                  )}
-                </div>
-                <div className="p-2">
-                  <p className="text-[11px] font-semibold leading-tight line-clamp-2 min-h-[28px]">
-                    {it.name}
-                  </p>
-                  <div className="mt-1 flex items-baseline gap-1">
-                    <span className="text-xs font-bold">
-                      R$ {Number(it.price).toFixed(2).replace(".", ",")}
-                    </span>
-                    {it.original_price && (
-                      <span className="text-[10px] text-muted-foreground line-through">
-                        R$ {Number(it.original_price).toFixed(2).replace(".", ",")}
+            {items.map((it) => {
+              const inner = (
+                <>
+                  <div className={`relative ${isEcom ? "aspect-square" : "h-20"} bg-muted flex items-center justify-center text-3xl`}>
+                    {it.image_url ? (
+                      <img src={it.image_url} alt={it.name} loading="lazy" className="h-full w-full object-cover" />
+                    ) : (
+                      <span>{it.emoji}</span>
+                    )}
+                    {it.promo && (
+                      <span className="absolute top-1 left-1 text-[9px] font-bold text-brand-foreground bg-brand px-1 py-0.5 rounded">
+                        {it.promo}
                       </span>
                     )}
                   </div>
-                </div>
-              </Link>
-            ))}
+                  <div className="p-2">
+                    <p className="text-[11px] font-semibold leading-tight line-clamp-2 min-h-[28px]">
+                      {it.name}
+                    </p>
+                    <div className="mt-1 flex items-baseline gap-1">
+                      <span className="text-xs font-bold">
+                        R$ {Number(it.price).toFixed(2).replace(".", ",")}
+                      </span>
+                      {it.original_price && (
+                        <span className="text-[10px] text-muted-foreground line-through">
+                          R$ {Number(it.original_price).toFixed(2).replace(".", ",")}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </>
+              );
+              const cls = "shrink-0 w-32 snap-start bg-surface rounded-xl overflow-hidden border border-border hover:border-brand/40 transition-colors";
+              return isEcom ? (
+                <Link key={it.id} to="/produto/$id" params={{ id: it.id }} className={cls}>
+                  {inner}
+                </Link>
+              ) : (
+                <Link key={it.id} to="/loja/$slug" params={{ slug: r.slug }} className={cls}>
+                  {inner}
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}
