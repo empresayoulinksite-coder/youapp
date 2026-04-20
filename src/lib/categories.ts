@@ -10,6 +10,9 @@ import {
   Cookie,
   Beer,
   Apple,
+  Pill,
+  Dog,
+  ShoppingBag,
 } from "lucide-react";
 
 export type Category = {
@@ -33,6 +36,9 @@ export const categories: Category[] = [
   { slug: "sorvetes", label: "Sorvetes", Icon: IceCream, tint: "bg-sky-50 text-sky-600", matches: ["Sorvetes", "Açaí"] },
   { slug: "cafe", label: "Café", Icon: Coffee, tint: "bg-stone-100 text-stone-700", matches: ["Café", "Cafeteria"] },
   { slug: "bebidas", label: "Bebidas", Icon: Beer, tint: "bg-indigo-50 text-indigo-600", matches: ["Bebidas", "Adega"] },
+  { slug: "farmacia", label: "Farmácia", Icon: Pill, tint: "bg-red-50 text-red-600", matches: ["Farmácia", "Farmacia"] },
+  { slug: "pet", label: "Pet", Icon: Dog, tint: "bg-purple-50 text-purple-600", matches: ["Pet", "Petshop", "Pet Shop"] },
+  { slug: "shopping", label: "Shopping", Icon: ShoppingBag, tint: "bg-fuchsia-50 text-fuchsia-600", matches: ["Shopping", "Loja"] },
 ];
 
 export const norm = (s: string) =>
