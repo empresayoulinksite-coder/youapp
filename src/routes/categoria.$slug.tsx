@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { categories, findCategoryBySlug, norm } from "@/lib/categories";
+import { categories, findCategoryBySlug, norm, isEcommerceCategorySlug } from "@/lib/categories";
 import { ChevronLeft, Star, Clock, Bike } from "lucide-react";
 
 interface StoreRow {
@@ -113,6 +113,7 @@ function CategoryPage() {
     items: ItemWithStore[];
   };
   const Icon = category.Icon;
+  const isEcom = isEcommerceCategorySlug(category.slug);
 
   // Agrupa até 4 itens em destaque por loja (promo primeiro)
   const itemsByStore = new Map<string, ItemWithStore[]>();
@@ -127,6 +128,13 @@ function CategoryPage() {
     );
     itemsByStore.set(k, sorted.slice(0, 4));
   }
+
+  // Lista plana de produtos (vitrine), promo primeiro
+  const allProducts = [...items].sort(
+    (a, b) => Number(!!b.promo) - Number(!!a.promo),
+  );
+
+  const fmt = (n: number) => `R$ ${Number(n).toFixed(2).replace(".", ",")}`;
 
   return (
     <div className="min-h-screen bg-surface pb-12">
@@ -163,6 +171,88 @@ function CategoryPage() {
               Ver tudo
             </Link>
           </div>
+        ) : isEcom ? (
+          <>
+            {/* Vitrine: lojas em pílulas */}
+            <section>
+              <h2 className="text-sm font-semibold mb-2">Lojas</h2>
+              <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4">
+                {stores.map((s) => (
+                  <Link
+                    key={s.id}
+                    to="/vitrine/$slug"
+                    params={{ slug: s.slug }}
+                    className="shrink-0 flex items-center gap-2 bg-card border border-border rounded-full pl-1 pr-3 py-1 hover:border-brand"
+                  >
+                    <span className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-base overflow-hidden">
+                      {s.image_url ? (
+                        <img src={s.image_url} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <span>{s.emoji}</span>
+                      )}
+                    </span>
+                    <span className="text-xs font-semibold whitespace-nowrap">{s.name}</span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+
+            {/* Vitrine: grid de produtos */}
+            <section>
+              <div className="flex items-end justify-between mb-3">
+                <div>
+                  <h2 className="text-lg font-bold">Vitrine</h2>
+                  <p className="text-xs text-muted-foreground">
+                    {allProducts.length} {allProducts.length === 1 ? "produto" : "produtos"}
+                  </p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {allProducts.map((p) => {
+                  const hasDiscount =
+                    !!p.original_price && Number(p.original_price) > Number(p.price);
+                  const discountPct = hasDiscount
+                    ? Math.round((1 - Number(p.price) / Number(p.original_price)) * 100)
+                    : 0;
+                  return (
+                    <Link
+                      key={p.id}
+                      to="/produto/$id"
+                      params={{ id: p.id }}
+                      className="bg-card rounded-2xl overflow-hidden shadow-[var(--shadow-card)] flex flex-col hover:translate-y-[-1px] transition-transform"
+                    >
+                      <div className="relative aspect-square bg-muted flex items-center justify-center text-5xl">
+                        {p.image_url ? (
+                          <img src={p.image_url} alt={p.name} loading="lazy" className="h-full w-full object-cover" />
+                        ) : (
+                          <span>{p.emoji}</span>
+                        )}
+                        {hasDiscount && (
+                          <span className="absolute top-2 left-2 text-[10px] font-bold text-brand-foreground bg-brand px-1.5 py-0.5 rounded">
+                            -{discountPct}%
+                          </span>
+                        )}
+                      </div>
+                      <div className="p-2.5 flex flex-col gap-0.5">
+                        <p className="text-[10px] text-muted-foreground truncate">{p.store.name}</p>
+                        <p className="text-xs font-medium leading-tight line-clamp-2 min-h-[32px]">
+                          {p.name}
+                        </p>
+                        <div className="flex items-baseline gap-1.5 mt-1">
+                          <span className="text-sm font-bold">{fmt(Number(p.price))}</span>
+                          {hasDiscount && (
+                            <span className="text-[10px] text-muted-foreground line-through">
+                              {fmt(Number(p.original_price))}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          </>
         ) : (
           <section className="space-y-6">
             <div>
@@ -182,7 +272,6 @@ function CategoryPage() {
                   key={s.id}
                   className="bg-card rounded-2xl shadow-[var(--shadow-card)] overflow-hidden"
                 >
-                  {/* Cabeçalho da loja */}
                   <Link
                     to="/loja/$slug"
                     params={{ slug: s.slug }}
@@ -223,7 +312,6 @@ function CategoryPage() {
                     </div>
                   </Link>
 
-                  {/* 4 produtos lado a lado */}
                   {storeItems.length > 0 && (
                     <div className="px-3 pb-3 -mt-1">
                       <div className="flex gap-2 overflow-x-auto no-scrollbar snap-x snap-mandatory">
