@@ -268,10 +268,12 @@ function AdjusterGate({
 
 function AddressForm({
   initial,
+  prefill,
   onClose,
   onSaved,
 }: {
   initial?: SavedAddress;
+  prefill?: AdjustedLocation;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -281,13 +283,14 @@ function AddressForm({
   const [form, setForm] = useState({
     label: initial?.label ?? "Casa",
     icon: initial?.icon ?? "home",
-    cep: initial?.cep ?? "",
-    street: initial?.street ?? gpsLocation?.street ?? "",
+    cep: initial?.cep ?? prefill?.cep ?? "",
+    street: initial?.street ?? prefill?.street ?? gpsLocation?.street ?? "",
     number: initial?.number ?? "",
     complement: initial?.complement ?? "",
-    neighborhood: initial?.neighborhood ?? gpsLocation?.neighborhood ?? "",
-    city: initial?.city ?? gpsLocation?.city ?? "",
-    state: initial?.state ?? gpsLocation?.state ?? "",
+    neighborhood:
+      initial?.neighborhood ?? prefill?.neighborhood ?? gpsLocation?.neighborhood ?? "",
+    city: initial?.city ?? prefill?.city ?? gpsLocation?.city ?? "",
+    state: initial?.state ?? prefill?.state ?? gpsLocation?.state ?? "",
     reference: initial?.reference ?? "",
     is_default: initial?.is_default ?? false,
   });
@@ -319,6 +322,8 @@ function AddressForm({
   const handleSave = async () => {
     if (!user || !form.street.trim()) return;
     setSaving(true);
+    const lat = initial?.lat ?? prefill?.lat ?? gpsLocation?.lat ?? null;
+    const lng = initial?.lng ?? prefill?.lng ?? gpsLocation?.lng ?? null;
     const payload = {
       user_id: user.id,
       label: form.label.trim() || "Endereço",
@@ -332,8 +337,8 @@ function AddressForm({
       state: form.state || null,
       reference: form.reference || null,
       is_default: form.is_default,
-      lat: !initial ? gpsLocation?.lat ?? null : initial.lat,
-      lng: !initial ? gpsLocation?.lng ?? null : initial.lng,
+      lat,
+      lng,
     };
 
     let savedId = initial?.id;
