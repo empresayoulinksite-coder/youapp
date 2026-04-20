@@ -43,6 +43,10 @@ export const categories: Category[] = [
   { slug: "farmacia", label: "Farmácia", Icon: Pill, tint: "bg-red-50 text-red-600", matches: ["Farmácia", "Farmacia"] },
   { slug: "pet", label: "Pet", Icon: Dog, tint: "bg-purple-50 text-purple-600", matches: ["Pet", "Petshop", "Pet Shop"] },
   { slug: "shopping", label: "Shopping", Icon: ShoppingBag, tint: "bg-fuchsia-50 text-fuchsia-600", matches: ["Shopping", "Loja"] },
+  { slug: "moda", label: "Moda", Icon: Shirt, tint: "bg-pink-50 text-pink-700", matches: ["Moda", "Roupas", "Roupa", "Vestuário"] },
+  { slug: "calcados", label: "Calçados", Icon: Footprints, tint: "bg-amber-50 text-amber-700", matches: ["Calçados", "Calcados", "Sapatos", "Tênis"] },
+  { slug: "acessorios", label: "Acessórios", Icon: Watch, tint: "bg-slate-100 text-slate-700", matches: ["Acessórios", "Acessorios", "Bolsas", "Joias", "Relógios"] },
+  { slug: "beleza", label: "Beleza", Icon: Sparkles, tint: "bg-rose-50 text-rose-700", matches: ["Beleza", "Cosméticos", "Cosmeticos", "Perfumaria", "Maquiagem"] },
 ];
 
 export const norm = (s: string) =>
