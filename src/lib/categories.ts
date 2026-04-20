@@ -13,6 +13,10 @@ import {
   Pill,
   Dog,
   ShoppingBag,
+  Shirt,
+  Footprints,
+  Watch,
+  Sparkles,
 } from "lucide-react";
 
 export type Category = {
