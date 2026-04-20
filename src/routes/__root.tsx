@@ -71,17 +71,20 @@ function RootShell({ children }: { children: React.ReactNode }) {
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
+import { AddressProvider } from "@/contexts/AddressContext";
 import { ProfileGate } from "@/components/ProfileGate";
 
 function RootComponent() {
   return (
     <AuthProvider>
       <ProfileGate>
-        <FavoritesProvider>
-          <CartProvider>
-            <Outlet />
-          </CartProvider>
-        </FavoritesProvider>
+        <AddressProvider>
+          <FavoritesProvider>
+            <CartProvider>
+              <Outlet />
+            </CartProvider>
+          </FavoritesProvider>
+        </AddressProvider>
       </ProfileGate>
     </AuthProvider>
   );
