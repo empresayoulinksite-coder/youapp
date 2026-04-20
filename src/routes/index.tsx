@@ -660,6 +660,7 @@ function Index() {
           })}
         </div>
       </nav>
+      <AddressPicker open={pickerOpen} onOpenChange={setPickerOpen} />
     </div>
   );
 }
