@@ -543,11 +543,11 @@ function Index() {
                 </button>
                 {filterOpen && (
                   <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-xl shadow-lg z-20 p-3 space-y-2">
-                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer opacity-70">
                       <input
                         type="checkbox"
                         checked={nearbyOnly}
-                        onChange={(e) => setNearbyOnly(e.target.checked)}
+                        readOnly
                         className="accent-[hsl(var(--brand))]"
                       />
                       Apenas próximas a mim
