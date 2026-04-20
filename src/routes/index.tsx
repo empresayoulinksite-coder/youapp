@@ -265,26 +265,28 @@ function Index() {
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-5 space-y-8">
-        {/* Categories grid */}
-        <section>
-          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-y-5 gap-x-2">
-            {categoryList.map(({ slug, label, Icon, tint }) => (
-              <Link
-                key={slug}
-                to="/categoria/$slug"
-                params={{ slug }}
-                className="flex flex-col items-center gap-2 group"
-              >
-                <span
-                  className={`h-14 w-14 rounded-2xl flex items-center justify-center ${tint} transition-transform group-hover:scale-105`}
+        {/* Categories — 2 fileiras com scroll horizontal */}
+        <section className="-mx-4">
+          <div className="overflow-x-auto no-scrollbar px-4 snap-x">
+            <div className="grid grid-rows-2 grid-flow-col auto-cols-[68px] sm:auto-cols-[80px] gap-y-5 gap-x-2">
+              {categoryList.map(({ slug, label, Icon, tint }) => (
+                <Link
+                  key={slug}
+                  to="/categoria/$slug"
+                  params={{ slug }}
+                  className="flex flex-col items-center gap-2 group snap-start"
                 >
-                  <Icon className="h-6 w-6" />
-                </span>
-                <span className="text-[11px] text-center leading-tight text-foreground">
-                  {label}
-                </span>
-              </Link>
-            ))}
+                  <span
+                    className={`h-14 w-14 rounded-2xl flex items-center justify-center ${tint} transition-transform group-hover:scale-105`}
+                  >
+                    <Icon className="h-6 w-6" />
+                  </span>
+                  <span className="text-[11px] text-center leading-tight text-foreground">
+                    {label}
+                  </span>
+                </Link>
+              ))}
+            </div>
           </div>
         </section>
 
