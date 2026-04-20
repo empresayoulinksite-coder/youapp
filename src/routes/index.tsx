@@ -239,25 +239,15 @@ function Index() {
 
         {/* Search */}
         <div className="mx-auto max-w-5xl px-4 pb-3">
-          <div className="flex items-center gap-2 rounded-full bg-muted px-4 py-2.5">
+          <Link
+            to="/busca"
+            className="flex items-center gap-2 rounded-full bg-muted px-4 py-2.5"
+          >
             <Search className="h-4 w-4 text-muted-foreground" />
-            <input
-              ref={searchInputRef}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="bg-transparent outline-none text-sm w-full placeholder:text-muted-foreground"
-              placeholder="Busque por item ou loja"
-            />
-            {query && (
-              <button
-                onClick={() => setQuery("")}
-                aria-label="Limpar busca"
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
+            <span className="text-sm text-muted-foreground">
+              Busque por item ou loja
+            </span>
+          </Link>
         </div>
 
         {/* Stories — empresas em destaque */}
