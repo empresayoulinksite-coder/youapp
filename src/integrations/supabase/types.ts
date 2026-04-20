@@ -325,7 +325,6 @@ export type Database = {
           about: string | null
           address: string | null
           category: string
-          city: string | null
           created_at: string
           delivery_fee: string
           delivery_time: string
@@ -337,7 +336,6 @@ export type Database = {
           image_url: string | null
           min_order: number
           name: string
-          neighborhood: string | null
           payment_methods: string | null
           promo: string | null
           rating: number
@@ -348,7 +346,6 @@ export type Database = {
           about?: string | null
           address?: string | null
           category: string
-          city?: string | null
           created_at?: string
           delivery_fee?: string
           delivery_time?: string
@@ -360,7 +357,6 @@ export type Database = {
           image_url?: string | null
           min_order?: number
           name: string
-          neighborhood?: string | null
           payment_methods?: string | null
           promo?: string | null
           rating?: number
@@ -371,7 +367,6 @@ export type Database = {
           about?: string | null
           address?: string | null
           category?: string
-          city?: string | null
           created_at?: string
           delivery_fee?: string
           delivery_time?: string
@@ -383,7 +378,6 @@ export type Database = {
           image_url?: string | null
           min_order?: number
           name?: string
-          neighborhood?: string | null
           payment_methods?: string | null
           promo?: string | null
           rating?: number
