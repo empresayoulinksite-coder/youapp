@@ -12,7 +12,7 @@ export type UserLocation = {
 
 type Status = "idle" | "loading" | "ready" | "denied" | "error";
 
-const STORAGE_KEY = "youlink:user-location";
+const STORAGE_KEY = "youapp:user-location";
 
 function loadCached(): UserLocation | null {
   if (typeof window === "undefined") return null;

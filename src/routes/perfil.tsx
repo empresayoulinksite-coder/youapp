@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/perfil")({
   head: () => ({
     meta: [
-      { title: "Meu Perfil — Youlink" },
+      { title: "Meu Perfil — Youapp" },
       { name: "description", content: "Gerencie seus dados de perfil." },
     ],
   }),

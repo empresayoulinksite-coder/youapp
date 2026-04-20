@@ -6,7 +6,7 @@ import { useCart } from "@/contexts/CartContext";
 
 export const Route = createFileRoute("/sacola")({
   head: () => ({
-    meta: [{ title: "Sacola — Youlink" }],
+    meta: [{ title: "Sacola — Youapp" }],
   }),
   component: CartPage,
 });

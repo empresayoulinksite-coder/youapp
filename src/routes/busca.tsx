@@ -17,7 +17,7 @@ interface StoreRow {
   free_delivery: boolean;
 }
 
-const HISTORY_KEY = "youlink:search-history";
+const HISTORY_KEY = "youapp:search-history";
 const MAX_HISTORY = 8;
 
 export const Route = createFileRoute("/busca")({
@@ -38,10 +38,10 @@ export const Route = createFileRoute("/busca")({
   ),
   head: () => ({
     meta: [
-      { title: "Buscar — Youlink" },
+      { title: "Buscar — Youapp" },
       {
         name: "description",
-        content: "Encontre lojas e produtos pelo nome ou categoria no Youlink.",
+        content: "Encontre lojas e produtos pelo nome ou categoria no Youapp.",
       },
     ],
   }),

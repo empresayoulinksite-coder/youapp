@@ -81,11 +81,11 @@ export const Route = createFileRoute("/")({
   ),
   head: () => ({
     meta: [
-      { title: "Youlink — Comida em casa, rápido" },
+      { title: "Youapp — Comida em casa, rápido" },
       {
         name: "description",
         content:
-          "Peça comida com entrega rápida. Os melhores restaurantes da sua região no Youlink.",
+          "Peça comida com entrega rápida. Os melhores restaurantes da sua região no Youapp.",
       },
     ],
   }),
@@ -193,7 +193,7 @@ function Index() {
         <div className="mx-auto max-w-5xl px-4 py-3 flex items-center gap-3">
           <img
             src={youlinkLogo}
-            alt="Youlink"
+            alt="Youapp"
             className="h-9 w-auto shrink-0 object-contain"
           />
           <button
@@ -335,7 +335,7 @@ function Index() {
             style={{ backgroundImage: "var(--gradient-promo)" }}
           >
             <span className="text-[11px] font-bold uppercase tracking-wide bg-white/20 px-2 py-0.5 rounded-full">
-              Clube Youlink
+              Clube Youapp
             </span>
             <h3 className="mt-3 text-2xl font-extrabold leading-tight">Entrega grátis ilimitada</h3>
             <p className="text-sm opacity-90 mt-1">Em milhares de restaurantes perto de você</p>

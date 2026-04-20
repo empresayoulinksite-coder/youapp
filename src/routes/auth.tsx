@@ -8,7 +8,7 @@ import { ArrowLeft } from "lucide-react";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Entrar — Youlink" },
+      { title: "Entrar — Youapp" },
       { name: "description", content: "Entre ou cadastre-se para fazer pedidos." },
     ],
   }),
