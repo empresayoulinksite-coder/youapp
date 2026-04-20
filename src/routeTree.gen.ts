@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SacolaRouteImport } from './routes/sacola'
 import { Route as PerfilRouteImport } from './routes/perfil'
+import { Route as PedidosRouteImport } from './routes/pedidos'
 import { Route as FavoritosRouteImport } from './routes/favoritos'
 import { Route as CompletarCadastroRouteImport } from './routes/completar-cadastro'
 import { Route as BuscaRouteImport } from './routes/busca'
@@ -29,6 +30,11 @@ const SacolaRoute = SacolaRouteImport.update({
 const PerfilRoute = PerfilRouteImport.update({
   id: '/perfil',
   path: '/perfil',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PedidosRoute = PedidosRouteImport.update({
+  id: '/pedidos',
+  path: '/pedidos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FavoritosRoute = FavoritosRouteImport.update({
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/busca': typeof BuscaRoute
   '/completar-cadastro': typeof CompletarCadastroRoute
   '/favoritos': typeof FavoritosRoute
+  '/pedidos': typeof PedidosRoute
   '/perfil': typeof PerfilRoute
   '/sacola': typeof SacolaRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByTo {
   '/busca': typeof BuscaRoute
   '/completar-cadastro': typeof CompletarCadastroRoute
   '/favoritos': typeof FavoritosRoute
+  '/pedidos': typeof PedidosRoute
   '/perfil': typeof PerfilRoute
   '/sacola': typeof SacolaRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
@@ -110,6 +118,7 @@ export interface FileRoutesById {
   '/busca': typeof BuscaRoute
   '/completar-cadastro': typeof CompletarCadastroRoute
   '/favoritos': typeof FavoritosRoute
+  '/pedidos': typeof PedidosRoute
   '/perfil': typeof PerfilRoute
   '/sacola': typeof SacolaRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
@@ -125,6 +134,7 @@ export interface FileRouteTypes {
     | '/busca'
     | '/completar-cadastro'
     | '/favoritos'
+    | '/pedidos'
     | '/perfil'
     | '/sacola'
     | '/categoria/$slug'
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/busca'
     | '/completar-cadastro'
     | '/favoritos'
+    | '/pedidos'
     | '/perfil'
     | '/sacola'
     | '/categoria/$slug'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/busca'
     | '/completar-cadastro'
     | '/favoritos'
+    | '/pedidos'
     | '/perfil'
     | '/sacola'
     | '/categoria/$slug'
@@ -165,6 +177,7 @@ export interface RootRouteChildren {
   BuscaRoute: typeof BuscaRoute
   CompletarCadastroRoute: typeof CompletarCadastroRoute
   FavoritosRoute: typeof FavoritosRoute
+  PedidosRoute: typeof PedidosRoute
   PerfilRoute: typeof PerfilRoute
   SacolaRoute: typeof SacolaRoute
   CategoriaSlugRoute: typeof CategoriaSlugRoute
@@ -187,6 +200,13 @@ declare module '@tanstack/react-router' {
       path: '/perfil'
       fullPath: '/perfil'
       preLoaderRoute: typeof PerfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pedidos': {
+      id: '/pedidos'
+      path: '/pedidos'
+      fullPath: '/pedidos'
+      preLoaderRoute: typeof PedidosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/favoritos': {
@@ -261,6 +281,7 @@ const rootRouteChildren: RootRouteChildren = {
   BuscaRoute: BuscaRoute,
   CompletarCadastroRoute: CompletarCadastroRoute,
   FavoritosRoute: FavoritosRoute,
+  PedidosRoute: PedidosRoute,
   PerfilRoute: PerfilRoute,
   SacolaRoute: SacolaRoute,
   CategoriaSlugRoute: CategoriaSlugRoute,
@@ -271,3 +292,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

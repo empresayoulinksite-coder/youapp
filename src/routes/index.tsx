@@ -633,7 +633,7 @@ function Index() {
           {[
             { Icon: Home, label: "Início", active: true, to: "/" as const, onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }) },
             { Icon: Search, label: "Busca", active: false, to: "/busca" as const },
-            { Icon: Receipt, label: "Pedidos", active: false, onClick: focusSearch },
+            { Icon: Receipt, label: "Pedidos", active: false, to: (user ? "/pedidos" : "/auth") as "/pedidos" | "/auth" },
             { Icon: Heart, label: "Favoritos", active: false, to: (user ? "/favoritos" : "/auth") as "/favoritos" | "/auth" },
             { Icon: User, label: "Perfil", active: false, to: (user ? "/perfil" : "/auth") as "/perfil" | "/auth" },
           ].map(({ Icon, label, active, onClick, to }) => {
