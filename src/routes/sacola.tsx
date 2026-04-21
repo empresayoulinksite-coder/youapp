@@ -131,8 +131,17 @@ function CartPage() {
             <div className="space-y-2">
               {items.map((item) => (
                 <article key={item.id} className="bg-card rounded-2xl p-3 flex items-center gap-3 shadow-[var(--shadow-card)]">
-                  <div className="h-14 w-14 rounded-xl bg-brand-soft flex items-center justify-center text-2xl">
-                    {item.menu_items?.emoji}
+                  <div className="h-14 w-14 rounded-xl bg-brand-soft flex items-center justify-center text-2xl overflow-hidden shrink-0">
+                    {item.menu_items?.image_url ? (
+                      <img
+                        src={item.menu_items.image_url}
+                        alt={item.menu_items?.name ?? "Produto"}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      item.menu_items?.emoji
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm truncate">{item.menu_items?.name}</p>
