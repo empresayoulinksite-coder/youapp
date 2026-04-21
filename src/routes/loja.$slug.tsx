@@ -313,13 +313,13 @@ function StorePage() {
                                     <QtyDecrement itemId={item.id} />
                                   </button>
                                   <span className="text-xs font-bold min-w-[14px] text-center">{qty}</span>
-                                  <button onClick={() => addItem(store.id, item.id)} className="p-0.5" aria-label="Aumentar">
+                                  <button onClick={() => tryAdd(store.id, item.id)} className="p-0.5" aria-label="Aumentar">
                                     <Plus className="h-3.5 w-3.5" />
                                   </button>
                                 </div>
                               ) : (
                                 <button
-                                  onClick={() => addItem(store.id, item.id)}
+                                  onClick={() => tryAdd(store.id, item.id)}
                                   className="text-brand bg-brand-soft rounded-full p-1.5"
                                   aria-label="Adicionar"
                                 >
@@ -496,19 +496,20 @@ function StorePage() {
                           <Minus className="h-4 w-4" />
                         </button>
                         <span className="font-bold text-sm min-w-[20px] text-center">{itemQty(selectedItem.id)}</span>
-                        <button onClick={() => addItem(store.id, selectedItem.id)} className="text-brand" aria-label="Aumentar">
+                        <button onClick={() => tryAdd(store.id, selectedItem.id)} className="text-brand" aria-label="Aumentar">
                           <Plus className="h-4 w-4" />
                         </button>
                       </div>
                     ) : null}
                     <button
-                      onClick={() => {
-                        addItem(store.id, selectedItem.id);
+                      onClick={async () => {
+                        await tryAdd(store.id, selectedItem.id);
                         setSelectedItem(null);
                       }}
-                      className="flex-1 bg-brand text-brand-foreground font-bold py-3 rounded-full"
+                      disabled={!open}
+                      className="flex-1 bg-brand text-brand-foreground font-bold py-3 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Adicionar à sacola
+                      {open ? "Adicionar à sacola" : "Loja fechada"}
                     </button>
                   </>
                 ) : (
