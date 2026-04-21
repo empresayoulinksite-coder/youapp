@@ -512,6 +512,7 @@ export type Database = {
           promo: string | null
           rating: number
           slug: string
+          store_type: string
           updated_at: string
         }
         Insert: {
@@ -536,6 +537,7 @@ export type Database = {
           promo?: string | null
           rating?: number
           slug: string
+          store_type?: string
           updated_at?: string
         }
         Update: {
@@ -560,6 +562,7 @@ export type Database = {
           promo?: string | null
           rating?: number
           slug?: string
+          store_type?: string
           updated_at?: string
         }
         Relationships: []
