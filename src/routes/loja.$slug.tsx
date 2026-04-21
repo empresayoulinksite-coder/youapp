@@ -204,7 +204,10 @@ function StorePage() {
             {open ? "Aberta" : "Fechada"}
           </span>
         </div>
-        {!open && nextOpen && (
+        {!open && store.is_paused && (
+          <p className="text-[11px] text-muted-foreground mt-1">Pausada pelo lojista</p>
+        )}
+        {!open && !store.is_paused && nextOpen && (
           <p className="text-[11px] text-muted-foreground mt-1">{nextOpen}</p>
         )}
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
