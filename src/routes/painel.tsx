@@ -19,6 +19,7 @@ import { BookingsTab, type BookingRow, type StoreLite } from "@/components/paine
 import { ServicesTab } from "@/components/painel/ServicesTab";
 import { CouponsTab } from "@/components/painel/CouponsTab";
 import { StoreHoursEditor } from "@/components/StoreHoursEditor";
+import { StoreWhatsappEditor } from "@/components/StoreWhatsappEditor";
 
 export const Route = createFileRoute("/painel")({
   component: PainelPage,
