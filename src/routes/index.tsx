@@ -134,6 +134,37 @@ function Index() {
 
   const norm = normalize;
 
+  // Categorias da home (gerenciadas pelo admin)
+  const { data: homeCategories = [] } = useQuery({
+    queryKey: ["home-categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("home_categories")
+        .select("slug,label,icon,tint,matches,is_ecommerce,is_active,position")
+        .eq("is_active", true)
+        .order("position");
+      if (error) throw error;
+      return (data ?? []) as HomeCategoryRow[];
+    },
+    staleTime: 5 * 60_000,
+  });
+
+  const ecomMatchSet = useMemo(() => {
+    const s = new Set<string>();
+    for (const c of homeCategories) {
+      if (c.is_ecommerce) for (const m of c.matches) s.add(norm(m));
+    }
+    return s;
+  }, [homeCategories, norm]);
+
+  const isEcommerceStoreCategory = (storeCategory: string) =>
+    ecomMatchSet.has(norm(storeCategory));
+
+  const ecommerceCats = useMemo(
+    () => homeCategories.filter((c) => c.is_ecommerce),
+    [homeCategories],
+  );
+
   // Lojas próximas: bairro do cliente; se vazio, cai pra cidade; se vazio, todas.
   const nearbyStores = useMemo(() => {
     if (!nearbyOnly || !location) return stores;
@@ -156,7 +187,7 @@ function Index() {
 
   const filteredStores = useMemo(() => {
     const q = norm(query.trim());
-    const cat = activeCategory ? categoryList.find((c) => c.label === activeCategory) : null;
+    const cat = activeCategory ? homeCategories.find((c) => c.label === activeCategory) : null;
     const catMatches = cat ? cat.matches.map(norm) : null;
     let list = nearbyStores.filter((s) => {
       if (q && !norm(s.name).includes(q) && !norm(s.category).includes(q)) return false;
@@ -171,25 +202,24 @@ function Index() {
       list = [...list].sort((a, b) => mins(a.delivery_time) - mins(b.delivery_time));
     }
     return list;
-  }, [nearbyStores, query, activeCategory, freeOnly, sortBy]);
+  }, [nearbyStores, query, activeCategory, freeOnly, sortBy, homeCategories, norm]);
 
   const featured = useMemo(
     () => [...filteredStores].sort((a, b) => Number(b.rating) - Number(a.rating)).slice(0, 6),
     [filteredStores],
   );
 
-  // Vitrine: produtos das lojas e-commerce (Moda, Calçados, Acessórios, Beleza)
+  // Vitrine: produtos das lojas e-commerce
   const ecomStoreMap = useMemo(() => {
     const map = new Map<string, StoreRow>();
     for (const s of stores) {
-      if (isEcommerceStoreCategory(s.category)) map.set(s.id, s);
+      if (ecomMatchSet.has(norm(s.category))) map.set(s.id, s);
     }
     return map;
-  }, [stores]);
+  }, [stores, ecomMatchSet, norm]);
 
   const vitrineProducts = useMemo(() => {
     const list = items.filter((it) => ecomStoreMap.has(it.store_id));
-    // Promo first, depois 12 em destaque
     return list
       .sort((a, b) => Number(!!b.promo) - Number(!!a.promo))
       .slice(0, 12);
