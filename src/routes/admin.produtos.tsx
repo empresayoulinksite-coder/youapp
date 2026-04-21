@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -13,6 +13,7 @@ import {
   ChevronDown,
   ChevronRight,
   X,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -516,6 +517,11 @@ function AdminProducts() {
               }}
             >
               <FolderPlus className="h-4 w-4" /> Adicionar categoria
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/admin/importar-cardapio">
+                <Upload className="h-4 w-4" /> Importar cardápio
+              </Link>
             </Button>
             <Button
               disabled={categories.length === 0}
