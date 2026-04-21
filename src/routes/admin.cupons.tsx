@@ -209,6 +209,7 @@ function StoreCoupons() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<StoreCoupon> | null>(null);
+  const [storeIds, setStoreIds] = useState<string[]>([]);
 
   const { data: stores = [] } = useQuery({
     queryKey: ["admin-stores-list"],
@@ -230,8 +231,7 @@ function StoreCoupons() {
 
   const save = useMutation({
     mutationFn: async (c: Partial<StoreCoupon>) => {
-      const payload = {
-        store_id: c.store_id!,
+      const base = {
         code: c.code!.toUpperCase(),
         title: c.title!,
         description: c.description || null,
@@ -239,15 +239,27 @@ function StoreCoupons() {
         min_order: Number(c.min_order) || 0,
       };
       if (c.id) {
-        const { error } = await supabase.from("store_coupons").update(payload).eq("id", c.id);
+        // edição: atualiza só essa linha (1 loja). Se o usuário marcou lojas extras, cria novas para elas.
+        const { error } = await supabase
+          .from("store_coupons")
+          .update({ ...base, store_id: c.store_id! })
+          .eq("id", c.id);
         if (error) throw error;
+        const extras = storeIds.filter((id) => id !== c.store_id);
+        if (extras.length > 0) {
+          const rows = extras.map((store_id) => ({ ...base, store_id }));
+          const { error: e2 } = await supabase.from("store_coupons").insert(rows);
+          if (e2) throw e2;
+        }
       } else {
-        const { error } = await supabase.from("store_coupons").insert(payload);
+        if (storeIds.length === 0) throw new Error("Selecione ao menos uma loja");
+        const rows = storeIds.map((store_id) => ({ ...base, store_id }));
+        const { error } = await supabase.from("store_coupons").insert(rows);
         if (error) throw error;
       }
     },
     onSuccess: () => {
-      toast.success("Cupom salvo");
+      toast.success(storeIds.length > 1 ? "Cupons salvos" : "Cupom salvo");
       qc.invalidateQueries({ queryKey: ["admin-store-coupons"] });
       setOpen(false);
     },
@@ -266,10 +278,26 @@ function StoreCoupons() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  function openNew() {
+    setEditing({ min_order: 0 });
+    setStoreIds([]);
+    setOpen(true);
+  }
+
+  function openEdit(c: StoreCoupon) {
+    setEditing(c);
+    setStoreIds([c.store_id]);
+    setOpen(true);
+  }
+
+  function toggleStore(id: string) {
+    setStoreIds((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
+  }
+
   return (
     <div className="mt-4">
       <div className="mb-3 flex justify-end">
-        <Button onClick={() => { setEditing({ min_order: 0 }); setOpen(true); }}>
+        <Button onClick={openNew}>
           <Plus className="h-4 w-4" /> Novo cupom de loja
         </Button>
       </div>
@@ -285,7 +313,7 @@ function StoreCoupons() {
               </div>
               <h3 className="font-semibold">{c.title}</h3>
               <div className="mt-3 flex gap-2">
-                <Button size="sm" variant="outline" className="flex-1" onClick={() => { setEditing(c); setOpen(true); }}>
+                <Button size="sm" variant="outline" className="flex-1" onClick={() => openEdit(c)}>
                   <Pencil className="h-3 w-3" /> Editar
                 </Button>
                 <Button size="sm" variant="destructive" onClick={() => { if (confirm("Excluir?")) del.mutate(c.id); }}>
@@ -298,18 +326,34 @@ function StoreCoupons() {
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editing?.id ? "Editar" : "Novo"} cupom de loja</DialogTitle></DialogHeader>
           {editing && (
             <div className="grid gap-3">
               <div>
-                <Label>Loja</Label>
-                <Select value={editing.store_id || ""} onValueChange={(v) => setEditing({ ...editing, store_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Escolha" /></SelectTrigger>
-                  <SelectContent>
-                    {stores.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <Label>Lojas {editing.id && <span className="text-xs text-muted-foreground">(marque outras para criar cópias)</span>}</Label>
+                <div className="max-h-48 overflow-y-auto rounded-md border p-2">
+                  {stores.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">Nenhuma loja cadastrada.</p>
+                  ) : (
+                    stores.map((s) => (
+                      <label key={s.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-muted/50">
+                        <input
+                          type="checkbox"
+                          checked={storeIds.includes(s.id)}
+                          onChange={() => {
+                            toggleStore(s.id);
+                            if (!editing.id) setEditing({ ...editing, store_id: s.id });
+                          }}
+                        />
+                        <span className="text-sm">{s.name}</span>
+                      </label>
+                    ))
+                  )}
+                </div>
+                {storeIds.length > 0 && (
+                  <p className="mt-1 text-xs text-muted-foreground">{storeIds.length} loja(s) selecionada(s)</p>
+                )}
               </div>
               <div><Label>Código</Label><Input value={editing.code || ""} onChange={(e) => setEditing({ ...editing, code: e.target.value })} /></div>
               <div><Label>Título</Label><Input value={editing.title || ""} onChange={(e) => setEditing({ ...editing, title: e.target.value })} /></div>
@@ -320,7 +364,10 @@ function StoreCoupons() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button disabled={save.isPending || !editing?.store_id || !editing?.code || !editing?.title || !editing?.discount_label} onClick={() => editing && save.mutate(editing)}>
+            <Button
+              disabled={save.isPending || storeIds.length === 0 || !editing?.code || !editing?.title || !editing?.discount_label}
+              onClick={() => editing && save.mutate({ ...editing, store_id: editing.id ? editing.store_id : storeIds[0] })}
+            >
               {save.isPending ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>
