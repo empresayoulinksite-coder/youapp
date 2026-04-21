@@ -289,6 +289,19 @@ function AdminStores() {
 
           {editing && (editing.id || (editing as Partial<Store> & { __typed?: boolean }).__typed) && (
             <div className="grid gap-3 sm:grid-cols-2">
+              <div className="sm:col-span-2 flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2">
+                {(() => {
+                  const t = STORE_TYPES.find((x) => x.value === (editing.store_type || "food"));
+                  const Icon = t?.Icon ?? UtensilsCrossed;
+                  return (
+                    <>
+                      <Icon className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">{t?.label}</span>
+                      <span className="text-xs text-muted-foreground">· {t?.description}</span>
+                    </>
+                  );
+                })()}
+              </div>
               <div className="sm:col-span-2">
                 <Label>Imagem</Label>
                 <div className="mt-1 flex items-center gap-3">
