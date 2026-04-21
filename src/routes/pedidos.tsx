@@ -264,7 +264,7 @@ function OrdersPage() {
                   <FilterChip
                     key={opt.value}
                     active={status === opt.value}
-                    onClick={() => navigate({ search: (p: OrdersSearch) => ({ ...p, status: opt.value }) })}
+                    onClick={() => navigate({ search: { store, status: opt.value, sort } })}
                   >
                     {opt.label}
                   </FilterChip>
