@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          created_at: string
+          customer_notes: string | null
+          ends_at: string
+          id: string
+          service_id: string
+          starts_at: string
+          status: Database["public"]["Enums"]["booking_status"]
+          store_id: string
+          total_price: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_notes?: string | null
+          ends_at: string
+          id?: string
+          service_id: string
+          starts_at: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          store_id: string
+          total_price?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_notes?: string | null
+          ends_at?: string
+          id?: string
+          service_id?: string
+          starts_at?: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          store_id?: string
+          total_price?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cart_items: {
         Row: {
           created_at: string
@@ -408,6 +465,56 @@ export type Database = {
         }
         Relationships: []
       }
+      services: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          position: number
+          price: number
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          position?: number
+          price?: number
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          position?: number
+          price?: number
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_coupons: {
         Row: {
           code: string
@@ -554,6 +661,7 @@ export type Database = {
           payment_methods: string | null
           promo: string | null
           rating: number
+          slot_minutes: number
           slug: string
           store_type: string
           updated_at: string
@@ -580,6 +688,7 @@ export type Database = {
           payment_methods?: string | null
           promo?: string | null
           rating?: number
+          slot_minutes?: number
           slug: string
           store_type?: string
           updated_at?: string
@@ -606,6 +715,7 @@ export type Database = {
           payment_methods?: string | null
           promo?: string | null
           rating?: number
+          slot_minutes?: number
           slug?: string
           store_type?: string
           updated_at?: string
@@ -793,6 +903,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      booking_status: "pending" | "confirmed" | "cancelled" | "completed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -921,6 +1032,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      booking_status: ["pending", "confirmed", "cancelled", "completed"],
     },
   },
 } as const
