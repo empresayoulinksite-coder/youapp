@@ -34,6 +34,7 @@ function CartPage() {
   const storeId = items[0]?.store_id ?? null;
 
   const [storeHours, setStoreHours] = useState<StoreHour[]>([]);
+  const [storePaused, setStorePaused] = useState(false);
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -44,6 +45,7 @@ function CartPage() {
   useEffect(() => {
     if (!storeId) {
       setStoreHours([]);
+      setStorePaused(false);
       return;
     }
     supabase
@@ -51,10 +53,17 @@ function CartPage() {
       .select("*")
       .eq("store_id", storeId)
       .then(({ data }) => setStoreHours((data ?? []) as StoreHour[]));
+    supabase
+      .from("stores")
+      .select("is_paused")
+      .eq("id", storeId)
+      .maybeSingle()
+      .then(({ data }) => setStorePaused(!!data?.is_paused));
   }, [storeId]);
 
-  const storeOpen = storeHours.length === 0 ? true : isStoreOpen(storeHours, now);
-  const nextOpen = !storeOpen ? nextOpeningLabel(storeHours, now) : null;
+  const withinHours = storeHours.length === 0 ? true : isStoreOpen(storeHours, now);
+  const storeOpen = !storePaused && withinHours;
+  const nextOpen = !storeOpen && !storePaused ? nextOpeningLabel(storeHours, now) : null;
 
   const { discount, reason } = calculateDiscount(applied, total, storeId);
   const grandTotal = Math.max(0, total - discount);
