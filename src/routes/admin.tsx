@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { Store, UtensilsCrossed, Ticket, Image as ImageIcon, LogOut, Home, Tags, LayoutGrid, Briefcase, CalendarDays } from "lucide-react";
+import { Store, UtensilsCrossed, Ticket, Image as ImageIcon, LogOut, Home, Tags, LayoutGrid, Briefcase, CalendarDays, Users } from "lucide-react";
 import { useIsAdmin } from "@/hooks/use-admin";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,7 @@ const NAV = [
   { to: "/admin/produtos", label: "Produtos", icon: UtensilsCrossed },
   { to: "/admin/servicos", label: "Serviços", icon: Briefcase },
   { to: "/admin/agendamentos", label: "Agendamentos", icon: CalendarDays },
+  { to: "/admin/donos", label: "Donos de loja", icon: Users },
   { to: "/admin/categorias-home", label: "Categorias Home", icon: LayoutGrid },
   { to: "/admin/categorias-ecommerce", label: "Categorias E-com", icon: Tags },
   { to: "/admin/cupons", label: "Cupons", icon: Ticket },

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SacolaRouteImport } from './routes/sacola'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as PedidosRouteImport } from './routes/pedidos'
+import { Route as PainelRouteImport } from './routes/painel'
 import { Route as FavoritosRouteImport } from './routes/favoritos'
 import { Route as CuponsRouteImport } from './routes/cupons'
 import { Route as CompletarCadastroRouteImport } from './routes/completar-cadastro'
@@ -29,6 +30,7 @@ import { Route as CategoriaSlugRouteImport } from './routes/categoria.$slug'
 import { Route as AdminStoriesRouteImport } from './routes/admin.stories'
 import { Route as AdminServicosRouteImport } from './routes/admin.servicos'
 import { Route as AdminProdutosRouteImport } from './routes/admin.produtos'
+import { Route as AdminDonosRouteImport } from './routes/admin.donos'
 import { Route as AdminCuponsRouteImport } from './routes/admin.cupons'
 import { Route as AdminCategoriasHomeRouteImport } from './routes/admin.categorias-home'
 import { Route as AdminCategoriasEcommerceRouteImport } from './routes/admin.categorias-ecommerce'
@@ -47,6 +49,11 @@ const PerfilRoute = PerfilRouteImport.update({
 const PedidosRoute = PedidosRouteImport.update({
   id: '/pedidos',
   path: '/pedidos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PainelRoute = PainelRouteImport.update({
+  id: '/painel',
+  path: '/painel',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FavoritosRoute = FavoritosRouteImport.update({
@@ -134,6 +141,11 @@ const AdminProdutosRoute = AdminProdutosRouteImport.update({
   path: '/produtos',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminDonosRoute = AdminDonosRouteImport.update({
+  id: '/donos',
+  path: '/donos',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCuponsRoute = AdminCuponsRouteImport.update({
   id: '/cupons',
   path: '/cupons',
@@ -166,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/completar-cadastro': typeof CompletarCadastroRoute
   '/cupons': typeof CuponsRoute
   '/favoritos': typeof FavoritosRoute
+  '/painel': typeof PainelRoute
   '/pedidos': typeof PedidosRoute
   '/perfil': typeof PerfilRoute
   '/sacola': typeof SacolaRoute
@@ -173,6 +186,7 @@ export interface FileRoutesByFullPath {
   '/admin/categorias-ecommerce': typeof AdminCategoriasEcommerceRoute
   '/admin/categorias-home': typeof AdminCategoriasHomeRoute
   '/admin/cupons': typeof AdminCuponsRoute
+  '/admin/donos': typeof AdminDonosRoute
   '/admin/produtos': typeof AdminProdutosRoute
   '/admin/servicos': typeof AdminServicosRoute
   '/admin/stories': typeof AdminStoriesRoute
@@ -191,6 +205,7 @@ export interface FileRoutesByTo {
   '/completar-cadastro': typeof CompletarCadastroRoute
   '/cupons': typeof CuponsRoute
   '/favoritos': typeof FavoritosRoute
+  '/painel': typeof PainelRoute
   '/pedidos': typeof PedidosRoute
   '/perfil': typeof PerfilRoute
   '/sacola': typeof SacolaRoute
@@ -198,6 +213,7 @@ export interface FileRoutesByTo {
   '/admin/categorias-ecommerce': typeof AdminCategoriasEcommerceRoute
   '/admin/categorias-home': typeof AdminCategoriasHomeRoute
   '/admin/cupons': typeof AdminCuponsRoute
+  '/admin/donos': typeof AdminDonosRoute
   '/admin/produtos': typeof AdminProdutosRoute
   '/admin/servicos': typeof AdminServicosRoute
   '/admin/stories': typeof AdminStoriesRoute
@@ -218,6 +234,7 @@ export interface FileRoutesById {
   '/completar-cadastro': typeof CompletarCadastroRoute
   '/cupons': typeof CuponsRoute
   '/favoritos': typeof FavoritosRoute
+  '/painel': typeof PainelRoute
   '/pedidos': typeof PedidosRoute
   '/perfil': typeof PerfilRoute
   '/sacola': typeof SacolaRoute
@@ -225,6 +242,7 @@ export interface FileRoutesById {
   '/admin/categorias-ecommerce': typeof AdminCategoriasEcommerceRoute
   '/admin/categorias-home': typeof AdminCategoriasHomeRoute
   '/admin/cupons': typeof AdminCuponsRoute
+  '/admin/donos': typeof AdminDonosRoute
   '/admin/produtos': typeof AdminProdutosRoute
   '/admin/servicos': typeof AdminServicosRoute
   '/admin/stories': typeof AdminStoriesRoute
@@ -246,6 +264,7 @@ export interface FileRouteTypes {
     | '/completar-cadastro'
     | '/cupons'
     | '/favoritos'
+    | '/painel'
     | '/pedidos'
     | '/perfil'
     | '/sacola'
@@ -253,6 +272,7 @@ export interface FileRouteTypes {
     | '/admin/categorias-ecommerce'
     | '/admin/categorias-home'
     | '/admin/cupons'
+    | '/admin/donos'
     | '/admin/produtos'
     | '/admin/servicos'
     | '/admin/stories'
@@ -271,6 +291,7 @@ export interface FileRouteTypes {
     | '/completar-cadastro'
     | '/cupons'
     | '/favoritos'
+    | '/painel'
     | '/pedidos'
     | '/perfil'
     | '/sacola'
@@ -278,6 +299,7 @@ export interface FileRouteTypes {
     | '/admin/categorias-ecommerce'
     | '/admin/categorias-home'
     | '/admin/cupons'
+    | '/admin/donos'
     | '/admin/produtos'
     | '/admin/servicos'
     | '/admin/stories'
@@ -297,6 +319,7 @@ export interface FileRouteTypes {
     | '/completar-cadastro'
     | '/cupons'
     | '/favoritos'
+    | '/painel'
     | '/pedidos'
     | '/perfil'
     | '/sacola'
@@ -304,6 +327,7 @@ export interface FileRouteTypes {
     | '/admin/categorias-ecommerce'
     | '/admin/categorias-home'
     | '/admin/cupons'
+    | '/admin/donos'
     | '/admin/produtos'
     | '/admin/servicos'
     | '/admin/stories'
@@ -324,6 +348,7 @@ export interface RootRouteChildren {
   CompletarCadastroRoute: typeof CompletarCadastroRoute
   CuponsRoute: typeof CuponsRoute
   FavoritosRoute: typeof FavoritosRoute
+  PainelRoute: typeof PainelRoute
   PedidosRoute: typeof PedidosRoute
   PerfilRoute: typeof PerfilRoute
   SacolaRoute: typeof SacolaRoute
@@ -354,6 +379,13 @@ declare module '@tanstack/react-router' {
       path: '/pedidos'
       fullPath: '/pedidos'
       preLoaderRoute: typeof PedidosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/painel': {
+      id: '/painel'
+      path: '/painel'
+      fullPath: '/painel'
+      preLoaderRoute: typeof PainelRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/favoritos': {
@@ -475,6 +507,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminProdutosRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/donos': {
+      id: '/admin/donos'
+      path: '/donos'
+      fullPath: '/admin/donos'
+      preLoaderRoute: typeof AdminDonosRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/cupons': {
       id: '/admin/cupons'
       path: '/cupons'
@@ -511,6 +550,7 @@ interface AdminRouteChildren {
   AdminCategoriasEcommerceRoute: typeof AdminCategoriasEcommerceRoute
   AdminCategoriasHomeRoute: typeof AdminCategoriasHomeRoute
   AdminCuponsRoute: typeof AdminCuponsRoute
+  AdminDonosRoute: typeof AdminDonosRoute
   AdminProdutosRoute: typeof AdminProdutosRoute
   AdminServicosRoute: typeof AdminServicosRoute
   AdminStoriesRoute: typeof AdminStoriesRoute
@@ -522,6 +562,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCategoriasEcommerceRoute: AdminCategoriasEcommerceRoute,
   AdminCategoriasHomeRoute: AdminCategoriasHomeRoute,
   AdminCuponsRoute: AdminCuponsRoute,
+  AdminDonosRoute: AdminDonosRoute,
   AdminProdutosRoute: AdminProdutosRoute,
   AdminServicosRoute: AdminServicosRoute,
   AdminStoriesRoute: AdminStoriesRoute,
@@ -540,6 +581,7 @@ const rootRouteChildren: RootRouteChildren = {
   CompletarCadastroRoute: CompletarCadastroRoute,
   CuponsRoute: CuponsRoute,
   FavoritosRoute: FavoritosRoute,
+  PainelRoute: PainelRoute,
   PedidosRoute: PedidosRoute,
   PerfilRoute: PerfilRoute,
   SacolaRoute: SacolaRoute,
@@ -551,3 +593,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
