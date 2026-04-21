@@ -250,7 +250,7 @@ function StorePage() {
       {/* Tabs */}
       <nav className="px-4 mt-5 flex gap-6 border-b border-border text-sm sticky top-[57px] bg-surface z-20">
         {([
-          { id: "menu", label: "Cardápio" },
+          { id: "menu", label: isService ? "Serviços" : "Vitrine" },
           { id: "info", label: "Informações" },
           { id: "reviews", label: `Avaliações (${reviews.length})` },
         ] as const).map((t) => (
