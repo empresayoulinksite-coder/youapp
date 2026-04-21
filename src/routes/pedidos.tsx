@@ -249,7 +249,11 @@ function OrdersPage() {
                     active={store === s.id}
                     onClick={() => navigate({ search: { store: s.id, status, sort } })}
                   >
-                    {s.emoji ? <span className="mr-1">{s.emoji}</span> : null}
+                    {s.image_url ? (
+                      <img src={s.image_url} alt="" className="inline-block h-4 w-4 rounded-full object-cover mr-1 -ml-0.5 align-[-2px]" />
+                    ) : s.emoji ? (
+                      <span className="mr-1">{s.emoji}</span>
+                    ) : null}
                     {s.name}
                   </FilterChip>
                 ))}
