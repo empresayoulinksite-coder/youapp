@@ -253,9 +253,41 @@ function AdminStores() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editing?.id ? "Editar loja" : "Nova loja"}</DialogTitle>
+            <DialogTitle>
+              {editing?.id
+                ? "Editar loja"
+                : !editing?.store_type || !(editing as Partial<Store> & { __typed?: boolean }).__typed
+                ? "Que tipo de loja você quer criar?"
+                : `Nova ${STORE_TYPES.find((t) => t.value === editing.store_type)?.label}`}
+            </DialogTitle>
           </DialogHeader>
-          {editing && (
+
+          {/* Step 1: type selection for new stores */}
+          {editing && !editing.id && !(editing as Partial<Store> & { __typed?: boolean }).__typed && (
+            <div className="grid gap-3 sm:grid-cols-3">
+              {STORE_TYPES.map((t) => (
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() =>
+                    setEditing({
+                      ...editing,
+                      store_type: t.value,
+                      emoji: t.emoji,
+                      ...({ __typed: true } as object),
+                    })
+                  }
+                  className="flex flex-col items-center gap-2 rounded-xl border-2 border-border bg-background p-6 text-center transition-colors hover:border-primary hover:bg-primary/5"
+                >
+                  <t.Icon className="h-10 w-10 text-primary" />
+                  <span className="font-semibold">{t.label}</span>
+                  <span className="text-xs text-muted-foreground">{t.description}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {editing && (editing.id || (editing as Partial<Store> & { __typed?: boolean }).__typed) && (
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <Label>Imagem</Label>
