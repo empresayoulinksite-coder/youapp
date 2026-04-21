@@ -18,6 +18,7 @@ import { Route as CompletarCadastroRouteImport } from './routes/completar-cadast
 import { Route as ClubeRouteImport } from './routes/clube'
 import { Route as BuscaRouteImport } from './routes/busca'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AgendamentosRouteImport } from './routes/agendamentos'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
@@ -26,6 +27,7 @@ import { Route as ProdutoIdRouteImport } from './routes/produto.$id'
 import { Route as LojaSlugRouteImport } from './routes/loja.$slug'
 import { Route as CategoriaSlugRouteImport } from './routes/categoria.$slug'
 import { Route as AdminStoriesRouteImport } from './routes/admin.stories'
+import { Route as AdminServicosRouteImport } from './routes/admin.servicos'
 import { Route as AdminProdutosRouteImport } from './routes/admin.produtos'
 import { Route as AdminCuponsRouteImport } from './routes/admin.cupons'
 import { Route as AdminCategoriasHomeRouteImport } from './routes/admin.categorias-home'
@@ -76,6 +78,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AgendamentosRoute = AgendamentosRouteImport.update({
+  id: '/agendamentos',
+  path: '/agendamentos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -116,6 +123,11 @@ const AdminStoriesRoute = AdminStoriesRouteImport.update({
   path: '/stories',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminServicosRoute = AdminServicosRouteImport.update({
+  id: '/servicos',
+  path: '/servicos',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminProdutosRoute = AdminProdutosRouteImport.update({
   id: '/produtos',
   path: '/produtos',
@@ -141,6 +153,7 @@ const AdminCategoriasEcommerceRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/agendamentos': typeof AgendamentosRoute
   '/auth': typeof AuthRoute
   '/busca': typeof BuscaRoute
   '/clube': typeof ClubeRoute
@@ -154,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/admin/categorias-home': typeof AdminCategoriasHomeRoute
   '/admin/cupons': typeof AdminCuponsRoute
   '/admin/produtos': typeof AdminProdutosRoute
+  '/admin/servicos': typeof AdminServicosRoute
   '/admin/stories': typeof AdminStoriesRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/loja/$slug': typeof LojaSlugRoute
@@ -163,6 +177,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/agendamentos': typeof AgendamentosRoute
   '/auth': typeof AuthRoute
   '/busca': typeof BuscaRoute
   '/clube': typeof ClubeRoute
@@ -176,6 +191,7 @@ export interface FileRoutesByTo {
   '/admin/categorias-home': typeof AdminCategoriasHomeRoute
   '/admin/cupons': typeof AdminCuponsRoute
   '/admin/produtos': typeof AdminProdutosRoute
+  '/admin/servicos': typeof AdminServicosRoute
   '/admin/stories': typeof AdminStoriesRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/loja/$slug': typeof LojaSlugRoute
@@ -187,6 +203,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/agendamentos': typeof AgendamentosRoute
   '/auth': typeof AuthRoute
   '/busca': typeof BuscaRoute
   '/clube': typeof ClubeRoute
@@ -200,6 +217,7 @@ export interface FileRoutesById {
   '/admin/categorias-home': typeof AdminCategoriasHomeRoute
   '/admin/cupons': typeof AdminCuponsRoute
   '/admin/produtos': typeof AdminProdutosRoute
+  '/admin/servicos': typeof AdminServicosRoute
   '/admin/stories': typeof AdminStoriesRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/loja/$slug': typeof LojaSlugRoute
@@ -212,6 +230,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/agendamentos'
     | '/auth'
     | '/busca'
     | '/clube'
@@ -225,6 +244,7 @@ export interface FileRouteTypes {
     | '/admin/categorias-home'
     | '/admin/cupons'
     | '/admin/produtos'
+    | '/admin/servicos'
     | '/admin/stories'
     | '/categoria/$slug'
     | '/loja/$slug'
@@ -234,6 +254,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/agendamentos'
     | '/auth'
     | '/busca'
     | '/clube'
@@ -247,6 +268,7 @@ export interface FileRouteTypes {
     | '/admin/categorias-home'
     | '/admin/cupons'
     | '/admin/produtos'
+    | '/admin/servicos'
     | '/admin/stories'
     | '/categoria/$slug'
     | '/loja/$slug'
@@ -257,6 +279,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/agendamentos'
     | '/auth'
     | '/busca'
     | '/clube'
@@ -270,6 +293,7 @@ export interface FileRouteTypes {
     | '/admin/categorias-home'
     | '/admin/cupons'
     | '/admin/produtos'
+    | '/admin/servicos'
     | '/admin/stories'
     | '/categoria/$slug'
     | '/loja/$slug'
@@ -281,6 +305,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
+  AgendamentosRoute: typeof AgendamentosRoute
   AuthRoute: typeof AuthRoute
   BuscaRoute: typeof BuscaRoute
   ClubeRoute: typeof ClubeRoute
@@ -361,6 +386,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/agendamentos': {
+      id: '/agendamentos'
+      path: '/agendamentos'
+      fullPath: '/agendamentos'
+      preLoaderRoute: typeof AgendamentosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -417,6 +449,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminStoriesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/servicos': {
+      id: '/admin/servicos'
+      path: '/servicos'
+      fullPath: '/admin/servicos'
+      preLoaderRoute: typeof AdminServicosRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/produtos': {
       id: '/admin/produtos'
       path: '/produtos'
@@ -453,6 +492,7 @@ interface AdminRouteChildren {
   AdminCategoriasHomeRoute: typeof AdminCategoriasHomeRoute
   AdminCuponsRoute: typeof AdminCuponsRoute
   AdminProdutosRoute: typeof AdminProdutosRoute
+  AdminServicosRoute: typeof AdminServicosRoute
   AdminStoriesRoute: typeof AdminStoriesRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
@@ -462,6 +502,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCategoriasHomeRoute: AdminCategoriasHomeRoute,
   AdminCuponsRoute: AdminCuponsRoute,
   AdminProdutosRoute: AdminProdutosRoute,
+  AdminServicosRoute: AdminServicosRoute,
   AdminStoriesRoute: AdminStoriesRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
@@ -471,6 +512,7 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
+  AgendamentosRoute: AgendamentosRoute,
   AuthRoute: AuthRoute,
   BuscaRoute: BuscaRoute,
   ClubeRoute: ClubeRoute,
