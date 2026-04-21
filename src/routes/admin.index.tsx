@@ -486,15 +486,22 @@ function AdminStores() {
               </div>
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button
-              disabled={save.isPending || uploading || !editing?.name || !editing?.slug || !editing?.category}
-              onClick={() => editing && save.mutate(editing)}
-            >
-              {save.isPending ? "Salvando..." : "Salvar"}
-            </Button>
-          </DialogFooter>
+          {editing && (editing.id || (editing as Partial<Store> & { __typed?: boolean }).__typed) && (
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+              <Button
+                disabled={save.isPending || uploading || !editing?.name || !editing?.slug || !editing?.category}
+                onClick={() => editing && save.mutate(editing)}
+              >
+                {save.isPending ? "Salvando..." : "Salvar"}
+              </Button>
+            </DialogFooter>
+          )}
+          {editing && !editing.id && !(editing as Partial<Store> & { __typed?: boolean }).__typed && (
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+            </DialogFooter>
+          )}
         </DialogContent>
       </Dialog>
     </div>
