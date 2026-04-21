@@ -35,6 +35,7 @@ type Store = {
   promo: string | null;
   image_url: string | null;
   about: string | null;
+  cep: string | null;
   address: string | null;
   neighborhood: string | null;
   city: string | null;
@@ -42,6 +43,23 @@ type Store = {
   payment_methods: string | null;
   min_order: number;
 };
+
+async function lookupCep(rawCep: string) {
+  const cep = rawCep.replace(/\D/g, "");
+  if (cep.length !== 8) return null;
+  try {
+    const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+    const data = await res.json();
+    if (data?.erro) return null;
+    return {
+      street: data.logradouro as string,
+      neighborhood: data.bairro as string,
+      city: data.localidade as string,
+    };
+  } catch {
+    return null;
+  }
+}
 
 const empty: Partial<Store> = {
   slug: "",
@@ -56,6 +74,7 @@ const empty: Partial<Store> = {
   promo: "",
   image_url: "",
   about: "",
+  cep: "",
   address: "",
   neighborhood: "",
   city: "",
@@ -97,6 +116,7 @@ function AdminStores() {
         promo: s.promo || null,
         image_url: s.image_url || null,
         about: s.about || null,
+        cep: s.cep || null,
         address: s.address || null,
         neighborhood: s.neighborhood || null,
         city: s.city || null,
@@ -324,7 +344,36 @@ function AdminStores() {
                 />
               </div>
               <div>
-                <Label>Endereço</Label>
+                <Label>CEP</Label>
+                <Input
+                  value={editing.cep || ""}
+                  maxLength={9}
+                  placeholder="00000-000"
+                  onChange={async (e) => {
+                    const raw = e.target.value;
+                    const digits = raw.replace(/\D/g, "").slice(0, 8);
+                    const masked = digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits;
+                    setEditing({ ...editing, cep: masked });
+                    if (digits.length === 8) {
+                      const found = await lookupCep(digits);
+                      if (found) {
+                        setEditing((prev) => ({
+                          ...(prev || {}),
+                          cep: masked,
+                          address: found.street || prev?.address || "",
+                          neighborhood: found.neighborhood || prev?.neighborhood || "",
+                          city: found.city || prev?.city || "",
+                        }));
+                        toast.success("Endereço preenchido pelo CEP");
+                      } else {
+                        toast.error("CEP não encontrado");
+                      }
+                    }
+                  }}
+                />
+              </div>
+              <div>
+                <Label>Endereço (rua, número)</Label>
                 <Input
                   value={editing.address || ""}
                   onChange={(e) => setEditing({ ...editing, address: e.target.value })}

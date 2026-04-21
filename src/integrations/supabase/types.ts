@@ -453,6 +453,7 @@ export type Database = {
           about: string | null
           address: string | null
           category: string
+          cep: string | null
           city: string | null
           created_at: string
           delivery_fee: string
@@ -476,6 +477,7 @@ export type Database = {
           about?: string | null
           address?: string | null
           category: string
+          cep?: string | null
           city?: string | null
           created_at?: string
           delivery_fee?: string
@@ -499,6 +501,7 @@ export type Database = {
           about?: string | null
           address?: string | null
           category?: string
+          cep?: string | null
           city?: string | null
           created_at?: string
           delivery_fee?: string
