@@ -93,8 +93,16 @@ type Category = {
   is_available: boolean;
 };
 
+type StoreType = "food" | "ecommerce" | "service";
+const STORE_TYPE_TABS: { value: StoreType; label: string }[] = [
+  { value: "food", label: "Food" },
+  { value: "ecommerce", label: "E-commerce" },
+  { value: "service", label: "Serviços" },
+];
+
 function AdminProducts() {
   const qc = useQueryClient();
+  const [storeType, setStoreType] = useState<StoreType>("food");
   const [storeId, setStoreId] = useState<string>("");
   const [search, setSearch] = useState("");
   const [filterCat, setFilterCat] = useState<string>("all");
@@ -109,11 +117,12 @@ function AdminProducts() {
   const [editingCat, setEditingCat] = useState<Partial<Category> | null>(null);
 
   const { data: stores = [] } = useQuery({
-    queryKey: ["admin-stores-list"],
+    queryKey: ["admin-stores-list", storeType],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("stores")
-        .select("id,name")
+        .select("id,name,store_type")
+        .eq("store_type", storeType)
         .order("name");
       if (error) throw error;
       return data;
@@ -427,11 +436,41 @@ function AdminProducts() {
         </p>
       </div>
 
+      <div className="mb-4 flex gap-2 border-b">
+        {STORE_TYPE_TABS.map((t) => {
+          const active = t.value === storeType;
+          return (
+            <button
+              key={t.value}
+              onClick={() => {
+                setStoreType(t.value);
+                setStoreId("");
+              }}
+              className={
+                "relative px-4 py-2 text-sm font-medium transition-colors " +
+                (active
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground")
+              }
+            >
+              {t.label}
+              {active && (
+                <span className="absolute inset-x-0 -bottom-px h-0.5 bg-primary" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
       <div className="mb-4 max-w-sm">
         <Label>Loja</Label>
         <Select value={storeId} onValueChange={setStoreId}>
           <SelectTrigger>
-            <SelectValue placeholder="Escolha uma loja" />
+            <SelectValue placeholder={
+              stores.length === 0
+                ? `Nenhuma loja ${STORE_TYPE_TABS.find((t) => t.value === storeType)?.label}`
+                : "Escolha uma loja"
+            } />
           </SelectTrigger>
           <SelectContent>
             {stores.map((s) => (
