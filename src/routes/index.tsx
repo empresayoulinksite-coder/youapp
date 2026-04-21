@@ -170,25 +170,22 @@ function Index() {
     [homeCategories],
   );
 
-  // Lojas próximas: bairro do cliente; se vazio, cai pra cidade; se vazio, todas.
+  // Lojas próximas: raio de 10 km do endereço do usuário, ordenadas por distância.
+  // Sem coordenadas → mostra todas.
   const nearbyStores = useMemo(() => {
-    if (!nearbyOnly || !location) return stores;
-    const userHood = normalizeText(location.neighborhood);
-    const userCity = normalizeText(location.city);
-    if (userHood) {
-      const sameHood = stores.filter(
-        (s) => normalizeText(s.neighborhood) === userHood,
-      );
-      if (sameHood.length > 0) return sameHood;
-    }
-    if (userCity) {
-      const sameCity = stores.filter(
-        (s) => normalizeText(s.city) === userCity,
-      );
-      if (sameCity.length > 0) return sameCity;
-    }
-    return stores;
-  }, [stores, location, nearbyOnly]);
+    if (!userCoords) return stores;
+    const RADIUS_KM = 10;
+    const withDist = stores
+      .map((s) => {
+        if (s.lat == null || s.lng == null) return null;
+        const km = haversineKm(userCoords, { lat: s.lat, lng: s.lng });
+        return km <= RADIUS_KM ? { store: s, km } : null;
+      })
+      .filter((x): x is { store: StoreRow; km: number } => x !== null)
+      .sort((a, b) => a.km - b.km)
+      .map((x) => x.store);
+    return withDist.length > 0 ? withDist : stores;
+  }, [stores, userCoords]);
 
   const filteredStores = useMemo(() => {
     const q = norm(query.trim());
