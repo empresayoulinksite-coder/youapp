@@ -28,6 +28,7 @@ import { Route as CategoriaSlugRouteImport } from './routes/categoria.$slug'
 import { Route as AdminStoriesRouteImport } from './routes/admin.stories'
 import { Route as AdminProdutosRouteImport } from './routes/admin.produtos'
 import { Route as AdminCuponsRouteImport } from './routes/admin.cupons'
+import { Route as AdminCategoriasEcommerceRouteImport } from './routes/admin.categorias-ecommerce'
 
 const SacolaRoute = SacolaRouteImport.update({
   id: '/sacola',
@@ -124,6 +125,12 @@ const AdminCuponsRoute = AdminCuponsRouteImport.update({
   path: '/cupons',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCategoriasEcommerceRoute =
+  AdminCategoriasEcommerceRouteImport.update({
+    id: '/categorias-ecommerce',
+    path: '/categorias-ecommerce',
+    getParentRoute: () => AdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -137,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/pedidos': typeof PedidosRoute
   '/perfil': typeof PerfilRoute
   '/sacola': typeof SacolaRoute
+  '/admin/categorias-ecommerce': typeof AdminCategoriasEcommerceRoute
   '/admin/cupons': typeof AdminCuponsRoute
   '/admin/produtos': typeof AdminProdutosRoute
   '/admin/stories': typeof AdminStoriesRoute
@@ -157,6 +165,7 @@ export interface FileRoutesByTo {
   '/pedidos': typeof PedidosRoute
   '/perfil': typeof PerfilRoute
   '/sacola': typeof SacolaRoute
+  '/admin/categorias-ecommerce': typeof AdminCategoriasEcommerceRoute
   '/admin/cupons': typeof AdminCuponsRoute
   '/admin/produtos': typeof AdminProdutosRoute
   '/admin/stories': typeof AdminStoriesRoute
@@ -179,6 +188,7 @@ export interface FileRoutesById {
   '/pedidos': typeof PedidosRoute
   '/perfil': typeof PerfilRoute
   '/sacola': typeof SacolaRoute
+  '/admin/categorias-ecommerce': typeof AdminCategoriasEcommerceRoute
   '/admin/cupons': typeof AdminCuponsRoute
   '/admin/produtos': typeof AdminProdutosRoute
   '/admin/stories': typeof AdminStoriesRoute
@@ -202,6 +212,7 @@ export interface FileRouteTypes {
     | '/pedidos'
     | '/perfil'
     | '/sacola'
+    | '/admin/categorias-ecommerce'
     | '/admin/cupons'
     | '/admin/produtos'
     | '/admin/stories'
@@ -222,6 +233,7 @@ export interface FileRouteTypes {
     | '/pedidos'
     | '/perfil'
     | '/sacola'
+    | '/admin/categorias-ecommerce'
     | '/admin/cupons'
     | '/admin/produtos'
     | '/admin/stories'
@@ -243,6 +255,7 @@ export interface FileRouteTypes {
     | '/pedidos'
     | '/perfil'
     | '/sacola'
+    | '/admin/categorias-ecommerce'
     | '/admin/cupons'
     | '/admin/produtos'
     | '/admin/stories'
@@ -406,10 +419,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCuponsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/categorias-ecommerce': {
+      id: '/admin/categorias-ecommerce'
+      path: '/categorias-ecommerce'
+      fullPath: '/admin/categorias-ecommerce'
+      preLoaderRoute: typeof AdminCategoriasEcommerceRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
 interface AdminRouteChildren {
+  AdminCategoriasEcommerceRoute: typeof AdminCategoriasEcommerceRoute
   AdminCuponsRoute: typeof AdminCuponsRoute
   AdminProdutosRoute: typeof AdminProdutosRoute
   AdminStoriesRoute: typeof AdminStoriesRoute
@@ -417,6 +438,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminCategoriasEcommerceRoute: AdminCategoriasEcommerceRoute,
   AdminCuponsRoute: AdminCuponsRoute,
   AdminProdutosRoute: AdminProdutosRoute,
   AdminStoriesRoute: AdminStoriesRoute,

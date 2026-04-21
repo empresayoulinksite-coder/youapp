@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { ChevronLeft, Search, ShoppingBag, Heart, Star, SlidersHorizontal } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronLeft, Search, ShoppingBag, Heart, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,6 +23,7 @@ interface Store {
 
 interface Product {
   id: string;
+  category_id: string;
   name: string;
   description: string | null;
   price: number;
@@ -32,8 +33,15 @@ interface Product {
   promo: string | null;
 }
 
+interface CategoryRow {
+  id: string;
+  name: string;
+  position: number;
+  is_available: boolean;
+}
+
 export const Route = createFileRoute("/vitrine/$slug")({
-  loader: async ({ params }): Promise<{ store: Store; products: Product[] }> => {
+  loader: async ({ params }): Promise<{ store: Store; products: Product[]; categories: CategoryRow[] }> => {
     const { data: store, error } = await supabase
       .from("stores")
       .select("id, slug, name, emoji, image_url, category, rating, about, delivery_time, delivery_fee, free_delivery, promo")
@@ -42,14 +50,27 @@ export const Route = createFileRoute("/vitrine/$slug")({
     if (error) throw error;
     if (!store) throw notFound();
 
-    const { data: items, error: itemsErr } = await supabase
-      .from("menu_items")
-      .select("id, name, description, price, original_price, emoji, image_url, promo")
-      .eq("store_id", store.id)
-      .order("position");
+    const [{ data: items, error: itemsErr }, { data: cats, error: catsErr }] = await Promise.all([
+      supabase
+        .from("menu_items")
+        .select("id, category_id, name, description, price, original_price, emoji, image_url, promo")
+        .eq("store_id", store.id)
+        .eq("is_available", true)
+        .order("position"),
+      supabase
+        .from("menu_categories")
+        .select("id, name, position, is_available")
+        .eq("store_id", store.id)
+        .order("position"),
+    ]);
     if (itemsErr) throw itemsErr;
+    if (catsErr) throw catsErr;
 
-    return { store: store as Store, products: (items ?? []) as Product[] };
+    return {
+      store: store as Store,
+      products: (items ?? []) as Product[],
+      categories: (cats ?? []) as CategoryRow[],
+    };
   },
   errorComponent: ({ error }) => (
     <div className="min-h-screen flex items-center justify-center p-6 text-sm text-muted-foreground">
