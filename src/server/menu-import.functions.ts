@@ -73,7 +73,7 @@ async function callAIWithTool(messages: unknown[]): Promise<ParsedMenu> {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
+      model: "google/gemini-2.5-flash-lite",
       messages,
       tools: [TOOL_SCHEMA],
       tool_choice: { type: "function", function: { name: "save_menu" } },
