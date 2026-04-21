@@ -405,6 +405,116 @@ export type Database = {
           },
         ]
       }
+      order_items: {
+        Row: {
+          created_at: string
+          emoji: string | null
+          id: string
+          image_url: string | null
+          menu_item_id: string | null
+          name: string
+          notes: string | null
+          order_id: string
+          quantity: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          image_url?: string | null
+          menu_item_id?: string | null
+          name: string
+          notes?: string | null
+          order_id: string
+          quantity?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          image_url?: string | null
+          menu_item_id?: string | null
+          name?: string
+          notes?: string | null
+          order_id?: string
+          quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          customer_notes: string | null
+          delivery_address: string | null
+          delivery_fee: number
+          discount: number
+          id: string
+          payment_method: string | null
+          status: string
+          store_emoji: string | null
+          store_id: string
+          store_image_url: string | null
+          store_name: string
+          store_slug: string
+          store_whatsapp: string | null
+          total: number
+          updated_at: string
+          user_id: string
+          whatsapp_message: string
+        }
+        Insert: {
+          created_at?: string
+          customer_notes?: string | null
+          delivery_address?: string | null
+          delivery_fee?: number
+          discount?: number
+          id?: string
+          payment_method?: string | null
+          status?: string
+          store_emoji?: string | null
+          store_id: string
+          store_image_url?: string | null
+          store_name: string
+          store_slug: string
+          store_whatsapp?: string | null
+          total?: number
+          updated_at?: string
+          user_id: string
+          whatsapp_message: string
+        }
+        Update: {
+          created_at?: string
+          customer_notes?: string | null
+          delivery_address?: string | null
+          delivery_fee?: number
+          discount?: number
+          id?: string
+          payment_method?: string | null
+          status?: string
+          store_emoji?: string | null
+          store_id?: string
+          store_image_url?: string | null
+          store_name?: string
+          store_slug?: string
+          store_whatsapp?: string | null
+          total?: number
+          updated_at?: string
+          user_id?: string
+          whatsapp_message?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
