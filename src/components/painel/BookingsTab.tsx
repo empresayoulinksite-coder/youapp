@@ -139,6 +139,11 @@ export function BookingsTab({
 
   return (
     <div>
+      <div className="mb-3 flex justify-end">
+        <Button size="sm" onClick={() => setNewOpen(true)}>
+          <Plus className="h-4 w-4" /> Novo agendamento
+        </Button>
+      </div>
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="pending">
