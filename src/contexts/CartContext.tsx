@@ -14,6 +14,7 @@ export interface CartItemRow {
     name: string;
     price: number;
     emoji: string;
+    image_url: string | null;
   } | null;
   stores: {
     id: string;
