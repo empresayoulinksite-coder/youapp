@@ -93,8 +93,16 @@ type Category = {
   is_available: boolean;
 };
 
+type StoreType = "food" | "ecommerce" | "service";
+const STORE_TYPE_TABS: { value: StoreType; label: string }[] = [
+  { value: "food", label: "Food" },
+  { value: "ecommerce", label: "E-commerce" },
+  { value: "service", label: "Serviços" },
+];
+
 function AdminProducts() {
   const qc = useQueryClient();
+  const [storeType, setStoreType] = useState<StoreType>("food");
   const [storeId, setStoreId] = useState<string>("");
   const [search, setSearch] = useState("");
   const [filterCat, setFilterCat] = useState<string>("all");
