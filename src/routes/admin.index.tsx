@@ -52,6 +52,7 @@ type Store = {
   hours: string | null;
   payment_methods: string | null;
   min_order: number;
+  is_paused: boolean;
 };
 
 async function lookupCep(rawCep: string) {
