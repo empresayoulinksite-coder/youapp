@@ -547,6 +547,7 @@ export type Database = {
           hours: string | null
           id: string
           image_url: string | null
+          is_paused: boolean
           min_order: number
           name: string
           neighborhood: string | null
@@ -572,6 +573,7 @@ export type Database = {
           hours?: string | null
           id?: string
           image_url?: string | null
+          is_paused?: boolean
           min_order?: number
           name: string
           neighborhood?: string | null
@@ -597,6 +599,7 @@ export type Database = {
           hours?: string | null
           id?: string
           image_url?: string | null
+          is_paused?: boolean
           min_order?: number
           name?: string
           neighborhood?: string | null

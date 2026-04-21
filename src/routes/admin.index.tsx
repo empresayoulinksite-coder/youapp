@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, UtensilsCrossed, ShoppingBag, Briefcase } from "lucide-react";
+import { Plus, Pencil, Trash2, UtensilsCrossed, ShoppingBag, Briefcase, Pause, Play } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -52,6 +52,7 @@ type Store = {
   hours: string | null;
   payment_methods: string | null;
   min_order: number;
+  is_paused: boolean;
 };
 
 async function lookupCep(rawCep: string) {
@@ -164,6 +165,18 @@ function AdminStores() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const togglePause = useMutation({
+    mutationFn: async ({ id, is_paused }: { id: string; is_paused: boolean }) => {
+      const { error } = await supabase.from("stores").update({ is_paused }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      toast.success(vars.is_paused ? "Loja pausada" : "Loja reaberta");
+      qc.invalidateQueries({ queryKey: ["admin-stores"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const handleFile = async (file: File) => {
     setUploading(true);
     try {
@@ -213,7 +226,14 @@ function AdminStores() {
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <h3 className="truncate font-semibold">{s.name}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="truncate font-semibold">{s.name}</h3>
+                    {s.is_paused && (
+                      <span className="rounded-full bg-destructive/10 px-1.5 py-0.5 text-[10px] font-medium text-destructive">
+                        Pausada
+                      </span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-1.5">
                     <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
                       {STORE_TYPES.find((t) => t.value === s.store_type)?.label ?? "Food"}
@@ -226,14 +246,30 @@ function AdminStores() {
               <div className="mt-3 flex gap-2">
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant={s.is_paused ? "default" : "secondary"}
                   className="flex-1"
+                  onClick={() => togglePause.mutate({ id: s.id, is_paused: !s.is_paused })}
+                  disabled={togglePause.isPending}
+                >
+                  {s.is_paused ? (
+                    <>
+                      <Play className="h-3 w-3" /> Reabrir
+                    </>
+                  ) : (
+                    <>
+                      <Pause className="h-3 w-3" /> Fechar
+                    </>
+                  )}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
                   onClick={() => {
                     setEditing(s);
                     setOpen(true);
                   }}
                 >
-                  <Pencil className="h-3 w-3" /> Editar
+                  <Pencil className="h-3 w-3" />
                 </Button>
                 <Button
                   size="sm"

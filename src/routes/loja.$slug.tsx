@@ -25,6 +25,7 @@ interface Store {
   hours: string | null;
   payment_methods: string | null;
   min_order: number;
+  is_paused: boolean;
 }
 
 interface MenuCategory {
@@ -138,12 +139,18 @@ function StorePage() {
     return () => clearInterval(t);
   }, []);
 
-  const open = isStoreOpen(hours, now);
-  const nextOpen = !open ? nextOpeningLabel(hours, now) : null;
+  const withinHours = isStoreOpen(hours, now);
+  const open = !store.is_paused && withinHours;
+  const nextOpen = !open && !store.is_paused ? nextOpeningLabel(hours, now) : null;
 
   const tryAdd = async (storeId: string, menuItemId: string) => {
     if (!open) {
-      toast.error(nextOpen ? `Loja fechada agora. ${nextOpen}.` : "Loja fechada no momento.");
+      const msg = store.is_paused
+        ? "Loja temporariamente fechada pelo lojista."
+        : nextOpen
+          ? `Loja fechada agora. ${nextOpen}.`
+          : "Loja fechada no momento.";
+      toast.error(msg);
       return;
     }
     await addItem(storeId, menuItemId);
@@ -197,7 +204,10 @@ function StorePage() {
             {open ? "Aberta" : "Fechada"}
           </span>
         </div>
-        {!open && nextOpen && (
+        {!open && store.is_paused && (
+          <p className="text-[11px] text-muted-foreground mt-1">Pausada pelo lojista</p>
+        )}
+        {!open && !store.is_paused && nextOpen && (
           <p className="text-[11px] text-muted-foreground mt-1">{nextOpen}</p>
         )}
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
