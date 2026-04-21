@@ -131,18 +131,22 @@ export const Route = createFileRoute("/loja/$slug")({
 });
 
 function StorePage() {
-  const { store, categories, items, coupons, reviews, hours } = Route.useLoaderData() as {
+  const router = useRouter();
+  const { store, categories, items, coupons, reviews, hours, services } = Route.useLoaderData() as {
     store: Store;
     categories: MenuCategory[];
     items: MenuItem[];
     coupons: Coupon[];
     reviews: Review[];
     hours: StoreHour[];
+    services: ServiceLite[];
   };
+  const isService = store.store_type === "service";
   const { user } = useAuth();
   const { items: cartItems, addItem, updateQuantity, count: cartCount } = useCart();
   const [tab, setTab] = useState<"menu" | "info" | "reviews">("menu");
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+  const [bookingService, setBookingService] = useState<ServiceLite | null>(null);
   const [now, setNow] = useState(() => new Date());
 
   // refresh "now" every minute so the open/closed badge updates without a refresh
