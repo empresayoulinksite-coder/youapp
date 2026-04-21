@@ -380,7 +380,18 @@ function OrdersPage() {
                     <div className="mt-3 pt-3 border-t border-border space-y-2">
                       {o.order_items.map((it) => (
                         <div key={it.id} className="flex items-center gap-2 text-sm">
-                          <span className="text-lg">{it.emoji ?? "•"}</span>
+                          <div className="h-8 w-8 rounded-md bg-brand-soft flex items-center justify-center text-base overflow-hidden shrink-0">
+                            {it.image_url ? (
+                              <img
+                                src={it.image_url}
+                                alt={it.name}
+                                className="h-full w-full object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              it.emoji ?? "•"
+                            )}
+                          </div>
                           <span className="flex-1 truncate">
                             {it.quantity}x {it.name}
                           </span>
