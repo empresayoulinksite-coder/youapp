@@ -148,7 +148,7 @@ function StorePage() {
   };
   const isService = store.store_type === "service";
   const { user } = useAuth();
-  const { items: cartItems, addItem, updateQuantity, count: cartCount } = useCart();
+  const { items: cartItems, addItem, switchStoreAndAdd, updateQuantity, count: cartCount } = useCart();
   const [tab, setTab] = useState<"menu" | "info" | "reviews">("menu");
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
