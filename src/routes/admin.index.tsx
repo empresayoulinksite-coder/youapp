@@ -393,14 +393,19 @@ function AdminStores() {
                   onChange={(e) => setEditing({ ...editing, city: e.target.value })}
                 />
               </div>
-              <div>
-                <Label>Horário</Label>
-                <Input
-                  value={editing.hours || ""}
-                  onChange={(e) => setEditing({ ...editing, hours: e.target.value })}
-                  placeholder="Seg-Dom 18h-23h"
-                />
-              </div>
+              {editing.id && (
+                <div className="sm:col-span-2">
+                  <Label>Horários de funcionamento</Label>
+                  <div className="mt-2">
+                    <StoreHoursEditor storeId={editing.id} />
+                  </div>
+                </div>
+              )}
+              {!editing.id && (
+                <div className="sm:col-span-2 rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+                  Salve a loja primeiro para configurar os horários de funcionamento.
+                </div>
+              )}
               <div className="sm:col-span-2">
                 <Label>Formas de pagamento</Label>
                 <Input
