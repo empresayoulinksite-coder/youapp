@@ -76,12 +76,13 @@ export const Route = createFileRoute("/loja/$slug")({
     if (error) throw error;
     if (!store) throw notFound();
 
-    const [categoriesRes, itemsRes, couponsRes, reviewsRes, hoursRes] = await Promise.all([
+    const [categoriesRes, itemsRes, couponsRes, reviewsRes, hoursRes, servicesRes] = await Promise.all([
       supabase.from("menu_categories").select("*").eq("store_id", store.id).order("position"),
       supabase.from("menu_items").select("*").eq("store_id", store.id).order("position"),
       supabase.from("store_coupons").select("*").eq("store_id", store.id),
       supabase.from("store_reviews").select("*").eq("store_id", store.id).order("created_at", { ascending: false }),
       supabase.from("store_hours").select("*").eq("store_id", store.id),
+      supabase.from("services").select("*").eq("store_id", store.id).eq("is_active", true).order("position"),
     ]);
 
     return {
@@ -91,6 +92,14 @@ export const Route = createFileRoute("/loja/$slug")({
       coupons: (couponsRes.data ?? []).map((c) => ({ ...c, min_order: Number(c.min_order) })) as Coupon[],
       reviews: (reviewsRes.data ?? []) as Review[],
       hours: (hoursRes.data ?? []) as StoreHour[],
+      services: (servicesRes.data ?? []).map((s) => ({
+        id: s.id as string,
+        name: s.name as string,
+        description: s.description as string | null,
+        price: Number(s.price),
+        duration_minutes: Number(s.duration_minutes),
+        image_url: s.image_url as string | null,
+      })),
     };
   },
   errorComponent: ({ error }) => {
