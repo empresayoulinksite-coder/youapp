@@ -436,20 +436,16 @@ function Index() {
                 <p className="text-xs text-muted-foreground">Moda, calçados, acessórios e beleza</p>
               </div>
               <div className="flex gap-1.5">
-                {ECOMMERCE_CATEGORY_SLUGS.map((s) => {
-                  const cat = categoryList.find((c) => c.slug === s);
-                  if (!cat) return null;
-                  return (
-                    <Link
-                      key={s}
-                      to="/categoria/$slug"
-                      params={{ slug: s }}
-                      className="text-[11px] font-semibold border border-border rounded-full px-2.5 py-1 hover:border-brand hover:text-brand"
-                    >
-                      {cat.label}
-                    </Link>
-                  );
-                })}
+                {ecommerceCats.map((cat) => (
+                  <Link
+                    key={cat.slug}
+                    to="/categoria/$slug"
+                    params={{ slug: cat.slug }}
+                    className="text-[11px] font-semibold border border-border rounded-full px-2.5 py-1 hover:border-brand hover:text-brand"
+                  >
+                    {cat.label}
+                  </Link>
+                ))}
               </div>
             </div>
             <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 snap-x snap-mandatory">
