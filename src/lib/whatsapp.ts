@@ -12,8 +12,12 @@ export function formatWhatsappNumber(raw: string): string {
  */
 export function openWhatsapp(rawPhone: string, message: string) {
   const phone = formatWhatsappNumber(rawPhone);
-  const text = encodeURIComponent(message);
-  const primaryUrl = `https://wa.me/${phone}?text=${text}`;
+  // Normaliza para NFC para garantir que emojis compostos (ex.: bandeiras, ZWJ)
+  // sejam codificados como uma única sequência UTF-8 válida.
+  const normalized = message.normalize("NFC");
+  const text = encodeURIComponent(normalized);
+  // api.whatsapp.com/send lida melhor com UTF-8/emojis que wa.me em alguns navegadores.
+  const primaryUrl = `https://api.whatsapp.com/send?phone=${phone}&text=${text}`;
   const fallbackUrl = `https://web.whatsapp.com/send?phone=${phone}&text=${text}`;
 
   const win = window.open(primaryUrl, "_blank", "noopener,noreferrer");
