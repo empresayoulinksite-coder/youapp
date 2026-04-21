@@ -281,7 +281,7 @@ function OrdersPage() {
                 value={sort}
                 onChange={(e) =>
                   navigate({
-                    search: (p: OrdersSearch) => ({ ...p, sort: e.target.value as typeof sort }),
+                    search: { store, status, sort: e.target.value as typeof sort },
                   })
                 }
                 className="w-full rounded-full bg-muted px-3 py-2 text-sm font-semibold outline-none"
