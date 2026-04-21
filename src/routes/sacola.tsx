@@ -54,6 +54,7 @@ function CartPage() {
       setStoreHours([]);
       setStorePaused(false);
       setStoreWhatsapp(null);
+      setStoreImageUrl(null);
       return;
     }
     supabase
@@ -63,12 +64,13 @@ function CartPage() {
       .then(({ data }) => setStoreHours((data ?? []) as StoreHour[]));
     supabase
       .from("stores")
-      .select("is_paused, whatsapp")
+      .select("is_paused, whatsapp, image_url")
       .eq("id", storeId)
       .maybeSingle()
       .then(({ data }) => {
         setStorePaused(!!data?.is_paused);
         setStoreWhatsapp(data?.whatsapp ?? null);
+        setStoreImageUrl(data?.image_url ?? null);
       });
   }, [storeId]);
 
