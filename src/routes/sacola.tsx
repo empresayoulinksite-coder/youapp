@@ -274,6 +274,7 @@ function CartPage() {
               if (customerName) {
                 lines.push("", `👤 Cliente: ${customerName}`);
               }
+              let deliveryAddress: string | null = null;
               if (active) {
                 const addrParts = [
                   active.street,
@@ -283,11 +284,47 @@ function CartPage() {
                   active.city,
                 ].filter(Boolean);
                 if (addrParts.length > 0) {
-                  lines.push(`📍 Entrega: ${addrParts.join(", ")}`);
+                  deliveryAddress = addrParts.join(", ");
+                  lines.push(`📍 Entrega: ${deliveryAddress}`);
                 }
               }
 
-              openWhatsapp(storeWhatsapp, lines.join("\n"));
+              const message = lines.join("\n");
+
+              // Salva o pedido no banco antes de abrir o WhatsApp
+              if (authUser && storeId) {
+                const firstStore = items[0]?.stores;
+                const { data: order, error: orderError } = await supabase
+                  .from("orders")
+                  .insert({
+                    user_id: authUser.id,
+                    store_id: storeId,
+                    store_name: storeName ?? firstStore?.name ?? "Loja",
+                    store_slug: storeSlug ?? firstStore?.slug ?? "",
+                    store_emoji: firstStore?.emoji ?? null,
+                    store_whatsapp: storeWhatsapp,
+                    total: grandTotal,
+                    discount,
+                    delivery_address: deliveryAddress,
+                    whatsapp_message: message,
+                    status: "sent",
+                  })
+                  .select("id")
+                  .single();
+                if (!orderError && order) {
+                  const itemRows = items.map((i) => ({
+                    order_id: order.id,
+                    menu_item_id: i.menu_item_id,
+                    name: i.menu_items?.name ?? "Item",
+                    quantity: i.quantity,
+                    unit_price: Number(i.menu_items?.price ?? 0),
+                    emoji: i.menu_items?.emoji ?? null,
+                  }));
+                  await supabase.from("order_items").insert(itemRows);
+                }
+              }
+
+              openWhatsapp(storeWhatsapp, message);
               await clear();
               clearCoupon();
               setSubmitting(false);
