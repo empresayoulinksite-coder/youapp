@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -11,12 +11,24 @@ import {
   Phone,
   MessageSquare,
   Calendar as CalIcon,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Tabs,
@@ -34,6 +46,13 @@ import {
 import { generateSlots, formatSlotLabel, type BookedRange } from "@/lib/booking-slots";
 import type { StoreHour } from "@/lib/store-hours";
 import { cn } from "@/lib/utils";
+
+type ServiceLite = {
+  id: string;
+  name: string;
+  duration_minutes: number;
+  price: number;
+};
 
 export type BookingRow = {
   id: string;
