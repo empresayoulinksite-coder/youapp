@@ -1,9 +1,11 @@
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Star, Clock, Bike, MapPin, CreditCard, Tag, Plus, Minus, ShoppingBag, MessageSquare, X } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
+import { isStoreOpen, nextOpeningLabel, groupByWeekday, formatTime, WEEKDAYS, type StoreHour } from "@/lib/store-hours";
 
 interface Store {
   id: string;
@@ -70,11 +72,12 @@ export const Route = createFileRoute("/loja/$slug")({
     if (error) throw error;
     if (!store) throw notFound();
 
-    const [categoriesRes, itemsRes, couponsRes, reviewsRes] = await Promise.all([
+    const [categoriesRes, itemsRes, couponsRes, reviewsRes, hoursRes] = await Promise.all([
       supabase.from("menu_categories").select("*").eq("store_id", store.id).order("position"),
       supabase.from("menu_items").select("*").eq("store_id", store.id).order("position"),
       supabase.from("store_coupons").select("*").eq("store_id", store.id),
       supabase.from("store_reviews").select("*").eq("store_id", store.id).order("created_at", { ascending: false }),
+      supabase.from("store_hours").select("*").eq("store_id", store.id),
     ]);
 
     return {
@@ -83,6 +86,7 @@ export const Route = createFileRoute("/loja/$slug")({
       items: (itemsRes.data ?? []).map((i) => ({ ...i, price: Number(i.price), original_price: i.original_price ? Number(i.original_price) : null })) as MenuItem[],
       coupons: (couponsRes.data ?? []).map((c) => ({ ...c, min_order: Number(c.min_order) })) as Coupon[],
       reviews: (reviewsRes.data ?? []) as Review[],
+      hours: (hoursRes.data ?? []) as StoreHour[],
     };
   },
   errorComponent: ({ error }) => {
@@ -114,17 +118,36 @@ export const Route = createFileRoute("/loja/$slug")({
 });
 
 function StorePage() {
-  const { store, categories, items, coupons, reviews } = Route.useLoaderData() as {
+  const { store, categories, items, coupons, reviews, hours } = Route.useLoaderData() as {
     store: Store;
     categories: MenuCategory[];
     items: MenuItem[];
     coupons: Coupon[];
     reviews: Review[];
+    hours: StoreHour[];
   };
   const { user } = useAuth();
   const { items: cartItems, addItem, updateQuantity, count: cartCount } = useCart();
   const [tab, setTab] = useState<"menu" | "info" | "reviews">("menu");
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+  const [now, setNow] = useState(() => new Date());
+
+  // refresh "now" every minute so the open/closed badge updates without a refresh
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+
+  const open = isStoreOpen(hours, now);
+  const nextOpen = !open ? nextOpeningLabel(hours, now) : null;
+
+  const tryAdd = async (storeId: string, menuItemId: string) => {
+    if (!open) {
+      toast.error(nextOpen ? `Loja fechada agora. ${nextOpen}.` : "Loja fechada no momento.");
+      return;
+    }
+    await addItem(storeId, menuItemId);
+  };
 
   const itemQty = (id: string) => cartItems.find((c) => c.menu_item_id === id)?.quantity ?? 0;
 
@@ -164,8 +187,20 @@ function StorePage() {
 
       {/* Store info card */}
       <div className="mx-4 -mt-6 bg-card rounded-2xl p-4 shadow-[var(--shadow-card)] relative">
-        <h2 className="text-xl font-bold">{store.name}</h2>
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+        <div className="flex items-start justify-between gap-2">
+          <h2 className="text-xl font-bold">{store.name}</h2>
+          <span
+            className={`shrink-0 text-[11px] font-bold px-2 py-1 rounded-full ${
+              open ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"
+            }`}
+          >
+            {open ? "Aberta" : "Fechada"}
+          </span>
+        </div>
+        {!open && nextOpen && (
+          <p className="text-[11px] text-muted-foreground mt-1">{nextOpen}</p>
+        )}
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
           <Star className="h-3.5 w-3.5 fill-warning text-warning" />
           <span className="font-semibold text-foreground">{avgRating}</span>
           <span>•</span>
@@ -278,13 +313,13 @@ function StorePage() {
                                     <QtyDecrement itemId={item.id} />
                                   </button>
                                   <span className="text-xs font-bold min-w-[14px] text-center">{qty}</span>
-                                  <button onClick={() => addItem(store.id, item.id)} className="p-0.5" aria-label="Aumentar">
+                                  <button onClick={() => tryAdd(store.id, item.id)} className="p-0.5" aria-label="Aumentar">
                                     <Plus className="h-3.5 w-3.5" />
                                   </button>
                                 </div>
                               ) : (
                                 <button
-                                  onClick={() => addItem(store.id, item.id)}
+                                  onClick={() => tryAdd(store.id, item.id)}
                                   className="text-brand bg-brand-soft rounded-full p-1.5"
                                   aria-label="Adicionar"
                                 >
@@ -322,12 +357,46 @@ function StorePage() {
                 </div>
               </div>
             )}
-            {store.hours && (
+            {(hours.length > 0 || store.hours) && (
               <div className="flex items-start gap-3">
                 <Clock className="h-5 w-5 text-brand shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-sm">Horário</p>
-                  <p className="text-sm text-muted-foreground">{store.hours}</p>
+                <div className="flex-1">
+                  <p className="font-semibold text-sm flex items-center gap-2">
+                    Horários
+                    <span
+                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                        open ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"
+                      }`}
+                    >
+                      {open ? "Aberta agora" : "Fechada"}
+                    </span>
+                  </p>
+                  {hours.length > 0 ? (
+                    <ul className="text-sm text-muted-foreground mt-1 space-y-0.5">
+                      {(() => {
+                        const grouped = groupByWeekday(hours);
+                        return WEEKDAYS.map((label, day) => {
+                          const dayHours = grouped[day]?.filter((h) => h.is_active) ?? [];
+                          return (
+                            <li key={day} className="flex justify-between gap-3">
+                              <span className={day === now.getDay() ? "font-semibold text-foreground" : ""}>
+                                {label}
+                              </span>
+                              <span className="text-right">
+                                {dayHours.length === 0
+                                  ? "Fechada"
+                                  : dayHours
+                                      .map((h) => `${formatTime(h.opens_at)}–${formatTime(h.closes_at)}`)
+                                      .join(", ")}
+                              </span>
+                            </li>
+                          );
+                        });
+                      })()}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{store.hours}</p>
+                  )}
                 </div>
               </div>
             )}
@@ -427,19 +496,20 @@ function StorePage() {
                           <Minus className="h-4 w-4" />
                         </button>
                         <span className="font-bold text-sm min-w-[20px] text-center">{itemQty(selectedItem.id)}</span>
-                        <button onClick={() => addItem(store.id, selectedItem.id)} className="text-brand" aria-label="Aumentar">
+                        <button onClick={() => tryAdd(store.id, selectedItem.id)} className="text-brand" aria-label="Aumentar">
                           <Plus className="h-4 w-4" />
                         </button>
                       </div>
                     ) : null}
                     <button
-                      onClick={() => {
-                        addItem(store.id, selectedItem.id);
+                      onClick={async () => {
+                        await tryAdd(store.id, selectedItem.id);
                         setSelectedItem(null);
                       }}
-                      className="flex-1 bg-brand text-brand-foreground font-bold py-3 rounded-full"
+                      disabled={!open}
+                      className="flex-1 bg-brand text-brand-foreground font-bold py-3 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Adicionar à sacola
+                      {open ? "Adicionar à sacola" : "Loja fechada"}
                     </button>
                   </>
                 ) : (
