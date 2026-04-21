@@ -4,7 +4,7 @@ import { ArrowLeft, Star, Clock, Bike, MapPin, CreditCard, Tag, Plus, Minus, Sho
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCart } from "@/contexts/CartContext";
+import { useCart, DifferentStoreError } from "@/contexts/CartContext";
 import { isStoreOpen, nextOpeningLabel, groupByWeekday, formatTime, WEEKDAYS, type StoreHour } from "@/lib/store-hours";
 import { BookingDialog, type ServiceLite } from "@/components/BookingDialog";
 import { StoreDistance } from "@/components/StoreDistance";
@@ -148,7 +148,7 @@ function StorePage() {
   };
   const isService = store.store_type === "service";
   const { user } = useAuth();
-  const { items: cartItems, addItem, updateQuantity, count: cartCount } = useCart();
+  const { items: cartItems, addItem, switchStoreAndAdd, updateQuantity, count: cartCount } = useCart();
   const [tab, setTab] = useState<"menu" | "info" | "reviews">("menu");
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
@@ -175,7 +175,20 @@ function StorePage() {
       toast.error(msg);
       return;
     }
-    await addItem(storeId, menuItemId);
+    try {
+      await addItem(storeId, menuItemId);
+    } catch (err) {
+      if (err instanceof DifferentStoreError) {
+        const ok = window.confirm(
+          "Você só pode pedir de uma loja por vez (o pedido vai pelo WhatsApp). Limpar o carrinho atual e adicionar este item?",
+        );
+        if (ok) {
+          await switchStoreAndAdd(storeId, menuItemId);
+        }
+      } else {
+        throw err;
+      }
+    }
   };
 
   const itemQty = (id: string) => cartItems.find((c) => c.menu_item_id === id)?.quantity ?? 0;

@@ -29,10 +29,20 @@ interface CartContextValue {
   total: number;
   loading: boolean;
   addItem: (storeId: string, menuItemId: string) => Promise<void>;
+  /** Limpa o carrinho atual e adiciona o item da nova loja. */
+  switchStoreAndAdd: (storeId: string, menuItemId: string) => Promise<void>;
+  /** Loja atualmente no carrinho, se houver. */
+  currentStoreId: string | null;
   updateQuantity: (id: string, quantity: number) => Promise<void>;
   removeItem: (id: string) => Promise<void>;
   clear: () => Promise<void>;
   refresh: () => Promise<void>;
+}
+
+export class DifferentStoreError extends Error {
+  constructor(public currentStoreId: string, public newStoreId: string) {
+    super("Você só pode pedir de uma loja por vez.");
+  }
 }
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
@@ -65,11 +75,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addItem = async (storeId: string, menuItemId: string) => {
     if (!user) return;
+    const currentStoreId = items[0]?.store_id ?? null;
+    if (currentStoreId && currentStoreId !== storeId) {
+      throw new DifferentStoreError(currentStoreId, storeId);
+    }
     const existing = items.find((i) => i.menu_item_id === menuItemId);
     if (existing) {
       await updateQuantity(existing.id, existing.quantity + 1);
       return;
     }
+    const { error } = await supabase.from("cart_items").insert({
+      user_id: user.id,
+      store_id: storeId,
+      menu_item_id: menuItemId,
+      quantity: 1,
+    });
+    if (!error) await refresh();
+  };
+
+  const switchStoreAndAdd = async (storeId: string, menuItemId: string) => {
+    if (!user) return;
+    await supabase.from("cart_items").delete().eq("user_id", user.id);
     const { error } = await supabase.from("cart_items").insert({
       user_id: user.id,
       store_id: storeId,
@@ -101,9 +127,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const count = items.reduce((sum, i) => sum + i.quantity, 0);
   const total = items.reduce((sum, i) => sum + (i.menu_items ? Number(i.menu_items.price) * i.quantity : 0), 0);
+  const currentStoreId = items[0]?.store_id ?? null;
 
   return (
-    <CartContext.Provider value={{ items, count, total, loading, addItem, updateQuantity, removeItem, clear, refresh }}>
+    <CartContext.Provider value={{ items, count, total, loading, currentStoreId, addItem, switchStoreAndAdd, updateQuantity, removeItem, clear, refresh }}>
       {children}
     </CartContext.Provider>
   );
