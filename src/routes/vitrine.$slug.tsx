@@ -115,7 +115,7 @@ function VitrinePage() {
     categories: CategoryRow[];
   };
   const { user } = useAuth();
-  const { count: cartCount, addItem } = useCart();
+  const { count: cartCount, addItem, switchStoreAndAdd } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
 
   const [query, setQuery] = useState("");
@@ -189,7 +189,16 @@ function VitrinePage() {
       return;
     }
     setAdding(productId);
-    await addItem(store.id, productId);
+    try {
+      await addItem(store.id, productId);
+    } catch (err) {
+      if (err instanceof DifferentStoreError) {
+        const ok = window.confirm(
+          "Você só pode pedir de uma loja por vez (o pedido vai pelo WhatsApp). Limpar o carrinho atual e adicionar este item?",
+        );
+        if (ok) await switchStoreAndAdd(store.id, productId);
+      }
+    }
     setTimeout(() => setAdding(null), 600);
   };
 
