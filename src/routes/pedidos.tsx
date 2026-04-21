@@ -31,6 +31,8 @@ const ordersSearchSchema = z.object({
   sort: fallback(z.enum(["recent", "oldest", "highest", "lowest"]), "recent").default("recent"),
 });
 
+type OrdersSearch = z.infer<typeof ordersSearchSchema>;
+
 export const Route = createFileRoute("/pedidos")({
   validateSearch: zodValidator(ordersSearchSchema),
   head: () => ({
