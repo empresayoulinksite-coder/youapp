@@ -51,6 +51,7 @@ type OrderItem = {
   quantity: number;
   unit_price: number;
   emoji: string | null;
+  image_url: string | null;
 };
 
 type Order = {
@@ -60,6 +61,7 @@ type Order = {
   store_name: string;
   store_slug: string;
   store_emoji: string | null;
+  store_image_url: string | null;
   store_whatsapp: string | null;
   total: number;
   discount: number;
@@ -111,7 +113,7 @@ function OrdersPage() {
       const { data, error } = await supabase
         .from("orders")
         .select(
-          "id, created_at, store_id, store_name, store_slug, store_emoji, store_whatsapp, total, discount, delivery_address, whatsapp_message, status, order_items(id, menu_item_id, name, quantity, unit_price, emoji)",
+          "id, created_at, store_id, store_name, store_slug, store_emoji, store_image_url, store_whatsapp, total, discount, delivery_address, whatsapp_message, status, order_items(id, menu_item_id, name, quantity, unit_price, emoji, image_url)",
         )
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
@@ -130,10 +132,10 @@ function OrdersPage() {
 
   // Lojas únicas presentes nos pedidos
   const uniqueStores = useMemo(() => {
-    const map = new Map<string, { id: string; name: string; emoji: string | null }>();
+    const map = new Map<string, { id: string; name: string; emoji: string | null; image_url: string | null }>();
     orders.forEach((o) => {
       if (!map.has(o.store_id)) {
-        map.set(o.store_id, { id: o.store_id, name: o.store_name, emoji: o.store_emoji });
+        map.set(o.store_id, { id: o.store_id, name: o.store_name, emoji: o.store_emoji, image_url: o.store_image_url });
       }
     });
     return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
@@ -247,7 +249,11 @@ function OrdersPage() {
                     active={store === s.id}
                     onClick={() => navigate({ search: { store: s.id, status, sort } })}
                   >
-                    {s.emoji ? <span className="mr-1">{s.emoji}</span> : null}
+                    {s.image_url ? (
+                      <img src={s.image_url} alt="" className="inline-block h-4 w-4 rounded-full object-cover mr-1 -ml-0.5 align-[-2px]" />
+                    ) : s.emoji ? (
+                      <span className="mr-1">{s.emoji}</span>
+                    ) : null}
                     {s.name}
                   </FilterChip>
                 ))}
@@ -338,8 +344,17 @@ function OrdersPage() {
                     onClick={() => setExpanded(isOpen ? null : o.id)}
                     className="w-full flex items-start gap-3 text-left"
                   >
-                    <div className="h-12 w-12 rounded-lg bg-brand-soft flex items-center justify-center text-2xl shrink-0">
-                      {o.store_emoji ?? "🛍️"}
+                    <div className="h-12 w-12 rounded-lg bg-brand-soft flex items-center justify-center text-2xl shrink-0 overflow-hidden">
+                      {o.store_image_url ? (
+                        <img
+                          src={o.store_image_url}
+                          alt={o.store_name}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        o.store_emoji ?? "🛍️"
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
@@ -369,7 +384,18 @@ function OrdersPage() {
                     <div className="mt-3 pt-3 border-t border-border space-y-2">
                       {o.order_items.map((it) => (
                         <div key={it.id} className="flex items-center gap-2 text-sm">
-                          <span className="text-lg">{it.emoji ?? "•"}</span>
+                          <div className="h-8 w-8 rounded-md bg-brand-soft flex items-center justify-center text-base overflow-hidden shrink-0">
+                            {it.image_url ? (
+                              <img
+                                src={it.image_url}
+                                alt={it.name}
+                                className="h-full w-full object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              it.emoji ?? "•"
+                            )}
+                          </div>
                           <span className="flex-1 truncate">
                             {it.quantity}x {it.name}
                           </span>

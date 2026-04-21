@@ -38,6 +38,7 @@ function CartPage() {
   const [storeHours, setStoreHours] = useState<StoreHour[]>([]);
   const [storePaused, setStorePaused] = useState(false);
   const [storeWhatsapp, setStoreWhatsapp] = useState<string | null>(null);
+  const [storeImageUrl, setStoreImageUrl] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
   const [submitting, setSubmitting] = useState(false);
   const { active } = useAddress();
@@ -53,6 +54,7 @@ function CartPage() {
       setStoreHours([]);
       setStorePaused(false);
       setStoreWhatsapp(null);
+      setStoreImageUrl(null);
       return;
     }
     supabase
@@ -62,12 +64,13 @@ function CartPage() {
       .then(({ data }) => setStoreHours((data ?? []) as StoreHour[]));
     supabase
       .from("stores")
-      .select("is_paused, whatsapp")
+      .select("is_paused, whatsapp, image_url")
       .eq("id", storeId)
       .maybeSingle()
       .then(({ data }) => {
         setStorePaused(!!data?.is_paused);
         setStoreWhatsapp(data?.whatsapp ?? null);
+        setStoreImageUrl(data?.image_url ?? null);
       });
   }, [storeId]);
 
@@ -311,6 +314,7 @@ function CartPage() {
                     store_name: storeName ?? firstStore?.name ?? "Loja",
                     store_slug: storeSlug ?? firstStore?.slug ?? "",
                     store_emoji: firstStore?.emoji ?? null,
+                    store_image_url: storeImageUrl,
                     store_whatsapp: storeWhatsapp,
                     total: grandTotal,
                     discount,
@@ -328,6 +332,7 @@ function CartPage() {
                     quantity: i.quantity,
                     unit_price: Number(i.menu_items?.price ?? 0),
                     emoji: i.menu_items?.emoji ?? null,
+                    image_url: i.menu_items?.image_url ?? null,
                   }));
                   await supabase.from("order_items").insert(itemRows);
                 }
