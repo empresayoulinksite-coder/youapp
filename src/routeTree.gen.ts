@@ -28,6 +28,7 @@ import { Route as CategoriaSlugRouteImport } from './routes/categoria.$slug'
 import { Route as AdminStoriesRouteImport } from './routes/admin.stories'
 import { Route as AdminProdutosRouteImport } from './routes/admin.produtos'
 import { Route as AdminCuponsRouteImport } from './routes/admin.cupons'
+import { Route as AdminCategoriasHomeRouteImport } from './routes/admin.categorias-home'
 import { Route as AdminCategoriasEcommerceRouteImport } from './routes/admin.categorias-ecommerce'
 
 const SacolaRoute = SacolaRouteImport.update({
@@ -125,6 +126,11 @@ const AdminCuponsRoute = AdminCuponsRouteImport.update({
   path: '/cupons',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCategoriasHomeRoute = AdminCategoriasHomeRouteImport.update({
+  id: '/categorias-home',
+  path: '/categorias-home',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCategoriasEcommerceRoute =
   AdminCategoriasEcommerceRouteImport.update({
     id: '/categorias-ecommerce',
@@ -145,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/perfil': typeof PerfilRoute
   '/sacola': typeof SacolaRoute
   '/admin/categorias-ecommerce': typeof AdminCategoriasEcommerceRoute
+  '/admin/categorias-home': typeof AdminCategoriasHomeRoute
   '/admin/cupons': typeof AdminCuponsRoute
   '/admin/produtos': typeof AdminProdutosRoute
   '/admin/stories': typeof AdminStoriesRoute
@@ -166,6 +173,7 @@ export interface FileRoutesByTo {
   '/perfil': typeof PerfilRoute
   '/sacola': typeof SacolaRoute
   '/admin/categorias-ecommerce': typeof AdminCategoriasEcommerceRoute
+  '/admin/categorias-home': typeof AdminCategoriasHomeRoute
   '/admin/cupons': typeof AdminCuponsRoute
   '/admin/produtos': typeof AdminProdutosRoute
   '/admin/stories': typeof AdminStoriesRoute
@@ -189,6 +197,7 @@ export interface FileRoutesById {
   '/perfil': typeof PerfilRoute
   '/sacola': typeof SacolaRoute
   '/admin/categorias-ecommerce': typeof AdminCategoriasEcommerceRoute
+  '/admin/categorias-home': typeof AdminCategoriasHomeRoute
   '/admin/cupons': typeof AdminCuponsRoute
   '/admin/produtos': typeof AdminProdutosRoute
   '/admin/stories': typeof AdminStoriesRoute
@@ -213,6 +222,7 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/sacola'
     | '/admin/categorias-ecommerce'
+    | '/admin/categorias-home'
     | '/admin/cupons'
     | '/admin/produtos'
     | '/admin/stories'
@@ -234,6 +244,7 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/sacola'
     | '/admin/categorias-ecommerce'
+    | '/admin/categorias-home'
     | '/admin/cupons'
     | '/admin/produtos'
     | '/admin/stories'
@@ -256,6 +267,7 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/sacola'
     | '/admin/categorias-ecommerce'
+    | '/admin/categorias-home'
     | '/admin/cupons'
     | '/admin/produtos'
     | '/admin/stories'
@@ -419,6 +431,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCuponsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/categorias-home': {
+      id: '/admin/categorias-home'
+      path: '/categorias-home'
+      fullPath: '/admin/categorias-home'
+      preLoaderRoute: typeof AdminCategoriasHomeRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/categorias-ecommerce': {
       id: '/admin/categorias-ecommerce'
       path: '/categorias-ecommerce'
@@ -431,6 +450,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminCategoriasEcommerceRoute: typeof AdminCategoriasEcommerceRoute
+  AdminCategoriasHomeRoute: typeof AdminCategoriasHomeRoute
   AdminCuponsRoute: typeof AdminCuponsRoute
   AdminProdutosRoute: typeof AdminProdutosRoute
   AdminStoriesRoute: typeof AdminStoriesRoute
@@ -439,6 +459,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminCategoriasEcommerceRoute: AdminCategoriasEcommerceRoute,
+  AdminCategoriasHomeRoute: AdminCategoriasHomeRoute,
   AdminCuponsRoute: AdminCuponsRoute,
   AdminProdutosRoute: AdminProdutosRoute,
   AdminStoriesRoute: AdminStoriesRoute,
