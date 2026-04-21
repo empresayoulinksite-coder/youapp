@@ -436,11 +436,41 @@ function AdminProducts() {
         </p>
       </div>
 
+      <div className="mb-4 flex gap-2 border-b">
+        {STORE_TYPE_TABS.map((t) => {
+          const active = t.value === storeType;
+          return (
+            <button
+              key={t.value}
+              onClick={() => {
+                setStoreType(t.value);
+                setStoreId("");
+              }}
+              className={
+                "relative px-4 py-2 text-sm font-medium transition-colors " +
+                (active
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground")
+              }
+            >
+              {t.label}
+              {active && (
+                <span className="absolute inset-x-0 -bottom-px h-0.5 bg-primary" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
       <div className="mb-4 max-w-sm">
         <Label>Loja</Label>
         <Select value={storeId} onValueChange={setStoreId}>
           <SelectTrigger>
-            <SelectValue placeholder="Escolha uma loja" />
+            <SelectValue placeholder={
+              stores.length === 0
+                ? `Nenhuma loja ${STORE_TYPE_TABS.find((t) => t.value === storeType)?.label}`
+                : "Escolha uma loja"
+            } />
           </SelectTrigger>
           <SelectContent>
             {stores.map((s) => (
