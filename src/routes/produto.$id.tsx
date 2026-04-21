@@ -3,7 +3,8 @@ import { useState } from "react";
 import { ChevronLeft, ShoppingBag, Heart, Star, Truck, ShieldCheck, RotateCcw, Minus, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCart } from "@/contexts/CartContext";
+import { useCart, DifferentStoreError } from "@/contexts/CartContext";
+import { toast } from "sonner";
 
 interface Product {
   id: string;
@@ -99,7 +100,7 @@ function ProductPage() {
     related: Product[];
   };
   const { user } = useAuth();
-  const { count: cartCount, addItem } = useCart();
+  const { count: cartCount, addItem, switchStoreAndAdd } = useCart();
   const [qty, setQty] = useState(1);
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
@@ -118,8 +119,29 @@ function ProductPage() {
       return;
     }
     setAdding(true);
-    for (let i = 0; i < qty; i++) {
-      await addItem(store.id, product.id);
+    try {
+      for (let i = 0; i < qty; i++) {
+        await addItem(store.id, product.id);
+      }
+    } catch (err) {
+      if (err instanceof DifferentStoreError) {
+        const ok = window.confirm(
+          "Você só pode pedir de uma loja por vez (o pedido vai pelo WhatsApp). Limpar o carrinho atual e adicionar este item?",
+        );
+        if (ok) {
+          await switchStoreAndAdd(store.id, product.id);
+          for (let i = 1; i < qty; i++) {
+            await addItem(store.id, product.id);
+          }
+        } else {
+          setAdding(false);
+          return;
+        }
+      } else {
+        toast.error("Erro ao adicionar.");
+        setAdding(false);
+        return;
+      }
     }
     setAdding(false);
     setAdded(true);
