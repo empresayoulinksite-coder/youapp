@@ -136,6 +136,7 @@ export const Route = createFileRoute("/loja/$slug")({
 
 function StorePage() {
   const router = useRouter();
+  const navigate = useNavigate();
   const { store, categories, items, coupons, reviews, hours, services } = Route.useLoaderData() as {
     store: Store;
     categories: MenuCategory[];
