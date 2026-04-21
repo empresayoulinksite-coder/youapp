@@ -240,17 +240,63 @@ function CartPage() {
             </p>
           )}
           <button
-            onClick={() => {
+            onClick={async () => {
               if (!storeOpen) {
                 toast.error("A loja está fechada no momento.");
                 return;
               }
-              alert("Pedido enviado! (mock)");
+              if (!storeWhatsapp) {
+                toast.error("Loja sem WhatsApp cadastrado. Não é possível finalizar.");
+                return;
+              }
+              setSubmitting(true);
+              const fmtBRL = (n: number) => `R$ ${n.toFixed(2).replace(".", ",")}`;
+              const lines = [
+                `Olá, ${storeName}! Gostaria de fazer um pedido:`,
+                "",
+                ...items.map((i) => {
+                  const name = i.menu_items?.name ?? "Item";
+                  const price = Number(i.menu_items?.price ?? 0);
+                  return `• ${i.quantity}x ${name} — ${fmtBRL(price * i.quantity)}`;
+                }),
+                "",
+                `Subtotal: ${fmtBRL(total)}`,
+              ];
+              if (discount > 0 && applied) {
+                lines.push(`Cupom ${applied.code}: -${fmtBRL(discount)}`);
+              }
+              lines.push(`*Total: ${fmtBRL(grandTotal)}*`);
+
+              const customerName =
+                authUser?.user_metadata?.full_name ||
+                authUser?.user_metadata?.name ||
+                authUser?.email?.split("@")[0];
+              if (customerName) {
+                lines.push("", `👤 Cliente: ${customerName}`);
+              }
+              if (active) {
+                const addrParts = [
+                  active.street,
+                  active.number,
+                  active.complement,
+                  active.neighborhood,
+                  active.city,
+                ].filter(Boolean);
+                if (addrParts.length > 0) {
+                  lines.push(`📍 Entrega: ${addrParts.join(", ")}`);
+                }
+              }
+
+              openWhatsapp(storeWhatsapp, lines.join("\n"));
+              await clear();
+              clearCoupon();
+              setSubmitting(false);
+              toast.success("Pedido enviado! Continue no WhatsApp.");
             }}
-            disabled={!storeOpen}
+            disabled={!storeOpen || submitting}
             className="w-full bg-brand text-brand-foreground font-bold py-3.5 rounded-full shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {storeOpen ? "Finalizar pedido" : "Loja fechada"}
+            {submitting ? "Enviando..." : storeOpen ? "Finalizar pedido pelo WhatsApp" : "Loja fechada"}
           </button>
         </div>
       )}
