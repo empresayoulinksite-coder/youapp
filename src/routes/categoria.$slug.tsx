@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { categories, findCategoryBySlug, norm, isEcommerceCategorySlug } from "@/lib/categories";
 import { ChevronLeft, Star, Clock, Bike } from "lucide-react";
 
+import { StoreDistance } from "@/components/StoreDistance";
+
 interface StoreRow {
   id: string;
   slug: string;
@@ -16,6 +18,8 @@ interface StoreRow {
   delivery_fee: string;
   free_delivery: boolean;
   promo: string | null;
+  lat: number | null;
+  lng: number | null;
 }
 
 interface MenuItemRow {
@@ -42,7 +46,7 @@ export const Route = createFileRoute("/categoria/$slug")({
     const { data: storesData, error: storesErr } = await supabase
       .from("stores")
       .select(
-        "id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, promo",
+        "id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, promo, lat, lng",
       )
       .order("rating", { ascending: false });
     if (storesErr) throw storesErr;
@@ -297,7 +301,7 @@ function CategoryPage() {
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground truncate">
-                        {s.category} • {s.distance}
+                        {s.category} • <StoreDistance store={s} />
                       </p>
                       <div className="flex items-center gap-3 text-xs mt-1">
                         <span className="flex items-center gap-1 text-muted-foreground">

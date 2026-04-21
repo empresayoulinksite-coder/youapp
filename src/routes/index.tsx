@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { X } from "lucide-react";
 import { normalizeText } from "@/hooks/use-location";
 import { StoriesBar } from "@/components/StoriesBar";
+import { StoreDistance } from "@/components/StoreDistance";
 
 import {
   MapPin,
@@ -53,6 +54,8 @@ interface StoreRow {
   promo: string | null;
   neighborhood: string | null;
   city: string | null;
+  lat: number | null;
+  lng: number | null;
 }
 
 interface MenuItemRow {
@@ -70,7 +73,7 @@ export const Route = createFileRoute("/")({
   loader: async () => {
     const { data, error } = await supabase
       .from("stores")
-      .select("id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, promo, neighborhood, city")
+      .select("id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, promo, neighborhood, city, lat, lng")
       .order("name");
     if (error) throw error;
     const stores = (data ?? []) as StoreRow[];
@@ -722,7 +725,7 @@ function StoreCard({
               <span>•</span>
               <span className="truncate">{r.category}</span>
               <span>•</span>
-              <span>{r.distance}</span>
+              <StoreDistance store={r} />
             </div>
             <div className="flex items-center gap-3 text-xs mt-1.5">
               <span className="flex items-center gap-1 text-muted-foreground">

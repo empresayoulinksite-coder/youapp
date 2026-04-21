@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { isStoreOpen, nextOpeningLabel, groupByWeekday, formatTime, WEEKDAYS, type StoreHour } from "@/lib/store-hours";
 import { BookingDialog, type ServiceLite } from "@/components/BookingDialog";
+import { StoreDistance } from "@/components/StoreDistance";
 
 interface Store {
   id: string;
@@ -30,6 +31,8 @@ interface Store {
   store_type: "food" | "ecommerce" | "service";
   slot_minutes: number;
   whatsapp: string | null;
+  lat: number | null;
+  lng: number | null;
 }
 
 interface MenuCategory {
@@ -234,7 +237,7 @@ function StorePage() {
           <span>•</span>
           <span>{store.category}</span>
           <span>•</span>
-          <span>{store.distance}</span>
+          <StoreDistance store={store} />
         </div>
         <div className="flex items-center gap-3 text-xs mt-2">
           <span className="flex items-center gap-1 text-muted-foreground">

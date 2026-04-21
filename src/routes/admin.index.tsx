@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { uploadImage } from "@/lib/upload";
 import { StoreHoursEditor } from "@/components/StoreHoursEditor";
+import { geocodeAddress } from "@/lib/distance";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminStores,
@@ -54,6 +55,8 @@ type Store = {
   min_order: number;
   is_paused: boolean;
   whatsapp: string | null;
+  lat: number | null;
+  lng: number | null;
 };
 
 async function lookupCep(rawCep: string) {
@@ -139,7 +142,26 @@ function AdminStores() {
         payment_methods: s.payment_methods || null,
         min_order: Number(s.min_order) || 0,
         whatsapp: s.whatsapp ? s.whatsapp.replace(/\D/g, "") : null,
+        lat: s.lat ?? null,
+        lng: s.lng ?? null,
       };
+
+      // Geocodifica automaticamente se temos endereço e ainda não temos coordenadas,
+      // ou se o endereço foi alterado em relação ao salvo.
+      const hasAddress = !!(s.address || s.cep || s.city);
+      if (hasAddress) {
+        const coords = await geocodeAddress({
+          address: s.address,
+          neighborhood: s.neighborhood,
+          city: s.city,
+          cep: s.cep,
+        });
+        if (coords) {
+          payload.lat = coords.lat;
+          payload.lng = coords.lng;
+        }
+      }
+
       if (s.id) {
         const { error } = await supabase.from("stores").update(payload).eq("id", s.id);
         if (error) throw error;
