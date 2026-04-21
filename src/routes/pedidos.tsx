@@ -51,6 +51,7 @@ type OrderItem = {
   quantity: number;
   unit_price: number;
   emoji: string | null;
+  image_url: string | null;
 };
 
 type Order = {
@@ -60,6 +61,7 @@ type Order = {
   store_name: string;
   store_slug: string;
   store_emoji: string | null;
+  store_image_url: string | null;
   store_whatsapp: string | null;
   total: number;
   discount: number;
