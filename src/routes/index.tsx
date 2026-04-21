@@ -300,23 +300,26 @@ function Index() {
         <section className="-mx-4">
           <div className="overflow-x-auto no-scrollbar px-4 snap-x">
             <div className="grid grid-rows-2 grid-flow-col auto-cols-[68px] sm:auto-cols-[80px] gap-y-5 gap-x-2">
-              {categoryList.map(({ slug, label, Icon, tint }) => (
-                <Link
-                  key={slug}
-                  to="/categoria/$slug"
-                  params={{ slug }}
-                  className="flex flex-col items-center gap-2 group snap-start"
-                >
-                  <span
-                    className={`h-14 w-14 rounded-2xl flex items-center justify-center ${tint} transition-transform group-hover:scale-105`}
+              {homeCategories.map((c) => {
+                const Icon = getCategoryIcon(c.icon);
+                return (
+                  <Link
+                    key={c.slug}
+                    to="/categoria/$slug"
+                    params={{ slug: c.slug }}
+                    className="flex flex-col items-center gap-2 group snap-start"
                   >
-                    <Icon className="h-6 w-6" />
-                  </span>
-                  <span className="text-[11px] text-center leading-tight text-foreground">
-                    {label}
-                  </span>
-                </Link>
-              ))}
+                    <span
+                      className={`h-14 w-14 rounded-2xl flex items-center justify-center ${c.tint} transition-transform group-hover:scale-105`}
+                    >
+                      <Icon className="h-6 w-6" />
+                    </span>
+                    <span className="text-[11px] text-center leading-tight text-foreground">
+                      {c.label}
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </section>
