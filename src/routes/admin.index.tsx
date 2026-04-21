@@ -74,6 +74,7 @@ const empty: Partial<Store> = {
   promo: "",
   image_url: "",
   about: "",
+  cep: "",
   address: "",
   neighborhood: "",
   city: "",
