@@ -197,6 +197,13 @@ function PainelPage() {
           </div>
         )}
 
+        {currentStore && (
+          <StoreWhatsappEditor
+            storeId={currentStore.id}
+            initialWhatsapp={currentStore.whatsapp}
+          />
+        )}
+
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview" className="gap-1.5">
