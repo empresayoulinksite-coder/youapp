@@ -165,6 +165,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_available: boolean
           name: string
           position: number
           store_id: string
@@ -172,6 +173,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_available?: boolean
           name: string
           position?: number
           store_id: string
@@ -179,6 +181,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_available?: boolean
           name?: string
           position?: number
           store_id?: string
@@ -193,6 +196,50 @@ export type Database = {
           },
         ]
       }
+      menu_item_variations: {
+        Row: {
+          created_at: string
+          id: string
+          is_available: boolean
+          menu_item_id: string
+          name: string
+          original_price: number | null
+          position: number
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_available?: boolean
+          menu_item_id: string
+          name: string
+          original_price?: number | null
+          position?: number
+          price: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_available?: boolean
+          menu_item_id?: string
+          name?: string
+          original_price?: number | null
+          position?: number
+          price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_item_variations_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_items: {
         Row: {
           category_id: string
@@ -201,6 +248,7 @@ export type Database = {
           emoji: string
           id: string
           image_url: string | null
+          is_available: boolean
           name: string
           original_price: number | null
           position: number
@@ -216,6 +264,7 @@ export type Database = {
           emoji?: string
           id?: string
           image_url?: string | null
+          is_available?: boolean
           name: string
           original_price?: number | null
           position?: number
@@ -231,6 +280,7 @@ export type Database = {
           emoji?: string
           id?: string
           image_url?: string | null
+          is_available?: boolean
           name?: string
           original_price?: number | null
           position?: number
