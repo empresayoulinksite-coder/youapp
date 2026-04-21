@@ -31,6 +31,8 @@ interface CartContextValue {
   addItem: (storeId: string, menuItemId: string) => Promise<void>;
   /** Limpa o carrinho atual e adiciona o item da nova loja. */
   switchStoreAndAdd: (storeId: string, menuItemId: string) => Promise<void>;
+  /** Limpa o carrinho e adiciona vários itens (usado em "Pedir de novo"). */
+  reorder: (storeId: string, items: Array<{ menu_item_id: string; quantity: number }>) => Promise<void>;
   /** Loja atualmente no carrinho, se houver. */
   currentStoreId: string | null;
   updateQuantity: (id: string, quantity: number) => Promise<void>;
@@ -105,6 +107,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (!error) await refresh();
   };
 
+  const reorder = async (
+    storeId: string,
+    newItems: Array<{ menu_item_id: string; quantity: number }>,
+  ) => {
+    if (!user) return;
+    await supabase.from("cart_items").delete().eq("user_id", user.id);
+    if (newItems.length > 0) {
+      const rows = newItems.map((i) => ({
+        user_id: user.id,
+        store_id: storeId,
+        menu_item_id: i.menu_item_id,
+        quantity: i.quantity,
+      }));
+      await supabase.from("cart_items").insert(rows);
+    }
+    await refresh();
+  };
+
   const updateQuantity = async (id: string, quantity: number) => {
     if (quantity <= 0) {
       await removeItem(id);
@@ -130,7 +150,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const currentStoreId = items[0]?.store_id ?? null;
 
   return (
-    <CartContext.Provider value={{ items, count, total, loading, currentStoreId, addItem, switchStoreAndAdd, updateQuantity, removeItem, clear, refresh }}>
+    <CartContext.Provider value={{ items, count, total, loading, currentStoreId, addItem, switchStoreAndAdd, reorder, updateQuantity, removeItem, clear, refresh }}>
       {children}
     </CartContext.Provider>
   );
