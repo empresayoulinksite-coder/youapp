@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, LogOut, User as UserIcon, Mail, Save, Shield } from "lucide-react";
+import { ArrowLeft, LogOut, User as UserIcon, Mail, Save, Shield, Store } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsAdmin } from "@/hooks/use-admin";
+import { useIsStoreOwner } from "@/hooks/use-store-owner";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/perfil")({
@@ -24,6 +25,7 @@ interface ProfileRow {
 function ProfilePage() {
   const { user, loading, signOut } = useAuth();
   const { isAdmin } = useIsAdmin();
+  const { isStoreOwner } = useIsStoreOwner();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [displayName, setDisplayName] = useState("");
@@ -141,6 +143,16 @@ function ProfilePage() {
             {saving ? "Salvando..." : "Salvar alterações"}
           </button>
         </div>
+
+        {isStoreOwner && (
+          <Link
+            to="/painel"
+            className="w-full bg-brand-soft border border-brand/30 text-brand font-semibold py-3 rounded-full flex items-center justify-center gap-2 hover:bg-brand/10"
+          >
+            <Store className="h-4 w-4" />
+            Painel da Loja
+          </Link>
+        )}
 
         {isAdmin && (
           <Link
