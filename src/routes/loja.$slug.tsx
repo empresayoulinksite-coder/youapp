@@ -27,6 +27,8 @@ interface Store {
   payment_methods: string | null;
   min_order: number;
   is_paused: boolean;
+  store_type: "food" | "ecommerce" | "service";
+  slot_minutes: number;
 }
 
 interface MenuCategory {
