@@ -29,10 +29,20 @@ interface CartContextValue {
   total: number;
   loading: boolean;
   addItem: (storeId: string, menuItemId: string) => Promise<void>;
+  /** Limpa o carrinho atual e adiciona o item da nova loja. */
+  switchStoreAndAdd: (storeId: string, menuItemId: string) => Promise<void>;
+  /** Loja atualmente no carrinho, se houver. */
+  currentStoreId: string | null;
   updateQuantity: (id: string, quantity: number) => Promise<void>;
   removeItem: (id: string) => Promise<void>;
   clear: () => Promise<void>;
   refresh: () => Promise<void>;
+}
+
+export class DifferentStoreError extends Error {
+  constructor(public currentStoreId: string, public newStoreId: string) {
+    super("Você só pode pedir de uma loja por vez.");
+  }
 }
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
