@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, UtensilsCrossed, ShoppingBag, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -22,11 +22,20 @@ export const Route = createFileRoute("/admin/")({
   component: AdminStores,
 });
 
+type StoreType = "food" | "ecommerce" | "service";
+
+const STORE_TYPES: Array<{ value: StoreType; label: string; description: string; Icon: typeof UtensilsCrossed; emoji: string }> = [
+  { value: "food", label: "Loja Food", description: "Restaurante, lanches, mercado, doces", Icon: UtensilsCrossed, emoji: "🍔" },
+  { value: "ecommerce", label: "E-commerce", description: "Moda, beleza, acessórios, calçados", Icon: ShoppingBag, emoji: "🛍️" },
+  { value: "service", label: "Serviço", description: "Agendamento, profissionais", Icon: Briefcase, emoji: "💼" },
+];
+
 type Store = {
   id: string;
   slug: string;
   name: string;
   emoji: string;
+  store_type: StoreType;
   category: string;
   rating: number;
   distance: string;
@@ -66,6 +75,7 @@ const empty: Partial<Store> = {
   slug: "",
   name: "",
   emoji: "🍽️",
+  store_type: "food",
   category: "",
   rating: 4.5,
   distance: "1,0 km",
@@ -108,6 +118,7 @@ function AdminStores() {
         slug: s.slug!,
         name: s.name!,
         emoji: s.emoji || "🍽️",
+        store_type: (s.store_type || "food") as StoreType,
         category: s.category!,
         rating: Number(s.rating) || 4.5,
         distance: s.distance || "1,0 km",
