@@ -237,7 +237,7 @@ function ImportMenuPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between rounded-lg border bg-card p-4">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-600" />
+              <CheckCircle2 className="h-5 w-5 text-primary" />
               <div>
                 <p className="font-semibold">Pronto para revisar</p>
                 <p className="text-xs text-muted-foreground">
