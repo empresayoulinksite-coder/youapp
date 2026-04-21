@@ -63,7 +63,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     const { data, error } = await supabase
       .from("cart_items")
-      .select("id, user_id, store_id, menu_item_id, quantity, notes, menu_items(id, name, price, emoji), stores(id, name, slug, emoji)")
+      .select("id, user_id, store_id, menu_item_id, quantity, notes, menu_items(id, name, price, emoji, image_url), stores(id, name, slug, emoji)")
       .eq("user_id", user.id)
       .order("created_at", { ascending: true });
     if (!error && data) {
