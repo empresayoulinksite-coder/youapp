@@ -113,7 +113,7 @@ function OrdersPage() {
       const { data, error } = await supabase
         .from("orders")
         .select(
-          "id, created_at, store_id, store_name, store_slug, store_emoji, store_whatsapp, total, discount, delivery_address, whatsapp_message, status, order_items(id, menu_item_id, name, quantity, unit_price, emoji)",
+          "id, created_at, store_id, store_name, store_slug, store_emoji, store_image_url, store_whatsapp, total, discount, delivery_address, whatsapp_message, status, order_items(id, menu_item_id, name, quantity, unit_price, emoji, image_url)",
         )
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
