@@ -224,7 +224,9 @@ function CartPage() {
         <div className="fixed bottom-4 left-4 right-4 max-w-md mx-auto z-40">
           {!storeOpen && (
             <p className="mb-2 rounded-xl bg-destructive/10 text-destructive text-xs font-semibold text-center px-3 py-2">
-              Loja fechada agora{nextOpen ? ` — ${nextOpen}` : ""}.
+              {storePaused
+                ? "Loja temporariamente fechada pelo lojista."
+                : `Loja fechada agora${nextOpen ? ` — ${nextOpen}` : ""}.`}
             </p>
           )}
           <button
