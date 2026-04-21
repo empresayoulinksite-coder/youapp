@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useRouter, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Star, Clock, Bike, MapPin, CreditCard, Tag, Plus, Minus, ShoppingBag, MessageSquare, X, CalendarClock } from "lucide-react";
 import { toast } from "sonner";
@@ -136,6 +136,7 @@ export const Route = createFileRoute("/loja/$slug")({
 
 function StorePage() {
   const router = useRouter();
+  const navigate = useNavigate();
   const { store, categories, items, coupons, reviews, hours, services } = Route.useLoaderData() as {
     store: Store;
     categories: MenuCategory[];
@@ -279,72 +280,84 @@ function StorePage() {
                 Esta loja ainda não cadastrou serviços.
               </p>
             ) : (
-              services.map((s) => (
-                <article
-                  key={s.id}
-                  className="bg-card rounded-2xl p-3 flex gap-3 shadow-[var(--shadow-card)]"
-                >
-                  <div className="h-20 w-20 rounded-xl overflow-hidden bg-brand-soft flex items-center justify-center text-3xl shrink-0">
-                    {s.image_url ? (
-                      <img
-                        src={s.image_url}
-                        alt={s.name}
-                        loading="lazy"
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span>✂️</span>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold truncate">{s.name}</h4>
-                    {s.description && (
-                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                        {s.description}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="font-bold text-sm">
-                        R$ {s.price.toFixed(2).replace(".", ",")}
-                      </span>
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="h-3 w-3" /> {s.duration_minutes} min
-                      </span>
-                    </div>
-                    <div className="mt-2">
-                      {user ? (
-                        <button
-                          onClick={() => {
-                            if (!open) {
-                              toast.error(
-                                store.is_paused
-                                  ? "Loja fechada pelo lojista."
-                                  : nextOpen
-                                    ? `Fechada agora. ${nextOpen}.`
-                                    : "Loja fechada agora.",
-                              );
-                              return;
-                            }
-                            setBookingInitialId(s.id);
-                            setBookingOpen(true);
-                          }}
-                          disabled={!open}
-                          className="text-xs font-bold bg-brand text-brand-foreground rounded-full px-3 py-1.5 inline-flex items-center gap-1 disabled:opacity-50"
-                        >
-                          <CalendarClock className="h-3.5 w-3.5" /> Agendar
-                        </button>
+              services.map((s) => {
+                const handleBook = () => {
+                  if (!user) {
+                    navigate({ to: "/auth" });
+                    return;
+                  }
+                  if (!open) {
+                    toast.error(
+                      store.is_paused
+                        ? "Loja fechada pelo lojista."
+                        : nextOpen
+                          ? `Fechada agora. ${nextOpen}.`
+                          : "Loja fechada agora.",
+                    );
+                    return;
+                  }
+                  setBookingInitialId(s.id);
+                  setBookingOpen(true);
+                };
+                return (
+                  <article
+                    key={s.id}
+                    onClick={handleBook}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleBook();
+                      }
+                    }}
+                    className="bg-card rounded-2xl p-3 flex gap-3 shadow-[var(--shadow-card)] cursor-pointer transition-colors hover:bg-accent/40 focus:outline-none focus:ring-2 focus:ring-brand"
+                  >
+                    <div className="h-20 w-20 rounded-xl overflow-hidden bg-brand-soft flex items-center justify-center text-3xl shrink-0">
+                      {s.image_url ? (
+                        <img
+                          src={s.image_url}
+                          alt={s.name}
+                          loading="lazy"
+                          className="h-full w-full object-cover"
+                        />
                       ) : (
-                        <Link
-                          to="/auth"
-                          className="text-xs font-bold bg-brand text-brand-foreground rounded-full px-3 py-1.5 inline-flex items-center gap-1"
-                        >
-                          Entrar para agendar
-                        </Link>
+                        <span>✂️</span>
                       )}
                     </div>
-                  </div>
-                </article>
-              ))
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold truncate">{s.name}</h4>
+                      {s.description && (
+                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                          {s.description}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="font-bold text-sm">
+                          R$ {s.price.toFixed(2).replace(".", ",")}
+                        </span>
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Clock className="h-3 w-3" /> {s.duration_minutes} min
+                        </span>
+                      </div>
+                      <div className="mt-2">
+                        <span
+                          className="text-xs font-bold bg-brand text-brand-foreground rounded-full px-3 py-1.5 inline-flex items-center gap-1"
+                          aria-hidden
+                        >
+                          {user ? (
+                            <>
+                              <CalendarClock className="h-3.5 w-3.5" /> Agendar
+                            </>
+                          ) : (
+                            "Entrar para agendar"
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })
             )}
           </div>
         )}
