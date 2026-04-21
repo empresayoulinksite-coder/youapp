@@ -344,7 +344,36 @@ function AdminStores() {
                 />
               </div>
               <div>
-                <Label>Endereço</Label>
+                <Label>CEP</Label>
+                <Input
+                  value={editing.cep || ""}
+                  maxLength={9}
+                  placeholder="00000-000"
+                  onChange={async (e) => {
+                    const raw = e.target.value;
+                    const digits = raw.replace(/\D/g, "").slice(0, 8);
+                    const masked = digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits;
+                    setEditing({ ...editing, cep: masked });
+                    if (digits.length === 8) {
+                      const found = await lookupCep(digits);
+                      if (found) {
+                        setEditing((prev) => ({
+                          ...(prev || {}),
+                          cep: masked,
+                          address: found.street || prev?.address || "",
+                          neighborhood: found.neighborhood || prev?.neighborhood || "",
+                          city: found.city || prev?.city || "",
+                        }));
+                        toast.success("Endereço preenchido pelo CEP");
+                      } else {
+                        toast.error("CEP não encontrado");
+                      }
+                    }
+                  }}
+                />
+              </div>
+              <div>
+                <Label>Endereço (rua, número)</Label>
                 <Input
                   value={editing.address || ""}
                   onChange={(e) => setEditing({ ...editing, address: e.target.value })}
