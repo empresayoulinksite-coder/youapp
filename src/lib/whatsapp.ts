@@ -18,19 +18,22 @@ export function openWhatsapp(rawPhone: string, message: string) {
   const text = encodeURIComponent(normalized);
   // api.whatsapp.com/send lida melhor com UTF-8/emojis que wa.me em alguns navegadores.
   const primaryUrl = `https://api.whatsapp.com/send?phone=${phone}&text=${text}`;
-  const fallbackUrl = `https://web.whatsapp.com/send?phone=${phone}&text=${text}`;
 
-  const win = window.open(primaryUrl, "_blank", "noopener,noreferrer");
-  const blocked = !win || win.closed || typeof win.closed === "undefined";
+  // Tenta abrir direto (funciona na maioria dos navegadores desktop e Android).
+  window.open(primaryUrl, "_blank", "noopener,noreferrer");
 
-  if (blocked) {
-    toast.success("Pedido pronto!", {
-      description: "Clique para abrir o WhatsApp da loja.",
-      action: {
-        label: "Abrir WhatsApp",
-        onClick: () => window.open(fallbackUrl, "_blank", "noopener,noreferrer"),
+  // Sempre mostra o toast com botão de fallback — em alguns celulares (especialmente
+  // iOS/Safari ou navegadores in-app) o redirecionamento direto falha silenciosamente.
+  toast.success("Pedido pronto!", {
+    description: "Se o WhatsApp não abrir, clique no botão para finalizar o pedido.",
+    action: {
+      label: "Abrir WhatsApp",
+      onClick: () => {
+        // No clique manual, usa wa.me que tem melhor compatibilidade mobile
+        // e é tratado como gesto do usuário (não bloqueado por popup blockers).
+        window.location.href = `https://wa.me/${phone}?text=${text}`;
       },
-      duration: 12000,
-    });
-  }
+    },
+    duration: 15000,
+  });
 }
