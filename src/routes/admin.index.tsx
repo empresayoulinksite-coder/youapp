@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, UtensilsCrossed, ShoppingBag, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -22,11 +22,20 @@ export const Route = createFileRoute("/admin/")({
   component: AdminStores,
 });
 
+type StoreType = "food" | "ecommerce" | "service";
+
+const STORE_TYPES: Array<{ value: StoreType; label: string; description: string; Icon: typeof UtensilsCrossed; emoji: string }> = [
+  { value: "food", label: "Loja Food", description: "Restaurante, lanches, mercado, doces", Icon: UtensilsCrossed, emoji: "🍔" },
+  { value: "ecommerce", label: "E-commerce", description: "Moda, beleza, acessórios, calçados", Icon: ShoppingBag, emoji: "🛍️" },
+  { value: "service", label: "Serviço", description: "Agendamento, profissionais", Icon: Briefcase, emoji: "💼" },
+];
+
 type Store = {
   id: string;
   slug: string;
   name: string;
   emoji: string;
+  store_type: StoreType;
   category: string;
   rating: number;
   distance: string;
@@ -66,6 +75,7 @@ const empty: Partial<Store> = {
   slug: "",
   name: "",
   emoji: "🍽️",
+  store_type: "food",
   category: "",
   rating: 4.5,
   distance: "1,0 km",
@@ -108,6 +118,7 @@ function AdminStores() {
         slug: s.slug!,
         name: s.name!,
         emoji: s.emoji || "🍽️",
+        store_type: (s.store_type || "food") as StoreType,
         category: s.category!,
         rating: Number(s.rating) || 4.5,
         distance: s.distance || "1,0 km",
@@ -203,7 +214,12 @@ function AdminStores() {
                 )}
                 <div className="min-w-0 flex-1">
                   <h3 className="truncate font-semibold">{s.name}</h3>
-                  <p className="truncate text-xs text-muted-foreground">{s.category}</p>
+                  <div className="flex items-center gap-1.5">
+                    <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                      {STORE_TYPES.find((t) => t.value === s.store_type)?.label ?? "Food"}
+                    </span>
+                    <p className="truncate text-xs text-muted-foreground">{s.category}</p>
+                  </div>
                   <p className="text-xs text-muted-foreground">⭐ {s.rating} · {s.delivery_time}</p>
                 </div>
               </div>
@@ -237,10 +253,55 @@ function AdminStores() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editing?.id ? "Editar loja" : "Nova loja"}</DialogTitle>
+            <DialogTitle>
+              {editing?.id
+                ? "Editar loja"
+                : !editing?.store_type || !(editing as Partial<Store> & { __typed?: boolean }).__typed
+                ? "Que tipo de loja você quer criar?"
+                : `Nova ${STORE_TYPES.find((t) => t.value === editing.store_type)?.label}`}
+            </DialogTitle>
           </DialogHeader>
-          {editing && (
+
+          {/* Step 1: type selection for new stores */}
+          {editing && !editing.id && !(editing as Partial<Store> & { __typed?: boolean }).__typed && (
+            <div className="grid gap-3 sm:grid-cols-3">
+              {STORE_TYPES.map((t) => (
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() =>
+                    setEditing({
+                      ...editing,
+                      store_type: t.value,
+                      emoji: t.emoji,
+                      ...({ __typed: true } as object),
+                    })
+                  }
+                  className="flex flex-col items-center gap-2 rounded-xl border-2 border-border bg-background p-6 text-center transition-colors hover:border-primary hover:bg-primary/5"
+                >
+                  <t.Icon className="h-10 w-10 text-primary" />
+                  <span className="font-semibold">{t.label}</span>
+                  <span className="text-xs text-muted-foreground">{t.description}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {editing && (editing.id || (editing as Partial<Store> & { __typed?: boolean }).__typed) && (
             <div className="grid gap-3 sm:grid-cols-2">
+              <div className="sm:col-span-2 flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2">
+                {(() => {
+                  const t = STORE_TYPES.find((x) => x.value === (editing.store_type || "food"));
+                  const Icon = t?.Icon ?? UtensilsCrossed;
+                  return (
+                    <>
+                      <Icon className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">{t?.label}</span>
+                      <span className="text-xs text-muted-foreground">· {t?.description}</span>
+                    </>
+                  );
+                })()}
+              </div>
               <div className="sm:col-span-2">
                 <Label>Imagem</Label>
                 <div className="mt-1 flex items-center gap-3">
@@ -425,15 +486,22 @@ function AdminStores() {
               </div>
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button
-              disabled={save.isPending || uploading || !editing?.name || !editing?.slug || !editing?.category}
-              onClick={() => editing && save.mutate(editing)}
-            >
-              {save.isPending ? "Salvando..." : "Salvar"}
-            </Button>
-          </DialogFooter>
+          {editing && (editing.id || (editing as Partial<Store> & { __typed?: boolean }).__typed) && (
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+              <Button
+                disabled={save.isPending || uploading || !editing?.name || !editing?.slug || !editing?.category}
+                onClick={() => editing && save.mutate(editing)}
+              >
+                {save.isPending ? "Salvando..." : "Salvar"}
+              </Button>
+            </DialogFooter>
+          )}
+          {editing && !editing.id && !(editing as Partial<Store> & { __typed?: boolean }).__typed && (
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+            </DialogFooter>
+          )}
         </DialogContent>
       </Dialog>
     </div>
