@@ -31,6 +31,8 @@ interface CartContextValue {
   addItem: (storeId: string, menuItemId: string) => Promise<void>;
   /** Limpa o carrinho atual e adiciona o item da nova loja. */
   switchStoreAndAdd: (storeId: string, menuItemId: string) => Promise<void>;
+  /** Limpa o carrinho e adiciona vários itens (usado em "Pedir de novo"). */
+  reorder: (storeId: string, items: Array<{ menu_item_id: string; quantity: number }>) => Promise<void>;
   /** Loja atualmente no carrinho, se houver. */
   currentStoreId: string | null;
   updateQuantity: (id: string, quantity: number) => Promise<void>;
