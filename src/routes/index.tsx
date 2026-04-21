@@ -12,6 +12,7 @@ import { normalizeText } from "@/hooks/use-location";
 import { StoriesBar } from "@/components/StoriesBar";
 import { StoreDistance } from "@/components/StoreDistance";
 import { useUserCoords, haversineKm } from "@/lib/distance";
+import { useInterestScores } from "@/hooks/use-interest-scores";
 
 import {
   MapPin,
