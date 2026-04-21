@@ -37,7 +37,11 @@ function CartPage() {
 
   const [storeHours, setStoreHours] = useState<StoreHour[]>([]);
   const [storePaused, setStorePaused] = useState(false);
+  const [storeWhatsapp, setStoreWhatsapp] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
+  const [submitting, setSubmitting] = useState(false);
+  const { active } = useAddress();
+  const { user: authUser } = useAuth();
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 60_000);
@@ -48,6 +52,7 @@ function CartPage() {
     if (!storeId) {
       setStoreHours([]);
       setStorePaused(false);
+      setStoreWhatsapp(null);
       return;
     }
     supabase
@@ -57,10 +62,13 @@ function CartPage() {
       .then(({ data }) => setStoreHours((data ?? []) as StoreHour[]));
     supabase
       .from("stores")
-      .select("is_paused")
+      .select("is_paused, whatsapp")
       .eq("id", storeId)
       .maybeSingle()
-      .then(({ data }) => setStorePaused(!!data?.is_paused));
+      .then(({ data }) => {
+        setStorePaused(!!data?.is_paused);
+        setStoreWhatsapp(data?.whatsapp ?? null);
+      });
   }, [storeId]);
 
   const withinHours = storeHours.length === 0 ? true : isStoreOpen(storeHours, now);
