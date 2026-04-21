@@ -40,6 +40,23 @@ interface CategoryRow {
   is_available: boolean;
 }
 
+function VitrineError({ error }: { error: Error }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center p-6 text-sm text-muted-foreground">
+      {error.message}
+    </div>
+  );
+}
+
+function VitrineNotFound() {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 gap-3">
+      <p className="font-semibold">Loja não encontrada</p>
+      <Link to="/" className="text-sm text-brand font-semibold">Voltar</Link>
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/vitrine/$slug")({
   loader: async ({ params }): Promise<{ store: Store; products: Product[]; categories: CategoryRow[] }> => {
     const { data: store, error } = await supabase
