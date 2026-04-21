@@ -519,8 +519,8 @@ function StorePage() {
         )}
       </main>
 
-      {/* Bottom cart bar */}
-      {cartCount > 0 && (
+      {/* Bottom cart bar (only for non-service stores) */}
+      {!isService && cartCount > 0 && (
         <Link
           to="/sacola"
           className="fixed bottom-4 left-4 right-4 z-40 bg-brand text-brand-foreground rounded-full px-5 py-3 flex items-center justify-between shadow-lg max-w-md mx-auto"
