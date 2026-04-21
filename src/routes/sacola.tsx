@@ -332,6 +332,7 @@ function CartPage() {
                     quantity: i.quantity,
                     unit_price: Number(i.menu_items?.price ?? 0),
                     emoji: i.menu_items?.emoji ?? null,
+                    image_url: i.menu_items?.image_url ?? null,
                   }));
                   await supabase.from("order_items").insert(itemRows);
                 }
