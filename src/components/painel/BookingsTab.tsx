@@ -492,3 +492,241 @@ function RescheduleDialog({
     </Dialog>
   );
 }
+
+function NewBookingDialog({
+  store,
+  onClose,
+  onSaved,
+}: {
+  store: StoreLite;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const { user } = useAuth();
+  const [services, setServices] = useState<ServiceLite[]>([]);
+  const [serviceId, setServiceId] = useState<string>("");
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [notes, setNotes] = useState("");
+  const [date, setDate] = useState<Date>(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  });
+  const [slot, setSlot] = useState<Date | null>(null);
+  const [hours, setHours] = useState<StoreHour[]>([]);
+  const [bookedRanges, setBookedRanges] = useState<BookedRange[]>([]);
+  const [saving, setSaving] = useState(false);
+
+  const service = services.find((s) => s.id === serviceId) ?? null;
+  const duration = service?.duration_minutes ?? 30;
+
+  useEffect(() => {
+    supabase
+      .from("services")
+      .select("id, name, duration_minutes, price")
+      .eq("store_id", store.id)
+      .eq("is_active", true)
+      .order("position")
+      .then(({ data }) => {
+        const list = (data ?? []) as ServiceLite[];
+        setServices(list);
+        if (list.length && !serviceId) setServiceId(list[0].id);
+      });
+    supabase
+      .from("store_hours")
+      .select("*")
+      .eq("store_id", store.id)
+      .then(({ data }) => setHours((data ?? []) as StoreHour[]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store.id]);
+
+  useEffect(() => {
+    const start = new Date(date);
+    const end = new Date(date);
+    end.setDate(end.getDate() + 1);
+    supabase
+      .from("bookings")
+      .select("starts_at, ends_at, status")
+      .eq("store_id", store.id)
+      .gte("starts_at", start.toISOString())
+      .lt("starts_at", end.toISOString())
+      .in("status", ["pending", "confirmed"])
+      .then(({ data }) => setBookedRanges((data ?? []) as BookedRange[]));
+  }, [store.id, date]);
+
+  const slots = useMemo(
+    () => generateSlots(date, hours, store.slot_minutes || 30, duration, bookedRanges),
+    [date, hours, store.slot_minutes, duration, bookedRanges],
+  );
+
+  const save = async () => {
+    if (!slot || !service || !user) return;
+    if (!customerName.trim()) {
+      toast.error("Informe o nome do cliente");
+      return;
+    }
+    setSaving(true);
+    const ends = new Date(slot.getTime() + duration * 60_000);
+    const noteParts = [
+      `[Manual] ${customerName.trim()}`,
+      customerPhone.trim() ? `Tel: ${customerPhone.trim()}` : "",
+      notes.trim(),
+    ].filter(Boolean);
+    const { error } = await supabase.from("bookings").insert({
+      store_id: store.id,
+      service_id: service.id,
+      user_id: user.id,
+      starts_at: slot.toISOString(),
+      ends_at: ends.toISOString(),
+      total_price: service.price,
+      status: "confirmed",
+      customer_notes: noteParts.join(" · "),
+    });
+    setSaving(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Agendamento criado");
+    onSaved();
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Novo agendamento</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <Label className="text-xs">Cliente *</Label>
+              <Input
+                className="mt-1.5"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder="Nome do cliente"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Telefone</Label>
+              <Input
+                className="mt-1.5"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                placeholder="(11) 99999-9999"
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-xs">Serviço *</Label>
+            <Select value={serviceId} onValueChange={(v) => { setServiceId(v); setSlot(null); }}>
+              <SelectTrigger className="mt-1.5">
+                <SelectValue placeholder="Escolha o serviço" />
+              </SelectTrigger>
+              <SelectContent>
+                {services.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name} · {s.duration_minutes}min · R$ {Number(s.price).toFixed(2).replace(".", ",")}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label className="text-xs">Dia</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="mt-1.5 w-full justify-start font-normal">
+                  <CalendarIcon className="h-4 w-4" />
+                  {format(date, "EEEE, dd 'de' MMMM", { locale: ptBR })}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={(d) => {
+                    if (d) {
+                      const nd = new Date(d);
+                      nd.setHours(0, 0, 0, 0);
+                      setDate(nd);
+                      setSlot(null);
+                    }
+                  }}
+                  disabled={(d) => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    return d < today;
+                  }}
+                  initialFocus
+                  locale={ptBR}
+                  className="pointer-events-auto p-3"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div>
+            <Label className="text-xs">Horário</Label>
+            {!service ? (
+              <p className="mt-2 rounded-md bg-muted p-3 text-center text-sm text-muted-foreground">
+                Escolha um serviço primeiro.
+              </p>
+            ) : slots.length === 0 ? (
+              <p className="mt-2 rounded-md bg-muted p-3 text-center text-sm text-muted-foreground">
+                Sem horários disponíveis nesse dia.
+              </p>
+            ) : (
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {slots.map((s) => {
+                  const active = slot?.getTime() === s.start.getTime();
+                  return (
+                    <button
+                      key={s.start.toISOString()}
+                      type="button"
+                      disabled={!s.available}
+                      onClick={() => setSlot(s.start)}
+                      className={cn(
+                        "rounded-md border py-2 text-sm font-semibold transition-colors",
+                        active
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : s.available
+                            ? "border-border hover:border-primary"
+                            : "cursor-not-allowed border-border bg-muted text-muted-foreground line-through",
+                      )}
+                    >
+                      {formatSlotLabel(s.start)}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <Label className="text-xs">Observações</Label>
+            <Textarea
+              className="mt-1.5"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Ex: cliente pediu corte degradê"
+              rows={2}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button onClick={save} disabled={!slot || !service || saving}>
+            {saving ? "Salvando..." : "Criar agendamento"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
