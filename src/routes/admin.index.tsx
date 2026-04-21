@@ -53,6 +53,7 @@ type Store = {
   payment_methods: string | null;
   min_order: number;
   is_paused: boolean;
+  whatsapp: string | null;
 };
 
 async function lookupCep(rawCep: string) {
@@ -93,6 +94,7 @@ const empty: Partial<Store> = {
   hours: "",
   payment_methods: "",
   min_order: 0,
+  whatsapp: "",
 };
 
 function AdminStores() {
@@ -136,6 +138,7 @@ function AdminStores() {
         hours: s.hours || null,
         payment_methods: s.payment_methods || null,
         min_order: Number(s.min_order) || 0,
+        whatsapp: s.whatsapp ? s.whatsapp.replace(/\D/g, "") : null,
       };
       if (s.id) {
         const { error } = await supabase.from("stores").update(payload).eq("id", s.id);
