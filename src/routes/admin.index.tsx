@@ -165,6 +165,18 @@ function AdminStores() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const togglePause = useMutation({
+    mutationFn: async ({ id, is_paused }: { id: string; is_paused: boolean }) => {
+      const { error } = await supabase.from("stores").update({ is_paused }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      toast.success(vars.is_paused ? "Loja pausada" : "Loja reaberta");
+      qc.invalidateQueries({ queryKey: ["admin-stores"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const handleFile = async (file: File) => {
     setUploading(true);
     try {
