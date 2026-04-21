@@ -267,7 +267,83 @@ function StorePage() {
       </nav>
 
       <main className="px-4 pt-5">
-        {tab === "menu" && (
+        {tab === "menu" && isService && (
+          <div className="space-y-3">
+            {services.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-12">
+                Esta loja ainda não cadastrou serviços.
+              </p>
+            ) : (
+              services.map((s) => (
+                <article
+                  key={s.id}
+                  className="bg-card rounded-2xl p-3 flex gap-3 shadow-[var(--shadow-card)]"
+                >
+                  <div className="h-20 w-20 rounded-xl overflow-hidden bg-brand-soft flex items-center justify-center text-3xl shrink-0">
+                    {s.image_url ? (
+                      <img
+                        src={s.image_url}
+                        alt={s.name}
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span>✂️</span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold truncate">{s.name}</h4>
+                    {s.description && (
+                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                        {s.description}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="font-bold text-sm">
+                        R$ {s.price.toFixed(2).replace(".", ",")}
+                      </span>
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Clock className="h-3 w-3" /> {s.duration_minutes} min
+                      </span>
+                    </div>
+                    <div className="mt-2">
+                      {user ? (
+                        <button
+                          onClick={() => {
+                            if (!open) {
+                              toast.error(
+                                store.is_paused
+                                  ? "Loja fechada pelo lojista."
+                                  : nextOpen
+                                    ? `Fechada agora. ${nextOpen}.`
+                                    : "Loja fechada agora.",
+                              );
+                              return;
+                            }
+                            setBookingService(s);
+                          }}
+                          disabled={!open}
+                          className="text-xs font-bold bg-brand text-brand-foreground rounded-full px-3 py-1.5 inline-flex items-center gap-1 disabled:opacity-50"
+                        >
+                          <CalendarClock className="h-3.5 w-3.5" /> Agendar
+                        </button>
+                      ) : (
+                        <Link
+                          to="/auth"
+                          className="text-xs font-bold bg-brand text-brand-foreground rounded-full px-3 py-1.5 inline-flex items-center gap-1"
+                        >
+                          Entrar para agendar
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              ))
+            )}
+          </div>
+        )}
+
+        {tab === "menu" && !isService && (
           <div className="space-y-7">
             {coupons.length > 0 && (
               <section>
