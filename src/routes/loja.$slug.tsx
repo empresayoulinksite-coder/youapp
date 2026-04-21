@@ -357,12 +357,46 @@ function StorePage() {
                 </div>
               </div>
             )}
-            {store.hours && (
+            {(hours.length > 0 || store.hours) && (
               <div className="flex items-start gap-3">
                 <Clock className="h-5 w-5 text-brand shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-sm">Horário</p>
-                  <p className="text-sm text-muted-foreground">{store.hours}</p>
+                <div className="flex-1">
+                  <p className="font-semibold text-sm flex items-center gap-2">
+                    Horários
+                    <span
+                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                        open ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"
+                      }`}
+                    >
+                      {open ? "Aberta agora" : "Fechada"}
+                    </span>
+                  </p>
+                  {hours.length > 0 ? (
+                    <ul className="text-sm text-muted-foreground mt-1 space-y-0.5">
+                      {(() => {
+                        const grouped = groupByWeekday(hours);
+                        return WEEKDAYS.map((label, day) => {
+                          const dayHours = grouped[day]?.filter((h) => h.is_active) ?? [];
+                          return (
+                            <li key={day} className="flex justify-between gap-3">
+                              <span className={day === now.getDay() ? "font-semibold text-foreground" : ""}>
+                                {label}
+                              </span>
+                              <span className="text-right">
+                                {dayHours.length === 0
+                                  ? "Fechada"
+                                  : dayHours
+                                      .map((h) => `${formatTime(h.opens_at)}–${formatTime(h.closes_at)}`)
+                                      .join(", ")}
+                              </span>
+                            </li>
+                          );
+                        });
+                      })()}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{store.hours}</p>
+                  )}
                 </div>
               </div>
             )}
