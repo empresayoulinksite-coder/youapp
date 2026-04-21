@@ -187,8 +187,20 @@ function StorePage() {
 
       {/* Store info card */}
       <div className="mx-4 -mt-6 bg-card rounded-2xl p-4 shadow-[var(--shadow-card)] relative">
-        <h2 className="text-xl font-bold">{store.name}</h2>
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+        <div className="flex items-start justify-between gap-2">
+          <h2 className="text-xl font-bold">{store.name}</h2>
+          <span
+            className={`shrink-0 text-[11px] font-bold px-2 py-1 rounded-full ${
+              open ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"
+            }`}
+          >
+            {open ? "Aberta" : "Fechada"}
+          </span>
+        </div>
+        {!open && nextOpen && (
+          <p className="text-[11px] text-muted-foreground mt-1">{nextOpen}</p>
+        )}
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
           <Star className="h-3.5 w-3.5 fill-warning text-warning" />
           <span className="font-semibold text-foreground">{avgRating}</span>
           <span>•</span>
