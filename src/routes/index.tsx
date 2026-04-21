@@ -171,22 +171,33 @@ function Index() {
     [homeCategories],
   );
 
-  // Lojas próximas: raio de 10 km do endereço do usuário, ordenadas por distância.
-  // Sem coordenadas → mostra todas.
+  // Score de interesse por loja (favoritos + cart + bookings).
+  const interestScores = useInterestScores(stores);
+
+  // Lojas próximas: raio de 10 km do endereço do usuário.
+  // Ordenação por relevância combina distância (km) com score de interesse:
+  //   rank = distancia_km - (score * 1.5)   → menor é melhor
+  // Sem coordenadas → mostra todas, mas ainda prioriza por interesse.
   const nearbyStores = useMemo(() => {
-    if (!userCoords) return stores;
     const RADIUS_KM = 10;
-    const withDist = stores
-      .map((s) => {
-        if (s.lat == null || s.lng == null) return null;
-        const km = haversineKm(userCoords, { lat: s.lat, lng: s.lng });
-        return km <= RADIUS_KM ? { store: s, km } : null;
-      })
-      .filter((x): x is { store: StoreRow; km: number } => x !== null)
-      .sort((a, b) => a.km - b.km)
-      .map((x) => x.store);
-    return withDist.length > 0 ? withDist : stores;
-  }, [stores, userCoords]);
+    const enriched = stores.map((s) => {
+      const km =
+        userCoords && s.lat != null && s.lng != null
+          ? haversineKm(userCoords, { lat: s.lat, lng: s.lng })
+          : null;
+      return { store: s, km, score: interestScores.get(s.id) ?? 0 };
+    });
+    const inRange = userCoords
+      ? enriched.filter((x) => x.km != null && x.km <= RADIUS_KM)
+      : enriched;
+    const list = inRange.length > 0 ? inRange : enriched;
+    list.sort((a, b) => {
+      const ra = (a.km ?? 0) - a.score * 1.5;
+      const rb = (b.km ?? 0) - b.score * 1.5;
+      return ra - rb;
+    });
+    return list.map((x) => x.store);
+  }, [stores, userCoords, interestScores]);
 
   const filteredStores = useMemo(() => {
     const q = norm(query.trim());
