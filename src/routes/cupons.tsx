@@ -87,6 +87,13 @@ function CouponsPage() {
               Remover
             </button>
           </div>
+          <Link
+            to="/sacola"
+            className="mt-2 w-full bg-card border border-brand text-brand rounded-2xl p-3 flex items-center justify-center gap-2 font-bold text-sm shadow-[var(--shadow-card)]"
+          >
+            <ShoppingBag className="h-4 w-4" />
+            Ir para a sacola e finalizar
+          </Link>
         </div>
       )}
 
