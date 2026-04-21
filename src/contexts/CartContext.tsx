@@ -75,11 +75,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addItem = async (storeId: string, menuItemId: string) => {
     if (!user) return;
+    const currentStoreId = items[0]?.store_id ?? null;
+    if (currentStoreId && currentStoreId !== storeId) {
+      throw new DifferentStoreError(currentStoreId, storeId);
+    }
     const existing = items.find((i) => i.menu_item_id === menuItemId);
     if (existing) {
       await updateQuantity(existing.id, existing.quantity + 1);
       return;
     }
+    const { error } = await supabase.from("cart_items").insert({
+      user_id: user.id,
+      store_id: storeId,
+      menu_item_id: menuItemId,
+      quantity: 1,
+    });
+    if (!error) await refresh();
+  };
+
+  const switchStoreAndAdd = async (storeId: string, menuItemId: string) => {
+    if (!user) return;
+    await supabase.from("cart_items").delete().eq("user_id", user.id);
     const { error } = await supabase.from("cart_items").insert({
       user_id: user.id,
       store_id: storeId,
