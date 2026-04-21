@@ -19,6 +19,7 @@ export interface ServiceLite {
   description: string | null;
   price: number;
   duration_minutes: number;
+  image_url: string | null;
 }
 
 interface BookingDialogProps {
