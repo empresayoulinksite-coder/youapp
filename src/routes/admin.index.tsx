@@ -53,6 +53,7 @@ type Store = {
   payment_methods: string | null;
   min_order: number;
   is_paused: boolean;
+  whatsapp: string | null;
 };
 
 async function lookupCep(rawCep: string) {
@@ -93,6 +94,7 @@ const empty: Partial<Store> = {
   hours: "",
   payment_methods: "",
   min_order: 0,
+  whatsapp: "",
 };
 
 function AdminStores() {
@@ -136,6 +138,7 @@ function AdminStores() {
         hours: s.hours || null,
         payment_methods: s.payment_methods || null,
         min_order: Number(s.min_order) || 0,
+        whatsapp: s.whatsapp ? s.whatsapp.replace(/\D/g, "") : null,
       };
       if (s.id) {
         const { error } = await supabase.from("stores").update(payload).eq("id", s.id);
@@ -516,6 +519,19 @@ function AdminStores() {
                   placeholder="Pix, Cartão, Dinheiro"
                 />
               </div>
+              {editing.store_type === "service" && (
+                <div className="sm:col-span-2">
+                  <Label>WhatsApp da loja (com DDD)</Label>
+                  <Input
+                    value={editing.whatsapp || ""}
+                    placeholder="(11) 99999-9999"
+                    onChange={(e) => setEditing({ ...editing, whatsapp: e.target.value })}
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Será usado para receber as solicitações de agendamento.
+                  </p>
+                </div>
+              )}
               <div className="sm:col-span-2">
                 <Label>Sobre</Label>
                 <Textarea

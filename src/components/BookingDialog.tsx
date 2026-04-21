@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, X } from "lucide-react";
+import { CalendarIcon, X, Check } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar } from "@/components/ui/calendar";
@@ -27,20 +27,26 @@ interface BookingDialogProps {
   onClose: () => void;
   storeId: string;
   storeName: string;
+  storeWhatsapp: string | null;
   slotMinutes: number;
   storeHours: StoreHour[];
-  service: ServiceLite | null;
+  services: ServiceLite[];
+  initialServiceId?: string | null;
   onCreated?: () => void;
 }
+
+const formatBRL = (n: number) => `R$ ${n.toFixed(2).replace(".", ",")}`;
 
 export function BookingDialog({
   open,
   onClose,
   storeId,
   storeName,
+  storeWhatsapp,
   slotMinutes,
   storeHours,
-  service,
+  services,
+  initialServiceId,
   onCreated,
 }: BookingDialogProps) {
   const { user } = useAuth();
@@ -50,17 +56,19 @@ export function BookingDialog({
     return d;
   });
   const [selectedSlot, setSelectedSlot] = useState<Date | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
   const [bookings, setBookings] = useState<BookedRange[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
-  // Reset when modal opens with a new service
+  // Reset on open
   useEffect(() => {
     if (open) {
       setSelectedSlot(null);
       setNotes("");
+      setSelectedIds(initialServiceId ? [initialServiceId] : []);
     }
-  }, [open, service?.id]);
+  }, [open, initialServiceId]);
 
   // Load existing bookings for the store on the picked day
   useEffect(() => {
@@ -79,36 +87,91 @@ export function BookingDialog({
       .then(({ data }) => setBookings((data ?? []) as BookedRange[]));
   }, [open, storeId, date]);
 
+  const selectedServices = useMemo(
+    () => selectedIds.map((id) => services.find((s) => s.id === id)).filter(Boolean) as ServiceLite[],
+    [selectedIds, services],
+  );
+
+  const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration_minutes, 0);
+  const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
+
   const slots = useMemo(() => {
-    if (!service) return [];
-    return generateSlots(date, storeHours, slotMinutes, service.duration_minutes, bookings);
-  }, [date, storeHours, slotMinutes, service, bookings]);
+    if (totalDuration === 0) return [];
+    return generateSlots(date, storeHours, slotMinutes, totalDuration, bookings);
+  }, [date, storeHours, slotMinutes, totalDuration, bookings]);
+
+  // If duration changes, drop slot selection
+  useEffect(() => {
+    setSelectedSlot(null);
+  }, [totalDuration]);
+
+  const toggleService = (id: string) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
+  const buildWhatsappMessage = (slot: Date) => {
+    const end = new Date(slot.getTime() + totalDuration * 60_000);
+    const lines = [
+      `Olá, ${storeName}! Gostaria de agendar:`,
+      "",
+      ...selectedServices.map(
+        (s) => `• ${s.name} (${s.duration_minutes} min) — ${formatBRL(s.price)}`,
+      ),
+      "",
+      `📅 ${format(slot, "EEEE, dd 'de' MMMM", { locale: ptBR })}`,
+      `🕐 ${formatSlotLabel(slot)} às ${formatSlotLabel(end)}`,
+      `💰 Total: ${formatBRL(totalPrice)}`,
+    ];
+    if (notes.trim()) {
+      lines.push("", `📝 Obs: ${notes.trim()}`);
+    }
+    return lines.join("\n");
+  };
 
   const submit = async () => {
-    if (!user || !service || !selectedSlot) return;
+    if (!user || selectedServices.length === 0 || !selectedSlot) return;
+    if (!storeWhatsapp) {
+      toast.error("Loja sem WhatsApp cadastrado.");
+      return;
+    }
     setSubmitting(true);
-    const end = new Date(selectedSlot.getTime() + service.duration_minutes * 60_000);
-    const { error } = await supabase.from("bookings").insert({
-      user_id: user.id,
-      store_id: storeId,
-      service_id: service.id,
-      starts_at: selectedSlot.toISOString(),
-      ends_at: end.toISOString(),
-      status: "pending",
-      customer_notes: notes || null,
-      total_price: service.price,
+
+    // Sequentially append bookings starting at selectedSlot
+    let cursor = new Date(selectedSlot);
+    const rows = selectedServices.map((s) => {
+      const start = new Date(cursor);
+      const end = new Date(start.getTime() + s.duration_minutes * 60_000);
+      cursor = end;
+      return {
+        user_id: user.id,
+        store_id: storeId,
+        service_id: s.id,
+        starts_at: start.toISOString(),
+        ends_at: end.toISOString(),
+        status: "pending" as const,
+        customer_notes: notes || null,
+        total_price: s.price,
+      };
     });
+
+    const { error } = await supabase.from("bookings").insert(rows);
     setSubmitting(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("Agendamento solicitado! Aguarde a confirmação do lojista.");
+
+    const phone = storeWhatsapp.replace(/\D/g, "");
+    const fullPhone = phone.startsWith("55") ? phone : `55${phone}`;
+    const url = `https://wa.me/${fullPhone}?text=${encodeURIComponent(buildWhatsappMessage(selectedSlot))}`;
+    window.open(url, "_blank");
+
+    toast.success("Solicitação enviada! Continue no WhatsApp.");
     onCreated?.();
     onClose();
   };
 
-  if (!open || !service) return null;
+  if (!open) return null;
 
   return (
     <div
@@ -122,10 +185,14 @@ export function BookingDialog({
         <div className="sticky top-0 bg-card border-b border-border px-5 py-4 flex items-start justify-between gap-3 z-10">
           <div className="min-w-0">
             <p className="text-xs text-muted-foreground">{storeName}</p>
-            <h2 className="font-bold truncate">Agendar {service.name}</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {service.duration_minutes} min · R$ {service.price.toFixed(2).replace(".", ",")}
-            </p>
+            <h2 className="font-bold truncate">Agendar serviços</h2>
+            {selectedServices.length > 0 && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {selectedServices.length}{" "}
+                {selectedServices.length === 1 ? "serviço" : "serviços"} · {totalDuration} min ·{" "}
+                {formatBRL(totalPrice)}
+              </p>
+            )}
           </div>
           <button onClick={onClose} className="p-1 -mr-1" aria-label="Fechar">
             <X className="h-5 w-5" />
@@ -133,6 +200,44 @@ export function BookingDialog({
         </div>
 
         <div className="p-5 space-y-5">
+          {/* Service multi-select */}
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground">
+              Selecione os serviços
+            </label>
+            <div className="mt-2 space-y-2">
+              {services.map((s) => {
+                const checked = selectedIds.includes(s.id);
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => toggleService(s.id)}
+                    className={cn(
+                      "w-full flex items-center gap-3 rounded-xl border p-3 text-left transition-colors",
+                      checked ? "border-brand bg-brand-soft" : "border-border bg-background hover:border-brand/50",
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "h-5 w-5 rounded-md border-2 flex items-center justify-center shrink-0",
+                        checked ? "border-brand bg-brand" : "border-border",
+                      )}
+                    >
+                      {checked && <Check className="h-3.5 w-3.5 text-brand-foreground" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate">{s.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {s.duration_minutes} min · {formatBRL(s.price)}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div>
             <label className="text-xs font-semibold text-muted-foreground">Dia</label>
             <Popover>
@@ -174,9 +279,13 @@ export function BookingDialog({
             <label className="text-xs font-semibold text-muted-foreground">
               Horário disponível
             </label>
-            {slots.length === 0 ? (
+            {selectedServices.length === 0 ? (
               <p className="mt-3 text-sm text-muted-foreground bg-muted rounded-lg p-4 text-center">
-                A loja não atende neste dia. Escolha outra data.
+                Selecione pelo menos um serviço.
+              </p>
+            ) : slots.length === 0 ? (
+              <p className="mt-3 text-sm text-muted-foreground bg-muted rounded-lg p-4 text-center">
+                Sem horários para a duração total nesse dia. Tente outra data.
               </p>
             ) : (
               <div className="mt-2 grid grid-cols-3 gap-2">
@@ -222,17 +331,17 @@ export function BookingDialog({
         <div className="sticky bottom-0 bg-card border-t border-border p-4">
           <Button
             onClick={submit}
-            disabled={!selectedSlot || submitting}
+            disabled={!selectedSlot || selectedServices.length === 0 || submitting}
             className="w-full h-11 rounded-full bg-brand text-brand-foreground hover:bg-brand/90 font-bold"
           >
             {submitting
               ? "Enviando..."
               : selectedSlot
-                ? `Confirmar ${formatSlotLabel(selectedSlot)}`
+                ? `Enviar pelo WhatsApp · ${formatSlotLabel(selectedSlot)}`
                 : "Selecione um horário"}
           </Button>
           <p className="text-[11px] text-muted-foreground text-center mt-2">
-            O lojista precisa confirmar o agendamento.
+            Você será redirecionado ao WhatsApp da loja para confirmar.
           </p>
         </div>
       </div>
