@@ -30,8 +30,24 @@ function OrdersPage() {
         <h1 className="font-semibold flex-1">Meus pedidos</h1>
       </header>
 
-      <main className="px-4 py-8 max-w-md mx-auto">
-        <div className="text-center py-16">
+      <main className="px-4 py-5 max-w-md mx-auto">
+        <Link
+          to="/agendamentos"
+          className="flex items-center justify-between bg-card rounded-2xl p-4 shadow-[var(--shadow-card)] mb-6"
+        >
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-brand-soft flex items-center justify-center">
+              <Receipt className="h-5 w-5 text-brand" />
+            </div>
+            <div>
+              <p className="font-semibold text-sm">Meus agendamentos</p>
+              <p className="text-xs text-muted-foreground">Serviços que você reservou</p>
+            </div>
+          </div>
+          <span className="text-brand text-sm font-semibold">Ver</span>
+        </Link>
+
+        <div className="text-center py-12">
           <div className="h-16 w-16 rounded-full bg-brand-soft mx-auto flex items-center justify-center mb-4">
             <Receipt className="h-8 w-8 text-brand" />
           </div>

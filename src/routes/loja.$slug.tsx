@@ -1,11 +1,12 @@
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Star, Clock, Bike, MapPin, CreditCard, Tag, Plus, Minus, ShoppingBag, MessageSquare, X } from "lucide-react";
+import { ArrowLeft, Star, Clock, Bike, MapPin, CreditCard, Tag, Plus, Minus, ShoppingBag, MessageSquare, X, CalendarClock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { isStoreOpen, nextOpeningLabel, groupByWeekday, formatTime, WEEKDAYS, type StoreHour } from "@/lib/store-hours";
+import { BookingDialog, type ServiceLite } from "@/components/BookingDialog";
 
 interface Store {
   id: string;
@@ -26,6 +27,8 @@ interface Store {
   payment_methods: string | null;
   min_order: number;
   is_paused: boolean;
+  store_type: "food" | "ecommerce" | "service";
+  slot_minutes: number;
 }
 
 interface MenuCategory {
@@ -73,12 +76,13 @@ export const Route = createFileRoute("/loja/$slug")({
     if (error) throw error;
     if (!store) throw notFound();
 
-    const [categoriesRes, itemsRes, couponsRes, reviewsRes, hoursRes] = await Promise.all([
+    const [categoriesRes, itemsRes, couponsRes, reviewsRes, hoursRes, servicesRes] = await Promise.all([
       supabase.from("menu_categories").select("*").eq("store_id", store.id).order("position"),
       supabase.from("menu_items").select("*").eq("store_id", store.id).order("position"),
       supabase.from("store_coupons").select("*").eq("store_id", store.id),
       supabase.from("store_reviews").select("*").eq("store_id", store.id).order("created_at", { ascending: false }),
       supabase.from("store_hours").select("*").eq("store_id", store.id),
+      supabase.from("services").select("*").eq("store_id", store.id).eq("is_active", true).order("position"),
     ]);
 
     return {
@@ -88,6 +92,14 @@ export const Route = createFileRoute("/loja/$slug")({
       coupons: (couponsRes.data ?? []).map((c) => ({ ...c, min_order: Number(c.min_order) })) as Coupon[],
       reviews: (reviewsRes.data ?? []) as Review[],
       hours: (hoursRes.data ?? []) as StoreHour[],
+      services: (servicesRes.data ?? []).map((s) => ({
+        id: s.id as string,
+        name: s.name as string,
+        description: s.description as string | null,
+        price: Number(s.price),
+        duration_minutes: Number(s.duration_minutes),
+        image_url: s.image_url as string | null,
+      })),
     };
   },
   errorComponent: ({ error }) => {
@@ -119,18 +131,22 @@ export const Route = createFileRoute("/loja/$slug")({
 });
 
 function StorePage() {
-  const { store, categories, items, coupons, reviews, hours } = Route.useLoaderData() as {
+  const router = useRouter();
+  const { store, categories, items, coupons, reviews, hours, services } = Route.useLoaderData() as {
     store: Store;
     categories: MenuCategory[];
     items: MenuItem[];
     coupons: Coupon[];
     reviews: Review[];
     hours: StoreHour[];
+    services: ServiceLite[];
   };
+  const isService = store.store_type === "service";
   const { user } = useAuth();
   const { items: cartItems, addItem, updateQuantity, count: cartCount } = useCart();
   const [tab, setTab] = useState<"menu" | "info" | "reviews">("menu");
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+  const [bookingService, setBookingService] = useState<ServiceLite | null>(null);
   const [now, setNow] = useState(() => new Date());
 
   // refresh "now" every minute so the open/closed badge updates without a refresh
@@ -234,7 +250,7 @@ function StorePage() {
       {/* Tabs */}
       <nav className="px-4 mt-5 flex gap-6 border-b border-border text-sm sticky top-[57px] bg-surface z-20">
         {([
-          { id: "menu", label: "Cardápio" },
+          { id: "menu", label: isService ? "Serviços" : "Vitrine" },
           { id: "info", label: "Informações" },
           { id: "reviews", label: `Avaliações (${reviews.length})` },
         ] as const).map((t) => (
@@ -251,7 +267,83 @@ function StorePage() {
       </nav>
 
       <main className="px-4 pt-5">
-        {tab === "menu" && (
+        {tab === "menu" && isService && (
+          <div className="space-y-3">
+            {services.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-12">
+                Esta loja ainda não cadastrou serviços.
+              </p>
+            ) : (
+              services.map((s) => (
+                <article
+                  key={s.id}
+                  className="bg-card rounded-2xl p-3 flex gap-3 shadow-[var(--shadow-card)]"
+                >
+                  <div className="h-20 w-20 rounded-xl overflow-hidden bg-brand-soft flex items-center justify-center text-3xl shrink-0">
+                    {s.image_url ? (
+                      <img
+                        src={s.image_url}
+                        alt={s.name}
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span>✂️</span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold truncate">{s.name}</h4>
+                    {s.description && (
+                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                        {s.description}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="font-bold text-sm">
+                        R$ {s.price.toFixed(2).replace(".", ",")}
+                      </span>
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Clock className="h-3 w-3" /> {s.duration_minutes} min
+                      </span>
+                    </div>
+                    <div className="mt-2">
+                      {user ? (
+                        <button
+                          onClick={() => {
+                            if (!open) {
+                              toast.error(
+                                store.is_paused
+                                  ? "Loja fechada pelo lojista."
+                                  : nextOpen
+                                    ? `Fechada agora. ${nextOpen}.`
+                                    : "Loja fechada agora.",
+                              );
+                              return;
+                            }
+                            setBookingService(s);
+                          }}
+                          disabled={!open}
+                          className="text-xs font-bold bg-brand text-brand-foreground rounded-full px-3 py-1.5 inline-flex items-center gap-1 disabled:opacity-50"
+                        >
+                          <CalendarClock className="h-3.5 w-3.5" /> Agendar
+                        </button>
+                      ) : (
+                        <Link
+                          to="/auth"
+                          className="text-xs font-bold bg-brand text-brand-foreground rounded-full px-3 py-1.5 inline-flex items-center gap-1"
+                        >
+                          Entrar para agendar
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              ))
+            )}
+          </div>
+        )}
+
+        {tab === "menu" && !isService && (
           <div className="space-y-7">
             {coupons.length > 0 && (
               <section>
@@ -427,8 +519,8 @@ function StorePage() {
         )}
       </main>
 
-      {/* Bottom cart bar */}
-      {cartCount > 0 && (
+      {/* Bottom cart bar (only for non-service stores) */}
+      {!isService && cartCount > 0 && (
         <Link
           to="/sacola"
           className="fixed bottom-4 left-4 right-4 z-40 bg-brand text-brand-foreground rounded-full px-5 py-3 flex items-center justify-between shadow-lg max-w-md mx-auto"
@@ -535,6 +627,17 @@ function StorePage() {
           </div>
         </div>
       )}
+
+      <BookingDialog
+        open={!!bookingService}
+        onClose={() => setBookingService(null)}
+        storeId={store.id}
+        storeName={store.name}
+        slotMinutes={store.slot_minutes || 30}
+        storeHours={hours}
+        service={bookingService}
+        onCreated={() => router.invalidate()}
+      />
     </div>
   );
 }
