@@ -518,6 +518,11 @@ function AdminProducts() {
             >
               <FolderPlus className="h-4 w-4" /> Adicionar categoria
             </Button>
+            <Button asChild variant="outline">
+              <Link to="/admin/importar-cardapio">
+                <Upload className="h-4 w-4" /> Importar cardápio
+              </Link>
+            </Button>
             <Button
               disabled={categories.length === 0}
               onClick={() => openNewItem()}
