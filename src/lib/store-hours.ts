@@ -30,6 +30,19 @@ export function formatTime(t: string): string {
 }
 
 /**
+ * Returns true if the store is "available" right now: not manually paused
+ * AND within its configured opening hours.
+ */
+export function isStoreAvailable(
+  hours: StoreHour[],
+  isPaused: boolean,
+  now: Date = new Date(),
+): boolean {
+  if (isPaused) return false;
+  return isStoreOpen(hours, now);
+}
+
+/**
  * Returns true if the store is currently open based on its hours.
  * Handles intervals that cross midnight (e.g. 18:00 → 02:00).
  */
