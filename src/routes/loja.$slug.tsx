@@ -175,7 +175,20 @@ function StorePage() {
       toast.error(msg);
       return;
     }
-    await addItem(storeId, menuItemId);
+    try {
+      await addItem(storeId, menuItemId);
+    } catch (err) {
+      if (err instanceof DifferentStoreError) {
+        const ok = window.confirm(
+          "Você só pode pedir de uma loja por vez (o pedido vai pelo WhatsApp). Limpar o carrinho atual e adicionar este item?",
+        );
+        if (ok) {
+          await switchStoreAndAdd(storeId, menuItemId);
+        }
+      } else {
+        throw err;
+      }
+    }
   };
 
   const itemQty = (id: string) => cartItems.find((c) => c.menu_item_id === id)?.quantity ?? 0;
