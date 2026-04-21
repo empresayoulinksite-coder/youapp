@@ -191,6 +191,17 @@ export function BookingsTab({
           }}
         />
       )}
+
+      {newOpen && (
+        <NewBookingDialog
+          store={store}
+          onClose={() => setNewOpen(false)}
+          onSaved={() => {
+            qc.invalidateQueries({ queryKey: ["painel", "bookings"] });
+            setNewOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }
