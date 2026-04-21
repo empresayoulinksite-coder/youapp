@@ -519,6 +519,19 @@ function AdminStores() {
                   placeholder="Pix, Cartão, Dinheiro"
                 />
               </div>
+              {editing.store_type === "service" && (
+                <div className="sm:col-span-2">
+                  <Label>WhatsApp da loja (com DDD)</Label>
+                  <Input
+                    value={editing.whatsapp || ""}
+                    placeholder="(11) 99999-9999"
+                    onChange={(e) => setEditing({ ...editing, whatsapp: e.target.value })}
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Será usado para receber as solicitações de agendamento.
+                  </p>
+                </div>
+              )}
               <div className="sm:col-span-2">
                 <Label>Sobre</Label>
                 <Textarea
