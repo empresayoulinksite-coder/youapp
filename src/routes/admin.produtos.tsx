@@ -430,7 +430,7 @@ function AdminProducts() {
   return (
     <div>
       <div className="mb-4">
-        <h1 className="text-2xl font-bold">Cardápio</h1>
+        <h1 className="text-2xl font-bold">Vitrine</h1>
         <p className="text-sm text-muted-foreground">
           Gerencie categorias, produtos e variações no estilo iFood
         </p>
