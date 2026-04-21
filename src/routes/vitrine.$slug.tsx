@@ -40,6 +40,23 @@ interface CategoryRow {
   is_available: boolean;
 }
 
+function VitrineError({ error }: { error: Error }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center p-6 text-sm text-muted-foreground">
+      {error.message}
+    </div>
+  );
+}
+
+function VitrineNotFound() {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 gap-3">
+      <p className="font-semibold">Loja não encontrada</p>
+      <Link to="/" className="text-sm text-brand font-semibold">Voltar</Link>
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/vitrine/$slug")({
   loader: async ({ params }): Promise<{ store: Store; products: Product[]; categories: CategoryRow[] }> => {
     const { data: store, error } = await supabase
@@ -72,29 +89,19 @@ export const Route = createFileRoute("/vitrine/$slug")({
       categories: (cats ?? []) as CategoryRow[],
     };
   },
-  errorComponent: ({ error }) => (
-    <div className="min-h-screen flex items-center justify-center p-6 text-sm text-muted-foreground">
-      {error.message}
-    </div>
-  ),
-  notFoundComponent: () => (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 gap-3">
-      <p className="font-semibold">Loja não encontrada</p>
-      <Link to="/" className="text-sm text-brand font-semibold">Voltar</Link>
-    </div>
-  ),
+  errorComponent: VitrineError,
+  notFoundComponent: VitrineNotFound,
   head: ({ loaderData }) => {
     const name = loaderData?.store?.name ?? "Vitrine";
-    return {
-      meta: [
-        { title: `${name} — Vitrine` },
-        { name: "description", content: `Compre online os produtos de ${name} no Youapp.` },
-        { property: "og:title", content: `${name} — Vitrine` },
-        ...(loaderData?.store?.image_url
-          ? [{ property: "og:image", content: loaderData.store.image_url }]
-          : []),
-      ],
-    };
+    const meta: Array<Record<string, string>> = [
+      { title: `${name} — Vitrine` },
+      { name: "description", content: `Compre online os produtos de ${name} no Youapp.` },
+      { property: "og:title", content: `${name} — Vitrine` },
+    ];
+    if (loaderData?.store?.image_url) {
+      meta.push({ property: "og:image", content: loaderData.store.image_url });
+    }
+    return { meta };
   },
   component: VitrinePage,
 });
