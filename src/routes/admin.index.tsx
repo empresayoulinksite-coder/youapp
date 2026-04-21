@@ -16,6 +16,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { uploadImage } from "@/lib/upload";
+import { StoreHoursEditor } from "@/components/StoreHoursEditor";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminStores,
