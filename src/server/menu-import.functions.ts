@@ -126,6 +126,9 @@ export const importMenuFromUrl = createServerFn({ method: "POST" })
         url: data.url,
         formats: ["markdown"],
         onlyMainContent: true,
+        maxAge: 3600000,
+        timeout: 20000,
+        blockAds: true,
       }),
     });
 
@@ -144,7 +147,7 @@ export const importMenuFromUrl = createServerFn({ method: "POST" })
       throw new Error("Não foi possível extrair conteúdo da página");
     }
 
-    const truncated = markdown.slice(0, 25000);
+    const truncated = markdown.slice(0, 15000);
     const menu = await callAIWithTool([
       { role: "system", content: SYSTEM_PROMPT },
       {
