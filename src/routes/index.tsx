@@ -26,7 +26,7 @@ import {
   Pizza,
 } from "lucide-react";
 import youlinkLogo from "@/assets/youlink-logo.png";
-import { norm as normalize } from "@/lib/categories";
+import { norm as normalize, isEcommerceStoreCategory } from "@/lib/categories";
 import { getCategoryIcon } from "@/lib/category-icons";
 
 type HomeCategoryRow = {
