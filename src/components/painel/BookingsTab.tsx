@@ -105,6 +105,7 @@ export function BookingsTab({
   const qc = useQueryClient();
   const [tab, setTab] = useState("pending");
   const [reschedFor, setReschedFor] = useState<BookingRow | null>(null);
+  const [newOpen, setNewOpen] = useState(false);
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: BookingRow["status"] }) => {
