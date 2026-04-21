@@ -161,6 +161,48 @@ export type Database = {
         }
         Relationships: []
       }
+      home_categories: {
+        Row: {
+          created_at: string
+          icon: string
+          id: string
+          is_active: boolean
+          is_ecommerce: boolean
+          label: string
+          matches: string[]
+          position: number
+          slug: string
+          tint: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          is_ecommerce?: boolean
+          label: string
+          matches?: string[]
+          position?: number
+          slug: string
+          tint?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          is_ecommerce?: boolean
+          label?: string
+          matches?: string[]
+          position?: number
+          slug?: string
+          tint?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       menu_categories: {
         Row: {
           created_at: string
