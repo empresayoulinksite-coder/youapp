@@ -132,10 +132,10 @@ function OrdersPage() {
 
   // Lojas únicas presentes nos pedidos
   const uniqueStores = useMemo(() => {
-    const map = new Map<string, { id: string; name: string; emoji: string | null }>();
+    const map = new Map<string, { id: string; name: string; emoji: string | null; image_url: string | null }>();
     orders.forEach((o) => {
       if (!map.has(o.store_id)) {
-        map.set(o.store_id, { id: o.store_id, name: o.store_name, emoji: o.store_emoji });
+        map.set(o.store_id, { id: o.store_id, name: o.store_name, emoji: o.store_emoji, image_url: o.store_image_url });
       }
     });
     return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
