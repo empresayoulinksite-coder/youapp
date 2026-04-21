@@ -245,7 +245,7 @@ function OrdersPage() {
                   <FilterChip
                     key={s.id}
                     active={store === s.id}
-                    onClick={() => navigate({ search: (p: OrdersSearch) => ({ ...p, store: s.id }) })}
+                    onClick={() => navigate({ search: { store: s.id, status, sort } })}
                   >
                     {s.emoji ? <span className="mr-1">{s.emoji}</span> : null}
                     {s.name}
