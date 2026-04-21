@@ -38,6 +38,7 @@ function CartPage() {
   const [storeHours, setStoreHours] = useState<StoreHour[]>([]);
   const [storePaused, setStorePaused] = useState(false);
   const [storeWhatsapp, setStoreWhatsapp] = useState<string | null>(null);
+  const [storeImageUrl, setStoreImageUrl] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
   const [submitting, setSubmitting] = useState(false);
   const { active } = useAddress();
