@@ -117,11 +117,12 @@ function Index() {
   const { isFavorite, toggleFavorite } = useFavorites();
   const { stores, items } = Route.useLoaderData() as { stores: StoreRow[]; items: MenuItemRow[] };
   const { active } = useAddress();
+  const userCoords = useUserCoords();
   const [pickerOpen, setPickerOpen] = useState(false);
   const location = active
     ? { neighborhood: active.neighborhood, city: active.city }
     : null;
-  const nearbyOnly = true;
+  void location;
 
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
