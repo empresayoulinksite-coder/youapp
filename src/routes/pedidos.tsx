@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
+import { z } from "zod";
 import {
   ArrowLeft,
   Receipt,
@@ -12,6 +14,8 @@ import {
   RefreshCw,
   MessageCircle,
   ChevronDown,
+  ArrowUpDown,
+  X,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -21,7 +25,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { openWhatsapp } from "@/lib/whatsapp";
 
+const ordersSearchSchema = z.object({
+  store: fallback(z.string(), "all").default("all"),
+  status: fallback(z.enum(["all", "sent", "preparing", "delivered", "cancelled"]), "all").default("all"),
+  sort: fallback(z.enum(["recent", "oldest", "highest", "lowest"]), "recent").default("recent"),
+});
+
+type OrdersSearch = z.infer<typeof ordersSearchSchema>;
+
 export const Route = createFileRoute("/pedidos")({
+  validateSearch: zodValidator(ordersSearchSchema),
   head: () => ({
     meta: [
       { title: "Meus pedidos — Youapp" },
@@ -58,9 +71,32 @@ type Order = {
 
 const fmtBRL = (n: number) => `R$ ${n.toFixed(2).replace(".", ",")}`;
 
+const STATUS_OPTIONS: { value: "all" | "sent" | "preparing" | "delivered" | "cancelled"; label: string }[] = [
+  { value: "all", label: "Todos" },
+  { value: "sent", label: "Enviado" },
+  { value: "preparing", label: "Em preparo" },
+  { value: "delivered", label: "Entregue" },
+  { value: "cancelled", label: "Cancelado" },
+];
+
+const SORT_OPTIONS: { value: "recent" | "oldest" | "highest" | "lowest"; label: string }[] = [
+  { value: "recent", label: "Mais recentes" },
+  { value: "oldest", label: "Mais antigos" },
+  { value: "highest", label: "Maior valor" },
+  { value: "lowest", label: "Menor valor" },
+];
+
+const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
+  sent: { label: "Enviado", cls: "bg-brand-soft text-brand" },
+  preparing: { label: "Em preparo", cls: "bg-warning/15 text-warning" },
+  delivered: { label: "Entregue", cls: "bg-success/15 text-success" },
+  cancelled: { label: "Cancelado", cls: "bg-destructive/15 text-destructive" },
+};
+
 function OrdersPage() {
   const { user, loading } = useAuth();
-  const navigate = useNavigate();
+  const navigate = useNavigate({ from: "/pedidos" });
+  const { store, status, sort } = Route.useSearch();
   const { reorder } = useCart();
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -91,6 +127,39 @@ function OrdersPage() {
       })) as Order[];
     },
   });
+
+  // Lojas únicas presentes nos pedidos
+  const uniqueStores = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; emoji: string | null }>();
+    orders.forEach((o) => {
+      if (!map.has(o.store_id)) {
+        map.set(o.store_id, { id: o.store_id, name: o.store_name, emoji: o.store_emoji });
+      }
+    });
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [orders]);
+
+  const filtered = useMemo(() => {
+    let list = orders.slice();
+    if (store !== "all") list = list.filter((o) => o.store_id === store);
+    if (status !== "all") list = list.filter((o) => o.status === status);
+    list.sort((a, b) => {
+      switch (sort) {
+        case "oldest":
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case "highest":
+          return b.total - a.total;
+        case "lowest":
+          return a.total - b.total;
+        case "recent":
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+    return list;
+  }, [orders, store, status, sort]);
+
+  const hasActiveFilters = store !== "all" || status !== "all" || sort !== "recent";
 
   const handleReorder = async (order: Order) => {
     const validItems = order.order_items.filter((i) => i.menu_item_id);
@@ -130,7 +199,7 @@ function OrdersPage() {
       <main className="px-4 py-5 max-w-md mx-auto">
         <Link
           to="/agendamentos"
-          className="flex items-center justify-between bg-card rounded-2xl p-4 shadow-[var(--shadow-card)] mb-6"
+          className="flex items-center justify-between bg-card rounded-2xl p-4 shadow-[var(--shadow-card)] mb-4"
         >
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-brand-soft flex items-center justify-center">
@@ -143,6 +212,89 @@ function OrdersPage() {
           </div>
           <span className="text-brand text-sm font-semibold">Ver</span>
         </Link>
+
+        {orders.length > 0 && (
+          <div className="bg-card rounded-2xl p-3 shadow-[var(--shadow-card)] mb-3 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-bold uppercase text-muted-foreground">Filtros</p>
+              {hasActiveFilters && (
+                <button
+                  onClick={() =>
+                    navigate({ search: { store: "all", status: "all", sort: "recent" } })
+                  }
+                  className="text-xs font-semibold text-brand inline-flex items-center gap-1"
+                >
+                  <X className="h-3 w-3" /> Limpar
+                </button>
+              )}
+            </div>
+
+            {/* Loja */}
+            <div>
+              <label className="text-[11px] font-semibold text-muted-foreground block mb-1">
+                Loja
+              </label>
+              <div className="flex gap-1.5 overflow-x-auto scrollbar-hide -mx-1 px-1 pb-1">
+                <FilterChip
+                  active={store === "all"}
+                  onClick={() => navigate({ search: (p: OrdersSearch) => ({ ...p, store: "all" }) })}
+                >
+                  Todas
+                </FilterChip>
+                {uniqueStores.map((s) => (
+                  <FilterChip
+                    key={s.id}
+                    active={store === s.id}
+                    onClick={() => navigate({ search: (p: OrdersSearch) => ({ ...p, store: s.id }) })}
+                  >
+                    {s.emoji ? <span className="mr-1">{s.emoji}</span> : null}
+                    {s.name}
+                  </FilterChip>
+                ))}
+              </div>
+            </div>
+
+            {/* Status */}
+            <div>
+              <label className="text-[11px] font-semibold text-muted-foreground block mb-1">
+                Status
+              </label>
+              <div className="flex gap-1.5 overflow-x-auto scrollbar-hide -mx-1 px-1 pb-1">
+                {STATUS_OPTIONS.map((opt) => (
+                  <FilterChip
+                    key={opt.value}
+                    active={status === opt.value}
+                    onClick={() => navigate({ search: (p: OrdersSearch) => ({ ...p, status: opt.value }) })}
+                  >
+                    {opt.label}
+                  </FilterChip>
+                ))}
+              </div>
+            </div>
+
+            {/* Ordenação */}
+            <div>
+              <label className="text-[11px] font-semibold text-muted-foreground block mb-1 flex items-center gap-1">
+                <ArrowUpDown className="h-3 w-3" /> Ordenar por
+              </label>
+              <select
+                value={sort}
+                onChange={(e) =>
+                  navigate({
+                    search: (p: OrdersSearch) => ({ ...p, sort: e.target.value as typeof sort }),
+                  })
+                }
+                className="w-full rounded-full bg-muted px-3 py-2 text-sm font-semibold outline-none"
+              >
+                {SORT_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
 
         {isLoading ? (
           <p className="text-sm text-muted-foreground text-center py-12">Carregando...</p>
@@ -163,11 +315,20 @@ function OrdersPage() {
               Explorar lojas
             </Link>
           </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-12 bg-card rounded-2xl shadow-[var(--shadow-card)]">
+            <p className="font-semibold text-sm">Nenhum pedido encontrado</p>
+            <p className="text-xs text-muted-foreground mt-1">Tente ajustar os filtros.</p>
+          </div>
         ) : (
           <div className="space-y-2">
-            {orders.map((o) => {
+            <p className="text-xs text-muted-foreground px-1">
+              {filtered.length} {filtered.length === 1 ? "pedido" : "pedidos"}
+            </p>
+            {filtered.map((o) => {
               const isOpen = expanded === o.id;
               const itemCount = o.order_items.reduce((s, i) => s + i.quantity, 0);
+              const statusInfo = STATUS_LABEL[o.status] ?? STATUS_LABEL.sent;
               return (
                 <article
                   key={o.id}
@@ -187,9 +348,16 @@ function OrdersPage() {
                           className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
                         />
                       </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {format(new Date(o.created_at), "dd 'de' MMM 'às' HH:mm", { locale: ptBR })}
-                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span
+                          className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${statusInfo.cls}`}
+                        >
+                          {statusInfo.label}
+                        </span>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {format(new Date(o.created_at), "dd 'de' MMM 'às' HH:mm", { locale: ptBR })}
+                        </p>
+                      </div>
                       <p className="text-xs text-muted-foreground mt-0.5 truncate">
                         {itemCount} {itemCount === 1 ? "item" : "itens"} •{" "}
                         <span className="font-semibold text-foreground">{fmtBRL(o.total)}</span>
@@ -261,5 +429,28 @@ function OrdersPage() {
         </div>
       </nav>
     </div>
+  );
+}
+
+function FilterChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`shrink-0 whitespace-nowrap text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${
+        active
+          ? "bg-brand text-brand-foreground"
+          : "bg-muted text-muted-foreground hover:bg-muted/70"
+      }`}
+    >
+      {children}
+    </button>
   );
 }
