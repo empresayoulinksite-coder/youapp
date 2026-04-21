@@ -1,13 +1,44 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, FolderPlus } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  FolderPlus,
+  Search,
+  GripVertical,
+  Pause,
+  Play,
+  ChevronDown,
+  ChevronRight,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -28,6 +59,17 @@ export const Route = createFileRoute("/admin/produtos")({
   component: AdminProducts,
 });
 
+type Variation = {
+  id?: string;
+  menu_item_id?: string;
+  name: string;
+  price: number;
+  original_price: number | null;
+  position: number;
+  is_available: boolean;
+  _isNew?: boolean;
+};
+
 type MenuItem = {
   id: string;
   store_id: string;
@@ -40,21 +82,39 @@ type MenuItem = {
   emoji: string;
   image_url: string | null;
   position: number;
+  is_available: boolean;
+};
+
+type Category = {
+  id: string;
+  store_id: string;
+  name: string;
+  position: number;
+  is_available: boolean;
 };
 
 function AdminProducts() {
   const qc = useQueryClient();
   const [storeId, setStoreId] = useState<string>("");
+  const [search, setSearch] = useState("");
+  const [filterCat, setFilterCat] = useState<string>("all");
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<MenuItem> | null>(null);
+  const [editingVars, setEditingVars] = useState<Variation[]>([]);
   const [uploading, setUploading] = useState(false);
+
   const [catOpen, setCatOpen] = useState(false);
-  const [newCat, setNewCat] = useState("");
+  const [editingCat, setEditingCat] = useState<Partial<Category> | null>(null);
 
   const { data: stores = [] } = useQuery({
     queryKey: ["admin-stores-list"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("stores").select("id,name").order("name");
+      const { data, error } = await supabase
+        .from("stores")
+        .select("id,name")
+        .order("name");
       if (error) throw error;
       return data;
     },
@@ -70,7 +130,7 @@ function AdminProducts() {
         .eq("store_id", storeId)
         .order("position");
       if (error) throw error;
-      return data;
+      return data as Category[];
     },
   });
 
@@ -88,20 +148,49 @@ function AdminProducts() {
     },
   });
 
-  const addCategory = useMutation({
-    mutationFn: async (name: string) => {
-      const { error } = await supabase.from("menu_categories").insert({
-        store_id: storeId,
-        name,
-        position: categories.length,
-      });
+  const { data: variationsByItem = {} } = useQuery({
+    queryKey: ["admin-variations", storeId, items.map((i) => i.id).join(",")],
+    enabled: !!storeId && items.length > 0,
+    queryFn: async () => {
+      const ids = items.map((i) => i.id);
+      const { data, error } = await supabase
+        .from("menu_item_variations")
+        .select("*")
+        .in("menu_item_id", ids)
+        .order("position");
       if (error) throw error;
+      const map: Record<string, Variation[]> = {};
+      (data as Variation[]).forEach((v) => {
+        const k = v.menu_item_id!;
+        (map[k] ||= []).push(v);
+      });
+      return map;
+    },
+  });
+
+  // ---------- Mutations ----------
+  const saveCategory = useMutation({
+    mutationFn: async (c: Partial<Category>) => {
+      if (c.id) {
+        const { error } = await supabase
+          .from("menu_categories")
+          .update({ name: c.name!, is_available: c.is_available ?? true })
+          .eq("id", c.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("menu_categories").insert({
+          store_id: storeId,
+          name: c.name!,
+          position: categories.length,
+        });
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      toast.success("Categoria criada");
+      toast.success("Categoria salva");
       qc.invalidateQueries({ queryKey: ["admin-cats", storeId] });
-      setNewCat("");
       setCatOpen(false);
+      setEditingCat(null);
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -119,8 +208,32 @@ function AdminProducts() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const save = useMutation({
-    mutationFn: async (m: Partial<MenuItem>) => {
+  const toggleCategoryAvailable = useMutation({
+    mutationFn: async (c: Category) => {
+      const { error } = await supabase
+        .from("menu_categories")
+        .update({ is_available: !c.is_available })
+        .eq("id", c.id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-cats", storeId] }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const reorderCategories = useMutation({
+    mutationFn: async (ordered: Category[]) => {
+      await Promise.all(
+        ordered.map((c, idx) =>
+          supabase.from("menu_categories").update({ position: idx }).eq("id", c.id),
+        ),
+      );
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-cats", storeId] }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const saveItem = useMutation({
+    mutationFn: async ({ m, vars }: { m: Partial<MenuItem>; vars: Variation[] }) => {
       const payload = {
         store_id: storeId,
         category_id: m.category_id!,
@@ -132,24 +245,62 @@ function AdminProducts() {
         emoji: m.emoji || "🍽️",
         image_url: m.image_url || null,
         position: Number(m.position) || 0,
+        is_available: m.is_available ?? true,
       };
-      if (m.id) {
-        const { error } = await supabase.from("menu_items").update(payload).eq("id", m.id);
+
+      let itemId = m.id;
+      if (itemId) {
+        const { error } = await supabase
+          .from("menu_items")
+          .update(payload)
+          .eq("id", itemId);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("menu_items").insert(payload);
+        const { data, error } = await supabase
+          .from("menu_items")
+          .insert(payload)
+          .select("id")
+          .single();
         if (error) throw error;
+        itemId = data.id;
+      }
+
+      // Sincroniza variações
+      const existing = variationsByItem[itemId!] || [];
+      const keptIds = vars.filter((v) => v.id).map((v) => v.id!);
+      const toDelete = existing.filter((v) => !keptIds.includes(v.id!)).map((v) => v.id!);
+      if (toDelete.length) {
+        await supabase.from("menu_item_variations").delete().in("id", toDelete);
+      }
+      for (let i = 0; i < vars.length; i++) {
+        const v = vars[i];
+        const data = {
+          menu_item_id: itemId!,
+          name: v.name,
+          price: Number(v.price) || 0,
+          original_price: v.original_price ? Number(v.original_price) : null,
+          position: i,
+          is_available: v.is_available,
+        };
+        if (v.id && !v._isNew) {
+          await supabase.from("menu_item_variations").update(data).eq("id", v.id);
+        } else {
+          await supabase.from("menu_item_variations").insert(data);
+        }
       }
     },
     onSuccess: () => {
       toast.success("Produto salvo");
       qc.invalidateQueries({ queryKey: ["admin-items", storeId] });
+      qc.invalidateQueries({ queryKey: ["admin-variations"] });
       setOpen(false);
+      setEditing(null);
+      setEditingVars([]);
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const del = useMutation({
+  const delItem = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("menu_items").delete().eq("id", id);
       if (error) throw error;
@@ -161,6 +312,31 @@ function AdminProducts() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const toggleItemAvailable = useMutation({
+    mutationFn: async (m: MenuItem) => {
+      const { error } = await supabase
+        .from("menu_items")
+        .update({ is_available: !m.is_available })
+        .eq("id", m.id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-items", storeId] }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const reorderItems = useMutation({
+    mutationFn: async (ordered: MenuItem[]) => {
+      await Promise.all(
+        ordered.map((m, idx) =>
+          supabase.from("menu_items").update({ position: idx }).eq("id", m.id),
+        ),
+      );
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-items", storeId] }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  // ---------- Helpers ----------
   const handleFile = async (file: File) => {
     setUploading(true);
     try {
@@ -174,20 +350,94 @@ function AdminProducts() {
     }
   };
 
+  const filteredCategories = useMemo(() => {
+    if (filterCat === "all") return categories;
+    return categories.filter((c) => c.id === filterCat);
+  }, [categories, filterCat]);
+
+  const itemsByCategory = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    const map: Record<string, MenuItem[]> = {};
+    for (const c of filteredCategories) map[c.id] = [];
+    for (const it of items) {
+      if (!map[it.category_id]) continue;
+      if (term && !it.name.toLowerCase().includes(term)) continue;
+      map[it.category_id].push(it);
+    }
+    return map;
+  }, [items, filteredCategories, search]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const onDragCategories = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const oldIdx = categories.findIndex((c) => c.id === active.id);
+    const newIdx = categories.findIndex((c) => c.id === over.id);
+    const next = arrayMove(categories, oldIdx, newIdx);
+    qc.setQueryData(["admin-cats", storeId], next);
+    reorderCategories.mutate(next);
+  };
+
+  const onDragItemsInCategory = (catId: string) => (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const list = itemsByCategory[catId];
+    const oldIdx = list.findIndex((m) => m.id === active.id);
+    const newIdx = list.findIndex((m) => m.id === over.id);
+    const reordered = arrayMove(list, oldIdx, newIdx);
+    // Reescreve posições globais mantendo as outras categorias intactas
+    const next = items.map((it) => {
+      if (it.category_id !== catId) return it;
+      const idxInCat = reordered.findIndex((r) => r.id === it.id);
+      return { ...it, position: idxInCat };
+    });
+    qc.setQueryData(["admin-items", storeId], next);
+    reorderItems.mutate(reordered);
+  };
+
+  const openNewItem = (categoryId?: string) => {
+    setEditing({
+      category_id: categoryId || categories[0]?.id,
+      emoji: "🍽️",
+      position: items.length,
+      is_available: true,
+      price: 0,
+    });
+    setEditingVars([]);
+    setOpen(true);
+  };
+
+  const openEditItem = (m: MenuItem) => {
+    setEditing(m);
+    setEditingVars((variationsByItem[m.id] || []).map((v) => ({ ...v })));
+    setOpen(true);
+  };
+
+  // ---------- Render ----------
   return (
     <div>
       <div className="mb-4">
-        <h1 className="text-2xl font-bold">Produtos</h1>
-        <p className="text-sm text-muted-foreground">Selecione uma loja para gerenciar o cardápio</p>
+        <h1 className="text-2xl font-bold">Cardápio</h1>
+        <p className="text-sm text-muted-foreground">
+          Gerencie categorias, produtos e variações no estilo iFood
+        </p>
       </div>
 
       <div className="mb-4 max-w-sm">
         <Label>Loja</Label>
         <Select value={storeId} onValueChange={setStoreId}>
-          <SelectTrigger><SelectValue placeholder="Escolha uma loja" /></SelectTrigger>
+          <SelectTrigger>
+            <SelectValue placeholder="Escolha uma loja" />
+          </SelectTrigger>
           <SelectContent>
             {stores.map((s) => (
-              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+              <SelectItem key={s.id} value={s.id}>
+                {s.name}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -195,103 +445,176 @@ function AdminProducts() {
 
       {storeId && (
         <>
-          <div className="mb-6 rounded-lg border bg-background p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-semibold">Categorias</h2>
-              <Button size="sm" variant="outline" onClick={() => setCatOpen(true)}>
-                <FolderPlus className="h-4 w-4" /> Nova categoria
-              </Button>
+          {/* Toolbar */}
+          <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border bg-card p-3">
+            <div className="relative min-w-[220px] flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar um item"
+                className="pl-9"
+              />
             </div>
-            {categories.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhuma categoria. Crie a primeira para adicionar produtos.</p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
+            <Select value={filterCat} onValueChange={setFilterCat}>
+              <SelectTrigger className="w-[220px]">
+                <SelectValue placeholder="Selecionar categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as categorias</SelectItem>
                 {categories.map((c) => (
-                  <div key={c.id} className="flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-sm">
+                  <SelectItem key={c.id} value={c.id}>
                     {c.name}
-                    <button
-                      onClick={() => {
-                        if (confirm(`Excluir categoria ${c.name}? Os produtos dela também serão excluídos.`))
-                          delCategory.mutate(c.id);
-                      }}
-                      className="text-destructive"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
-                  </div>
+                  </SelectItem>
                 ))}
-              </div>
-            )}
-          </div>
-
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-semibold">Produtos ({items.length})</h2>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setEditingCat({ name: "", is_available: true });
+                setCatOpen(true);
+              }}
+            >
+              <FolderPlus className="h-4 w-4" /> Adicionar categoria
+            </Button>
             <Button
               disabled={categories.length === 0}
-              onClick={() => {
-                setEditing({
-                  category_id: categories[0]?.id,
-                  emoji: "🍽️",
-                  position: items.length,
-                });
-                setOpen(true);
-              }}
+              onClick={() => openNewItem()}
             >
               <Plus className="h-4 w-4" /> Novo produto
             </Button>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {items.map((m) => {
-              const cat = categories.find((c) => c.id === m.category_id);
-              return (
-                <div key={m.id} className="rounded-lg border bg-background p-3">
-                  <div className="flex items-start gap-3">
-                    {m.image_url ? (
-                      <img src={m.image_url} alt={m.name} className="h-16 w-16 rounded-md object-cover" />
-                    ) : (
-                      <div className="flex h-16 w-16 items-center justify-center rounded-md bg-muted text-2xl">
-                        {m.emoji}
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <h3 className="truncate font-semibold">{m.name}</h3>
-                      <p className="text-xs text-muted-foreground">{cat?.name}</p>
-                      <p className="text-sm font-bold">R$ {Number(m.price).toFixed(2)}</p>
-                    </div>
-                  </div>
-                  <div className="mt-3 flex gap-2">
-                    <Button size="sm" variant="outline" className="flex-1" onClick={() => { setEditing(m); setOpen(true); }}>
-                      <Pencil className="h-3 w-3" /> Editar
-                    </Button>
-                    <Button size="sm" variant="destructive" onClick={() => { if (confirm(`Excluir ${m.name}?`)) del.mutate(m.id); }}>
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
+          {categories.length === 0 ? (
+            <div className="rounded-lg border bg-card p-8 text-center">
+              <p className="text-sm text-muted-foreground">
+                Nenhuma categoria. Crie a primeira para começar a adicionar produtos.
+              </p>
+            </div>
+          ) : (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={onDragCategories}
+            >
+              <SortableContext
+                items={filteredCategories.map((c) => c.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-3">
+                  {filteredCategories.map((cat) => (
+                    <SortableCategory
+                      key={cat.id}
+                      category={cat}
+                      items={itemsByCategory[cat.id] || []}
+                      variationsByItem={variationsByItem}
+                      collapsed={!!collapsed[cat.id]}
+                      onToggle={() =>
+                        setCollapsed((p) => ({ ...p, [cat.id]: !p[cat.id] }))
+                      }
+                      onEditCategory={() => {
+                        setEditingCat(cat);
+                        setCatOpen(true);
+                      }}
+                      onDeleteCategory={() => {
+                        if (
+                          confirm(
+                            `Excluir categoria "${cat.name}"? Os produtos dela também serão excluídos.`,
+                          )
+                        )
+                          delCategory.mutate(cat.id);
+                      }}
+                      onToggleAvailable={() => toggleCategoryAvailable.mutate(cat)}
+                      onAddItem={() => openNewItem(cat.id)}
+                      onEditItem={openEditItem}
+                      onDeleteItem={(id, name) => {
+                        if (confirm(`Excluir "${name}"?`)) delItem.mutate(id);
+                      }}
+                      onToggleItemAvailable={(m) => toggleItemAvailable.mutate(m)}
+                      onDragItems={onDragItemsInCategory(cat.id)}
+                      sensors={sensors}
+                    />
+                  ))}
                 </div>
-              );
-            })}
-          </div>
+              </SortableContext>
+            </DndContext>
+          )}
         </>
       )}
 
       {/* Dialog categoria */}
-      <Dialog open={catOpen} onOpenChange={setCatOpen}>
+      <Dialog
+        open={catOpen}
+        onOpenChange={(o) => {
+          setCatOpen(o);
+          if (!o) setEditingCat(null);
+        }}
+      >
         <DialogContent>
-          <DialogHeader><DialogTitle>Nova categoria</DialogTitle></DialogHeader>
-          <Input value={newCat} onChange={(e) => setNewCat(e.target.value)} placeholder="Ex: Pizzas Salgadas" />
+          <DialogHeader>
+            <DialogTitle>
+              {editingCat?.id ? "Editar categoria" : "Nova categoria"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Nome</Label>
+              <Input
+                value={editingCat?.name || ""}
+                onChange={(e) =>
+                  setEditingCat({ ...editingCat, name: e.target.value })
+                }
+                placeholder="Ex: Pizzas Salgadas"
+              />
+            </div>
+            {editingCat?.id && (
+              <div className="flex items-center justify-between rounded-md border p-3">
+                <div>
+                  <p className="text-sm font-medium">Disponível</p>
+                  <p className="text-xs text-muted-foreground">
+                    Pausar oculta a categoria do cardápio
+                  </p>
+                </div>
+                <Switch
+                  checked={editingCat?.is_available ?? true}
+                  onCheckedChange={(v) =>
+                    setEditingCat({ ...editingCat, is_available: v })
+                  }
+                />
+              </div>
+            )}
+          </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCatOpen(false)}>Cancelar</Button>
-            <Button disabled={!newCat.trim()} onClick={() => addCategory.mutate(newCat.trim())}>Criar</Button>
+            <Button variant="outline" onClick={() => setCatOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              disabled={!editingCat?.name?.trim()}
+              onClick={() => editingCat && saveCategory.mutate(editingCat)}
+            >
+              Salvar
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Dialog produto */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] max-w-xl overflow-y-auto">
+      <Dialog
+        open={open}
+        onOpenChange={(o) => {
+          setOpen(o);
+          if (!o) {
+            setEditing(null);
+            setEditingVars([]);
+          }
+        }}
+      >
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editing?.id ? "Editar produto" : "Novo produto"}</DialogTitle>
+            <DialogTitle>
+              {editing?.id ? "Editar produto" : "Novo produto"}
+            </DialogTitle>
           </DialogHeader>
           {editing && (
             <div className="grid gap-3 sm:grid-cols-2">
@@ -299,61 +622,453 @@ function AdminProducts() {
                 <Label>Imagem</Label>
                 <div className="mt-1 flex items-center gap-3">
                   {editing.image_url && (
-                    <img src={editing.image_url} alt="" className="h-16 w-16 rounded object-cover" />
+                    <img
+                      src={editing.image_url}
+                      alt=""
+                      className="h-16 w-16 rounded object-cover"
+                    />
                   )}
-                  <Input type="file" accept="image/*" disabled={uploading}
-                    onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    disabled={uploading}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleFile(f);
+                    }}
                   />
                 </div>
               </div>
               <div className="sm:col-span-2">
                 <Label>Categoria</Label>
-                <Select value={editing.category_id || ""} onValueChange={(v) => setEditing({ ...editing, category_id: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select
+                  value={editing.category_id || ""}
+                  onValueChange={(v) => setEditing({ ...editing, category_id: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     {categories.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="sm:col-span-2">
                 <Label>Nome</Label>
-                <Input value={editing.name || ""} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
+                <Input
+                  value={editing.name || ""}
+                  onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+                />
               </div>
               <div className="sm:col-span-2">
                 <Label>Descrição</Label>
-                <Textarea rows={2} value={editing.description || ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} />
+                <Textarea
+                  rows={2}
+                  value={editing.description || ""}
+                  onChange={(e) =>
+                    setEditing({ ...editing, description: e.target.value })
+                  }
+                />
               </div>
               <div>
-                <Label>Preço (R$)</Label>
-                <Input type="number" step="0.01" value={editing.price ?? ""} onChange={(e) => setEditing({ ...editing, price: Number(e.target.value) })} />
+                <Label>Preço base (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={editing.price ?? ""}
+                  onChange={(e) =>
+                    setEditing({ ...editing, price: Number(e.target.value) })
+                  }
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Usado quando não há variações
+                </p>
               </div>
               <div>
                 <Label>Preço original (riscado)</Label>
-                <Input type="number" step="0.01" value={editing.original_price ?? ""} onChange={(e) => setEditing({ ...editing, original_price: e.target.value ? Number(e.target.value) : null })} />
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={editing.original_price ?? ""}
+                  onChange={(e) =>
+                    setEditing({
+                      ...editing,
+                      original_price: e.target.value ? Number(e.target.value) : null,
+                    })
+                  }
+                />
               </div>
               <div>
                 <Label>Emoji</Label>
-                <Input value={editing.emoji || ""} onChange={(e) => setEditing({ ...editing, emoji: e.target.value })} />
+                <Input
+                  value={editing.emoji || ""}
+                  onChange={(e) => setEditing({ ...editing, emoji: e.target.value })}
+                />
               </div>
               <div>
                 <Label>Promo (texto)</Label>
-                <Input value={editing.promo || ""} onChange={(e) => setEditing({ ...editing, promo: e.target.value })} placeholder="Ex: -20%" />
+                <Input
+                  value={editing.promo || ""}
+                  onChange={(e) => setEditing({ ...editing, promo: e.target.value })}
+                  placeholder="Ex: -20%"
+                />
+              </div>
+
+              {/* Variações */}
+              <div className="sm:col-span-2 mt-2 rounded-md border p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold">Tamanhos / Variações</p>
+                    <p className="text-xs text-muted-foreground">
+                      Ex: Pequena, Média, Grande
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      setEditingVars((p) => [
+                        ...p,
+                        {
+                          name: "",
+                          price: 0,
+                          original_price: null,
+                          position: p.length,
+                          is_available: true,
+                          _isNew: true,
+                        },
+                      ])
+                    }
+                  >
+                    <Plus className="h-3 w-3" /> Adicionar
+                  </Button>
+                </div>
+                {editingVars.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    Sem variações — usa o preço base.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {editingVars.map((v, i) => (
+                      <div
+                        key={i}
+                        className="grid grid-cols-[1fr_110px_110px_auto] gap-2"
+                      >
+                        <Input
+                          placeholder="Nome (ex: Média)"
+                          value={v.name}
+                          onChange={(e) => {
+                            const next = [...editingVars];
+                            next[i] = { ...v, name: e.target.value };
+                            setEditingVars(next);
+                          }}
+                        />
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="Preço"
+                          value={v.price}
+                          onChange={(e) => {
+                            const next = [...editingVars];
+                            next[i] = { ...v, price: Number(e.target.value) };
+                            setEditingVars(next);
+                          }}
+                        />
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="De (riscado)"
+                          value={v.original_price ?? ""}
+                          onChange={(e) => {
+                            const next = [...editingVars];
+                            next[i] = {
+                              ...v,
+                              original_price: e.target.value
+                                ? Number(e.target.value)
+                                : null,
+                            };
+                            setEditingVars(next);
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          onClick={() =>
+                            setEditingVars(editingVars.filter((_, j) => j !== i))
+                          }
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="sm:col-span-2 flex items-center justify-between rounded-md border p-3">
+                <div>
+                  <p className="text-sm font-medium">Disponível</p>
+                  <p className="text-xs text-muted-foreground">
+                    Pausar oculta o produto do cardápio
+                  </p>
+                </div>
+                <Switch
+                  checked={editing.is_available ?? true}
+                  onCheckedChange={(v) => setEditing({ ...editing, is_available: v })}
+                />
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancelar
+            </Button>
             <Button
-              disabled={save.isPending || uploading || !editing?.name || !editing?.category_id || !editing?.price}
-              onClick={() => editing && save.mutate(editing)}
+              disabled={
+                saveItem.isPending ||
+                uploading ||
+                !editing?.name ||
+                !editing?.category_id
+              }
+              onClick={() =>
+                editing && saveItem.mutate({ m: editing, vars: editingVars })
+              }
             >
-              {save.isPending ? "Salvando..." : "Salvar"}
+              {saveItem.isPending ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+// ---------- Sortable category card ----------
+function SortableCategory({
+  category,
+  items,
+  variationsByItem,
+  collapsed,
+  onToggle,
+  onEditCategory,
+  onDeleteCategory,
+  onToggleAvailable,
+  onAddItem,
+  onEditItem,
+  onDeleteItem,
+  onToggleItemAvailable,
+  onDragItems,
+  sensors,
+}: {
+  category: Category;
+  items: MenuItem[];
+  variationsByItem: Record<string, Variation[]>;
+  collapsed: boolean;
+  onToggle: () => void;
+  onEditCategory: () => void;
+  onDeleteCategory: () => void;
+  onToggleAvailable: () => void;
+  onAddItem: () => void;
+  onEditItem: (m: MenuItem) => void;
+  onDeleteItem: (id: string, name: string) => void;
+  onToggleItemAvailable: (m: MenuItem) => void;
+  onDragItems: (e: DragEndEvent) => void;
+  sensors: ReturnType<typeof useSensors>;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: category.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="rounded-lg border bg-card">
+      <div className="flex items-center gap-2 border-b p-3">
+        <button
+          {...attributes}
+          {...listeners}
+          className="cursor-grab text-muted-foreground hover:text-foreground"
+          aria-label="Arrastar categoria"
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+        <button onClick={onToggle} className="text-muted-foreground">
+          {collapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </button>
+        <div className="flex flex-1 items-center gap-2">
+          <h3 className="font-semibold">{category.name}</h3>
+          <span className="text-xs text-muted-foreground">
+            ({items.length} {items.length === 1 ? "item" : "itens"})
+          </span>
+          {!category.is_available && (
+            <Badge variant="secondary" className="text-xs">
+              Pausada
+            </Badge>
+          )}
+        </div>
+        <Button size="sm" variant="outline" onClick={onAddItem}>
+          <Plus className="h-3 w-3" /> Adicionar item
+        </Button>
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={onToggleAvailable}
+          title={category.is_available ? "Pausar categoria" : "Ativar categoria"}
+        >
+          {category.is_available ? (
+            <Pause className="h-4 w-4" />
+          ) : (
+            <Play className="h-4 w-4" />
+          )}
+        </Button>
+        <Button size="icon" variant="ghost" onClick={onEditCategory}>
+          <Pencil className="h-4 w-4" />
+        </Button>
+        <Button size="icon" variant="ghost" onClick={onDeleteCategory}>
+          <Trash2 className="h-4 w-4 text-destructive" />
+        </Button>
+      </div>
+
+      {!collapsed && (
+        <div className="divide-y">
+          {items.length === 0 ? (
+            <p className="p-4 text-center text-sm text-muted-foreground">
+              Sem produtos nesta categoria
+            </p>
+          ) : (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={onDragItems}
+            >
+              <SortableContext
+                items={items.map((i) => i.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {items.map((m) => (
+                  <SortableItemRow
+                    key={m.id}
+                    item={m}
+                    variations={variationsByItem[m.id] || []}
+                    onEdit={() => onEditItem(m)}
+                    onDelete={() => onDeleteItem(m.id, m.name)}
+                    onToggleAvailable={() => onToggleItemAvailable(m)}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------- Sortable item row ----------
+function SortableItemRow({
+  item,
+  variations,
+  onEdit,
+  onDelete,
+  onToggleAvailable,
+}: {
+  item: MenuItem;
+  variations: Variation[];
+  onEdit: () => void;
+  onDelete: () => void;
+  onToggleAvailable: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: item.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const minPrice = variations.length
+    ? Math.min(...variations.map((v) => Number(v.price)))
+    : Number(item.price);
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-3 p-3 hover:bg-muted/40"
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        className="cursor-grab text-muted-foreground hover:text-foreground"
+        aria-label="Arrastar produto"
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      {item.image_url ? (
+        <img
+          src={item.image_url}
+          alt={item.name}
+          className="h-12 w-12 rounded object-cover"
+        />
+      ) : (
+        <div className="flex h-12 w-12 items-center justify-center rounded bg-muted text-xl">
+          {item.emoji}
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <p className="truncate font-medium">{item.name}</p>
+          {!item.is_available && (
+            <Badge variant="secondary" className="text-xs">
+              Pausado
+            </Badge>
+          )}
+        </div>
+        {item.description && (
+          <p className="truncate text-xs text-muted-foreground">{item.description}</p>
+        )}
+      </div>
+      {variations.length > 0 && (
+        <Badge variant="outline" className="hidden sm:inline-flex">
+          {variations.length} tamanhos
+        </Badge>
+      )}
+      <div className="text-right">
+        {variations.length > 0 && (
+          <p className="text-[10px] text-muted-foreground">A partir de</p>
+        )}
+        <p className="text-sm font-semibold">R$ {minPrice.toFixed(2)}</p>
+      </div>
+      <Button
+        size="icon"
+        variant="ghost"
+        onClick={onToggleAvailable}
+        title={item.is_available ? "Pausar" : "Ativar"}
+      >
+        {item.is_available ? (
+          <Pause className="h-4 w-4" />
+        ) : (
+          <Play className="h-4 w-4" />
+        )}
+      </Button>
+      <Button size="icon" variant="ghost" onClick={onEdit}>
+        <Pencil className="h-4 w-4" />
+      </Button>
+      <Button size="icon" variant="ghost" onClick={onDelete}>
+        <Trash2 className="h-4 w-4 text-destructive" />
+      </Button>
     </div>
   );
 }
