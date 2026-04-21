@@ -18,7 +18,6 @@ export function openWhatsapp(rawPhone: string, message: string) {
   const text = encodeURIComponent(normalized);
   // api.whatsapp.com/send lida melhor com UTF-8/emojis que wa.me em alguns navegadores.
   const primaryUrl = `https://api.whatsapp.com/send?phone=${phone}&text=${text}`;
-  const fallbackUrl = `https://web.whatsapp.com/send?phone=${phone}&text=${text}`;
 
   // Tenta abrir direto (funciona na maioria dos navegadores desktop e Android).
   window.open(primaryUrl, "_blank", "noopener,noreferrer");
