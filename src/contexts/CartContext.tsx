@@ -127,9 +127,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const count = items.reduce((sum, i) => sum + i.quantity, 0);
   const total = items.reduce((sum, i) => sum + (i.menu_items ? Number(i.menu_items.price) * i.quantity : 0), 0);
+  const currentStoreId = items[0]?.store_id ?? null;
 
   return (
-    <CartContext.Provider value={{ items, count, total, loading, addItem, updateQuantity, removeItem, clear, refresh }}>
+    <CartContext.Provider value={{ items, count, total, loading, currentStoreId, addItem, switchStoreAndAdd, updateQuantity, removeItem, clear, refresh }}>
       {children}
     </CartContext.Provider>
   );
