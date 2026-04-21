@@ -85,16 +85,15 @@ export const Route = createFileRoute("/vitrine/$slug")({
   ),
   head: ({ loaderData }) => {
     const name = loaderData?.store?.name ?? "Vitrine";
-    return {
-      meta: [
-        { title: `${name} — Vitrine` },
-        { name: "description", content: `Compre online os produtos de ${name} no Youapp.` },
-        { property: "og:title", content: `${name} — Vitrine` },
-        ...(loaderData?.store?.image_url
-          ? [{ property: "og:image", content: loaderData.store.image_url }]
-          : []),
-      ],
-    };
+    const meta: Array<Record<string, string>> = [
+      { title: `${name} — Vitrine` },
+      { name: "description", content: `Compre online os produtos de ${name} no Youapp.` },
+      { property: "og:title", content: `${name} — Vitrine` },
+    ];
+    if (loaderData?.store?.image_url) {
+      meta.push({ property: "og:image", content: loaderData.store.image_url });
+    }
+    return { meta };
   },
   component: VitrinePage,
 });
