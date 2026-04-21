@@ -26,7 +26,17 @@ import {
   Pizza,
 } from "lucide-react";
 import youlinkLogo from "@/assets/youlink-logo.png";
-import { categories as categoryList, norm as normalize, isEcommerceStoreCategory, ECOMMERCE_CATEGORY_SLUGS } from "@/lib/categories";
+import { norm as normalize } from "@/lib/categories";
+import { getCategoryIcon } from "@/lib/category-icons";
+
+type HomeCategoryRow = {
+  slug: string;
+  label: string;
+  icon: string;
+  tint: string;
+  matches: string[];
+  is_ecommerce: boolean;
+};
 
 interface StoreRow {
   id: string;
