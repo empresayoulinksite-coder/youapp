@@ -4,9 +4,11 @@ import { ArrowLeft, Plus, Minus, Trash2, ShoppingBag, Ticket, X, Check } from "l
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { useCoupon } from "@/contexts/CouponContext";
+import { useAddress } from "@/contexts/AddressContext";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateDiscount, formatCouponLabel, type CouponLike } from "@/lib/coupons";
 import { isStoreOpen, nextOpeningLabel, type StoreHour } from "@/lib/store-hours";
+import { openWhatsapp } from "@/lib/whatsapp";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/sacola")({
