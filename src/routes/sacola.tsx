@@ -33,6 +33,29 @@ function CartPage() {
   const storeSlug = items[0]?.stores?.slug;
   const storeId = items[0]?.store_id ?? null;
 
+  const [storeHours, setStoreHours] = useState<StoreHour[]>([]);
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    if (!storeId) {
+      setStoreHours([]);
+      return;
+    }
+    supabase
+      .from("store_hours")
+      .select("*")
+      .eq("store_id", storeId)
+      .then(({ data }) => setStoreHours((data ?? []) as StoreHour[]));
+  }, [storeId]);
+
+  const storeOpen = storeHours.length === 0 ? true : isStoreOpen(storeHours, now);
+  const nextOpen = !storeOpen ? nextOpeningLabel(storeHours, now) : null;
+
   const { discount, reason } = calculateDiscount(applied, total, storeId);
   const grandTotal = Math.max(0, total - discount);
 
@@ -190,11 +213,23 @@ function CartPage() {
 
       {items.length > 0 && (
         <div className="fixed bottom-4 left-4 right-4 max-w-md mx-auto z-40">
+          {!storeOpen && (
+            <p className="mb-2 rounded-xl bg-destructive/10 text-destructive text-xs font-semibold text-center px-3 py-2">
+              Loja fechada agora{nextOpen ? ` — ${nextOpen}` : ""}.
+            </p>
+          )}
           <button
-            onClick={() => alert("Pedido enviado! (mock)")}
-            className="w-full bg-brand text-brand-foreground font-bold py-3.5 rounded-full shadow-lg"
+            onClick={() => {
+              if (!storeOpen) {
+                toast.error("A loja está fechada no momento.");
+                return;
+              }
+              alert("Pedido enviado! (mock)");
+            }}
+            disabled={!storeOpen}
+            className="w-full bg-brand text-brand-foreground font-bold py-3.5 rounded-full shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Finalizar pedido
+            {storeOpen ? "Finalizar pedido" : "Loja fechada"}
           </button>
         </div>
       )}
