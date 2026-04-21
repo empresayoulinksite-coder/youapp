@@ -214,7 +214,12 @@ function AdminStores() {
                 )}
                 <div className="min-w-0 flex-1">
                   <h3 className="truncate font-semibold">{s.name}</h3>
-                  <p className="truncate text-xs text-muted-foreground">{s.category}</p>
+                  <div className="flex items-center gap-1.5">
+                    <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                      {STORE_TYPES.find((t) => t.value === s.store_type)?.label ?? "Food"}
+                    </span>
+                    <p className="truncate text-xs text-muted-foreground">{s.category}</p>
+                  </div>
                   <p className="text-xs text-muted-foreground">⭐ {s.rating} · {s.delivery_time}</p>
                 </div>
               </div>
