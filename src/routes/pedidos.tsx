@@ -237,7 +237,7 @@ function OrdersPage() {
               <div className="flex gap-1.5 overflow-x-auto scrollbar-hide -mx-1 px-1 pb-1">
                 <FilterChip
                   active={store === "all"}
-                  onClick={() => navigate({ search: (p) => ({ ...p, store: "all" }) })}
+                  onClick={() => navigate({ search: (p: OrdersSearch) => ({ ...p, store: "all" }) })}
                 >
                   Todas
                 </FilterChip>
@@ -245,7 +245,7 @@ function OrdersPage() {
                   <FilterChip
                     key={s.id}
                     active={store === s.id}
-                    onClick={() => navigate({ search: (p) => ({ ...p, store: s.id }) })}
+                    onClick={() => navigate({ search: (p: OrdersSearch) => ({ ...p, store: s.id }) })}
                   >
                     {s.emoji ? <span className="mr-1">{s.emoji}</span> : null}
                     {s.name}
@@ -264,7 +264,7 @@ function OrdersPage() {
                   <FilterChip
                     key={opt.value}
                     active={status === opt.value}
-                    onClick={() => navigate({ search: (p) => ({ ...p, status: opt.value }) })}
+                    onClick={() => navigate({ search: (p: OrdersSearch) => ({ ...p, status: opt.value }) })}
                   >
                     {opt.label}
                   </FilterChip>
@@ -281,7 +281,7 @@ function OrdersPage() {
                 value={sort}
                 onChange={(e) =>
                   navigate({
-                    search: (p) => ({ ...p, sort: e.target.value as typeof sort }),
+                    search: (p: OrdersSearch) => ({ ...p, sort: e.target.value as typeof sort }),
                   })
                 }
                 className="w-full rounded-full bg-muted px-3 py-2 text-sm font-semibold outline-none"
