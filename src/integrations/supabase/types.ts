@@ -684,6 +684,8 @@ export type Database = {
           id: string
           image_url: string | null
           is_paused: boolean
+          lat: number | null
+          lng: number | null
           min_order: number
           name: string
           neighborhood: string | null
@@ -712,6 +714,8 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_paused?: boolean
+          lat?: number | null
+          lng?: number | null
           min_order?: number
           name: string
           neighborhood?: string | null
@@ -740,6 +744,8 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_paused?: boolean
+          lat?: number | null
+          lng?: number | null
           min_order?: number
           name?: string
           neighborhood?: string | null
