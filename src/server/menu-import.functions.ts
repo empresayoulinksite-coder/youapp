@@ -73,7 +73,7 @@ async function callAIWithTool(messages: unknown[]): Promise<ParsedMenu> {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
+      model: "google/gemini-2.5-flash-lite",
       messages,
       tools: [TOOL_SCHEMA],
       tool_choice: { type: "function", function: { name: "save_menu" } },
@@ -126,6 +126,9 @@ export const importMenuFromUrl = createServerFn({ method: "POST" })
         url: data.url,
         formats: ["markdown"],
         onlyMainContent: true,
+        maxAge: 3600000,
+        timeout: 20000,
+        blockAds: true,
       }),
     });
 
@@ -144,7 +147,7 @@ export const importMenuFromUrl = createServerFn({ method: "POST" })
       throw new Error("Não foi possível extrair conteúdo da página");
     }
 
-    const truncated = markdown.slice(0, 25000);
+    const truncated = markdown.slice(0, 15000);
     const menu = await callAIWithTool([
       { role: "system", content: SYSTEM_PROMPT },
       {
