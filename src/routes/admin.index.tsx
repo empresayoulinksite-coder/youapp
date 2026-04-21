@@ -35,6 +35,7 @@ type Store = {
   promo: string | null;
   image_url: string | null;
   about: string | null;
+  cep: string | null;
   address: string | null;
   neighborhood: string | null;
   city: string | null;
@@ -42,6 +43,23 @@ type Store = {
   payment_methods: string | null;
   min_order: number;
 };
+
+async function lookupCep(rawCep: string) {
+  const cep = rawCep.replace(/\D/g, "");
+  if (cep.length !== 8) return null;
+  try {
+    const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+    const data = await res.json();
+    if (data?.erro) return null;
+    return {
+      street: data.logradouro as string,
+      neighborhood: data.bairro as string,
+      city: data.localidade as string,
+    };
+  } catch {
+    return null;
+  }
+}
 
 const empty: Partial<Store> = {
   slug: "",
