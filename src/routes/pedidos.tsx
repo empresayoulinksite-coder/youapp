@@ -340,8 +340,17 @@ function OrdersPage() {
                     onClick={() => setExpanded(isOpen ? null : o.id)}
                     className="w-full flex items-start gap-3 text-left"
                   >
-                    <div className="h-12 w-12 rounded-lg bg-brand-soft flex items-center justify-center text-2xl shrink-0">
-                      {o.store_emoji ?? "🛍️"}
+                    <div className="h-12 w-12 rounded-lg bg-brand-soft flex items-center justify-center text-2xl shrink-0 overflow-hidden">
+                      {o.store_image_url ? (
+                        <img
+                          src={o.store_image_url}
+                          alt={o.store_name}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        o.store_emoji ?? "🛍️"
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
