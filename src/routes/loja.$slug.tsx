@@ -1,9 +1,11 @@
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Star, Clock, Bike, MapPin, CreditCard, Tag, Plus, Minus, ShoppingBag, MessageSquare, X } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
+import { isStoreOpen, nextOpeningLabel, groupByWeekday, formatTime, WEEKDAYS, type StoreHour } from "@/lib/store-hours";
 
 interface Store {
   id: string;
@@ -70,11 +72,12 @@ export const Route = createFileRoute("/loja/$slug")({
     if (error) throw error;
     if (!store) throw notFound();
 
-    const [categoriesRes, itemsRes, couponsRes, reviewsRes] = await Promise.all([
+    const [categoriesRes, itemsRes, couponsRes, reviewsRes, hoursRes] = await Promise.all([
       supabase.from("menu_categories").select("*").eq("store_id", store.id).order("position"),
       supabase.from("menu_items").select("*").eq("store_id", store.id).order("position"),
       supabase.from("store_coupons").select("*").eq("store_id", store.id),
       supabase.from("store_reviews").select("*").eq("store_id", store.id).order("created_at", { ascending: false }),
+      supabase.from("store_hours").select("*").eq("store_id", store.id),
     ]);
 
     return {
@@ -83,6 +86,7 @@ export const Route = createFileRoute("/loja/$slug")({
       items: (itemsRes.data ?? []).map((i) => ({ ...i, price: Number(i.price), original_price: i.original_price ? Number(i.original_price) : null })) as MenuItem[],
       coupons: (couponsRes.data ?? []).map((c) => ({ ...c, min_order: Number(c.min_order) })) as Coupon[],
       reviews: (reviewsRes.data ?? []) as Review[],
+      hours: (hoursRes.data ?? []) as StoreHour[],
     };
   },
   errorComponent: ({ error }) => {
@@ -114,17 +118,36 @@ export const Route = createFileRoute("/loja/$slug")({
 });
 
 function StorePage() {
-  const { store, categories, items, coupons, reviews } = Route.useLoaderData() as {
+  const { store, categories, items, coupons, reviews, hours } = Route.useLoaderData() as {
     store: Store;
     categories: MenuCategory[];
     items: MenuItem[];
     coupons: Coupon[];
     reviews: Review[];
+    hours: StoreHour[];
   };
   const { user } = useAuth();
   const { items: cartItems, addItem, updateQuantity, count: cartCount } = useCart();
   const [tab, setTab] = useState<"menu" | "info" | "reviews">("menu");
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+  const [now, setNow] = useState(() => new Date());
+
+  // refresh "now" every minute so the open/closed badge updates without a refresh
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+
+  const open = isStoreOpen(hours, now);
+  const nextOpen = !open ? nextOpeningLabel(hours, now) : null;
+
+  const tryAdd = async (storeId: string, menuItemId: string) => {
+    if (!open) {
+      toast.error(nextOpen ? `Loja fechada agora. ${nextOpen}.` : "Loja fechada no momento.");
+      return;
+    }
+    await addItem(storeId, menuItemId);
+  };
 
   const itemQty = (id: string) => cartItems.find((c) => c.menu_item_id === id)?.quantity ?? 0;
 
