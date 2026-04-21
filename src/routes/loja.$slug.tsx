@@ -4,7 +4,7 @@ import { ArrowLeft, Star, Clock, Bike, MapPin, CreditCard, Tag, Plus, Minus, Sho
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCart } from "@/contexts/CartContext";
+import { useCart, DifferentStoreError } from "@/contexts/CartContext";
 import { isStoreOpen, nextOpeningLabel, groupByWeekday, formatTime, WEEKDAYS, type StoreHour } from "@/lib/store-hours";
 import { BookingDialog, type ServiceLite } from "@/components/BookingDialog";
 import { StoreDistance } from "@/components/StoreDistance";
