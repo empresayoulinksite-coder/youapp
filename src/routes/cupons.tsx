@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Ticket, Copy, Check, Store as StoreIcon, Tag } from "lucide-react";
+import { ArrowLeft, Ticket, Copy, Check, Store as StoreIcon, Tag, ShoppingBag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCoupon } from "@/contexts/CouponContext";
 import { calculateDiscount, formatCouponLabel, type CouponLike } from "@/lib/coupons";
