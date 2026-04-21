@@ -665,6 +665,7 @@ export type Database = {
           slug: string
           store_type: string
           updated_at: string
+          whatsapp: string | null
         }
         Insert: {
           about?: string | null
@@ -692,6 +693,7 @@ export type Database = {
           slug: string
           store_type?: string
           updated_at?: string
+          whatsapp?: string | null
         }
         Update: {
           about?: string | null
@@ -719,6 +721,7 @@ export type Database = {
           slug?: string
           store_type?: string
           updated_at?: string
+          whatsapp?: string | null
         }
         Relationships: []
       }
