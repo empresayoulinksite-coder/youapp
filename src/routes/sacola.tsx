@@ -314,6 +314,7 @@ function CartPage() {
                     store_name: storeName ?? firstStore?.name ?? "Loja",
                     store_slug: storeSlug ?? firstStore?.slug ?? "",
                     store_emoji: firstStore?.emoji ?? null,
+                    store_image_url: storeImageUrl,
                     store_whatsapp: storeWhatsapp,
                     total: grandTotal,
                     discount,
