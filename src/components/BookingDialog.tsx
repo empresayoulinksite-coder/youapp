@@ -163,10 +163,26 @@ export function BookingDialog({
 
     const phone = storeWhatsapp.replace(/\D/g, "");
     const fullPhone = phone.startsWith("55") ? phone : `55${phone}`;
-    const url = `https://wa.me/${fullPhone}?text=${encodeURIComponent(buildWhatsappMessage(selectedSlot))}`;
-    window.open(url, "_blank");
+    const text = encodeURIComponent(buildWhatsappMessage(selectedSlot));
+    const primaryUrl = `https://wa.me/${fullPhone}?text=${text}`;
+    const fallbackUrl = `https://web.whatsapp.com/send?phone=${fullPhone}&text=${text}`;
 
-    toast.success("Solicitação enviada! Continue no WhatsApp.");
+    const win = window.open(primaryUrl, "_blank", "noopener,noreferrer");
+    const blocked = !win || win.closed || typeof win.closed === "undefined";
+
+    if (blocked) {
+      toast.success("Agendamento criado!", {
+        description: "Clique para abrir o WhatsApp da loja.",
+        action: {
+          label: "Abrir WhatsApp",
+          onClick: () => window.open(fallbackUrl, "_blank", "noopener,noreferrer"),
+        },
+        duration: 10000,
+      });
+    } else {
+      toast.success("Solicitação enviada! Continue no WhatsApp.");
+    }
+
     onCreated?.();
     onClose();
   };
