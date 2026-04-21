@@ -139,12 +139,18 @@ function StorePage() {
     return () => clearInterval(t);
   }, []);
 
-  const open = isStoreOpen(hours, now);
-  const nextOpen = !open ? nextOpeningLabel(hours, now) : null;
+  const withinHours = isStoreOpen(hours, now);
+  const open = !store.is_paused && withinHours;
+  const nextOpen = !open && !store.is_paused ? nextOpeningLabel(hours, now) : null;
 
   const tryAdd = async (storeId: string, menuItemId: string) => {
     if (!open) {
-      toast.error(nextOpen ? `Loja fechada agora. ${nextOpen}.` : "Loja fechada no momento.");
+      const msg = store.is_paused
+        ? "Loja temporariamente fechada pelo lojista."
+        : nextOpen
+          ? `Loja fechada agora. ${nextOpen}.`
+          : "Loja fechada no momento.";
+      toast.error(msg);
       return;
     }
     await addItem(storeId, menuItemId);
