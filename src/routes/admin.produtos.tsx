@@ -117,11 +117,12 @@ function AdminProducts() {
   const [editingCat, setEditingCat] = useState<Partial<Category> | null>(null);
 
   const { data: stores = [] } = useQuery({
-    queryKey: ["admin-stores-list"],
+    queryKey: ["admin-stores-list", storeType],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("stores")
-        .select("id,name")
+        .select("id,name,store_type")
+        .eq("store_type", storeType)
         .order("name");
       if (error) throw error;
       return data;
