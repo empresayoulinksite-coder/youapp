@@ -237,7 +237,7 @@ function OrdersPage() {
               <div className="flex gap-1.5 overflow-x-auto scrollbar-hide -mx-1 px-1 pb-1">
                 <FilterChip
                   active={store === "all"}
-                  onClick={() => navigate({ search: (p: OrdersSearch) => ({ ...p, store: "all" }) })}
+                  onClick={() => navigate({ search: (p) => ({ ...p, store: "all" }) })}
                 >
                   Todas
                 </FilterChip>
