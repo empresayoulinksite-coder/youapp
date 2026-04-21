@@ -627,6 +627,17 @@ function StorePage() {
           </div>
         </div>
       )}
+
+      <BookingDialog
+        open={!!bookingService}
+        onClose={() => setBookingService(null)}
+        storeId={store.id}
+        storeName={store.name}
+        slotMinutes={store.slot_minutes || 30}
+        storeHours={hours}
+        service={bookingService}
+        onCreated={() => router.invalidate()}
+      />
     </div>
   );
 }
