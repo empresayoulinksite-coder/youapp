@@ -11,6 +11,7 @@ import { X } from "lucide-react";
 import { normalizeText } from "@/hooks/use-location";
 import { StoriesBar } from "@/components/StoriesBar";
 import { StoreDistance } from "@/components/StoreDistance";
+import { useUserCoords, haversineKm } from "@/lib/distance";
 
 import {
   MapPin,
@@ -116,11 +117,12 @@ function Index() {
   const { isFavorite, toggleFavorite } = useFavorites();
   const { stores, items } = Route.useLoaderData() as { stores: StoreRow[]; items: MenuItemRow[] };
   const { active } = useAddress();
+  const userCoords = useUserCoords();
   const [pickerOpen, setPickerOpen] = useState(false);
   const location = active
     ? { neighborhood: active.neighborhood, city: active.city }
     : null;
-  const nearbyOnly = true;
+  void location;
 
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -168,25 +170,22 @@ function Index() {
     [homeCategories],
   );
 
-  // Lojas próximas: bairro do cliente; se vazio, cai pra cidade; se vazio, todas.
+  // Lojas próximas: raio de 10 km do endereço do usuário, ordenadas por distância.
+  // Sem coordenadas → mostra todas.
   const nearbyStores = useMemo(() => {
-    if (!nearbyOnly || !location) return stores;
-    const userHood = normalizeText(location.neighborhood);
-    const userCity = normalizeText(location.city);
-    if (userHood) {
-      const sameHood = stores.filter(
-        (s) => normalizeText(s.neighborhood) === userHood,
-      );
-      if (sameHood.length > 0) return sameHood;
-    }
-    if (userCity) {
-      const sameCity = stores.filter(
-        (s) => normalizeText(s.city) === userCity,
-      );
-      if (sameCity.length > 0) return sameCity;
-    }
-    return stores;
-  }, [stores, location, nearbyOnly]);
+    if (!userCoords) return stores;
+    const RADIUS_KM = 10;
+    const withDist = stores
+      .map((s) => {
+        if (s.lat == null || s.lng == null) return null;
+        const km = haversineKm(userCoords, { lat: s.lat, lng: s.lng });
+        return km <= RADIUS_KM ? { store: s, km } : null;
+      })
+      .filter((x): x is { store: StoreRow; km: number } => x !== null)
+      .sort((a, b) => a.km - b.km)
+      .map((x) => x.store);
+    return withDist.length > 0 ? withDist : stores;
+  }, [stores, userCoords]);
 
   const filteredStores = useMemo(() => {
     const q = norm(query.trim());
@@ -549,11 +548,11 @@ function Index() {
                     <label className="flex items-center gap-2 text-sm cursor-pointer opacity-70">
                       <input
                         type="checkbox"
-                        checked={nearbyOnly}
+                        checked={!!userCoords}
                         readOnly
                         className="accent-[hsl(var(--brand))]"
                       />
-                      Apenas próximas a mim
+                      Apenas em até 10 km
                     </label>
                     <label className="flex items-center gap-2 text-sm cursor-pointer">
                       <input
