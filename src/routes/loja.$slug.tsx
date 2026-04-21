@@ -29,6 +29,7 @@ interface Store {
   is_paused: boolean;
   store_type: "food" | "ecommerce" | "service";
   slot_minutes: number;
+  whatsapp: string | null;
 }
 
 interface MenuCategory {
@@ -146,7 +147,8 @@ function StorePage() {
   const { items: cartItems, addItem, updateQuantity, count: cartCount } = useCart();
   const [tab, setTab] = useState<"menu" | "info" | "reviews">("menu");
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
-  const [bookingService, setBookingService] = useState<ServiceLite | null>(null);
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [bookingInitialId, setBookingInitialId] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
 
   // refresh "now" every minute so the open/closed badge updates without a refresh
@@ -320,7 +322,8 @@ function StorePage() {
                               );
                               return;
                             }
-                            setBookingService(s);
+                            setBookingInitialId(s.id);
+                            setBookingOpen(true);
                           }}
                           disabled={!open}
                           className="text-xs font-bold bg-brand text-brand-foreground rounded-full px-3 py-1.5 inline-flex items-center gap-1 disabled:opacity-50"
@@ -629,13 +632,15 @@ function StorePage() {
       )}
 
       <BookingDialog
-        open={!!bookingService}
-        onClose={() => setBookingService(null)}
+        open={bookingOpen}
+        onClose={() => setBookingOpen(false)}
         storeId={store.id}
         storeName={store.name}
+        storeWhatsapp={store.whatsapp}
         slotMinutes={store.slot_minutes || 30}
         storeHours={hours}
-        service={bookingService}
+        services={services}
+        initialServiceId={bookingInitialId}
         onCreated={() => router.invalidate()}
       />
     </div>
