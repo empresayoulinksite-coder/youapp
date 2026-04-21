@@ -548,11 +548,11 @@ function Index() {
                     <label className="flex items-center gap-2 text-sm cursor-pointer opacity-70">
                       <input
                         type="checkbox"
-                        checked={nearbyOnly}
+                        checked={!!userCoords}
                         readOnly
                         className="accent-[hsl(var(--brand))]"
                       />
-                      Apenas próximas a mim
+                      Apenas em até 10 km
                     </label>
                     <label className="flex items-center gap-2 text-sm cursor-pointer">
                       <input
