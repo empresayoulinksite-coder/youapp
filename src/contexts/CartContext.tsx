@@ -107,6 +107,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (!error) await refresh();
   };
 
+  const reorder = async (
+    storeId: string,
+    newItems: Array<{ menu_item_id: string; quantity: number }>,
+  ) => {
+    if (!user) return;
+    await supabase.from("cart_items").delete().eq("user_id", user.id);
+    if (newItems.length > 0) {
+      const rows = newItems.map((i) => ({
+        user_id: user.id,
+        store_id: storeId,
+        menu_item_id: i.menu_item_id,
+        quantity: i.quantity,
+      }));
+      await supabase.from("cart_items").insert(rows);
+    }
+    await refresh();
+  };
+
   const updateQuantity = async (id: string, quantity: number) => {
     if (quantity <= 0) {
       await removeItem(id);
