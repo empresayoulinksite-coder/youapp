@@ -6,6 +6,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useCoupon } from "@/contexts/CouponContext";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateDiscount, formatCouponLabel, type CouponLike } from "@/lib/coupons";
+import { isStoreOpen, nextOpeningLabel, type StoreHour } from "@/lib/store-hours";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/sacola")({
