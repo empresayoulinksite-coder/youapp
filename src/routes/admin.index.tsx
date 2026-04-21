@@ -116,6 +116,7 @@ function AdminStores() {
         promo: s.promo || null,
         image_url: s.image_url || null,
         about: s.about || null,
+        cep: s.cep || null,
         address: s.address || null,
         neighborhood: s.neighborhood || null,
         city: s.city || null,
