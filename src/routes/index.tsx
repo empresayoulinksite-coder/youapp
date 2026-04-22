@@ -56,6 +56,8 @@ interface StoreRow {
   promo: string | null;
   neighborhood: string | null;
   city: string | null;
+  address: string | null;
+  cep: string | null;
   lat: number | null;
   lng: number | null;
 }
@@ -75,7 +77,7 @@ export const Route = createFileRoute("/")({
   loader: async () => {
     const { data, error } = await supabase
       .from("stores")
-      .select("id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, promo, neighborhood, city, lat, lng")
+      .select("id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, promo, neighborhood, city, address, cep, lat, lng")
       .order("name");
     if (error) throw error;
     const stores = (data ?? []) as StoreRow[];
