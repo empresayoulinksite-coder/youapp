@@ -56,6 +56,8 @@ interface StoreRow {
   promo: string | null;
   neighborhood: string | null;
   city: string | null;
+  address: string | null;
+  cep: string | null;
   lat: number | null;
   lng: number | null;
 }

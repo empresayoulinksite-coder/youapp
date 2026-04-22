@@ -18,6 +18,10 @@ interface StoreRow {
   delivery_fee: string;
   free_delivery: boolean;
   promo: string | null;
+  address: string | null;
+  neighborhood: string | null;
+  city: string | null;
+  cep: string | null;
   lat: number | null;
   lng: number | null;
 }
