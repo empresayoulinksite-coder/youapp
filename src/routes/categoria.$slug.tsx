@@ -46,7 +46,7 @@ export const Route = createFileRoute("/categoria/$slug")({
     const { data: storesData, error: storesErr } = await supabase
       .from("stores")
       .select(
-        "id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, promo, lat, lng",
+        "id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, promo, address, neighborhood, city, cep, lat, lng",
       )
       .order("rating", { ascending: false });
     if (storesErr) throw storesErr;
