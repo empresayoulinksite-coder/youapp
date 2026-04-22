@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAddress } from "@/contexts/AddressContext";
 
 export type LatLng = { lat: number; lng: number };
@@ -67,15 +67,101 @@ export function useUserCoords(): LatLng | null {
   }, [active, gpsLocation, addresses]);
 }
 
-/** Calcula a distância dinâmica até a loja, ou retorna o fallback. */
+/** Cache em memória + localStorage de geocoding por chave de endereço. */
+const GEOCODE_STORAGE_KEY = "youapp:geocode-cache";
+const geocodeMemo = new Map<string, LatLng | null>();
+const inflight = new Map<string, Promise<LatLng | null>>();
+
+function loadGeocodeCache(): Record<string, LatLng | null> {
+  if (typeof window === "undefined") return {};
+  try {
+    return JSON.parse(localStorage.getItem(GEOCODE_STORAGE_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+function saveGeocodeCache(key: string, value: LatLng | null) {
+  if (typeof window === "undefined") return;
+  try {
+    const all = loadGeocodeCache();
+    all[key] = value;
+    localStorage.setItem(GEOCODE_STORAGE_KEY, JSON.stringify(all));
+  } catch {
+    // ignore
+  }
+}
+
+function buildKey(parts: { address?: string | null; neighborhood?: string | null; city?: string | null; cep?: string | null }) {
+  return [parts.address, parts.neighborhood, parts.city, parts.cep]
+    .map((p) => (p ?? "").trim().toLowerCase())
+    .join("|");
+}
+
+async function getOrGeocode(parts: { address?: string | null; neighborhood?: string | null; city?: string | null; cep?: string | null }): Promise<LatLng | null> {
+  const key = buildKey(parts);
+  if (!key.replaceAll("|", "")) return null;
+  if (geocodeMemo.has(key)) return geocodeMemo.get(key)!;
+  const cached = loadGeocodeCache();
+  if (key in cached) {
+    geocodeMemo.set(key, cached[key]);
+    return cached[key];
+  }
+  if (inflight.has(key)) return inflight.get(key)!;
+  const p = geocodeAddress(parts).then((res) => {
+    geocodeMemo.set(key, res);
+    saveGeocodeCache(key, res);
+    inflight.delete(key);
+    return res;
+  });
+  inflight.set(key, p);
+  return p;
+}
+
+/**
+ * Calcula a distância em tempo real entre o usuário e a loja.
+ * - Usa lat/lng da loja quando disponíveis.
+ * - Caso contrário geocodifica o endereço da loja (com cache).
+ * - Retorna string vazia se não conseguir calcular (sem fallback estático).
+ */
 export function useStoreDistance(
-  store: { lat?: number | null; lng?: number | null; distance?: string | null },
+  store: {
+    lat?: number | null;
+    lng?: number | null;
+    address?: string | null;
+    neighborhood?: string | null;
+    city?: string | null;
+    cep?: string | null;
+    distance?: string | null;
+  },
 ): string {
   const coords = useUserCoords();
-  return useMemo(() => {
-    if (coords && store.lat != null && store.lng != null) {
-      return formatDistance(haversineKm(coords, { lat: store.lat, lng: store.lng }));
+  const [resolved, setResolved] = useState<LatLng | null>(
+    store.lat != null && store.lng != null ? { lat: store.lat, lng: store.lng } : null,
+  );
+
+  useEffect(() => {
+    if (store.lat != null && store.lng != null) {
+      setResolved({ lat: store.lat, lng: store.lng });
+      return;
     }
-    return store.distance || "";
-  }, [coords, store.lat, store.lng, store.distance]);
+    let cancelled = false;
+    getOrGeocode({
+      address: store.address,
+      neighborhood: store.neighborhood,
+      city: store.city,
+      cep: store.cep,
+    }).then((res) => {
+      if (!cancelled) setResolved(res);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [store.lat, store.lng, store.address, store.neighborhood, store.city, store.cep]);
+
+  return useMemo(() => {
+    if (coords && resolved) {
+      return formatDistance(haversineKm(coords, resolved));
+    }
+    return "";
+  }, [coords, resolved]);
 }

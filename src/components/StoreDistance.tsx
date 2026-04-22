@@ -1,11 +1,19 @@
 import { useStoreDistance } from "@/lib/distance";
 
 type Props = {
-  store: { lat?: number | null; lng?: number | null; distance?: string | null };
+  store: {
+    lat?: number | null;
+    lng?: number | null;
+    address?: string | null;
+    neighborhood?: string | null;
+    city?: string | null;
+    cep?: string | null;
+    distance?: string | null;
+  };
   className?: string;
 };
 
-/** Mostra distância dinâmica (calculada do usuário até a loja) ou fallback. */
+/** Mostra distância em tempo real (usuário → loja). Não renderiza nada se não puder calcular. */
 export function StoreDistance({ store, className }: Props) {
   const d = useStoreDistance(store);
   if (!d) return null;
