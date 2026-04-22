@@ -520,6 +520,42 @@ function AdminStores() {
                   onChange={(e) => setEditing({ ...editing, city: e.target.value })}
                 />
               </div>
+              <div className="sm:col-span-2 rounded-lg border bg-muted/30 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <Label className="block">Coordenadas (GPS)</Label>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      {editing.lat != null && editing.lng != null
+                        ? `📍 ${editing.lat.toFixed(5)}, ${editing.lng.toFixed(5)}`
+                        : "Sem coordenadas. Usadas para calcular distância em tempo real."}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={!(editing.address || editing.cep || editing.city)}
+                    onClick={async () => {
+                      const t = toast.loading("Buscando coordenadas...");
+                      const coords = await geocodeAddress({
+                        address: editing.address,
+                        neighborhood: editing.neighborhood,
+                        city: editing.city,
+                        cep: editing.cep,
+                      });
+                      toast.dismiss(t);
+                      if (coords) {
+                        setEditing((prev) => ({ ...(prev || {}), lat: coords.lat, lng: coords.lng }));
+                        toast.success("Coordenadas encontradas");
+                      } else {
+                        toast.error("Não foi possível localizar o endereço");
+                      }
+                    }}
+                  >
+                    Buscar pelo endereço
+                  </Button>
+                </div>
+              </div>
               {editing.id && (
                 <div className="sm:col-span-2">
                   <Label>Horários de funcionamento</Label>
