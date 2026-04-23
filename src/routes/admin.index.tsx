@@ -20,6 +20,7 @@ import { StoreHoursEditor } from "@/components/StoreHoursEditor";
 import { geocodeAddress } from "@/lib/distance";
 import { PAYMENT_METHODS } from "@/lib/payment-methods";
 import { StoreLocationAdjuster } from "@/components/StoreLocationAdjuster";
+import { StoreBenefitsEditor } from "@/components/StoreBenefitsEditor";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminStores,
