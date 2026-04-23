@@ -126,13 +126,16 @@ function AdminProducts() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("stores")
-        .select("id,name,store_type")
+        .select("id,name,store_type,category,is_pizzeria")
         .eq("store_type", storeType)
         .order("name");
       if (error) throw error;
       return data;
     },
   });
+
+  const currentStore = stores.find((s) => s.id === storeId);
+  const isPizzeria = !!currentStore && (currentStore.is_pizzeria === true || currentStore.category === "Pizza");
 
   const { data: categories = [] } = useQuery({
     queryKey: ["admin-cats", storeId],
