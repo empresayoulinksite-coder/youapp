@@ -565,6 +565,24 @@ function AdminStores() {
                   </Button>
                 </div>
               </div>
+              <div className="sm:col-span-2">
+                <label className="flex items-start gap-3 rounded-md border p-3 cursor-pointer hover:bg-muted/30 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={!!editing.show_route}
+                    onChange={(e) =>
+                      setEditing({ ...editing, show_route: e.target.checked })
+                    }
+                    className="h-4 w-4 mt-0.5 accent-[hsl(var(--brand))]"
+                  />
+                  <div>
+                    <p className="font-medium text-sm">Mostrar botão "Ver rota até a loja"</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Ative para lojas com endereço físico. Desative para lojas online ou somente delivery.
+                    </p>
+                  </div>
+                </label>
+              </div>
               {editing.id && (
                 <div className="sm:col-span-2">
                   <Label>Horários de funcionamento</Label>
