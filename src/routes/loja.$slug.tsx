@@ -154,10 +154,12 @@ function StorePage() {
   };
   const isService = store.store_type === "service";
   const { user } = useAuth();
-  const { items: cartItems, addItem, switchStoreAndAdd, updateQuantity, count: cartCount } = useCart();
+  const { items: cartItems, addItem, addHalfHalf, switchStoreAndAdd, switchStoreAndAddHalfHalf, updateQuantity, count: cartCount } = useCart();
   const [tab, setTab] = useState<"menu" | "info" | "reviews">("menu");
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [orderMode, setOrderMode] = useState<"whole" | "half">("whole");
+  const [secondHalfId, setSecondHalfId] = useState<string | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingInitialId, setBookingInitialId] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
