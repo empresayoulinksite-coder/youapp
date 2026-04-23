@@ -8,6 +8,7 @@ import { useCart, DifferentStoreError } from "@/contexts/CartContext";
 import { isStoreOpen, nextOpeningLabel, groupByWeekday, formatTime, WEEKDAYS, type StoreHour } from "@/lib/store-hours";
 import { BookingDialog, type ServiceLite } from "@/components/BookingDialog";
 import { StoreDistance } from "@/components/StoreDistance";
+import { normalizePaymentList, paymentLabelsFromList } from "@/lib/payment-methods";
 
 interface Store {
   id: string;
