@@ -1157,10 +1157,12 @@ function SortableCategory({
   onEditCategory,
   onDeleteCategory,
   onToggleAvailable,
+  onDuplicateCategory,
   onAddItem,
   onEditItem,
   onDeleteItem,
   onToggleItemAvailable,
+  onDuplicateItem,
   onDragItems,
   sensors,
 }: {
@@ -1172,10 +1174,12 @@ function SortableCategory({
   onEditCategory: () => void;
   onDeleteCategory: () => void;
   onToggleAvailable: () => void;
+  onDuplicateCategory: () => void;
   onAddItem: () => void;
   onEditItem: (m: MenuItem) => void;
   onDeleteItem: (id: string, name: string) => void;
   onToggleItemAvailable: (m: MenuItem) => void;
+  onDuplicateItem: (m: MenuItem) => void;
   onDragItems: (e: DragEndEvent) => void;
   sensors: ReturnType<typeof useSensors>;
 }) {
