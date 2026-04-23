@@ -20,6 +20,7 @@ import { StoreHoursEditor } from "@/components/StoreHoursEditor";
 import { geocodeAddress } from "@/lib/distance";
 import { PAYMENT_METHODS } from "@/lib/payment-methods";
 import { StoreLocationAdjuster } from "@/components/StoreLocationAdjuster";
+import { StoreBenefitsEditor } from "@/components/StoreBenefitsEditor";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminStores,
@@ -747,6 +748,11 @@ function AdminStores() {
                   onChange={(e) => setEditing({ ...editing, about: e.target.value })}
                 />
               </div>
+            </div>
+          )}
+          {editing && editing.id && (
+            <div className="mt-4">
+              <StoreBenefitsEditor storeId={editing.id} />
             </div>
           )}
           {editing && (editing.id || (editing as Partial<Store> & { __typed?: boolean }).__typed) && (
