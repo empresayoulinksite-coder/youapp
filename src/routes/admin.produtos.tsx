@@ -121,6 +121,8 @@ function AdminProducts() {
 
   const [catOpen, setCatOpen] = useState(false);
   const [editingCat, setEditingCat] = useState<Partial<Category> | null>(null);
+  const [pizzaWizardOpen, setPizzaWizardOpen] = useState(false);
+  const [pizzaWizardInitial, setPizzaWizardInitial] = useState<Category | null>(null);
 
   const { data: stores = [] } = useQuery({
     queryKey: ["admin-stores-list", storeType],
