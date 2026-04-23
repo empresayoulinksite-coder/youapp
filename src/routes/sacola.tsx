@@ -10,6 +10,7 @@ import { calculateDiscount, formatCouponLabel, type CouponLike } from "@/lib/cou
 import { isStoreOpen, nextOpeningLabel, type StoreHour } from "@/lib/store-hours";
 import { openWhatsapp } from "@/lib/whatsapp";
 import { toast } from "sonner";
+import { CheckoutReviewDialog, type PaymentMethod } from "@/components/CheckoutReviewDialog";
 
 export const Route = createFileRoute("/sacola")({
   head: () => ({
