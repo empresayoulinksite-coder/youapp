@@ -22,6 +22,8 @@ interface Props {
   acceptedPaymentMethods?: string[] | null;
   customerName?: string | null;
   customerPhone?: string | null;
+  deliveryMode?: "delivery" | "pickup";
+  storeAddress?: string | null;
   submitting: boolean;
   onConfirm: (data: {
     paymentMethod: PaymentMethod;
@@ -72,9 +74,12 @@ export function CheckoutReviewDialog({
   acceptedPaymentMethods,
   customerName: initialName,
   customerPhone: initialPhone,
+  deliveryMode = "delivery",
+  storeAddress,
   submitting,
   onConfirm,
 }: Props) {
+  const isPickup = deliveryMode === "pickup";
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [notes, setNotes] = useState("");
   const [number, setNumber] = useState("");
@@ -110,8 +115,9 @@ export function CheckoutReviewDialog({
   const hasName = name.trim().length > 0;
   const phoneDigits = phone.replace(/\D/g, "");
   const hasPhone = phoneDigits.length >= 10;
+  const addressOk = isPickup ? true : !!addressText && hasNumber;
   const canConfirm =
-    !!paymentMethod && !!addressText && hasNumber && hasName && hasPhone && !submitting;
+    !!paymentMethod && addressOk && hasName && hasPhone && !submitting;
 
   return (
     <div
@@ -172,20 +178,30 @@ export function CheckoutReviewDialog({
             </div>
           </section>
 
-          {/* Endereço */}
+          {/* Endereço / Retirada */}
           <section>
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5" /> Endereço de entrega
+                <MapPin className="h-3.5 w-3.5" />
+                {isPickup ? "Retirada no local" : "Endereço de entrega"}
               </h3>
-              <Link
-                to="/perfil"
-                className="text-xs font-semibold text-brand flex items-center gap-1"
-              >
-                <Pencil className="h-3 w-3" /> Editar
-              </Link>
+              {!isPickup && (
+                <Link
+                  to="/perfil"
+                  className="text-xs font-semibold text-brand flex items-center gap-1"
+                >
+                  <Pencil className="h-3 w-3" /> Editar
+                </Link>
+              )}
             </div>
-            {address ? (
+            {isPickup ? (
+              <div className="rounded-xl border border-border bg-background p-3">
+                <p className="text-sm font-semibold">🏪 Você vai retirar na loja</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {storeAddress ?? "Confirme o endereço com a loja pelo WhatsApp."}
+                </p>
+              </div>
+            ) : address ? (
               <div className="rounded-xl border border-border bg-background p-3 space-y-3">
                 <div>
                   <p className="text-sm font-semibold">{address.label}</p>
@@ -334,13 +350,13 @@ export function CheckoutReviewDialog({
           >
             {submitting
               ? "Enviando..."
-              : !address
-                ? "Cadastre um endereço"
-                : !hasName
-                  ? "Informe seu nome"
-                  : !hasPhone
-                    ? "Informe seu telefone"
-                    : !hasNumber
+              : !hasName
+                ? "Informe seu nome"
+                : !hasPhone
+                  ? "Informe seu telefone"
+                  : !isPickup && !address
+                    ? "Cadastre um endereço"
+                    : !isPickup && !hasNumber
                       ? "Informe o número"
                       : !paymentMethod
                         ? "Escolha o pagamento"

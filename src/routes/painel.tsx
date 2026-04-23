@@ -42,7 +42,7 @@ function PainelPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("store_owners")
-        .select("stores(id, name, slot_minutes, whatsapp, is_paused)")
+        .select("stores(id, name, slot_minutes, whatsapp, is_paused, pickup_enabled)")
         .eq("user_id", user!.id);
       if (error) throw error;
       return ((data ?? [])
@@ -99,6 +99,22 @@ function PainelPage() {
     },
     onSuccess: () => {
       toast.success("Status da loja atualizado");
+      qc.invalidateQueries({ queryKey: ["painel", "stores"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const togglePickup = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      if (!storeId) return;
+      const { error } = await supabase
+        .from("stores")
+        .update({ pickup_enabled: enabled })
+        .eq("id", storeId);
+      if (error) throw error;
+    },
+    onSuccess: (_d, enabled) => {
+      toast.success(enabled ? "Retirada no local ativada" : "Retirada no local desativada");
       qc.invalidateQueries({ queryKey: ["painel", "stores"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -193,6 +209,27 @@ function PainelPage() {
             >
               <Power className="h-4 w-4" />
               {currentStore.is_paused ? "Reabrir" : "Pausar"}
+            </Button>
+          </div>
+        )}
+
+        {currentStore && (
+          <div className="flex items-center justify-between rounded-lg border bg-card p-4">
+            <div>
+              <p className="text-sm font-semibold">
+                Retirar no local {currentStore.pickup_enabled ? "(ativado)" : "(desativado)"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Quando ativado, o cliente pode escolher buscar o pedido na loja.
+              </p>
+            </div>
+            <Button
+              variant={currentStore.pickup_enabled ? "outline" : "default"}
+              size="sm"
+              onClick={() => togglePickup.mutate(!currentStore.pickup_enabled)}
+              disabled={togglePickup.isPending}
+            >
+              {currentStore.pickup_enabled ? "Desativar" : "Ativar"}
             </Button>
           </div>
         )}

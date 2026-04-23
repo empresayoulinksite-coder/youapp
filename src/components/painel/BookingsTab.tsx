@@ -74,6 +74,7 @@ export type StoreLite = {
   slot_minutes: number;
   whatsapp: string | null;
   is_paused: boolean;
+  pickup_enabled?: boolean;
 };
 
 const STATUS_LABEL: Record<BookingRow["status"], string> = {

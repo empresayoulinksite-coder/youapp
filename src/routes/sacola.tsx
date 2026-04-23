@@ -41,6 +41,9 @@ function CartPage() {
   const [storeWhatsapp, setStoreWhatsapp] = useState<string | null>(null);
   const [storeImageUrl, setStoreImageUrl] = useState<string | null>(null);
   const [storePaymentMethods, setStorePaymentMethods] = useState<string[] | null>(null);
+  const [pickupEnabled, setPickupEnabled] = useState(false);
+  const [storeAddress, setStoreAddress] = useState<string | null>(null);
+  const [deliveryMode, setDeliveryMode] = useState<"delivery" | "pickup">("delivery");
   const [profileName, setProfileName] = useState<string | null>(null);
   const [profilePhone, setProfilePhone] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
@@ -85,6 +88,8 @@ function CartPage() {
       setStoreWhatsapp(null);
       setStoreImageUrl(null);
       setStorePaymentMethods(null);
+      setPickupEnabled(false);
+      setStoreAddress(null);
       return;
     }
     supabase
@@ -94,7 +99,7 @@ function CartPage() {
       .then(({ data }) => setStoreHours((data ?? []) as StoreHour[]));
     supabase
       .from("stores")
-      .select("is_paused, whatsapp, image_url, payment_methods_list")
+      .select("is_paused, whatsapp, image_url, payment_methods_list, pickup_enabled, address, neighborhood, city")
       .eq("id", storeId)
       .maybeSingle()
       .then(({ data }) => {
@@ -104,12 +109,20 @@ function CartPage() {
         setStorePaymentMethods(
           Array.isArray(data?.payment_methods_list) ? data!.payment_methods_list : null,
         );
+        setPickupEnabled(!!data?.pickup_enabled);
+        const parts = [data?.address, data?.neighborhood, data?.city].filter(Boolean);
+        setStoreAddress(parts.length ? parts.join(", ") : null);
       });
   }, [storeId]);
 
   const withinHours = storeHours.length === 0 ? true : isStoreOpen(storeHours, now);
   const storeOpen = !storePaused && withinHours;
   const nextOpen = !storeOpen && !storePaused ? nextOpeningLabel(storeHours, now) : null;
+
+  // Garante que se a loja desabilitar retirada, voltamos para entrega
+  useEffect(() => {
+    if (!pickupEnabled && deliveryMode === "pickup") setDeliveryMode("delivery");
+  }, [pickupEnabled, deliveryMode]);
 
   const { discount, reason } = calculateDiscount(applied, total, storeId);
   const grandTotal = Math.max(0, total - discount);
@@ -254,6 +267,31 @@ function CartPage() {
               )}
             </div>
 
+            {/* Toggle Entrega / Retirada */}
+            {pickupEnabled && (
+              <div className="bg-card rounded-2xl p-3 mt-3 shadow-[var(--shadow-card)]">
+                <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Como você quer receber?</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryMode("delivery")}
+                    className={`rounded-xl border-2 p-3 text-left transition-colors ${deliveryMode === "delivery" ? "border-brand bg-brand-soft" : "border-border bg-background"}`}
+                  >
+                    <p className="text-sm font-bold">🛵 Entrega</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Receber no meu endereço</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryMode("pickup")}
+                    className={`rounded-xl border-2 p-3 text-left transition-colors ${deliveryMode === "pickup" ? "border-brand bg-brand-soft" : "border-border bg-background"}`}
+                  >
+                    <p className="text-sm font-bold">🏪 Retirar no local</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Buscar na loja</p>
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="bg-card rounded-2xl p-4 mt-3 shadow-[var(--shadow-card)] space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
@@ -315,6 +353,8 @@ function CartPage() {
         acceptedPaymentMethods={storePaymentMethods}
         customerName={profileName}
         customerPhone={profilePhone}
+        deliveryMode={deliveryMode}
+        storeAddress={storeAddress}
         submitting={submitting}
         onConfirm={async ({ paymentMethod, notes, number, complement, customerName, customerPhone }) => {
           if (!storeWhatsapp) return;
@@ -365,7 +405,9 @@ function CartPage() {
             setProfilePhone(customerPhone || null);
           }
           let deliveryAddress: string | null = null;
-          if (active) {
+          if (deliveryMode === "pickup") {
+            lines.push(`🏪 Retirada no local${storeAddress ? `: ${storeAddress}` : ""}`);
+          } else if (active) {
             const finalNumber = number || active.number || "";
             const finalComplement = complement || active.complement || "";
             const addrParts = [

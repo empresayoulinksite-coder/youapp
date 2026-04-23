@@ -62,6 +62,7 @@ type Store = {
   lng: number | null;
   show_route: boolean;
   route_url: string | null;
+  pickup_enabled: boolean;
 };
 
 async function lookupCep(rawCep: string) {
@@ -106,6 +107,7 @@ const empty: Partial<Store> = {
   whatsapp: "",
   show_route: false,
   route_url: "",
+  pickup_enabled: false,
 };
 
 function AdminStores() {
@@ -158,6 +160,7 @@ function AdminStores() {
         lng: s.lng ?? null,
         show_route: !!s.show_route,
         route_url: s.route_url?.trim() ? s.route_url.trim() : null,
+        pickup_enabled: !!s.pickup_enabled,
       };
 
       // Geocodifica automaticamente APENAS se temos endereço e ainda não temos coordenadas.
@@ -619,6 +622,24 @@ function AdminStores() {
                   </p>
                 </div>
               )}
+              <div className="sm:col-span-2">
+                <label className="flex items-start gap-3 rounded-md border p-3 cursor-pointer hover:bg-muted/30 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={!!editing.pickup_enabled}
+                    onChange={(e) =>
+                      setEditing({ ...editing, pickup_enabled: e.target.checked })
+                    }
+                    className="h-4 w-4 mt-0.5 accent-[hsl(var(--brand))]"
+                  />
+                  <div>
+                    <p className="font-medium text-sm">Permitir "Retirar no local"</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Quando ativado, o cliente poderá escolher entre receber em casa ou retirar no endereço da loja.
+                    </p>
+                  </div>
+                </label>
+              </div>
               {editing.id && (
                 <div className="sm:col-span-2">
                   <Label>Horários de funcionamento</Label>
