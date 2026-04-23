@@ -352,9 +352,9 @@ function AdminProducts() {
           position: categories.length,
           is_available: cat.is_available,
           is_pizza: cat.is_pizza,
-          available_days: cat.available_days ?? null,
-          available_start: cat.available_start ?? null,
-          available_end: cat.available_end ?? null,
+          ...(cat.available_days ? { available_days: cat.available_days } : {}),
+          ...(cat.available_start ? { available_start: cat.available_start } : {}),
+          ...(cat.available_end ? { available_end: cat.available_end } : {}),
         })
         .select("id")
         .single();
