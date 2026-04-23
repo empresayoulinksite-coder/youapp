@@ -665,38 +665,51 @@ function StorePage() {
                 )}
               </div>
 
+              {selectedItem.sizes && selectedItem.sizes.length > 0 && (
+                <div className="mt-5">
+                  <p className="text-sm font-semibold mb-2">
+                    Escolha o tamanho <span className="text-destructive">*</span>
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedItem.sizes.map((s) => {
+                      const active = selectedSize === s;
+                      return (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => setSelectedSize(s)}
+                          className={
+                            "min-w-[48px] px-3 py-2 rounded-xl border text-sm font-semibold transition-colors " +
+                            (active
+                              ? "bg-brand text-brand-foreground border-brand"
+                              : "bg-card text-foreground border-border hover:border-brand")
+                          }
+                        >
+                          {s}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               <div className="mt-6 flex items-center gap-3">
                 {user ? (
-                  <>
-                    {itemQty(selectedItem.id) > 0 ? (
-                      <div className="flex items-center gap-3 bg-brand-soft rounded-full px-3 py-2">
-                        <button
-                          onClick={() => {
-                            const ci = cartItems.find((c) => c.menu_item_id === selectedItem.id);
-                            if (ci) updateQuantity(ci.id, ci.quantity - 1);
-                          }}
-                          className="text-brand"
-                          aria-label="Diminuir"
-                        >
-                          <Minus className="h-4 w-4" />
-                        </button>
-                        <span className="font-bold text-sm min-w-[20px] text-center">{itemQty(selectedItem.id)}</span>
-                        <button onClick={() => tryAdd(store.id, selectedItem.id)} className="text-brand" aria-label="Aumentar">
-                          <Plus className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ) : null}
-                    <button
-                      onClick={async () => {
-                        await tryAdd(store.id, selectedItem.id);
-                        setSelectedItem(null);
-                      }}
-                      disabled={!open}
-                      className="flex-1 bg-brand text-brand-foreground font-bold py-3 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {open ? "Adicionar à sacola" : "Loja fechada"}
-                    </button>
-                  </>
+                  <button
+                    onClick={async () => {
+                      const needsSize = selectedItem.sizes && selectedItem.sizes.length > 0;
+                      if (needsSize && !selectedSize) {
+                        toast.error("Escolha um tamanho antes de adicionar.");
+                        return;
+                      }
+                      await tryAdd(store.id, selectedItem.id, selectedSize);
+                      setSelectedItem(null);
+                    }}
+                    disabled={!open}
+                    className="flex-1 bg-brand text-brand-foreground font-bold py-3 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {open ? "Adicionar à sacola" : "Loja fechada"}
+                  </button>
                 ) : (
                   <Link
                     to="/auth"
