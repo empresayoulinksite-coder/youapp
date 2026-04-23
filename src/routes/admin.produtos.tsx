@@ -600,8 +600,13 @@ function AdminProducts() {
                         setCollapsed((p) => ({ ...p, [cat.id]: !p[cat.id] }))
                       }
                       onEditCategory={() => {
-                        setEditingCat(cat);
-                        setCatOpen(true);
+                        if (cat.is_pizza || isPizzeria) {
+                          setPizzaWizardInitial(cat);
+                          setPizzaWizardOpen(true);
+                        } else {
+                          setEditingCat(cat);
+                          setCatOpen(true);
+                        }
                       }}
                       onDeleteCategory={() => {
                         if (
