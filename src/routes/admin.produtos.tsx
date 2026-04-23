@@ -989,6 +989,17 @@ function AdminProducts() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <PizzaCategoryWizard
+        open={pizzaWizardOpen}
+        onOpenChange={(o) => {
+          setPizzaWizardOpen(o);
+          if (!o) setPizzaWizardInitial(null);
+        }}
+        storeId={storeId}
+        initial={pizzaWizardInitial}
+        position={categories.length}
+      />
     </div>
   );
 }
