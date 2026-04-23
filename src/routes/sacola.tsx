@@ -353,6 +353,8 @@ function CartPage() {
         acceptedPaymentMethods={storePaymentMethods}
         customerName={profileName}
         customerPhone={profilePhone}
+        deliveryMode={deliveryMode}
+        storeAddress={storeAddress}
         submitting={submitting}
         onConfirm={async ({ paymentMethod, notes, number, complement, customerName, customerPhone }) => {
           if (!storeWhatsapp) return;
