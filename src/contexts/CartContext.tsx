@@ -187,6 +187,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     await insertHalfHalf(storeId, p);
   };
 
+  const switchStoreAndAddHalfHalf = async (storeId: string, p: HalfHalfPayload) => {
+    if (!user) return;
+    await supabase.from("cart_items").delete().eq("user_id", user.id);
+    await insertHalfHalf(storeId, p);
+  };
+
   const insertPizza = async (storeId: string, p: PizzaCartPayload) => {
     if (!user) return;
     const { error } = await supabase.from("cart_items").insert({
