@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { X, MapPin, CreditCard, Phone, Pencil, Check } from "lucide-react";
+import { X, MapPin, CreditCard, Phone, Pencil, Check, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,13 +20,23 @@ interface Props {
   address: ActiveAddress | null;
   storeWhatsapp: string | null;
   acceptedPaymentMethods?: string[] | null;
+  customerName?: string | null;
+  customerPhone?: string | null;
   submitting: boolean;
   onConfirm: (data: {
     paymentMethod: PaymentMethod;
     notes: string;
     number: string;
     complement: string;
+    customerName: string;
+    customerPhone: string;
   }) => void;
+}
+
+function maskPhoneInput(v: string): string {
+  const d = v.replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 10) return d.replace(/(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3").trim().replace(/-$/, "");
+  return d.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3").trim().replace(/-$/, "");
 }
 
 function formatPhone(raw: string): string {
@@ -60,6 +70,8 @@ export function CheckoutReviewDialog({
   address,
   storeWhatsapp,
   acceptedPaymentMethods,
+  customerName: initialName,
+  customerPhone: initialPhone,
   submitting,
   onConfirm,
 }: Props) {
@@ -67,6 +79,8 @@ export function CheckoutReviewDialog({
   const [notes, setNotes] = useState("");
   const [number, setNumber] = useState("");
   const [complement, setComplement] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
 
   // Sempre que o endereço ativo mudar (ou abrir), pré-preenche número/complemento
   useEffect(() => {
@@ -74,6 +88,12 @@ export function CheckoutReviewDialog({
     setNumber(address?.number ?? "");
     setComplement(address?.complement ?? "");
   }, [open, address?.id, address?.number, address?.complement]);
+
+  useEffect(() => {
+    if (!open) return;
+    setName(initialName ?? "");
+    setPhone(initialPhone ? maskPhoneInput(initialPhone) : "");
+  }, [open, initialName, initialPhone]);
 
   if (!open) return null;
 
@@ -87,7 +107,11 @@ export function CheckoutReviewDialog({
 
   const addressText = formatAddress(address, number, complement);
   const hasNumber = number.trim().length > 0;
-  const canConfirm = !!paymentMethod && !!addressText && hasNumber && !submitting;
+  const hasName = name.trim().length > 0;
+  const phoneDigits = phone.replace(/\D/g, "");
+  const hasPhone = phoneDigits.length >= 10;
+  const canConfirm =
+    !!paymentMethod && !!addressText && hasNumber && hasName && hasPhone && !submitting;
 
   return (
     <div
@@ -109,6 +133,45 @@ export function CheckoutReviewDialog({
         </div>
 
         <div className="p-5 space-y-5">
+          {/* Seus dados */}
+          <section>
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 mb-2">
+              <User className="h-3.5 w-3.5" /> Seus dados
+            </h3>
+            <div className="rounded-xl border border-border bg-background p-3 space-y-3">
+              <div>
+                <label className="text-[11px] font-semibold text-muted-foreground uppercase">
+                  Nome *
+                </label>
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Seu nome"
+                  className="mt-1 h-9"
+                  maxLength={80}
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-semibold text-muted-foreground uppercase">
+                  WhatsApp / Telefone *
+                </label>
+                <Input
+                  value={phone}
+                  onChange={(e) => setPhone(maskPhoneInput(e.target.value))}
+                  placeholder="(11) 99999-9999"
+                  className="mt-1 h-9"
+                  inputMode="tel"
+                  type="tel"
+                />
+                {!hasPhone && phone.length > 0 && (
+                  <p className="text-[11px] text-destructive font-semibold mt-1">
+                    Telefone inválido
+                  </p>
+                )}
+              </div>
+            </div>
+          </section>
+
           {/* Endereço */}
           <section>
             <div className="flex items-center justify-between mb-2">
@@ -262,6 +325,8 @@ export function CheckoutReviewDialog({
                 notes: notes.trim(),
                 number: number.trim(),
                 complement: complement.trim(),
+                customerName: name.trim(),
+                customerPhone: phoneDigits,
               })
             }
             disabled={!canConfirm}
@@ -271,11 +336,15 @@ export function CheckoutReviewDialog({
               ? "Enviando..."
               : !address
                 ? "Cadastre um endereço"
-                : !hasNumber
-                  ? "Informe o número"
-                  : !paymentMethod
-                    ? "Escolha o pagamento"
-                    : "Confirmar e enviar pelo WhatsApp"}
+                : !hasName
+                  ? "Informe seu nome"
+                  : !hasPhone
+                    ? "Informe seu telefone"
+                    : !hasNumber
+                      ? "Informe o número"
+                      : !paymentMethod
+                        ? "Escolha o pagamento"
+                        : "Confirmar e enviar pelo WhatsApp"}
           </button>
         </div>
       </div>

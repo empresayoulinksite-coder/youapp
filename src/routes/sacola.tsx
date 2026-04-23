@@ -41,11 +41,37 @@ function CartPage() {
   const [storeWhatsapp, setStoreWhatsapp] = useState<string | null>(null);
   const [storeImageUrl, setStoreImageUrl] = useState<string | null>(null);
   const [storePaymentMethods, setStorePaymentMethods] = useState<string[] | null>(null);
+  const [profileName, setProfileName] = useState<string | null>(null);
+  const [profilePhone, setProfilePhone] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
   const [submitting, setSubmitting] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const { active } = useAddress();
   const { user: authUser } = useAuth();
+
+  // Carrega nome/telefone salvos no perfil para pré-preencher a revisão
+  useEffect(() => {
+    if (!authUser) {
+      setProfileName(null);
+      setProfilePhone(null);
+      return;
+    }
+    supabase
+      .from("profiles")
+      .select("display_name, phone")
+      .eq("user_id", authUser.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        setProfileName(
+          data?.display_name ??
+            authUser.user_metadata?.full_name ??
+            authUser.user_metadata?.name ??
+            authUser.email?.split("@")[0] ??
+            null,
+        );
+        setProfilePhone(data?.phone ?? null);
+      });
+  }, [authUser]);
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 60_000);
@@ -284,8 +310,10 @@ function CartPage() {
         address={active}
         storeWhatsapp={storeWhatsapp}
         acceptedPaymentMethods={storePaymentMethods}
+        customerName={profileName}
+        customerPhone={profilePhone}
         submitting={submitting}
-        onConfirm={async ({ paymentMethod, notes, number, complement }) => {
+        onConfirm={async ({ paymentMethod, notes, number, complement, customerName, customerPhone }) => {
           if (!storeWhatsapp) return;
           setSubmitting(true);
           const fmtBRL = (n: number) => `R$ ${n.toFixed(2).replace(".", ",")}`;
@@ -306,20 +334,6 @@ function CartPage() {
           lines.push(`*Total: ${fmtBRL(grandTotal)}*`);
           lines.push("", `💳 Pagamento: ${paymentMethod}`);
 
-          let customerName: string | undefined =
-            authUser?.user_metadata?.full_name ||
-            authUser?.user_metadata?.name ||
-            authUser?.email?.split("@")[0];
-          let customerPhone: string | null = null;
-          if (authUser) {
-            const { data: profile } = await supabase
-              .from("profiles")
-              .select("display_name, phone")
-              .eq("user_id", authUser.id)
-              .maybeSingle();
-            if (profile?.display_name) customerName = profile.display_name;
-            if (profile?.phone) customerPhone = profile.phone;
-          }
           if (customerName) {
             lines.push(`👤 Cliente: ${customerName}`);
           }
@@ -332,6 +346,19 @@ function CartPage() {
                   ? `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`
                   : customerPhone;
             lines.push(`📱 Contato: ${formatted}`);
+          }
+
+          // Persiste alterações no perfil para próximas compras
+          if (authUser && (customerName !== (profileName ?? "") || customerPhone !== (profilePhone ?? ""))) {
+            await supabase
+              .from("profiles")
+              .update({
+                display_name: customerName || null,
+                phone: customerPhone || null,
+              })
+              .eq("user_id", authUser.id);
+            setProfileName(customerName || null);
+            setProfilePhone(customerPhone || null);
           }
           let deliveryAddress: string | null = null;
           if (active) {
