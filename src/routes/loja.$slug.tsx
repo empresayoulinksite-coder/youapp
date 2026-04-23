@@ -495,11 +495,13 @@ function StorePage() {
                   {store.show_route && (
                     <a
                       href={
-                        store.lat != null && store.lng != null
-                          ? `https://www.google.com/maps/dir/?api=1&destination=${store.lat},${store.lng}`
-                          : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-                              [store.address, store.name].filter(Boolean).join(", "),
-                            )}`
+                        store.route_url && store.route_url.trim()
+                          ? store.route_url
+                          : store.lat != null && store.lng != null
+                            ? `https://www.google.com/maps/dir/?api=1&destination=${store.lat},${store.lng}`
+                            : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+                                [store.address, store.name].filter(Boolean).join(", "),
+                              )}`
                       }
                       target="_blank"
                       rel="noopener noreferrer"
