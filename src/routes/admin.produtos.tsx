@@ -775,13 +775,22 @@ function AdminProducts() {
                   </p>
                 </div>
                 <Input
-                  value={(editing.sizes ?? []).join(", ")}
+                  value={sizesInput}
                   onChange={(e) => {
-                    const parts = e.target.value
+                    const raw = e.target.value;
+                    setSizesInput(raw);
+                    const parts = raw
                       .split(",")
                       .map((s) => s.trim())
                       .filter(Boolean);
                     setEditing({ ...editing, sizes: parts });
+                  }}
+                  onBlur={() => {
+                    const parts = sizesInput
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean);
+                    setSizesInput(parts.join(", "));
                   }}
                   placeholder="P, M, G, GG"
                 />
