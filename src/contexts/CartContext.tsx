@@ -10,6 +10,9 @@ export interface CartItemRow {
   quantity: number;
   notes: string | null;
   selected_size: string | null;
+  half_two_menu_item_id: string | null;
+  half_two_name: string | null;
+  unit_price_override: number | null;
   menu_items: {
     id: string;
     name: string;
@@ -25,14 +28,26 @@ export interface CartItemRow {
   } | null;
 }
 
+export interface HalfHalfPayload {
+  firstMenuItemId: string;
+  firstName: string;
+  firstPrice: number;
+  secondMenuItemId: string;
+  secondName: string;
+  secondPrice: number;
+  selectedSize: string | null;
+}
+
 interface CartContextValue {
   items: CartItemRow[];
   count: number;
   total: number;
   loading: boolean;
   addItem: (storeId: string, menuItemId: string, selectedSize?: string | null) => Promise<void>;
+  addHalfHalf: (storeId: string, payload: HalfHalfPayload) => Promise<void>;
   /** Limpa o carrinho atual e adiciona o item da nova loja. */
   switchStoreAndAdd: (storeId: string, menuItemId: string, selectedSize?: string | null) => Promise<void>;
+  switchStoreAndAddHalfHalf: (storeId: string, payload: HalfHalfPayload) => Promise<void>;
   /** Limpa o carrinho e adiciona vários itens (usado em "Pedir de novo"). */
   reorder: (storeId: string, items: Array<{ menu_item_id: string; quantity: number; selected_size?: string | null }>) => Promise<void>;
   /** Loja atualmente no carrinho, se houver. */
