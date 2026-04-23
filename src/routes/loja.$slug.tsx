@@ -429,7 +429,7 @@ function StorePage() {
                               )}
                             </div>
                           </div>
-                          <div className="flex flex-col items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex flex-col items-center gap-2 shrink-0">
                             <div className="h-20 w-20 rounded-xl overflow-hidden bg-brand-soft flex items-center justify-center text-3xl">
                               {item.image_url ? (
                                 <img
@@ -444,29 +444,31 @@ function StorePage() {
                                 <span>{item.emoji}</span>
                               )}
                             </div>
-                            {user ? (
-                              qty > 0 ? (
-                                <div className="flex items-center gap-2 bg-brand text-brand-foreground rounded-full px-2 py-1">
-                                  <button className="p-0.5" aria-label="Diminuir">
-                                    <QtyDecrement itemId={item.id} />
+                            <div onClick={(e) => e.stopPropagation()}>
+                              {user ? (
+                                qty > 0 ? (
+                                  <div className="flex items-center gap-2 bg-brand text-brand-foreground rounded-full px-2 py-1">
+                                    <button className="p-0.5" aria-label="Diminuir">
+                                      <QtyDecrement itemId={item.id} />
+                                    </button>
+                                    <span className="text-xs font-bold min-w-[14px] text-center">{qty}</span>
+                                    <button onClick={() => tryAdd(store.id, item.id)} className="p-0.5" aria-label="Aumentar">
+                                      <Plus className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => tryAdd(store.id, item.id)}
+                                    className="text-brand bg-brand-soft rounded-full p-1.5"
+                                    aria-label="Adicionar"
+                                  >
+                                    <Plus className="h-4 w-4" />
                                   </button>
-                                  <span className="text-xs font-bold min-w-[14px] text-center">{qty}</span>
-                                  <button onClick={() => tryAdd(store.id, item.id)} className="p-0.5" aria-label="Aumentar">
-                                    <Plus className="h-3.5 w-3.5" />
-                                  </button>
-                                </div>
+                                )
                               ) : (
-                                <button
-                                  onClick={() => tryAdd(store.id, item.id)}
-                                  className="text-brand bg-brand-soft rounded-full p-1.5"
-                                  aria-label="Adicionar"
-                                >
-                                  <Plus className="h-4 w-4" />
-                                </button>
-                              )
-                            ) : (
-                              <Link to="/auth" className="text-[10px] text-brand font-semibold">Entrar</Link>
-                            )}
+                                <Link to="/auth" className="text-[10px] text-brand font-semibold">Entrar</Link>
+                              )}
+                            </div>
                           </div>
                         </article>
                       );
