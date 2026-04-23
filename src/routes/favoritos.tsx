@@ -129,14 +129,22 @@ function FavoritesPage() {
                         <span className="truncate">{r.category}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs mt-1.5">
-                        <span className="flex items-center gap-1 text-muted-foreground">
-                          <Clock className="h-3.5 w-3.5" /> {r.delivery_time}
-                        </span>
-                        <span
-                          className={`flex items-center gap-1 ${r.free_delivery ? "text-success font-semibold" : "text-muted-foreground"}`}
-                        >
-                          <Bike className="h-3.5 w-3.5" /> {r.delivery_fee}
-                        </span>
+                        {r.delivery_enabled === false ? (
+                          <span className="flex items-center gap-1 text-muted-foreground font-semibold">
+                            <Bike className="h-3.5 w-3.5" /> Apenas retirada
+                          </span>
+                        ) : (
+                          <>
+                            <span className="flex items-center gap-1 text-muted-foreground">
+                              <Clock className="h-3.5 w-3.5" /> {r.delivery_time}
+                            </span>
+                            <span
+                              className={`flex items-center gap-1 ${r.free_delivery ? "text-success font-semibold" : "text-muted-foreground"}`}
+                            >
+                              <Bike className="h-3.5 w-3.5" /> {r.delivery_fee}
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </article>
