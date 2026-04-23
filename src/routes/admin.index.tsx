@@ -533,40 +533,52 @@ function AdminStores() {
                 />
               </div>
               <div className="sm:col-span-2 rounded-lg border bg-muted/30 p-3">
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex items-start justify-between gap-2 flex-wrap">
                   <div className="min-w-0">
                     <Label className="block">Coordenadas (GPS)</Label>
                     <p className="text-[11px] text-muted-foreground mt-0.5">
                       {editing.lat != null && editing.lng != null
                         ? `📍 ${editing.lat.toFixed(5)}, ${editing.lng.toFixed(5)}`
-                        : "Sem coordenadas. Usadas para calcular distância em tempo real."}
+                        : "Sem coordenadas. Usadas para o botão de rota e cálculo de distância."}
                     </p>
                   </div>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    disabled={!(editing.address || editing.cep || editing.city)}
-                    onClick={async () => {
-                      const t = toast.loading("Buscando coordenadas...");
-                      const coords = await geocodeAddress({
-                        address: editing.address,
-                        neighborhood: editing.neighborhood,
-                        city: editing.city,
-                        cep: editing.cep,
-                      });
-                      toast.dismiss(t);
-                      if (coords) {
-                        setEditing((prev) => ({ ...(prev || {}), lat: coords.lat, lng: coords.lng }));
-                        toast.success("Coordenadas encontradas");
-                      } else {
-                        toast.error("Não foi possível localizar o endereço");
-                      }
-                    }}
-                  >
-                    Buscar pelo endereço
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={!(editing.address || editing.cep || editing.city)}
+                      onClick={async () => {
+                        const t = toast.loading("Buscando coordenadas...");
+                        const coords = await geocodeAddress({
+                          address: editing.address,
+                          neighborhood: editing.neighborhood,
+                          city: editing.city,
+                          cep: editing.cep,
+                        });
+                        toast.dismiss(t);
+                        if (coords) {
+                          setEditing((prev) => ({ ...(prev || {}), lat: coords.lat, lng: coords.lng }));
+                          toast.success("Coordenadas encontradas");
+                        } else {
+                          toast.error("Não foi possível localizar o endereço");
+                        }
+                      }}
+                    >
+                      Buscar pelo endereço
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => setMapOpen(true)}
+                    >
+                      📍 Ajustar no mapa
+                    </Button>
+                  </div>
                 </div>
+                <p className="text-[11px] text-muted-foreground mt-2">
+                  💡 Use "Ajustar no mapa" para arrastar o pin até a entrada exata da loja. Isso garante que a rota leve o cliente ao local correto.
+                </p>
               </div>
               <div className="sm:col-span-2">
                 <label className="flex items-start gap-3 rounded-md border p-3 cursor-pointer hover:bg-muted/30 transition-colors">
