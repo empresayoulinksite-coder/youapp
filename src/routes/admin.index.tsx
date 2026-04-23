@@ -107,6 +107,7 @@ const empty: Partial<Store> = {
   whatsapp: "",
   show_route: false,
   route_url: "",
+  pickup_enabled: false,
 };
 
 function AdminStores() {
