@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { Store, UtensilsCrossed, Ticket, Image as ImageIcon, LogOut, Home, Tags, LayoutGrid, Briefcase, CalendarDays, Users, Upload, Pizza } from "lucide-react";
+import { Store, UtensilsCrossed, Ticket, Image as ImageIcon, LogOut, Home, Tags, LayoutGrid, Briefcase, CalendarDays, Users, Upload } from "lucide-react";
 import { useIsAdmin } from "@/hooks/use-admin";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
