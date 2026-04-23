@@ -110,6 +110,7 @@ const empty: Partial<Store> = {
   route_url: "",
   pickup_enabled: false,
   is_pizzeria: false,
+};
 
 function AdminStores() {
   const qc = useQueryClient();
