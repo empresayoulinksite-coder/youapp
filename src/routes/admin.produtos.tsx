@@ -513,15 +513,9 @@ function AdminProducts() {
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold">Esta loja é uma pizzaria</p>
             <p className="text-xs text-muted-foreground">
-              Configure tamanhos, sabores com preço por tamanho, bordas recheadas e adicionais.
+              Ao criar uma categoria, configure tamanhos, bordas e disponibilidade no estilo iFood.
             </p>
           </div>
-          <Link to="/admin/pizzas">
-            <Button size="sm" className="gap-2 bg-orange-600 hover:bg-orange-700 text-white">
-              <Pizza className="h-4 w-4" />
-              Gerenciar pizzas
-            </Button>
-          </Link>
         </div>
       )}
 
