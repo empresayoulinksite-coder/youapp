@@ -52,7 +52,7 @@ export const Route = createFileRoute("/produto/$id")({
 
     const { data: related } = await supabase
       .from("menu_items")
-      .select("id, store_id, name, description, price, original_price, emoji, image_url, promo")
+      .select("id, store_id, name, description, price, original_price, emoji, image_url, promo, sizes")
       .eq("store_id", product.store_id)
       .neq("id", product.id)
       .order("position")
