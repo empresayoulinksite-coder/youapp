@@ -61,6 +61,7 @@ type Store = {
   lat: number | null;
   lng: number | null;
   show_route: boolean;
+  route_url: string | null;
 };
 
 async function lookupCep(rawCep: string) {
@@ -104,6 +105,7 @@ const empty: Partial<Store> = {
   min_order: 0,
   whatsapp: "",
   show_route: false,
+  route_url: "",
 };
 
 function AdminStores() {
@@ -155,6 +157,7 @@ function AdminStores() {
         lat: s.lat ?? null,
         lng: s.lng ?? null,
         show_route: !!s.show_route,
+        route_url: s.route_url?.trim() ? s.route_url.trim() : null,
       };
 
       // Geocodifica automaticamente APENAS se temos endereço e ainda não temos coordenadas.
@@ -598,6 +601,24 @@ function AdminStores() {
                   </div>
                 </label>
               </div>
+              {editing.show_route && (
+                <div className="sm:col-span-2">
+                  <Label htmlFor="route_url">Link manual da rota (opcional)</Label>
+                  <Input
+                    id="route_url"
+                    type="url"
+                    inputMode="url"
+                    placeholder="https://maps.app.goo.gl/..."
+                    value={editing.route_url ?? ""}
+                    onChange={(e) =>
+                      setEditing({ ...editing, route_url: e.target.value })
+                    }
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Cole aqui o link da rota (Google Maps, Waze, etc.) já alinhado no local exato. Se preenchido, este link será usado no botão. Caso contrário, usaremos a localização ajustada no mapa ou o endereço.
+                  </p>
+                </div>
+              )}
               {editing.id && (
                 <div className="sm:col-span-2">
                   <Label>Horários de funcionamento</Label>
