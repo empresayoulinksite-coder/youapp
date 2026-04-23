@@ -991,6 +991,15 @@ export type Database = {
         Row: {
           about: string | null
           address: string | null
+          benefit_delivery_enabled: boolean
+          benefit_delivery_subtitle: string
+          benefit_delivery_title: string
+          benefit_protection_enabled: boolean
+          benefit_protection_subtitle: string
+          benefit_protection_title: string
+          benefit_return_enabled: boolean
+          benefit_return_subtitle: string
+          benefit_return_title: string
           category: string
           cep: string | null
           city: string | null
@@ -1027,6 +1036,15 @@ export type Database = {
         Insert: {
           about?: string | null
           address?: string | null
+          benefit_delivery_enabled?: boolean
+          benefit_delivery_subtitle?: string
+          benefit_delivery_title?: string
+          benefit_protection_enabled?: boolean
+          benefit_protection_subtitle?: string
+          benefit_protection_title?: string
+          benefit_return_enabled?: boolean
+          benefit_return_subtitle?: string
+          benefit_return_title?: string
           category: string
           cep?: string | null
           city?: string | null
@@ -1063,6 +1081,15 @@ export type Database = {
         Update: {
           about?: string | null
           address?: string | null
+          benefit_delivery_enabled?: boolean
+          benefit_delivery_subtitle?: string
+          benefit_delivery_title?: string
+          benefit_protection_enabled?: boolean
+          benefit_protection_subtitle?: string
+          benefit_protection_title?: string
+          benefit_return_enabled?: boolean
+          benefit_return_subtitle?: string
+          benefit_return_title?: string
           category?: string
           cep?: string | null
           city?: string | null
