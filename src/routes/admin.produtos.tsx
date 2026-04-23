@@ -548,8 +548,13 @@ function AdminProducts() {
             <Button
               variant="outline"
               onClick={() => {
-                setEditingCat({ name: "", is_available: true });
-                setCatOpen(true);
+                if (isPizzeria) {
+                  setPizzaWizardInitial(null);
+                  setPizzaWizardOpen(true);
+                } else {
+                  setEditingCat({ name: "", is_available: true });
+                  setCatOpen(true);
+                }
               }}
             >
               <FolderPlus className="h-4 w-4" /> Adicionar categoria
