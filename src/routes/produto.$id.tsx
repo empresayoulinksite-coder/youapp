@@ -31,6 +31,15 @@ interface Store {
   delivery_fee: string;
   free_delivery: boolean;
   delivery_enabled: boolean;
+  benefit_delivery_enabled: boolean;
+  benefit_delivery_title: string;
+  benefit_delivery_subtitle: string;
+  benefit_protection_enabled: boolean;
+  benefit_protection_title: string;
+  benefit_protection_subtitle: string;
+  benefit_return_enabled: boolean;
+  benefit_return_title: string;
+  benefit_return_subtitle: string;
 }
 
 export const Route = createFileRoute("/produto/$id")({
@@ -45,7 +54,7 @@ export const Route = createFileRoute("/produto/$id")({
 
     const { data: store, error: storeErr } = await supabase
       .from("stores")
-      .select("id, slug, name, emoji, image_url, rating, category, delivery_time, delivery_fee, free_delivery, delivery_enabled")
+      .select("id, slug, name, emoji, image_url, rating, category, delivery_time, delivery_fee, free_delivery, delivery_enabled, benefit_delivery_enabled, benefit_delivery_title, benefit_delivery_subtitle, benefit_protection_enabled, benefit_protection_title, benefit_protection_subtitle, benefit_return_enabled, benefit_return_title, benefit_return_subtitle")
       .eq("id", product.store_id)
       .maybeSingle();
     if (storeErr) throw storeErr;
@@ -272,48 +281,43 @@ function ProductPage() {
             </div>
           )}
 
-          <div className="bg-card rounded-2xl p-4 shadow-[var(--shadow-card)] space-y-3">
-            <div className="flex items-start gap-3">
-              <div className="h-9 w-9 rounded-full bg-brand-soft text-brand flex items-center justify-center shrink-0">
-                <Truck className="h-4 w-4" />
-              </div>
-              <div>
-                {store.delivery_enabled === false ? (
-                  <>
-                    <p className="text-sm font-semibold">Apenas retirada</p>
-                    <p className="text-xs text-muted-foreground">Esta loja não faz entrega</p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-sm font-semibold">Entrega em {store.delivery_time}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Frete {store.free_delivery ? "grátis" : store.delivery_fee}
-                    </p>
-                  </>
-                )}
-              </div>
+          {(store.benefit_delivery_enabled || store.benefit_protection_enabled || store.benefit_return_enabled) && (
+            <div className="bg-card rounded-2xl p-4 shadow-[var(--shadow-card)] space-y-3">
+              {store.benefit_delivery_enabled && (
+                <div className="flex items-start gap-3">
+                  <div className="h-9 w-9 rounded-full bg-brand-soft text-brand flex items-center justify-center shrink-0">
+                    <Truck className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">{store.benefit_delivery_title}</p>
+                    <p className="text-xs text-muted-foreground">{store.benefit_delivery_subtitle}</p>
+                  </div>
+                </div>
+              )}
+              {store.benefit_protection_enabled && (
+                <div className="flex items-start gap-3">
+                  <div className="h-9 w-9 rounded-full bg-brand-soft text-brand flex items-center justify-center shrink-0">
+                    <ShieldCheck className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">{store.benefit_protection_title}</p>
+                    <p className="text-xs text-muted-foreground">{store.benefit_protection_subtitle}</p>
+                  </div>
+                </div>
+              )}
+              {store.benefit_return_enabled && (
+                <div className="flex items-start gap-3">
+                  <div className="h-9 w-9 rounded-full bg-brand-soft text-brand flex items-center justify-center shrink-0">
+                    <RotateCcw className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">{store.benefit_return_title}</p>
+                    <p className="text-xs text-muted-foreground">{store.benefit_return_subtitle}</p>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="flex items-start gap-3">
-              <div className="h-9 w-9 rounded-full bg-brand-soft text-brand flex items-center justify-center shrink-0">
-                <ShieldCheck className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">Compra protegida</p>
-                <p className="text-xs text-muted-foreground">
-                  Reembolso garantido em caso de problemas
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="h-9 w-9 rounded-full bg-brand-soft text-brand flex items-center justify-center shrink-0">
-                <RotateCcw className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">Troca em até 7 dias</p>
-                <p className="text-xs text-muted-foreground">Direito de arrependimento</p>
-              </div>
-            </div>
-          </div>
+          )}
         </section>
 
         {/* Relacionados */}
