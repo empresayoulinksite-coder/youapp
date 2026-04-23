@@ -9,6 +9,7 @@ import { isStoreOpen, nextOpeningLabel, groupByWeekday, formatTime, WEEKDAYS, ty
 import { BookingDialog, type ServiceLite } from "@/components/BookingDialog";
 import { StoreDistance } from "@/components/StoreDistance";
 import { normalizePaymentList, paymentLabelsFromList } from "@/lib/payment-methods";
+import { PizzaBuilderDialog, type PizzaConfigPayload } from "@/components/PizzaBuilderDialog";
 
 interface Store {
   id: string;
