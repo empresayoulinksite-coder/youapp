@@ -30,6 +30,7 @@ interface Store {
   delivery_time: string;
   delivery_fee: string;
   free_delivery: boolean;
+  delivery_enabled: boolean;
 }
 
 export const Route = createFileRoute("/produto/$id")({
@@ -44,7 +45,7 @@ export const Route = createFileRoute("/produto/$id")({
 
     const { data: store, error: storeErr } = await supabase
       .from("stores")
-      .select("id, slug, name, emoji, image_url, rating, category, delivery_time, delivery_fee, free_delivery")
+      .select("id, slug, name, emoji, image_url, rating, category, delivery_time, delivery_fee, free_delivery, delivery_enabled")
       .eq("id", product.store_id)
       .maybeSingle();
     if (storeErr) throw storeErr;
@@ -277,10 +278,19 @@ function ProductPage() {
                 <Truck className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-sm font-semibold">Entrega em {store.delivery_time}</p>
-                <p className="text-xs text-muted-foreground">
-                  Frete {store.free_delivery ? "grátis" : store.delivery_fee}
-                </p>
+                {store.delivery_enabled === false ? (
+                  <>
+                    <p className="text-sm font-semibold">Apenas retirada</p>
+                    <p className="text-xs text-muted-foreground">Esta loja não faz entrega</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-semibold">Entrega em {store.delivery_time}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Frete {store.free_delivery ? "grátis" : store.delivery_fee}
+                    </p>
+                  </>
+                )}
               </div>
             </div>
             <div className="flex items-start gap-3">

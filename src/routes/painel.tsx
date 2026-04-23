@@ -20,6 +20,7 @@ import { ServicesTab } from "@/components/painel/ServicesTab";
 import { CouponsTab } from "@/components/painel/CouponsTab";
 import { StoreHoursEditor } from "@/components/StoreHoursEditor";
 import { StoreWhatsappEditor } from "@/components/StoreWhatsappEditor";
+import { StoreDeliveryEditor } from "@/components/StoreDeliveryEditor";
 
 export const Route = createFileRoute("/painel")({
   component: PainelPage,
@@ -239,6 +240,10 @@ function PainelPage() {
             storeId={currentStore.id}
             initialWhatsapp={currentStore.whatsapp}
           />
+        )}
+
+        {currentStore && currentStore.id && (
+          <StoreDeliveryEditor storeId={currentStore.id} />
         )}
 
         <Tabs value={tab} onValueChange={setTab}>

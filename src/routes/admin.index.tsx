@@ -45,6 +45,7 @@ type Store = {
   delivery_time: string;
   delivery_fee: string;
   free_delivery: boolean;
+  delivery_enabled: boolean;
   promo: string | null;
   image_url: string | null;
   about: string | null;
@@ -94,6 +95,7 @@ const empty: Partial<Store> = {
   delivery_time: "30-40 min",
   delivery_fee: "Grátis",
   free_delivery: true,
+  delivery_enabled: true,
   promo: "",
   image_url: "",
   about: "",
@@ -144,6 +146,7 @@ function AdminStores() {
         delivery_time: s.delivery_time || "30-40 min",
         delivery_fee: s.delivery_fee || "Grátis",
         free_delivery: !!s.free_delivery,
+        delivery_enabled: s.delivery_enabled !== false,
         promo: s.promo || null,
         image_url: s.image_url || null,
         about: s.about || null,
@@ -449,38 +452,53 @@ function AdminStores() {
               </div>
               {editing.store_type === "food" && (
                 <>
-                  <div>
-                    <Label>Tempo de entrega</Label>
-                    <Input
-                      value={editing.delivery_time || ""}
-                      onChange={(e) => setEditing({ ...editing, delivery_time: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label>Taxa de entrega</Label>
-                    <Input
-                      value={editing.delivery_fee || ""}
-                      onChange={(e) => setEditing({ ...editing, delivery_fee: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label>Pedido mínimo (R$)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={editing.min_order ?? 0}
-                      onChange={(e) => setEditing({ ...editing, min_order: Number(e.target.value) })}
-                    />
-                  </div>
-                  <div className="flex items-center gap-2 pt-6">
+                  <div className="flex items-center gap-2 pt-6 sm:col-span-2">
                     <input
                       type="checkbox"
-                      id="free"
-                      checked={!!editing.free_delivery}
-                      onChange={(e) => setEditing({ ...editing, free_delivery: e.target.checked })}
+                      id="delivery_enabled"
+                      checked={editing.delivery_enabled !== false}
+                      onChange={(e) => setEditing({ ...editing, delivery_enabled: e.target.checked })}
                     />
-                    <Label htmlFor="free">Entrega grátis</Label>
+                    <Label htmlFor="delivery_enabled">Faz entrega</Label>
                   </div>
+                  {editing.delivery_enabled !== false && (
+                    <>
+                      <div>
+                        <Label>Tempo de entrega</Label>
+                        <Input
+                          value={editing.delivery_time || ""}
+                          onChange={(e) => setEditing({ ...editing, delivery_time: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <Label>Taxa de entrega</Label>
+                        <Input
+                          value={editing.delivery_fee || ""}
+                          onChange={(e) => setEditing({ ...editing, delivery_fee: e.target.value })}
+                          disabled={!!editing.free_delivery}
+                          placeholder={editing.free_delivery ? "Grátis" : "Ex: R$ 5,00"}
+                        />
+                      </div>
+                      <div>
+                        <Label>Pedido mínimo (R$)</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={editing.min_order ?? 0}
+                          onChange={(e) => setEditing({ ...editing, min_order: Number(e.target.value) })}
+                        />
+                      </div>
+                      <div className="flex items-center gap-2 pt-6">
+                        <input
+                          type="checkbox"
+                          id="free"
+                          checked={!!editing.free_delivery}
+                          onChange={(e) => setEditing({ ...editing, free_delivery: e.target.checked, delivery_fee: e.target.checked ? "Grátis" : (editing.delivery_fee || "") })}
+                        />
+                        <Label htmlFor="free">Entrega grátis</Label>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
               <div className="sm:col-span-2">

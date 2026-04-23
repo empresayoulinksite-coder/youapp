@@ -27,6 +27,7 @@ interface StoreRow {
   delivery_time: string;
   delivery_fee: string;
   free_delivery: boolean;
+  delivery_enabled: boolean;
   promo: string | null;
 }
 
@@ -53,7 +54,7 @@ function FavoritesPage() {
     supabase
       .from("stores")
       .select(
-        "id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, promo",
+        "id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, delivery_enabled, promo",
       )
       .in("id", ids)
       .then(({ data }) => {
@@ -128,14 +129,22 @@ function FavoritesPage() {
                         <span className="truncate">{r.category}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs mt-1.5">
-                        <span className="flex items-center gap-1 text-muted-foreground">
-                          <Clock className="h-3.5 w-3.5" /> {r.delivery_time}
-                        </span>
-                        <span
-                          className={`flex items-center gap-1 ${r.free_delivery ? "text-success font-semibold" : "text-muted-foreground"}`}
-                        >
-                          <Bike className="h-3.5 w-3.5" /> {r.delivery_fee}
-                        </span>
+                        {r.delivery_enabled === false ? (
+                          <span className="flex items-center gap-1 text-muted-foreground font-semibold">
+                            <Bike className="h-3.5 w-3.5" /> Apenas retirada
+                          </span>
+                        ) : (
+                          <>
+                            <span className="flex items-center gap-1 text-muted-foreground">
+                              <Clock className="h-3.5 w-3.5" /> {r.delivery_time}
+                            </span>
+                            <span
+                              className={`flex items-center gap-1 ${r.free_delivery ? "text-success font-semibold" : "text-muted-foreground"}`}
+                            >
+                              <Bike className="h-3.5 w-3.5" /> {r.delivery_fee}
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </article>

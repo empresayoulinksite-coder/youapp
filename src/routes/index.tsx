@@ -53,6 +53,7 @@ interface StoreRow {
   delivery_time: string;
   delivery_fee: string;
   free_delivery: boolean;
+  delivery_enabled: boolean;
   promo: string | null;
   neighborhood: string | null;
   city: string | null;
@@ -77,7 +78,7 @@ export const Route = createFileRoute("/")({
   loader: async () => {
     const { data, error } = await supabase
       .from("stores")
-      .select("id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, promo, neighborhood, city, address, cep, lat, lng")
+      .select("id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, delivery_enabled, promo, neighborhood, city, address, cep, lat, lng")
       .order("name");
     if (error) throw error;
     const stores = (data ?? []) as StoreRow[];
@@ -741,12 +742,20 @@ function StoreCard({
               <StoreDistance store={r} />
             </div>
             <div className="flex items-center gap-3 text-xs mt-1.5">
-              <span className="flex items-center gap-1 text-muted-foreground">
-                <Clock className="h-3.5 w-3.5" /> {r.delivery_time}
-              </span>
-              <span className={`flex items-center gap-1 ${r.free_delivery ? "text-success font-semibold" : "text-muted-foreground"}`}>
-                <Bike className="h-3.5 w-3.5" /> {r.delivery_fee}
-              </span>
+              {r.delivery_enabled === false ? (
+                <span className="flex items-center gap-1 text-muted-foreground font-semibold">
+                  <Bike className="h-3.5 w-3.5" /> Apenas retirada
+                </span>
+              ) : (
+                <>
+                  <span className="flex items-center gap-1 text-muted-foreground">
+                    <Clock className="h-3.5 w-3.5" /> {r.delivery_time}
+                  </span>
+                  <span className={`flex items-center gap-1 ${r.free_delivery ? "text-success font-semibold" : "text-muted-foreground"}`}>
+                    <Bike className="h-3.5 w-3.5" /> {r.delivery_fee}
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </article>
@@ -841,12 +850,20 @@ function StoreWithItemsCard({
               <span className="truncate">{r.category}</span>
             </div>
             <div className="flex items-center gap-3 text-xs mt-1">
-              <span className="flex items-center gap-1 text-muted-foreground">
-                <Clock className="h-3.5 w-3.5" /> {r.delivery_time}
-              </span>
-              <span className={`flex items-center gap-1 ${r.free_delivery ? "text-success font-semibold" : "text-muted-foreground"}`}>
-                <Bike className="h-3.5 w-3.5" /> {r.delivery_fee}
-              </span>
+              {r.delivery_enabled === false ? (
+                <span className="flex items-center gap-1 text-muted-foreground font-semibold">
+                  <Bike className="h-3.5 w-3.5" /> Apenas retirada
+                </span>
+              ) : (
+                <>
+                  <span className="flex items-center gap-1 text-muted-foreground">
+                    <Clock className="h-3.5 w-3.5" /> {r.delivery_time}
+                  </span>
+                  <span className={`flex items-center gap-1 ${r.free_delivery ? "text-success font-semibold" : "text-muted-foreground"}`}>
+                    <Bike className="h-3.5 w-3.5" /> {r.delivery_fee}
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </Link>
