@@ -1238,6 +1238,9 @@ function SortableCategory({
         <Button size="icon" variant="ghost" onClick={onEditCategory}>
           <Pencil className="h-4 w-4" />
         </Button>
+        <Button size="icon" variant="ghost" onClick={onDuplicateCategory} title="Duplicar categoria">
+          <Copy className="h-4 w-4" />
+        </Button>
         <Button size="icon" variant="ghost" onClick={onDeleteCategory}>
           <Trash2 className="h-4 w-4 text-destructive" />
         </Button>
