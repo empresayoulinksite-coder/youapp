@@ -15,6 +15,7 @@ interface StoreRow {
   delivery_time: string;
   delivery_fee: string;
   free_delivery: boolean;
+  delivery_enabled: boolean;
 }
 
 const HISTORY_KEY = "youapp:search-history";
@@ -25,7 +26,7 @@ export const Route = createFileRoute("/busca")({
     const { data, error } = await supabase
       .from("stores")
       .select(
-        "id, slug, name, emoji, image_url, category, rating, delivery_time, delivery_fee, free_delivery",
+        "id, slug, name, emoji, image_url, category, rating, delivery_time, delivery_fee, free_delivery, delivery_enabled",
       )
       .order("name");
     if (error) throw error;
@@ -290,16 +291,25 @@ function BuscaPage() {
                           <span className="truncate">{s.category}</span>
                         </div>
                         <div className="flex items-center gap-3 text-xs mt-1">
-                          <span className="flex items-center gap-1 text-muted-foreground">
-                            <Clock className="h-3.5 w-3.5" />
-                            {s.delivery_time}
-                          </span>
-                          <span
-                            className={`flex items-center gap-1 ${s.free_delivery ? "text-success font-semibold" : "text-muted-foreground"}`}
-                          >
-                            <Bike className="h-3.5 w-3.5" />
-                            {s.delivery_fee}
-                          </span>
+                          {s.delivery_enabled === false ? (
+                            <span className="flex items-center gap-1 text-muted-foreground font-semibold">
+                              <Bike className="h-3.5 w-3.5" />
+                              Apenas retirada
+                            </span>
+                          ) : (
+                            <>
+                              <span className="flex items-center gap-1 text-muted-foreground">
+                                <Clock className="h-3.5 w-3.5" />
+                                {s.delivery_time}
+                              </span>
+                              <span
+                                className={`flex items-center gap-1 ${s.free_delivery ? "text-success font-semibold" : "text-muted-foreground"}`}
+                              >
+                                <Bike className="h-3.5 w-3.5" />
+                                {s.delivery_fee}
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </Link>
