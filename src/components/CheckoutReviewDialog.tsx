@@ -107,7 +107,11 @@ export function CheckoutReviewDialog({
 
   const addressText = formatAddress(address, number, complement);
   const hasNumber = number.trim().length > 0;
-  const canConfirm = !!paymentMethod && !!addressText && hasNumber && !submitting;
+  const hasName = name.trim().length > 0;
+  const phoneDigits = phone.replace(/\D/g, "");
+  const hasPhone = phoneDigits.length >= 10;
+  const canConfirm =
+    !!paymentMethod && !!addressText && hasNumber && hasName && hasPhone && !submitting;
 
   return (
     <div
