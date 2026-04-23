@@ -2,6 +2,18 @@ import { createContext, useContext, useEffect, useState, useCallback, ReactNode 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./AuthContext";
 
+export interface PizzaFlavorJson {
+  menu_item_id: string;
+  name: string;
+  price: number;
+}
+
+export interface PizzaAddonJson {
+  id: string;
+  name: string;
+  price: number;
+}
+
 export interface CartItemRow {
   id: string;
   user_id: string;
@@ -13,6 +25,13 @@ export interface CartItemRow {
   half_two_menu_item_id: string | null;
   half_two_name: string | null;
   unit_price_override: number | null;
+  pizza_size_id: string | null;
+  pizza_size_name: string | null;
+  pizza_flavors: PizzaFlavorJson[] | null;
+  pizza_crust_id: string | null;
+  pizza_crust_name: string | null;
+  pizza_crust_price: number | null;
+  pizza_addons: PizzaAddonJson[] | null;
   menu_items: {
     id: string;
     name: string;
@@ -36,6 +55,16 @@ export interface HalfHalfPayload {
   secondName: string;
   secondPrice: number;
   selectedSize: string | null;
+}
+
+export interface PizzaCartPayload {
+  baseMenuItemId: string;
+  sizeId: string;
+  sizeName: string;
+  flavors: PizzaFlavorJson[];
+  crust: { id: string; name: string; price: number } | null;
+  addons: PizzaAddonJson[];
+  unitPrice: number;
 }
 
 interface CartContextValue {
