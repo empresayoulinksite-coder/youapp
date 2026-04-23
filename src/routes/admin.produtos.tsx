@@ -766,6 +766,36 @@ function AdminProducts() {
                 />
               </div>
 
+              {/* Tamanhos disponíveis (e-commerce) */}
+              <div className="sm:col-span-2 rounded-md border p-3">
+                <div className="mb-2">
+                  <p className="text-sm font-semibold">Tamanhos disponíveis</p>
+                  <p className="text-xs text-muted-foreground">
+                    Separe por vírgula. Ex: P, M, G, GG, 38, 39, 40. Deixe vazio se o produto não tem tamanho.
+                  </p>
+                </div>
+                <Input
+                  value={(editing.sizes ?? []).join(", ")}
+                  onChange={(e) => {
+                    const parts = e.target.value
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean);
+                    setEditing({ ...editing, sizes: parts });
+                  }}
+                  placeholder="P, M, G, GG"
+                />
+                {(editing.sizes ?? []).length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {(editing.sizes ?? []).map((s, i) => (
+                      <Badge key={i} variant="secondary" className="text-xs">
+                        {s}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {/* Variações */}
               <div className="sm:col-span-2 mt-2 rounded-md border p-3">
                 <div className="mb-2 flex items-center justify-between">
