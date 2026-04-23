@@ -187,7 +187,11 @@ function AdminProducts() {
       if (c.id) {
         const { error } = await supabase
           .from("menu_categories")
-          .update({ name: c.name!, is_available: c.is_available ?? true })
+          .update({
+            name: c.name!,
+            is_available: c.is_available ?? true,
+            is_pizza: c.is_pizza ?? false,
+          })
           .eq("id", c.id);
         if (error) throw error;
       } else {
@@ -195,6 +199,7 @@ function AdminProducts() {
           store_id: storeId,
           name: c.name!,
           position: categories.length,
+          is_pizza: c.is_pizza ?? false,
         });
         if (error) throw error;
       }
