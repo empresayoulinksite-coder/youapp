@@ -1174,6 +1174,7 @@ function SortableCategory({
   onDeleteItem,
   onToggleItemAvailable,
   onDuplicateItem,
+  onPatchItem,
   onDragItems,
   sensors,
 }: {
@@ -1191,6 +1192,7 @@ function SortableCategory({
   onDeleteItem: (id: string, name: string) => void;
   onToggleItemAvailable: (m: MenuItem) => void;
   onDuplicateItem: (m: MenuItem) => void;
+  onPatchItem: (id: string, patch: Partial<MenuItem>) => void;
   onDragItems: (e: DragEndEvent) => void;
   sensors: ReturnType<typeof useSensors>;
 }) {
