@@ -207,6 +207,39 @@ function StorePage() {
     }
   };
 
+  const tryAddHalfHalf = async (
+    storeId: string,
+    first: MenuItem,
+    second: MenuItem,
+    size: string | null,
+  ) => {
+    if (!open) {
+      toast.error(store.is_paused ? "Loja fechada pelo lojista." : "Loja fechada no momento.");
+      return;
+    }
+    const payload = {
+      firstMenuItemId: first.id,
+      firstName: first.name,
+      firstPrice: Number(first.price),
+      secondMenuItemId: second.id,
+      secondName: second.name,
+      secondPrice: Number(second.price),
+      selectedSize: size,
+    };
+    try {
+      await addHalfHalf(storeId, payload);
+    } catch (err) {
+      if (err instanceof DifferentStoreError) {
+        const ok = window.confirm(
+          "Você só pode pedir de uma loja por vez. Limpar o carrinho atual e adicionar este item?",
+        );
+        if (ok) await switchStoreAndAddHalfHalf(storeId, payload);
+      } else {
+        throw err;
+      }
+    }
+  };
+
   const itemQty = (id: string) => cartItems.filter((c) => c.menu_item_id === id).reduce((s, c) => s + c.quantity, 0);
 
   const avgRating = reviews.length
