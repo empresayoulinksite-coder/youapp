@@ -276,7 +276,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const currentStoreId = items[0]?.store_id ?? null;
 
   return (
-    <CartContext.Provider value={{ items, count, total, loading, currentStoreId, addItem, addHalfHalf, switchStoreAndAdd, switchStoreAndAddHalfHalf, reorder, updateQuantity, removeItem, clear, refresh }}>
+    <CartContext.Provider value={{ items, count, total, loading, currentStoreId, addItem, addHalfHalf, addPizza, switchStoreAndAdd, switchStoreAndAddHalfHalf, switchStoreAndAddPizza, reorder, updateQuantity, removeItem, clear, refresh }}>
       {children}
     </CartContext.Provider>
   );
