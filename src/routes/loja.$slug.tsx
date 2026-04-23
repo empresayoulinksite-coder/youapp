@@ -242,19 +242,31 @@ function StorePage() {
     }
   };
 
-  const tryAddPizza = async (storeId: string, payload: PizzaConfigPayload) => {
+  const tryAddPizzas = async (storeId: string, payloads: PizzaConfigPayload[]) => {
     if (!open) {
       toast.error(store.is_paused ? "Loja fechada pelo lojista." : "Loja fechada no momento.");
       return;
     }
+    if (payloads.length === 0) return;
     try {
-      await addPizza(storeId, payload);
+      // primeira pizza pode disparar DifferentStoreError; depois disso o carrinho está na loja certa
+      await addPizza(storeId, payloads[0]);
+      for (let i = 1; i < payloads.length; i++) {
+        await addPizza(storeId, payloads[i]);
+      }
     } catch (err) {
       if (err instanceof DifferentStoreError) {
         const ok = window.confirm(
-          "Você só pode pedir de uma loja por vez. Limpar o carrinho atual e adicionar esta pizza?",
+          payloads.length > 1
+            ? `Você só pode pedir de uma loja por vez. Limpar o carrinho atual e adicionar essas ${payloads.length} pizzas?`
+            : "Você só pode pedir de uma loja por vez. Limpar o carrinho atual e adicionar esta pizza?",
         );
-        if (ok) await switchStoreAndAddPizza(storeId, payload);
+        if (ok) {
+          await switchStoreAndAddPizza(storeId, payloads[0]);
+          for (let i = 1; i < payloads.length; i++) {
+            await addPizza(storeId, payloads[i]);
+          }
+        }
       } else {
         throw err;
       }
@@ -893,8 +905,8 @@ function StorePage() {
               basePrice: Number(i.price),
             }))}
           disabled={!open}
-          onConfirm={async (payload) => {
-            await tryAddPizza(store.id, payload);
+          onConfirm={async (payloads) => {
+            await tryAddPizzas(store.id, payloads);
             setPizzaBuilderItem(null);
           }}
         />
