@@ -55,6 +55,7 @@ interface MenuItem {
   emoji: string;
   image_url: string | null;
   promo: string | null;
+  sizes: string[];
 }
 
 interface Coupon {
