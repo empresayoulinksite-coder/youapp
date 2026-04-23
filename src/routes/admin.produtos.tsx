@@ -113,6 +113,7 @@ function AdminProducts() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<MenuItem> | null>(null);
   const [editingVars, setEditingVars] = useState<Variation[]>([]);
+  const [sizesInput, setSizesInput] = useState<string>("");
   const [uploading, setUploading] = useState(false);
 
   const [catOpen, setCatOpen] = useState(false);
