@@ -156,6 +156,7 @@ function StorePage() {
   const { items: cartItems, addItem, switchStoreAndAdd, updateQuantity, count: cartCount } = useCart();
   const [tab, setTab] = useState<"menu" | "info" | "reviews">("menu");
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingInitialId, setBookingInitialId] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
@@ -166,11 +167,16 @@ function StorePage() {
     return () => clearInterval(t);
   }, []);
 
+  // Reset selected size whenever the modal opens with a different item
+  useEffect(() => {
+    setSelectedSize(null);
+  }, [selectedItem?.id]);
+
   const withinHours = isStoreOpen(hours, now);
   const open = !store.is_paused && withinHours;
   const nextOpen = !open && !store.is_paused ? nextOpeningLabel(hours, now) : null;
 
-  const tryAdd = async (storeId: string, menuItemId: string) => {
+  const tryAdd = async (storeId: string, menuItemId: string, size: string | null = null) => {
     if (!open) {
       const msg = store.is_paused
         ? "Loja temporariamente fechada pelo lojista."
@@ -181,14 +187,14 @@ function StorePage() {
       return;
     }
     try {
-      await addItem(storeId, menuItemId);
+      await addItem(storeId, menuItemId, size);
     } catch (err) {
       if (err instanceof DifferentStoreError) {
         const ok = window.confirm(
           "Você só pode pedir de uma loja por vez (o pedido vai pelo WhatsApp). Limpar o carrinho atual e adicionar este item?",
         );
         if (ok) {
-          await switchStoreAndAdd(storeId, menuItemId);
+          await switchStoreAndAdd(storeId, menuItemId, size);
         }
       } else {
         throw err;
@@ -196,7 +202,7 @@ function StorePage() {
     }
   };
 
-  const itemQty = (id: string) => cartItems.find((c) => c.menu_item_id === id)?.quantity ?? 0;
+  const itemQty = (id: string) => cartItems.filter((c) => c.menu_item_id === id).reduce((s, c) => s + c.quantity, 0);
 
   const avgRating = reviews.length
     ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
