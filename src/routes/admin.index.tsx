@@ -63,6 +63,7 @@ type Store = {
   show_route: boolean;
   route_url: string | null;
   pickup_enabled: boolean;
+  is_pizzeria: boolean;
 };
 
 async function lookupCep(rawCep: string) {
@@ -108,7 +109,7 @@ const empty: Partial<Store> = {
   show_route: false,
   route_url: "",
   pickup_enabled: false,
-};
+  is_pizzeria: false,
 
 function AdminStores() {
   const qc = useQueryClient();
@@ -161,7 +162,7 @@ function AdminStores() {
         show_route: !!s.show_route,
         route_url: s.route_url?.trim() ? s.route_url.trim() : null,
         pickup_enabled: !!s.pickup_enabled,
-      };
+        is_pizzeria: !!s.is_pizzeria,
 
       // Geocodifica automaticamente APENAS se temos endereço e ainda não temos coordenadas.
       // Se admin já ajustou manualmente (lat/lng definidos), preservamos o ajuste.
