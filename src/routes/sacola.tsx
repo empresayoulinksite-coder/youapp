@@ -193,11 +193,15 @@ function CartPage() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate">{item.menu_items?.name}</p>
+                    <p className="font-semibold text-sm truncate">
+                      {item.half_two_name
+                        ? `½ ${item.menu_items?.name} + ½ ${item.half_two_name}`
+                        : item.menu_items?.name}
+                    </p>
                     {item.selected_size && (
                       <p className="text-[11px] font-semibold text-brand mt-0.5">Tamanho: {item.selected_size}</p>
                     )}
-                    <p className="text-xs text-muted-foreground">R$ {Number(item.menu_items?.price ?? 0).toFixed(2).replace(".", ",")}</p>
+                    <p className="text-xs text-muted-foreground">R$ {Number(item.unit_price_override ?? item.menu_items?.price ?? 0).toFixed(2).replace(".", ",")}</p>
                     <div className="flex items-center gap-2 mt-2">
                       <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="bg-brand-soft text-brand rounded-full p-1">
                         {item.quantity === 1 ? <Trash2 className="h-3.5 w-3.5" /> : <Minus className="h-3.5 w-3.5" />}

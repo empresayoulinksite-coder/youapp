@@ -93,6 +93,7 @@ type Category = {
   name: string;
   position: number;
   is_available: boolean;
+  is_pizza: boolean;
 };
 
 type StoreType = "food" | "ecommerce" | "service";
@@ -186,7 +187,11 @@ function AdminProducts() {
       if (c.id) {
         const { error } = await supabase
           .from("menu_categories")
-          .update({ name: c.name!, is_available: c.is_available ?? true })
+          .update({
+            name: c.name!,
+            is_available: c.is_available ?? true,
+            is_pizza: c.is_pizza ?? false,
+          })
           .eq("id", c.id);
         if (error) throw error;
       } else {
@@ -194,6 +199,7 @@ function AdminProducts() {
           store_id: storeId,
           name: c.name!,
           position: categories.length,
+          is_pizza: c.is_pizza ?? false,
         });
         if (error) throw error;
       }
@@ -617,6 +623,20 @@ function AdminProducts() {
                   setEditingCat({ ...editingCat, name: e.target.value })
                 }
                 placeholder="Ex: Pizzas Salgadas"
+              />
+            </div>
+            <div className="flex items-center justify-between rounded-md border p-3">
+              <div>
+                <p className="text-sm font-medium">Categoria de pizza 🍕</p>
+                <p className="text-xs text-muted-foreground">
+                  Permite que o cliente monte pedido meio a meio com 2 sabores desta categoria.
+                </p>
+              </div>
+              <Switch
+                checked={editingCat?.is_pizza ?? false}
+                onCheckedChange={(v) =>
+                  setEditingCat({ ...editingCat, is_pizza: v })
+                }
               />
             </div>
             {editingCat?.id && (

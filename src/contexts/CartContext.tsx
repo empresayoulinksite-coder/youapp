@@ -10,6 +10,9 @@ export interface CartItemRow {
   quantity: number;
   notes: string | null;
   selected_size: string | null;
+  half_two_menu_item_id: string | null;
+  half_two_name: string | null;
+  unit_price_override: number | null;
   menu_items: {
     id: string;
     name: string;
@@ -25,14 +28,26 @@ export interface CartItemRow {
   } | null;
 }
 
+export interface HalfHalfPayload {
+  firstMenuItemId: string;
+  firstName: string;
+  firstPrice: number;
+  secondMenuItemId: string;
+  secondName: string;
+  secondPrice: number;
+  selectedSize: string | null;
+}
+
 interface CartContextValue {
   items: CartItemRow[];
   count: number;
   total: number;
   loading: boolean;
   addItem: (storeId: string, menuItemId: string, selectedSize?: string | null) => Promise<void>;
+  addHalfHalf: (storeId: string, payload: HalfHalfPayload) => Promise<void>;
   /** Limpa o carrinho atual e adiciona o item da nova loja. */
   switchStoreAndAdd: (storeId: string, menuItemId: string, selectedSize?: string | null) => Promise<void>;
+  switchStoreAndAddHalfHalf: (storeId: string, payload: HalfHalfPayload) => Promise<void>;
   /** Limpa o carrinho e adiciona vários itens (usado em "Pedir de novo"). */
   reorder: (storeId: string, items: Array<{ menu_item_id: string; quantity: number; selected_size?: string | null }>) => Promise<void>;
   /** Loja atualmente no carrinho, se houver. */
@@ -64,7 +79,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     const { data, error } = await supabase
       .from("cart_items")
-      .select("id, user_id, store_id, menu_item_id, quantity, notes, selected_size, menu_items(id, name, price, emoji, image_url), stores(id, name, slug, emoji)")
+      .select("id, user_id, store_id, menu_item_id, quantity, notes, selected_size, half_two_menu_item_id, half_two_name, unit_price_override, menu_items(id, name, price, emoji, image_url), stores(id, name, slug, emoji)")
       .eq("user_id", user.id)
       .order("created_at", { ascending: true });
     if (!error && data) {
@@ -84,7 +99,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       throw new DifferentStoreError(currentStoreId, storeId);
     }
     const existing = items.find(
-      (i) => i.menu_item_id === menuItemId && (i.selected_size ?? null) === (selectedSize ?? null),
+      (i) =>
+        i.menu_item_id === menuItemId &&
+        (i.selected_size ?? null) === (selectedSize ?? null) &&
+        !i.half_two_menu_item_id,
     );
     if (existing) {
       await updateQuantity(existing.id, existing.quantity + 1);
@@ -111,6 +129,37 @@ export function CartProvider({ children }: { children: ReactNode }) {
       selected_size: selectedSize,
     });
     if (!error) await refresh();
+  };
+
+  const insertHalfHalf = async (storeId: string, p: HalfHalfPayload) => {
+    if (!user) return;
+    const unitPrice = Math.max(Number(p.firstPrice) || 0, Number(p.secondPrice) || 0);
+    const { error } = await supabase.from("cart_items").insert({
+      user_id: user.id,
+      store_id: storeId,
+      menu_item_id: p.firstMenuItemId,
+      quantity: 1,
+      selected_size: p.selectedSize,
+      half_two_menu_item_id: p.secondMenuItemId,
+      half_two_name: p.secondName,
+      unit_price_override: unitPrice,
+    });
+    if (!error) await refresh();
+  };
+
+  const addHalfHalf = async (storeId: string, p: HalfHalfPayload) => {
+    if (!user) return;
+    const currentStoreId = items[0]?.store_id ?? null;
+    if (currentStoreId && currentStoreId !== storeId) {
+      throw new DifferentStoreError(currentStoreId, storeId);
+    }
+    await insertHalfHalf(storeId, p);
+  };
+
+  const switchStoreAndAddHalfHalf = async (storeId: string, p: HalfHalfPayload) => {
+    if (!user) return;
+    await supabase.from("cart_items").delete().eq("user_id", user.id);
+    await insertHalfHalf(storeId, p);
   };
 
   const reorder = async (
@@ -152,12 +201,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (!error) await refresh();
   };
 
+  const unitPriceOf = (i: CartItemRow) =>
+    i.unit_price_override != null
+      ? Number(i.unit_price_override)
+      : Number(i.menu_items?.price ?? 0);
+
   const count = items.reduce((sum, i) => sum + i.quantity, 0);
-  const total = items.reduce((sum, i) => sum + (i.menu_items ? Number(i.menu_items.price) * i.quantity : 0), 0);
+  const total = items.reduce((sum, i) => sum + unitPriceOf(i) * i.quantity, 0);
   const currentStoreId = items[0]?.store_id ?? null;
 
   return (
-    <CartContext.Provider value={{ items, count, total, loading, currentStoreId, addItem, switchStoreAndAdd, reorder, updateQuantity, removeItem, clear, refresh }}>
+    <CartContext.Provider value={{ items, count, total, loading, currentStoreId, addItem, addHalfHalf, switchStoreAndAdd, switchStoreAndAddHalfHalf, reorder, updateQuantity, removeItem, clear, refresh }}>
       {children}
     </CartContext.Provider>
   );
