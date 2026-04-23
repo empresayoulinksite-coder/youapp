@@ -52,6 +52,7 @@ type Store = {
   city: string | null;
   hours: string | null;
   payment_methods: string | null;
+  payment_methods_list: string[];
   min_order: number;
   is_paused: boolean;
   whatsapp: string | null;
@@ -96,6 +97,7 @@ const empty: Partial<Store> = {
   city: "",
   hours: "",
   payment_methods: "",
+  payment_methods_list: [],
   min_order: 0,
   whatsapp: "",
 };
@@ -140,6 +142,9 @@ function AdminStores() {
         city: s.city || null,
         hours: s.hours || null,
         payment_methods: s.payment_methods || null,
+        payment_methods_list: Array.isArray(s.payment_methods_list)
+          ? s.payment_methods_list
+          : [],
         min_order: Number(s.min_order) || 0,
         whatsapp: s.whatsapp ? s.whatsapp.replace(/\D/g, "") : null,
         lat: s.lat ?? null,
@@ -570,12 +575,37 @@ function AdminStores() {
                 </div>
               )}
               <div className="sm:col-span-2">
-                <Label>Formas de pagamento</Label>
-                <Input
-                  value={editing.payment_methods || ""}
-                  onChange={(e) => setEditing({ ...editing, payment_methods: e.target.value })}
-                  placeholder="Pix, Cartão, Dinheiro"
-                />
+                <Label>Formas de pagamento aceitas</Label>
+                <p className="text-[11px] text-muted-foreground mt-1 mb-2">
+                  Marque todas as opções que a loja aceita. Aparecerão para o cliente na hora de finalizar o pedido.
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {PAYMENT_METHODS.map((m) => {
+                    const list = editing.payment_methods_list ?? [];
+                    const checked = list.includes(m.key);
+                    return (
+                      <label
+                        key={m.key}
+                        className={`flex items-center gap-2 rounded-md border p-2.5 cursor-pointer text-sm transition-colors ${
+                          checked ? "border-brand bg-brand-soft" : "border-border"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) => {
+                            const next = e.target.checked
+                              ? [...list.filter((k) => k !== m.key), m.key]
+                              : list.filter((k) => k !== m.key);
+                            setEditing({ ...editing, payment_methods_list: next });
+                          }}
+                          className="h-4 w-4 accent-[hsl(var(--brand))]"
+                        />
+                        <span className="font-medium">{m.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
               <div className="sm:col-span-2">
                 <Label>WhatsApp da loja (com DDD)</Label>
