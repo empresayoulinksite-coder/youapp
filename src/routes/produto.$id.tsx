@@ -59,9 +59,9 @@ export const Route = createFileRoute("/produto/$id")({
       .limit(8);
 
     return {
-      product: product as Product,
+      product: { ...product, sizes: Array.isArray(product.sizes) ? product.sizes : [] } as Product,
       store: store as Store,
-      related: (related ?? []) as Product[],
+      related: ((related ?? []) as Product[]).map((p) => ({ ...p, sizes: Array.isArray(p.sizes) ? p.sizes : [] })),
     };
   },
   errorComponent: ({ error }) => (
