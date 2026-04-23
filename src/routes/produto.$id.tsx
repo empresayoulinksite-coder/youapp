@@ -105,6 +105,7 @@ function ProductPage() {
   const [qty, setQty] = useState(1);
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
 
   const fmt = (n: number) => `R$ ${Number(n).toFixed(2).replace(".", ",")}`;
   const hasDiscount =
@@ -113,16 +114,21 @@ function ProductPage() {
     ? Math.round((1 - Number(product.price) / Number(product.original_price)) * 100)
     : 0;
   const totalPrice = Number(product.price) * qty;
+  const hasSizes = product.sizes && product.sizes.length > 0;
 
   const handleAdd = async () => {
     if (!user) {
       window.location.href = "/auth";
       return;
     }
+    if (hasSizes && !selectedSize) {
+      toast.error("Escolha um tamanho antes de adicionar.");
+      return;
+    }
     setAdding(true);
     try {
       for (let i = 0; i < qty; i++) {
-        await addItem(store.id, product.id);
+        await addItem(store.id, product.id, selectedSize);
       }
     } catch (err) {
       if (err instanceof DifferentStoreError) {
@@ -130,9 +136,9 @@ function ProductPage() {
           "Você só pode pedir de uma loja por vez (o pedido vai pelo WhatsApp). Limpar o carrinho atual e adicionar este item?",
         );
         if (ok) {
-          await switchStoreAndAdd(store.id, product.id);
+          await switchStoreAndAdd(store.id, product.id, selectedSize);
           for (let i = 1; i < qty; i++) {
-            await addItem(store.id, product.id);
+            await addItem(store.id, product.id, selectedSize);
           }
         } else {
           setAdding(false);
