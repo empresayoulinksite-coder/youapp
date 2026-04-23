@@ -506,11 +506,11 @@ function CartPage() {
                 half_two_name: i.half_two_name ?? null,
                 pizza_size_id: i.pizza_size_id ?? null,
                 pizza_size_name: i.pizza_size_name ?? null,
-                pizza_flavors: i.pizza_flavors ?? null,
+                pizza_flavors: (i.pizza_flavors ?? null) as any,
                 pizza_crust_id: i.pizza_crust_id ?? null,
                 pizza_crust_name: i.pizza_crust_name ?? null,
                 pizza_crust_price: i.pizza_crust_price ?? null,
-                pizza_addons: i.pizza_addons ?? null,
+                pizza_addons: (i.pizza_addons ?? null) as any,
               }));
               await supabase.from("order_items").insert(itemRows);
             }
