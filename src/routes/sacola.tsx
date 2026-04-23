@@ -283,7 +283,7 @@ function CartPage() {
         storeWhatsapp={storeWhatsapp}
         acceptedPaymentMethods={storePaymentMethods}
         submitting={submitting}
-        onConfirm={async ({ paymentMethod, notes }) => {
+        onConfirm={async ({ paymentMethod, notes, number, complement }) => {
           if (!storeWhatsapp) return;
           setSubmitting(true);
           const fmtBRL = (n: number) => `R$ ${n.toFixed(2).replace(".", ",")}`;
@@ -313,10 +313,12 @@ function CartPage() {
           }
           let deliveryAddress: string | null = null;
           if (active) {
+            const finalNumber = number || active.number || "";
+            const finalComplement = complement || active.complement || "";
             const addrParts = [
               active.street,
-              active.number,
-              active.complement,
+              finalNumber || null,
+              finalComplement || null,
               active.neighborhood,
               active.city,
             ].filter(Boolean);
