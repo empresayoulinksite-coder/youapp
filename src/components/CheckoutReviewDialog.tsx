@@ -77,13 +77,13 @@ export function CheckoutReviewDialog({
 
   if (!open) return null;
 
-  // Filtra os métodos pelos aceitos pela loja (se informado)
-  const accepted = (acceptedPaymentMethods ?? "").toLowerCase();
-  const methods =
-    accepted.trim().length > 0
-      ? ALL_METHODS.filter((m) => accepted.includes(m.toLowerCase().split(" ")[0]))
-      : ALL_METHODS;
-  const finalMethods = methods.length > 0 ? methods : ALL_METHODS;
+  // Lista padronizada vinda da loja (chaves)
+  const acceptedKeys = normalizePaymentList(acceptedPaymentMethods);
+  const finalMethods: { key: PaymentMethodKey; label: string }[] =
+    acceptedKeys.length > 0
+      ? acceptedKeys.map((k) => ({ key: k, label: PAYMENT_LABEL[k] }))
+      : PAYMENT_METHODS;
+  const noMethodsConfigured = acceptedKeys.length === 0;
 
   const addressText = formatAddress(address, number, complement);
   const hasNumber = number.trim().length > 0;
@@ -200,14 +200,19 @@ export function CheckoutReviewDialog({
             <h3 className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 mb-2">
               <CreditCard className="h-3.5 w-3.5" /> Forma de pagamento
             </h3>
+            {noMethodsConfigured && (
+              <p className="text-[11px] text-muted-foreground mb-2">
+                A loja ainda não definiu formas de pagamento. Mostrando todas as opções.
+              </p>
+            )}
             <div className="space-y-2">
               {finalMethods.map((m) => {
-                const checked = paymentMethod === m;
+                const checked = paymentMethod === m.label;
                 return (
                   <button
-                    key={m}
+                    key={m.key}
                     type="button"
-                    onClick={() => setPaymentMethod(m)}
+                    onClick={() => setPaymentMethod(m.label)}
                     className={cn(
                       "w-full flex items-center gap-3 rounded-xl border p-3 text-left transition-colors",
                       checked
@@ -223,7 +228,7 @@ export function CheckoutReviewDialog({
                     >
                       {checked && <Check className="h-3 w-3 text-brand-foreground" />}
                     </div>
-                    <span className="text-sm font-semibold">{m}</span>
+                    <span className="text-sm font-semibold">{m.label}</span>
                   </button>
                 );
               })}
