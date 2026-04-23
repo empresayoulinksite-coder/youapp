@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound, useRouter, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Star, Clock, Bike, MapPin, CreditCard, Tag, Plus, Minus, ShoppingBag, MessageSquare, X, CalendarClock } from "lucide-react";
+import { ArrowLeft, Star, Clock, Bike, MapPin, CreditCard, Tag, Plus, Minus, ShoppingBag, MessageSquare, X, CalendarClock, Navigation } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -35,6 +35,7 @@ interface Store {
   whatsapp: string | null;
   lat: number | null;
   lng: number | null;
+  show_route: boolean;
 }
 
 interface MenuCategory {
@@ -487,9 +488,26 @@ function StorePage() {
             {store.address && (
               <div className="flex items-start gap-3">
                 <MapPin className="h-5 w-5 text-brand shrink-0 mt-0.5" />
-                <div>
+                <div className="flex-1">
                   <p className="font-semibold text-sm">Endereço</p>
                   <p className="text-sm text-muted-foreground">{store.address}</p>
+                  {store.show_route && (
+                    <a
+                      href={
+                        store.lat != null && store.lng != null
+                          ? `https://www.google.com/maps/dir/?api=1&destination=${store.lat},${store.lng}`
+                          : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+                              [store.address, store.name].filter(Boolean).join(", "),
+                            )}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-brand bg-brand-soft hover:bg-brand/10 transition-colors rounded-full px-3 py-1.5"
+                    >
+                      <Navigation className="h-3.5 w-3.5" />
+                      Ver rota até a loja
+                    </a>
+                  )}
                 </div>
               </div>
             )}

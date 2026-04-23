@@ -59,6 +59,7 @@ type Store = {
   whatsapp: string | null;
   lat: number | null;
   lng: number | null;
+  show_route: boolean;
 };
 
 async function lookupCep(rawCep: string) {
@@ -101,6 +102,7 @@ const empty: Partial<Store> = {
   payment_methods_list: [],
   min_order: 0,
   whatsapp: "",
+  show_route: false,
 };
 
 function AdminStores() {
@@ -150,6 +152,7 @@ function AdminStores() {
         whatsapp: s.whatsapp ? s.whatsapp.replace(/\D/g, "") : null,
         lat: s.lat ?? null,
         lng: s.lng ?? null,
+        show_route: !!s.show_route,
       };
 
       // Geocodifica automaticamente se temos endereço e ainda não temos coordenadas,
@@ -561,6 +564,24 @@ function AdminStores() {
                     Buscar pelo endereço
                   </Button>
                 </div>
+              </div>
+              <div className="sm:col-span-2">
+                <label className="flex items-start gap-3 rounded-md border p-3 cursor-pointer hover:bg-muted/30 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={!!editing.show_route}
+                    onChange={(e) =>
+                      setEditing({ ...editing, show_route: e.target.checked })
+                    }
+                    className="h-4 w-4 mt-0.5 accent-[hsl(var(--brand))]"
+                  />
+                  <div>
+                    <p className="font-medium text-sm">Mostrar botão "Ver rota até a loja"</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Ative para lojas com endereço físico. Desative para lojas online ou somente delivery.
+                    </p>
+                  </div>
+                </label>
               </div>
               {editing.id && (
                 <div className="sm:col-span-2">

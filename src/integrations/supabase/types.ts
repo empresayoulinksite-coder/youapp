@@ -803,6 +803,7 @@ export type Database = {
           payment_methods_list: string[]
           promo: string | null
           rating: number
+          show_route: boolean
           slot_minutes: number
           slug: string
           store_type: string
@@ -834,6 +835,7 @@ export type Database = {
           payment_methods_list?: string[]
           promo?: string | null
           rating?: number
+          show_route?: boolean
           slot_minutes?: number
           slug: string
           store_type?: string
@@ -865,6 +867,7 @@ export type Database = {
           payment_methods_list?: string[]
           promo?: string | null
           rating?: number
+          show_route?: boolean
           slot_minutes?: number
           slug?: string
           store_type?: string
