@@ -36,7 +36,7 @@ export const Route = createFileRoute("/produto/$id")({
   loader: async ({ params }): Promise<{ product: Product; store: Store; related: Product[] }> => {
     const { data: product, error } = await supabase
       .from("menu_items")
-      .select("id, store_id, name, description, price, original_price, emoji, image_url, promo")
+      .select("id, store_id, name, description, price, original_price, emoji, image_url, promo, sizes")
       .eq("id", params.id)
       .maybeSingle();
     if (error) throw error;
