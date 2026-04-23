@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { X, MapPin, CreditCard, Phone, Pencil, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { ActiveAddress } from "@/contexts/AddressContext";
 
@@ -19,7 +20,12 @@ interface Props {
   storeWhatsapp: string | null;
   acceptedPaymentMethods?: string | null;
   submitting: boolean;
-  onConfirm: (data: { paymentMethod: PaymentMethod; notes: string }) => void;
+  onConfirm: (data: {
+    paymentMethod: PaymentMethod;
+    notes: string;
+    number: string;
+    complement: string;
+  }) => void;
 }
 
 const ALL_METHODS: PaymentMethod[] = [
@@ -42,9 +48,15 @@ function formatPhone(raw: string): string {
   return raw;
 }
 
-function formatAddress(a: ActiveAddress | null): string {
+function formatAddress(
+  a: ActiveAddress | null,
+  numberOverride?: string,
+  complementOverride?: string,
+): string {
   if (!a) return "";
-  return [a.street, a.number, a.complement, a.neighborhood, a.city]
+  const num = (numberOverride ?? a.number ?? "").trim();
+  const comp = (complementOverride ?? a.complement ?? "").trim();
+  return [a.street, num || null, comp || null, a.neighborhood, a.city]
     .filter(Boolean)
     .join(", ");
 }
@@ -60,6 +72,15 @@ export function CheckoutReviewDialog({
 }: Props) {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [notes, setNotes] = useState("");
+  const [number, setNumber] = useState("");
+  const [complement, setComplement] = useState("");
+
+  // Sempre que o endereço ativo mudar (ou abrir), pré-preenche número/complemento
+  useEffect(() => {
+    if (!open) return;
+    setNumber(address?.number ?? "");
+    setComplement(address?.complement ?? "");
+  }, [open, address?.id, address?.number, address?.complement]);
 
   if (!open) return null;
 
@@ -71,8 +92,9 @@ export function CheckoutReviewDialog({
       : ALL_METHODS;
   const finalMethods = methods.length > 0 ? methods : ALL_METHODS;
 
-  const addressText = formatAddress(address);
-  const canConfirm = !!paymentMethod && !!addressText && !submitting;
+  const addressText = formatAddress(address, number, complement);
+  const hasNumber = number.trim().length > 0;
+  const canConfirm = !!paymentMethod && !!addressText && hasNumber && !submitting;
 
   return (
     <div
@@ -107,10 +129,48 @@ export function CheckoutReviewDialog({
                 <Pencil className="h-3 w-3" /> Editar
               </Link>
             </div>
-            {addressText ? (
-              <div className="rounded-xl border border-border bg-background p-3">
-                <p className="text-sm font-semibold">{address?.label}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{addressText}</p>
+            {address ? (
+              <div className="rounded-xl border border-border bg-background p-3 space-y-3">
+                <div>
+                  <p className="text-sm font-semibold">{address.label}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {[address.street, address.neighborhood, address.city]
+                      .filter(Boolean)
+                      .join(", ")}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[11px] font-semibold text-muted-foreground uppercase">
+                      Número *
+                    </label>
+                    <Input
+                      value={number}
+                      onChange={(e) => setNumber(e.target.value)}
+                      placeholder="123 ou Apto 45"
+                      className="mt-1 h-9"
+                      maxLength={20}
+                      inputMode="text"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-muted-foreground uppercase">
+                      Complemento
+                    </label>
+                    <Input
+                      value={complement}
+                      onChange={(e) => setComplement(e.target.value)}
+                      placeholder="Bloco, fundos..."
+                      className="mt-1 h-9"
+                      maxLength={80}
+                    />
+                  </div>
+                </div>
+                {!hasNumber && (
+                  <p className="text-[11px] text-destructive font-semibold">
+                    Informe o número da casa/apartamento
+                  </p>
+                )}
               </div>
             ) : (
               <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3">
@@ -198,18 +258,26 @@ export function CheckoutReviewDialog({
         <div className="sticky bottom-0 bg-card border-t border-border p-4">
           <button
             onClick={() =>
-              paymentMethod && onConfirm({ paymentMethod, notes: notes.trim() })
+              paymentMethod &&
+              onConfirm({
+                paymentMethod,
+                notes: notes.trim(),
+                number: number.trim(),
+                complement: complement.trim(),
+              })
             }
             disabled={!canConfirm}
             className="w-full bg-brand text-brand-foreground font-bold py-3.5 rounded-full shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting
               ? "Enviando..."
-              : !addressText
+              : !address
                 ? "Cadastre um endereço"
-                : !paymentMethod
-                  ? "Escolha o pagamento"
-                  : "Confirmar e enviar pelo WhatsApp"}
+                : !hasNumber
+                  ? "Informe o número"
+                  : !paymentMethod
+                    ? "Escolha o pagamento"
+                    : "Confirmar e enviar pelo WhatsApp"}
           </button>
         </div>
       </div>
