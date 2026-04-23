@@ -453,7 +453,19 @@ function StorePage() {
                             </div>
                             <div onClick={(e) => e.stopPropagation()}>
                               {user ? (
-                                qty > 0 ? (
+                                item.sizes && item.sizes.length > 0 ? (
+                                  <button
+                                    onClick={() => setSelectedItem(item)}
+                                    className="text-brand bg-brand-soft rounded-full p-1.5"
+                                    aria-label="Escolher tamanho"
+                                  >
+                                    {qty > 0 ? (
+                                      <span className="text-xs font-bold px-1">{qty}</span>
+                                    ) : (
+                                      <Plus className="h-4 w-4" />
+                                    )}
+                                  </button>
+                                ) : qty > 0 ? (
                                   <div className="flex items-center gap-2 bg-brand text-brand-foreground rounded-full px-2 py-1">
                                     <button className="p-0.5" aria-label="Diminuir">
                                       <QtyDecrement itemId={item.id} />
