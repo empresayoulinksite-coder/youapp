@@ -295,6 +295,9 @@ export type Database = {
       }
       menu_categories: {
         Row: {
+          available_days: number[]
+          available_end: string | null
+          available_start: string | null
           created_at: string
           id: string
           is_available: boolean
@@ -304,6 +307,9 @@ export type Database = {
           store_id: string
         }
         Insert: {
+          available_days?: number[]
+          available_end?: string | null
+          available_start?: string | null
           created_at?: string
           id?: string
           is_available?: boolean
@@ -313,6 +319,9 @@ export type Database = {
           store_id: string
         }
         Update: {
+          available_days?: number[]
+          available_end?: string | null
+          available_start?: string | null
           created_at?: string
           id?: string
           is_available?: boolean
