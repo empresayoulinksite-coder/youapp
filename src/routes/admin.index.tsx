@@ -167,6 +167,7 @@ function AdminStores() {
         route_url: s.route_url?.trim() ? s.route_url.trim() : null,
         pickup_enabled: !!s.pickup_enabled,
         is_pizzeria: !!s.is_pizzeria,
+        delivery_enabled: s.delivery_enabled !== false,
       };
 
       // Geocodifica automaticamente APENAS se temos endereço e ainda não temos coordenadas.
