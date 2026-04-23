@@ -26,6 +26,7 @@ interface Store {
   address: string | null;
   hours: string | null;
   payment_methods: string | null;
+  payment_methods_list: string[] | null;
   min_order: number;
   is_paused: boolean;
   store_type: "food" | "ecommerce" | "service";
@@ -534,15 +535,22 @@ function StorePage() {
                 </div>
               </div>
             )}
-            {store.payment_methods && (
-              <div className="flex items-start gap-3">
-                <CreditCard className="h-5 w-5 text-brand shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-sm">Formas de pagamento</p>
-                  <p className="text-sm text-muted-foreground">{store.payment_methods}</p>
+            {(() => {
+              const list = paymentLabelsFromList(
+                normalizePaymentList(store.payment_methods_list),
+              );
+              const text = list.length > 0 ? list.join(", ") : store.payment_methods;
+              if (!text) return null;
+              return (
+                <div className="flex items-start gap-3">
+                  <CreditCard className="h-5 w-5 text-brand shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-sm">Formas de pagamento</p>
+                    <p className="text-sm text-muted-foreground">{text}</p>
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
         )}
 
