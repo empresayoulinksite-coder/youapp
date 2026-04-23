@@ -178,45 +178,64 @@ function CartPage() {
             )}
 
             <div className="space-y-2">
-              {items.map((item) => (
-                <article key={item.id} className="bg-card rounded-2xl p-3 flex items-center gap-3 shadow-[var(--shadow-card)]">
-                  <div className="h-14 w-14 rounded-xl bg-brand-soft flex items-center justify-center text-2xl overflow-hidden shrink-0">
-                    {item.menu_items?.image_url ? (
-                      <img
-                        src={item.menu_items.image_url}
-                        alt={item.menu_items?.name ?? "Produto"}
-                        className="h-full w-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      item.menu_items?.emoji
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate">
-                      {item.half_two_name
-                        ? `½ ${item.menu_items?.name} + ½ ${item.half_two_name}`
-                        : item.menu_items?.name}
-                    </p>
-                    {item.selected_size && (
-                      <p className="text-[11px] font-semibold text-brand mt-0.5">Tamanho: {item.selected_size}</p>
-                    )}
-                    <p className="text-xs text-muted-foreground">R$ {Number(item.unit_price_override ?? item.menu_items?.price ?? 0).toFixed(2).replace(".", ",")}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="bg-brand-soft text-brand rounded-full p-1">
-                        {item.quantity === 1 ? <Trash2 className="h-3.5 w-3.5" /> : <Minus className="h-3.5 w-3.5" />}
-                      </button>
-                      <span className="text-sm font-bold min-w-[16px] text-center">{item.quantity}</span>
-                      <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="bg-brand text-brand-foreground rounded-full p-1">
-                        <Plus className="h-3.5 w-3.5" />
-                      </button>
+              {items.map((item) => {
+                const isPizza = Array.isArray(item.pizza_flavors) && item.pizza_flavors.length > 0;
+                const unitPrice = Number(item.unit_price_override ?? item.menu_items?.price ?? 0);
+                return (
+                  <article key={item.id} className="bg-card rounded-2xl p-3 flex items-start gap-3 shadow-[var(--shadow-card)]">
+                    <div className="h-14 w-14 rounded-xl bg-brand-soft flex items-center justify-center text-2xl overflow-hidden shrink-0">
+                      {item.menu_items?.image_url ? (
+                        <img
+                          src={item.menu_items.image_url}
+                          alt={item.menu_items?.name ?? "Produto"}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        isPizza ? "🍕" : item.menu_items?.emoji
+                      )}
                     </div>
-                  </div>
-                  <button onClick={() => removeItem(item.id)} className="text-muted-foreground p-1" aria-label="Remover">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </article>
-              ))}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate">
+                        {isPizza
+                          ? `Pizza ${item.pizza_size_name ?? ""}`.trim()
+                          : item.half_two_name
+                            ? `½ ${item.menu_items?.name} + ½ ${item.half_two_name}`
+                            : item.menu_items?.name}
+                      </p>
+                      {isPizza && (
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          {(item.pizza_flavors ?? []).map((f) => f.name).join(" + ")}
+                        </p>
+                      )}
+                      {isPizza && item.pizza_crust_name && (
+                        <p className="text-[11px] text-muted-foreground">Borda: {item.pizza_crust_name}</p>
+                      )}
+                      {isPizza && Array.isArray(item.pizza_addons) && item.pizza_addons.length > 0 && (
+                        <p className="text-[11px] text-muted-foreground">
+                          Adicionais: {item.pizza_addons.map((a) => a.name).join(", ")}
+                        </p>
+                      )}
+                      {!isPizza && item.selected_size && (
+                        <p className="text-[11px] font-semibold text-brand mt-0.5">Tamanho: {item.selected_size}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground">R$ {unitPrice.toFixed(2).replace(".", ",")}</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="bg-brand-soft text-brand rounded-full p-1">
+                          {item.quantity === 1 ? <Trash2 className="h-3.5 w-3.5" /> : <Minus className="h-3.5 w-3.5" />}
+                        </button>
+                        <span className="text-sm font-bold min-w-[16px] text-center">{item.quantity}</span>
+                        <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="bg-brand text-brand-foreground rounded-full p-1">
+                          <Plus className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                    <button onClick={() => removeItem(item.id)} className="text-muted-foreground p-1" aria-label="Remover">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </article>
+                );
+              })}
             </div>
 
             {/* Coupon */}
