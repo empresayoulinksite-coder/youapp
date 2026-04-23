@@ -418,6 +418,7 @@ function AdminProducts() {
       position: items.length,
       is_available: true,
       price: 0,
+      sizes: [],
     });
     setEditingVars([]);
     setOpen(true);
