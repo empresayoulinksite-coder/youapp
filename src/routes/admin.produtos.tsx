@@ -342,6 +342,146 @@ function AdminProducts() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const duplicateCategory = useMutation({
+    mutationFn: async (cat: Category) => {
+      const { data: newCat, error } = await supabase
+        .from("menu_categories")
+        .insert({
+          store_id: storeId,
+          name: `${cat.name} (cópia)`,
+          position: categories.length,
+          is_available: cat.is_available,
+          is_pizza: cat.is_pizza,
+          available_days: cat.available_days ?? null,
+          available_start: cat.available_start ?? null,
+          available_end: cat.available_end ?? null,
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+
+      const catItems = items.filter((i) => i.category_id === cat.id);
+      for (let idx = 0; idx < catItems.length; idx++) {
+        const it = catItems[idx];
+        const { data: newItem, error: e1 } = await supabase
+          .from("menu_items")
+          .insert({
+            store_id: storeId,
+            category_id: newCat.id,
+            name: it.name,
+            description: it.description,
+            price: it.price,
+            original_price: it.original_price,
+            promo: it.promo,
+            emoji: it.emoji,
+            image_url: it.image_url,
+            position: idx,
+            is_available: it.is_available,
+            sizes: it.sizes ?? [],
+          })
+          .select("id")
+          .single();
+        if (e1) throw e1;
+
+        const vars = variationsByItem[it.id] || [];
+        if (vars.length) {
+          await supabase.from("menu_item_variations").insert(
+            vars.map((v, i) => ({
+              menu_item_id: newItem.id,
+              name: v.name,
+              price: v.price,
+              original_price: v.original_price,
+              position: i,
+              is_available: v.is_available,
+            })),
+          );
+        }
+
+        const { data: pizzaPrices } = await supabase
+          .from("menu_item_size_prices")
+          .select("pizza_size_id,price,is_available")
+          .eq("menu_item_id", it.id);
+        if (pizzaPrices?.length) {
+          await supabase.from("menu_item_size_prices").insert(
+            pizzaPrices.map((p) => ({
+              menu_item_id: newItem.id,
+              pizza_size_id: p.pizza_size_id,
+              price: p.price,
+              is_available: p.is_available,
+            })),
+          );
+        }
+      }
+    },
+    onSuccess: () => {
+      toast.success("Categoria duplicada");
+      qc.invalidateQueries({ queryKey: ["admin-cats", storeId] });
+      qc.invalidateQueries({ queryKey: ["admin-items", storeId] });
+      qc.invalidateQueries({ queryKey: ["admin-variations"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const duplicateItem = useMutation({
+    mutationFn: async (it: MenuItem) => {
+      const sameCat = items.filter((i) => i.category_id === it.category_id);
+      const { data: newItem, error } = await supabase
+        .from("menu_items")
+        .insert({
+          store_id: storeId,
+          category_id: it.category_id,
+          name: `${it.name} (cópia)`,
+          description: it.description,
+          price: it.price,
+          original_price: it.original_price,
+          promo: it.promo,
+          emoji: it.emoji,
+          image_url: it.image_url,
+          position: sameCat.length,
+          is_available: it.is_available,
+          sizes: it.sizes ?? [],
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+
+      const vars = variationsByItem[it.id] || [];
+      if (vars.length) {
+        await supabase.from("menu_item_variations").insert(
+          vars.map((v, i) => ({
+            menu_item_id: newItem.id,
+            name: v.name,
+            price: v.price,
+            original_price: v.original_price,
+            position: i,
+            is_available: v.is_available,
+          })),
+        );
+      }
+
+      const { data: pizzaPrices } = await supabase
+        .from("menu_item_size_prices")
+        .select("pizza_size_id,price,is_available")
+        .eq("menu_item_id", it.id);
+      if (pizzaPrices?.length) {
+        await supabase.from("menu_item_size_prices").insert(
+          pizzaPrices.map((p) => ({
+            menu_item_id: newItem.id,
+            pizza_size_id: p.pizza_size_id,
+            price: p.price,
+            is_available: p.is_available,
+          })),
+        );
+      }
+    },
+    onSuccess: () => {
+      toast.success("Produto duplicado");
+      qc.invalidateQueries({ queryKey: ["admin-items", storeId] });
+      qc.invalidateQueries({ queryKey: ["admin-variations"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const toggleItemAvailable = useMutation({
     mutationFn: async (m: MenuItem) => {
       const { error } = await supabase
