@@ -93,6 +93,7 @@ type Category = {
   name: string;
   position: number;
   is_available: boolean;
+  is_pizza: boolean;
 };
 
 type StoreType = "food" | "ecommerce" | "service";
