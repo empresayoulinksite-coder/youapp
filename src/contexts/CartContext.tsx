@@ -79,7 +79,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     const { data, error } = await supabase
       .from("cart_items")
-      .select("id, user_id, store_id, menu_item_id, quantity, notes, selected_size, menu_items(id, name, price, emoji, image_url), stores(id, name, slug, emoji)")
+      .select("id, user_id, store_id, menu_item_id, quantity, notes, selected_size, half_two_menu_item_id, half_two_name, unit_price_override, menu_items(id, name, price, emoji, image_url), stores(id, name, slug, emoji)")
       .eq("user_id", user.id)
       .order("created_at", { ascending: true });
     if (!error && data) {
@@ -99,7 +99,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       throw new DifferentStoreError(currentStoreId, storeId);
     }
     const existing = items.find(
-      (i) => i.menu_item_id === menuItemId && (i.selected_size ?? null) === (selectedSize ?? null),
+      (i) =>
+        i.menu_item_id === menuItemId &&
+        (i.selected_size ?? null) === (selectedSize ?? null) &&
+        !i.half_two_menu_item_id,
     );
     if (existing) {
       await updateQuantity(existing.id, existing.quantity + 1);
