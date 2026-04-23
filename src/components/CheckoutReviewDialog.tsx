@@ -20,7 +20,12 @@ interface Props {
   storeWhatsapp: string | null;
   acceptedPaymentMethods?: string | null;
   submitting: boolean;
-  onConfirm: (data: { paymentMethod: PaymentMethod; notes: string }) => void;
+  onConfirm: (data: {
+    paymentMethod: PaymentMethod;
+    notes: string;
+    number: string;
+    complement: string;
+  }) => void;
 }
 
 const ALL_METHODS: PaymentMethod[] = [
@@ -43,9 +48,15 @@ function formatPhone(raw: string): string {
   return raw;
 }
 
-function formatAddress(a: ActiveAddress | null): string {
+function formatAddress(
+  a: ActiveAddress | null,
+  numberOverride?: string,
+  complementOverride?: string,
+): string {
   if (!a) return "";
-  return [a.street, a.number, a.complement, a.neighborhood, a.city]
+  const num = (numberOverride ?? a.number ?? "").trim();
+  const comp = (complementOverride ?? a.complement ?? "").trim();
+  return [a.street, num || null, comp || null, a.neighborhood, a.city]
     .filter(Boolean)
     .join(", ");
 }
@@ -61,6 +72,15 @@ export function CheckoutReviewDialog({
 }: Props) {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [notes, setNotes] = useState("");
+  const [number, setNumber] = useState("");
+  const [complement, setComplement] = useState("");
+
+  // Sempre que o endereço ativo mudar (ou abrir), pré-preenche número/complemento
+  useEffect(() => {
+    if (!open) return;
+    setNumber(address?.number ?? "");
+    setComplement(address?.complement ?? "");
+  }, [open, address?.id, address?.number, address?.complement]);
 
   if (!open) return null;
 
@@ -72,8 +92,9 @@ export function CheckoutReviewDialog({
       : ALL_METHODS;
   const finalMethods = methods.length > 0 ? methods : ALL_METHODS;
 
-  const addressText = formatAddress(address);
-  const canConfirm = !!paymentMethod && !!addressText && !submitting;
+  const addressText = formatAddress(address, number, complement);
+  const hasNumber = number.trim().length > 0;
+  const canConfirm = !!paymentMethod && !!addressText && hasNumber && !submitting;
 
   return (
     <div
