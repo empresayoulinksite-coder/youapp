@@ -758,12 +758,14 @@ function AdminProducts() {
                           delCategory.mutate(cat.id);
                       }}
                       onToggleAvailable={() => toggleCategoryAvailable.mutate(cat)}
+                      onDuplicateCategory={() => duplicateCategory.mutate(cat)}
                       onAddItem={() => openNewItem(cat.id)}
                       onEditItem={openEditItem}
                       onDeleteItem={(id, name) => {
                         if (confirm(`Excluir "${name}"?`)) delItem.mutate(id);
                       }}
                       onToggleItemAvailable={(m) => toggleItemAvailable.mutate(m)}
+                      onDuplicateItem={(m) => duplicateItem.mutate(m)}
                       onDragItems={onDragItemsInCategory(cat.id)}
                       sensors={sensors}
                     />
