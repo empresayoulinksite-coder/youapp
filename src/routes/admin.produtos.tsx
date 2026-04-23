@@ -342,7 +342,16 @@ function AdminProducts() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const duplicateCategory = useMutation({
+  const patchItem = useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Partial<MenuItem> }) => {
+      const { error } = await supabase.from("menu_items").update(patch).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-items", storeId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
     mutationFn: async (cat: Category) => {
       const { data: newCat, error } = await supabase
         .from("menu_categories")
