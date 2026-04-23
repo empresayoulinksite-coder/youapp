@@ -643,6 +643,26 @@ function AdminStores() {
                   </div>
                 </label>
               </div>
+              {editing.store_type === "food" && (
+                <div className="sm:col-span-2">
+                  <label className="flex items-start gap-3 rounded-md border border-orange-200 bg-orange-50/40 p-3 cursor-pointer hover:bg-orange-50 transition-colors dark:border-orange-900/40 dark:bg-orange-950/10">
+                    <input
+                      type="checkbox"
+                      checked={!!editing.is_pizzeria}
+                      onChange={(e) =>
+                        setEditing({ ...editing, is_pizzeria: e.target.checked })
+                      }
+                      className="h-4 w-4 mt-0.5 accent-[hsl(var(--brand))]"
+                    />
+                    <div>
+                      <p className="font-medium text-sm">🍕 Esta loja é uma pizzaria</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        Habilita o módulo de pizzas em "Produtos" (tamanhos, sabores meio a meio, bordas recheadas e adicionais). Lojas com categoria "Pizza" já vêm habilitadas automaticamente.
+                      </p>
+                    </div>
+                  </label>
+                </div>
+              )}
               {editing.id && (
                 <div className="sm:col-span-2">
                   <Label>Horários de funcionamento</Label>
