@@ -104,6 +104,22 @@ function PainelPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const togglePickup = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      if (!storeId) return;
+      const { error } = await supabase
+        .from("stores")
+        .update({ pickup_enabled: enabled })
+        .eq("id", storeId);
+      if (error) throw error;
+    },
+    onSuccess: (_d, enabled) => {
+      toast.success(enabled ? "Retirada no local ativada" : "Retirada no local desativada");
+      qc.invalidateQueries({ queryKey: ["painel", "stores"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   if (authLoading || storesLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
