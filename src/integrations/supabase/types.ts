@@ -995,6 +995,7 @@ export type Database = {
           cep: string | null
           city: string | null
           created_at: string
+          delivery_enabled: boolean
           delivery_fee: string
           delivery_time: string
           distance: string
@@ -1030,6 +1031,7 @@ export type Database = {
           cep?: string | null
           city?: string | null
           created_at?: string
+          delivery_enabled?: boolean
           delivery_fee?: string
           delivery_time?: string
           distance?: string
@@ -1065,6 +1067,7 @@ export type Database = {
           cep?: string | null
           city?: string | null
           created_at?: string
+          delivery_enabled?: boolean
           delivery_fee?: string
           delivery_time?: string
           distance?: string
