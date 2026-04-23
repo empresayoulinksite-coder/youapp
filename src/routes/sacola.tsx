@@ -41,11 +41,37 @@ function CartPage() {
   const [storeWhatsapp, setStoreWhatsapp] = useState<string | null>(null);
   const [storeImageUrl, setStoreImageUrl] = useState<string | null>(null);
   const [storePaymentMethods, setStorePaymentMethods] = useState<string[] | null>(null);
+  const [profileName, setProfileName] = useState<string | null>(null);
+  const [profilePhone, setProfilePhone] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
   const [submitting, setSubmitting] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const { active } = useAddress();
   const { user: authUser } = useAuth();
+
+  // Carrega nome/telefone salvos no perfil para pré-preencher a revisão
+  useEffect(() => {
+    if (!authUser) {
+      setProfileName(null);
+      setProfilePhone(null);
+      return;
+    }
+    supabase
+      .from("profiles")
+      .select("display_name, phone")
+      .eq("user_id", authUser.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        setProfileName(
+          data?.display_name ??
+            authUser.user_metadata?.full_name ??
+            authUser.user_metadata?.name ??
+            authUser.email?.split("@")[0] ??
+            null,
+        );
+        setProfilePhone(data?.phone ?? null);
+      });
+  }, [authUser]);
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 60_000);
