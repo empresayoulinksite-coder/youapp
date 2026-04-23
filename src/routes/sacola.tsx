@@ -181,6 +181,9 @@ function CartPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm truncate">{item.menu_items?.name}</p>
+                    {item.selected_size && (
+                      <p className="text-[11px] font-semibold text-brand mt-0.5">Tamanho: {item.selected_size}</p>
+                    )}
                     <p className="text-xs text-muted-foreground">R$ {Number(item.menu_items?.price ?? 0).toFixed(2).replace(".", ",")}</p>
                     <div className="flex items-center gap-2 mt-2">
                       <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="bg-brand-soft text-brand rounded-full p-1">
