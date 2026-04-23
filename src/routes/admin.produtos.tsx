@@ -1289,12 +1289,14 @@ function SortableItemRow({
   onEdit,
   onDelete,
   onToggleAvailable,
+  onDuplicate,
 }: {
   item: MenuItem;
   variations: Variation[];
   onEdit: () => void;
   onDelete: () => void;
   onToggleAvailable: () => void;
+  onDuplicate: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: item.id });
