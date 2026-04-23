@@ -810,6 +810,7 @@ export type Database = {
           neighborhood: string | null
           payment_methods: string | null
           payment_methods_list: string[]
+          pickup_enabled: boolean
           promo: string | null
           rating: number
           route_url: string | null
@@ -843,6 +844,7 @@ export type Database = {
           neighborhood?: string | null
           payment_methods?: string | null
           payment_methods_list?: string[]
+          pickup_enabled?: boolean
           promo?: string | null
           rating?: number
           route_url?: string | null
@@ -876,6 +878,7 @@ export type Database = {
           neighborhood?: string | null
           payment_methods?: string | null
           payment_methods_list?: string[]
+          pickup_enabled?: boolean
           promo?: string | null
           rating?: number
           route_url?: string | null
