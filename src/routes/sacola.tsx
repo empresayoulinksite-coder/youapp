@@ -492,12 +492,25 @@ function CartPage() {
               const itemRows = items.map((i) => ({
                 order_id: order.id,
                 menu_item_id: i.menu_item_id,
-                name: i.menu_items?.name ?? "Item",
+                name: Array.isArray(i.pizza_flavors) && i.pizza_flavors.length > 0
+                  ? `🍕 Pizza ${i.pizza_size_name ?? ""}`.trim()
+                  : i.half_two_name
+                    ? `½ ${i.menu_items?.name} + ½ ${i.half_two_name}`
+                    : (i.menu_items?.name ?? "Item"),
                 quantity: i.quantity,
-                unit_price: Number(i.menu_items?.price ?? 0),
+                unit_price: Number(i.unit_price_override ?? i.menu_items?.price ?? 0),
                 emoji: i.menu_items?.emoji ?? null,
                 image_url: i.menu_items?.image_url ?? null,
                 selected_size: i.selected_size ?? null,
+                half_two_menu_item_id: i.half_two_menu_item_id ?? null,
+                half_two_name: i.half_two_name ?? null,
+                pizza_size_id: i.pizza_size_id ?? null,
+                pizza_size_name: i.pizza_size_name ?? null,
+                pizza_flavors: i.pizza_flavors ?? null,
+                pizza_crust_id: i.pizza_crust_id ?? null,
+                pizza_crust_name: i.pizza_crust_name ?? null,
+                pizza_crust_price: i.pizza_crust_price ?? null,
+                pizza_addons: i.pizza_addons ?? null,
               }));
               await supabase.from("order_items").insert(itemRows);
             }
