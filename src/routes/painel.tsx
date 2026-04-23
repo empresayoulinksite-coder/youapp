@@ -214,6 +214,27 @@ function PainelPage() {
         )}
 
         {currentStore && (
+          <div className="flex items-center justify-between rounded-lg border bg-card p-4">
+            <div>
+              <p className="text-sm font-semibold">
+                Retirar no local {currentStore.pickup_enabled ? "(ativado)" : "(desativado)"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Quando ativado, o cliente pode escolher buscar o pedido na loja.
+              </p>
+            </div>
+            <Button
+              variant={currentStore.pickup_enabled ? "outline" : "default"}
+              size="sm"
+              onClick={() => togglePickup.mutate(!currentStore.pickup_enabled)}
+              disabled={togglePickup.isPending}
+            >
+              {currentStore.pickup_enabled ? "Desativar" : "Ativar"}
+            </Button>
+          </div>
+        )}
+
+        {currentStore && (
           <StoreWhatsappEditor
             storeId={currentStore.id}
             initialWhatsapp={currentStore.whatsapp}
