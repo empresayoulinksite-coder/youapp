@@ -62,6 +62,7 @@ type Store = {
   lng: number | null;
   show_route: boolean;
   route_url: string | null;
+  pickup_enabled: boolean;
 };
 
 async function lookupCep(rawCep: string) {
