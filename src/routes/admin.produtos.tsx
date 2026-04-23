@@ -342,6 +342,17 @@ function AdminProducts() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const patchItem = useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Partial<MenuItem> }) => {
+      const { error } = await supabase.from("menu_items").update(patch).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-items", storeId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const duplicateCategory = useMutation({
     mutationFn: async (cat: Category) => {
       const { data: newCat, error } = await supabase
@@ -766,6 +777,7 @@ function AdminProducts() {
                       }}
                       onToggleItemAvailable={(m) => toggleItemAvailable.mutate(m)}
                       onDuplicateItem={(m) => duplicateItem.mutate(m)}
+                      onPatchItem={(id, patch) => patchItem.mutate({ id, patch })}
                       onDragItems={onDragItemsInCategory(cat.id)}
                       sensors={sensors}
                     />
@@ -1163,6 +1175,7 @@ function SortableCategory({
   onDeleteItem,
   onToggleItemAvailable,
   onDuplicateItem,
+  onPatchItem,
   onDragItems,
   sensors,
 }: {
@@ -1180,6 +1193,7 @@ function SortableCategory({
   onDeleteItem: (id: string, name: string) => void;
   onToggleItemAvailable: (m: MenuItem) => void;
   onDuplicateItem: (m: MenuItem) => void;
+  onPatchItem: (id: string, patch: Partial<MenuItem>) => void;
   onDragItems: (e: DragEndEvent) => void;
   sensors: ReturnType<typeof useSensors>;
 }) {
@@ -1271,6 +1285,7 @@ function SortableCategory({
                     onDelete={() => onDeleteItem(m.id, m.name)}
                     onToggleAvailable={() => onToggleItemAvailable(m)}
                     onDuplicate={() => onDuplicateItem(m)}
+                    onPatch={(patch) => onPatchItem(m.id, patch)}
                   />
                 ))}
               </SortableContext>
@@ -1290,6 +1305,7 @@ function SortableItemRow({
   onDelete,
   onToggleAvailable,
   onDuplicate,
+  onPatch,
 }: {
   item: MenuItem;
   variations: Variation[];
@@ -1297,6 +1313,7 @@ function SortableItemRow({
   onDelete: () => void;
   onToggleAvailable: () => void;
   onDuplicate: () => void;
+  onPatch: (patch: Partial<MenuItem>) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: item.id });
@@ -1306,9 +1323,42 @@ function SortableItemRow({
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const minPrice = variations.length
+  const hasVariations = variations.length > 0;
+  const minPrice = hasVariations
     ? Math.min(...variations.map((v) => Number(v.price)))
     : Number(item.price);
+
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState(item.name);
+  const [editingPrice, setEditingPrice] = useState(false);
+  const [priceDraft, setPriceDraft] = useState(String(item.price ?? 0));
+
+  const commitName = () => {
+    const v = nameDraft.trim();
+    setEditingName(false);
+    if (!v || v === item.name) {
+      setNameDraft(item.name);
+      return;
+    }
+    if (v.length > 120) {
+      toast.error("Nome muito longo");
+      setNameDraft(item.name);
+      return;
+    }
+    onPatch({ name: v });
+  };
+
+  const commitPrice = () => {
+    setEditingPrice(false);
+    const n = Number(priceDraft.replace(",", "."));
+    if (!Number.isFinite(n) || n < 0) {
+      toast.error("Preço inválido");
+      setPriceDraft(String(item.price ?? 0));
+      return;
+    }
+    if (n === Number(item.price)) return;
+    onPatch({ price: n });
+  };
 
   return (
     <div
@@ -1337,7 +1387,34 @@ function SortableItemRow({
       )}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <p className="truncate font-medium">{item.name}</p>
+          {editingName ? (
+            <Input
+              autoFocus
+              value={nameDraft}
+              onChange={(e) => setNameDraft(e.target.value)}
+              onBlur={commitName}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") commitName();
+                if (e.key === "Escape") {
+                  setNameDraft(item.name);
+                  setEditingName(false);
+                }
+              }}
+              className="h-7 text-sm"
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setNameDraft(item.name);
+                setEditingName(true);
+              }}
+              className="truncate text-left font-medium hover:underline"
+              title="Clique para editar o nome"
+            >
+              {item.name}
+            </button>
+          )}
           {!item.is_available && (
             <Badge variant="secondary" className="text-xs">
               Pausado
@@ -1348,16 +1425,58 @@ function SortableItemRow({
           <p className="truncate text-xs text-muted-foreground">{item.description}</p>
         )}
       </div>
-      {variations.length > 0 && (
+      {hasVariations && (
         <Badge variant="outline" className="hidden sm:inline-flex">
           {variations.length} tamanhos
         </Badge>
       )}
       <div className="text-right">
-        {variations.length > 0 && (
+        {hasVariations && (
           <p className="text-[10px] text-muted-foreground">A partir de</p>
         )}
-        <p className="text-sm font-semibold">R$ {minPrice.toFixed(2)}</p>
+        {editingPrice && !hasVariations ? (
+          <div className="flex items-center gap-1">
+            <span className="text-sm font-semibold">R$</span>
+            <Input
+              autoFocus
+              type="number"
+              step="0.01"
+              min="0"
+              value={priceDraft}
+              onChange={(e) => setPriceDraft(e.target.value)}
+              onBlur={commitPrice}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") commitPrice();
+                if (e.key === "Escape") {
+                  setPriceDraft(String(item.price ?? 0));
+                  setEditingPrice(false);
+                }
+              }}
+              className="h-7 w-24 text-right text-sm"
+            />
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              if (hasVariations) {
+                toast.info("Edite os preços nas variações deste produto");
+                onEdit();
+                return;
+              }
+              setPriceDraft(String(item.price ?? 0));
+              setEditingPrice(true);
+            }}
+            className="text-sm font-semibold hover:underline"
+            title={
+              hasVariations
+                ? "Produto com variações — edite no formulário"
+                : "Clique para editar o preço"
+            }
+          >
+            R$ {minPrice.toFixed(2)}
+          </button>
+        )}
       </div>
       <Button
         size="icon"
