@@ -350,13 +350,13 @@ export function CheckoutReviewDialog({
           >
             {submitting
               ? "Enviando..."
-              : !address
-                ? "Cadastre um endereço"
-                : !hasName
-                  ? "Informe seu nome"
-                  : !hasPhone
-                    ? "Informe seu telefone"
-                    : !hasNumber
+              : !hasName
+                ? "Informe seu nome"
+                : !hasPhone
+                  ? "Informe seu telefone"
+                  : !isPickup && !address
+                    ? "Cadastre um endereço"
+                    : !isPickup && !hasNumber
                       ? "Informe o número"
                       : !paymentMethod
                         ? "Escolha o pagamento"
