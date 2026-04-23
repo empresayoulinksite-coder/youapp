@@ -352,6 +352,8 @@ function AdminProducts() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const duplicateCategory = useMutation({
     mutationFn: async (cat: Category) => {
       const { data: newCat, error } = await supabase
         .from("menu_categories")
