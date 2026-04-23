@@ -74,34 +74,43 @@ export type Database = {
       cart_items: {
         Row: {
           created_at: string
+          half_two_menu_item_id: string | null
+          half_two_name: string | null
           id: string
           menu_item_id: string
           notes: string | null
           quantity: number
           selected_size: string | null
           store_id: string
+          unit_price_override: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          half_two_menu_item_id?: string | null
+          half_two_name?: string | null
           id?: string
           menu_item_id: string
           notes?: string | null
           quantity?: number
           selected_size?: string | null
           store_id: string
+          unit_price_override?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          half_two_menu_item_id?: string | null
+          half_two_name?: string | null
           id?: string
           menu_item_id?: string
           notes?: string | null
           quantity?: number
           selected_size?: string | null
           store_id?: string
+          unit_price_override?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -268,6 +277,7 @@ export type Database = {
           created_at: string
           id: string
           is_available: boolean
+          is_pizza: boolean
           name: string
           position: number
           store_id: string
@@ -276,6 +286,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_available?: boolean
+          is_pizza?: boolean
           name: string
           position?: number
           store_id: string
@@ -284,6 +295,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_available?: boolean
+          is_pizza?: boolean
           name?: string
           position?: number
           store_id?: string
@@ -415,6 +427,8 @@ export type Database = {
         Row: {
           created_at: string
           emoji: string | null
+          half_two_menu_item_id: string | null
+          half_two_name: string | null
           id: string
           image_url: string | null
           menu_item_id: string | null
@@ -428,6 +442,8 @@ export type Database = {
         Insert: {
           created_at?: string
           emoji?: string | null
+          half_two_menu_item_id?: string | null
+          half_two_name?: string | null
           id?: string
           image_url?: string | null
           menu_item_id?: string | null
@@ -441,6 +457,8 @@ export type Database = {
         Update: {
           created_at?: string
           emoji?: string | null
+          half_two_menu_item_id?: string | null
+          half_two_name?: string | null
           id?: string
           image_url?: string | null
           menu_item_id?: string | null
