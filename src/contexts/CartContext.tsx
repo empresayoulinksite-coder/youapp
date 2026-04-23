@@ -187,10 +187,38 @@ export function CartProvider({ children }: { children: ReactNode }) {
     await insertHalfHalf(storeId, p);
   };
 
-  const switchStoreAndAddHalfHalf = async (storeId: string, p: HalfHalfPayload) => {
+  const insertPizza = async (storeId: string, p: PizzaCartPayload) => {
+    if (!user) return;
+    const { error } = await supabase.from("cart_items").insert({
+      user_id: user.id,
+      store_id: storeId,
+      menu_item_id: p.baseMenuItemId,
+      quantity: 1,
+      unit_price_override: p.unitPrice,
+      pizza_size_id: p.sizeId,
+      pizza_size_name: p.sizeName,
+      pizza_flavors: p.flavors as any,
+      pizza_crust_id: p.crust?.id ?? null,
+      pizza_crust_name: p.crust?.name ?? null,
+      pizza_crust_price: p.crust?.price ?? null,
+      pizza_addons: p.addons as any,
+    });
+    if (!error) await refresh();
+  };
+
+  const addPizza = async (storeId: string, p: PizzaCartPayload) => {
+    if (!user) return;
+    const currentStoreId = items[0]?.store_id ?? null;
+    if (currentStoreId && currentStoreId !== storeId) {
+      throw new DifferentStoreError(currentStoreId, storeId);
+    }
+    await insertPizza(storeId, p);
+  };
+
+  const switchStoreAndAddPizza = async (storeId: string, p: PizzaCartPayload) => {
     if (!user) return;
     await supabase.from("cart_items").delete().eq("user_id", user.id);
-    await insertHalfHalf(storeId, p);
+    await insertPizza(storeId, p);
   };
 
   const reorder = async (
