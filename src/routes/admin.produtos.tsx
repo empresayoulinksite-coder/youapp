@@ -777,6 +777,7 @@ function AdminProducts() {
                       }}
                       onToggleItemAvailable={(m) => toggleItemAvailable.mutate(m)}
                       onDuplicateItem={(m) => duplicateItem.mutate(m)}
+                      onPatchItem={(id, patch) => patchItem.mutate({ id, patch })}
                       onDragItems={onDragItemsInCategory(cat.id)}
                       sensors={sensors}
                     />
