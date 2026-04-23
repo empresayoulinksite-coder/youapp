@@ -499,6 +499,26 @@ function AdminProducts() {
         </Select>
       </div>
 
+      {storeId && isPizzeria && (
+        <div className="mb-4 flex items-center gap-3 rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-900/40 dark:bg-orange-950/20">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-100 text-orange-600 dark:bg-orange-900/40">
+            <Pizza className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold">Esta loja é uma pizzaria</p>
+            <p className="text-xs text-muted-foreground">
+              Configure tamanhos, sabores com preço por tamanho, bordas recheadas e adicionais.
+            </p>
+          </div>
+          <Link to="/admin/pizzas" search={{ store: storeId } as never}>
+            <Button size="sm" className="gap-2 bg-orange-600 hover:bg-orange-700 text-white">
+              <Pizza className="h-4 w-4" />
+              Gerenciar pizzas
+            </Button>
+          </Link>
+        </div>
+      )}
+
       {storeId && (
         <>
           {/* Toolbar */}
