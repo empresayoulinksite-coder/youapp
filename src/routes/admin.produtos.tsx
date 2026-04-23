@@ -15,6 +15,7 @@ import {
   X,
   Upload,
   Pizza,
+  Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -341,6 +342,146 @@ function AdminProducts() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const duplicateCategory = useMutation({
+    mutationFn: async (cat: Category) => {
+      const { data: newCat, error } = await supabase
+        .from("menu_categories")
+        .insert({
+          store_id: storeId,
+          name: `${cat.name} (cópia)`,
+          position: categories.length,
+          is_available: cat.is_available,
+          is_pizza: cat.is_pizza,
+          ...(cat.available_days ? { available_days: cat.available_days } : {}),
+          ...(cat.available_start ? { available_start: cat.available_start } : {}),
+          ...(cat.available_end ? { available_end: cat.available_end } : {}),
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+
+      const catItems = items.filter((i) => i.category_id === cat.id);
+      for (let idx = 0; idx < catItems.length; idx++) {
+        const it = catItems[idx];
+        const { data: newItem, error: e1 } = await supabase
+          .from("menu_items")
+          .insert({
+            store_id: storeId,
+            category_id: newCat.id,
+            name: it.name,
+            description: it.description,
+            price: it.price,
+            original_price: it.original_price,
+            promo: it.promo,
+            emoji: it.emoji,
+            image_url: it.image_url,
+            position: idx,
+            is_available: it.is_available,
+            sizes: it.sizes ?? [],
+          })
+          .select("id")
+          .single();
+        if (e1) throw e1;
+
+        const vars = variationsByItem[it.id] || [];
+        if (vars.length) {
+          await supabase.from("menu_item_variations").insert(
+            vars.map((v, i) => ({
+              menu_item_id: newItem.id,
+              name: v.name,
+              price: v.price,
+              original_price: v.original_price,
+              position: i,
+              is_available: v.is_available,
+            })),
+          );
+        }
+
+        const { data: pizzaPrices } = await supabase
+          .from("menu_item_size_prices")
+          .select("pizza_size_id,price,is_available")
+          .eq("menu_item_id", it.id);
+        if (pizzaPrices?.length) {
+          await supabase.from("menu_item_size_prices").insert(
+            pizzaPrices.map((p) => ({
+              menu_item_id: newItem.id,
+              pizza_size_id: p.pizza_size_id,
+              price: p.price,
+              is_available: p.is_available,
+            })),
+          );
+        }
+      }
+    },
+    onSuccess: () => {
+      toast.success("Categoria duplicada");
+      qc.invalidateQueries({ queryKey: ["admin-cats", storeId] });
+      qc.invalidateQueries({ queryKey: ["admin-items", storeId] });
+      qc.invalidateQueries({ queryKey: ["admin-variations"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const duplicateItem = useMutation({
+    mutationFn: async (it: MenuItem) => {
+      const sameCat = items.filter((i) => i.category_id === it.category_id);
+      const { data: newItem, error } = await supabase
+        .from("menu_items")
+        .insert({
+          store_id: storeId,
+          category_id: it.category_id,
+          name: `${it.name} (cópia)`,
+          description: it.description,
+          price: it.price,
+          original_price: it.original_price,
+          promo: it.promo,
+          emoji: it.emoji,
+          image_url: it.image_url,
+          position: sameCat.length,
+          is_available: it.is_available,
+          sizes: it.sizes ?? [],
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+
+      const vars = variationsByItem[it.id] || [];
+      if (vars.length) {
+        await supabase.from("menu_item_variations").insert(
+          vars.map((v, i) => ({
+            menu_item_id: newItem.id,
+            name: v.name,
+            price: v.price,
+            original_price: v.original_price,
+            position: i,
+            is_available: v.is_available,
+          })),
+        );
+      }
+
+      const { data: pizzaPrices } = await supabase
+        .from("menu_item_size_prices")
+        .select("pizza_size_id,price,is_available")
+        .eq("menu_item_id", it.id);
+      if (pizzaPrices?.length) {
+        await supabase.from("menu_item_size_prices").insert(
+          pizzaPrices.map((p) => ({
+            menu_item_id: newItem.id,
+            pizza_size_id: p.pizza_size_id,
+            price: p.price,
+            is_available: p.is_available,
+          })),
+        );
+      }
+    },
+    onSuccess: () => {
+      toast.success("Produto duplicado");
+      qc.invalidateQueries({ queryKey: ["admin-items", storeId] });
+      qc.invalidateQueries({ queryKey: ["admin-variations"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const toggleItemAvailable = useMutation({
     mutationFn: async (m: MenuItem) => {
       const { error } = await supabase
@@ -617,12 +758,14 @@ function AdminProducts() {
                           delCategory.mutate(cat.id);
                       }}
                       onToggleAvailable={() => toggleCategoryAvailable.mutate(cat)}
+                      onDuplicateCategory={() => duplicateCategory.mutate(cat)}
                       onAddItem={() => openNewItem(cat.id)}
                       onEditItem={openEditItem}
                       onDeleteItem={(id, name) => {
                         if (confirm(`Excluir "${name}"?`)) delItem.mutate(id);
                       }}
                       onToggleItemAvailable={(m) => toggleItemAvailable.mutate(m)}
+                      onDuplicateItem={(m) => duplicateItem.mutate(m)}
                       onDragItems={onDragItemsInCategory(cat.id)}
                       sensors={sensors}
                     />
@@ -1014,10 +1157,12 @@ function SortableCategory({
   onEditCategory,
   onDeleteCategory,
   onToggleAvailable,
+  onDuplicateCategory,
   onAddItem,
   onEditItem,
   onDeleteItem,
   onToggleItemAvailable,
+  onDuplicateItem,
   onDragItems,
   sensors,
 }: {
@@ -1029,10 +1174,12 @@ function SortableCategory({
   onEditCategory: () => void;
   onDeleteCategory: () => void;
   onToggleAvailable: () => void;
+  onDuplicateCategory: () => void;
   onAddItem: () => void;
   onEditItem: (m: MenuItem) => void;
   onDeleteItem: (id: string, name: string) => void;
   onToggleItemAvailable: (m: MenuItem) => void;
+  onDuplicateItem: (m: MenuItem) => void;
   onDragItems: (e: DragEndEvent) => void;
   sensors: ReturnType<typeof useSensors>;
 }) {
@@ -1091,6 +1238,9 @@ function SortableCategory({
         <Button size="icon" variant="ghost" onClick={onEditCategory}>
           <Pencil className="h-4 w-4" />
         </Button>
+        <Button size="icon" variant="ghost" onClick={onDuplicateCategory} title="Duplicar categoria">
+          <Copy className="h-4 w-4" />
+        </Button>
         <Button size="icon" variant="ghost" onClick={onDeleteCategory}>
           <Trash2 className="h-4 w-4 text-destructive" />
         </Button>
@@ -1120,6 +1270,7 @@ function SortableCategory({
                     onEdit={() => onEditItem(m)}
                     onDelete={() => onDeleteItem(m.id, m.name)}
                     onToggleAvailable={() => onToggleItemAvailable(m)}
+                    onDuplicate={() => onDuplicateItem(m)}
                   />
                 ))}
               </SortableContext>
@@ -1138,12 +1289,14 @@ function SortableItemRow({
   onEdit,
   onDelete,
   onToggleAvailable,
+  onDuplicate,
 }: {
   item: MenuItem;
   variations: Variation[];
   onEdit: () => void;
   onDelete: () => void;
   onToggleAvailable: () => void;
+  onDuplicate: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: item.id });
@@ -1220,6 +1373,9 @@ function SortableItemRow({
       </Button>
       <Button size="icon" variant="ghost" onClick={onEdit}>
         <Pencil className="h-4 w-4" />
+      </Button>
+      <Button size="icon" variant="ghost" onClick={onDuplicate} title="Duplicar produto">
+        <Copy className="h-4 w-4" />
       </Button>
       <Button size="icon" variant="ghost" onClick={onDelete}>
         <Trash2 className="h-4 w-4 text-destructive" />
