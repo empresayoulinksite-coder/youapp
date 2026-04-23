@@ -160,6 +160,7 @@ function AdminStores() {
         lng: s.lng ?? null,
         show_route: !!s.show_route,
         route_url: s.route_url?.trim() ? s.route_url.trim() : null,
+        pickup_enabled: !!s.pickup_enabled,
       };
 
       // Geocodifica automaticamente APENAS se temos endereço e ainda não temos coordenadas.
