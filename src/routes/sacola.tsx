@@ -267,6 +267,31 @@ function CartPage() {
               )}
             </div>
 
+            {/* Toggle Entrega / Retirada */}
+            {pickupEnabled && (
+              <div className="bg-card rounded-2xl p-3 mt-3 shadow-[var(--shadow-card)]">
+                <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Como você quer receber?</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryMode("delivery")}
+                    className={`rounded-xl border-2 p-3 text-left transition-colors ${deliveryMode === "delivery" ? "border-brand bg-brand-soft" : "border-border bg-background"}`}
+                  >
+                    <p className="text-sm font-bold">🛵 Entrega</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Receber no meu endereço</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryMode("pickup")}
+                    className={`rounded-xl border-2 p-3 text-left transition-colors ${deliveryMode === "pickup" ? "border-brand bg-brand-soft" : "border-border bg-background"}`}
+                  >
+                    <p className="text-sm font-bold">🏪 Retirar no local</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Buscar na loja</p>
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="bg-card rounded-2xl p-4 mt-3 shadow-[var(--shadow-card)] space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
