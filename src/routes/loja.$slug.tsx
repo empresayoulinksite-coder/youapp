@@ -242,7 +242,35 @@ function StorePage() {
     }
   };
 
+  const tryAddPizza = async (storeId: string, payload: PizzaConfigPayload) => {
+    if (!open) {
+      toast.error(store.is_paused ? "Loja fechada pelo lojista." : "Loja fechada no momento.");
+      return;
+    }
+    try {
+      await addPizza(storeId, payload);
+    } catch (err) {
+      if (err instanceof DifferentStoreError) {
+        const ok = window.confirm(
+          "Você só pode pedir de uma loja por vez. Limpar o carrinho atual e adicionar esta pizza?",
+        );
+        if (ok) await switchStoreAndAddPizza(storeId, payload);
+      } else {
+        throw err;
+      }
+    }
+  };
+
   const itemQty = (id: string) => cartItems.filter((c) => c.menu_item_id === id).reduce((s, c) => s + c.quantity, 0);
+
+  const openItemModal = (item: MenuItem) => {
+    const cat = categories.find((c) => c.id === item.category_id);
+    if (cat?.is_pizza) {
+      setPizzaBuilderItem(item);
+    } else {
+      setSelectedItem(item);
+    }
+  };
 
   const avgRating = reviews.length
     ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
