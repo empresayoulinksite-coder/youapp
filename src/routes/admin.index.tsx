@@ -450,7 +450,7 @@ function AdminStores() {
                   onChange={(e) => setEditing({ ...editing, distance: e.target.value })}
                 />
               </div>
-              {editing.store_type === "food" && (
+              {(editing.store_type === "food" || editing.store_type === "ecommerce") && (
                 <>
                   <div className="flex items-center gap-2 pt-6 sm:col-span-2">
                     <input
