@@ -88,6 +88,8 @@ function CartPage() {
       setStoreWhatsapp(null);
       setStoreImageUrl(null);
       setStorePaymentMethods(null);
+      setPickupEnabled(false);
+      setStoreAddress(null);
       return;
     }
     supabase
@@ -97,7 +99,7 @@ function CartPage() {
       .then(({ data }) => setStoreHours((data ?? []) as StoreHour[]));
     supabase
       .from("stores")
-      .select("is_paused, whatsapp, image_url, payment_methods_list")
+      .select("is_paused, whatsapp, image_url, payment_methods_list, pickup_enabled, address, neighborhood, city")
       .eq("id", storeId)
       .maybeSingle()
       .then(({ data }) => {
@@ -107,6 +109,9 @@ function CartPage() {
         setStorePaymentMethods(
           Array.isArray(data?.payment_methods_list) ? data!.payment_methods_list : null,
         );
+        setPickupEnabled(!!data?.pickup_enabled);
+        const parts = [data?.address, data?.neighborhood, data?.city].filter(Boolean);
+        setStoreAddress(parts.length ? parts.join(", ") : null);
       });
   }, [storeId]);
 
