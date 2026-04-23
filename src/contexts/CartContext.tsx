@@ -9,6 +9,7 @@ export interface CartItemRow {
   menu_item_id: string;
   quantity: number;
   notes: string | null;
+  selected_size: string | null;
   menu_items: {
     id: string;
     name: string;
@@ -29,11 +30,11 @@ interface CartContextValue {
   count: number;
   total: number;
   loading: boolean;
-  addItem: (storeId: string, menuItemId: string) => Promise<void>;
+  addItem: (storeId: string, menuItemId: string, selectedSize?: string | null) => Promise<void>;
   /** Limpa o carrinho atual e adiciona o item da nova loja. */
-  switchStoreAndAdd: (storeId: string, menuItemId: string) => Promise<void>;
+  switchStoreAndAdd: (storeId: string, menuItemId: string, selectedSize?: string | null) => Promise<void>;
   /** Limpa o carrinho e adiciona vários itens (usado em "Pedir de novo"). */
-  reorder: (storeId: string, items: Array<{ menu_item_id: string; quantity: number }>) => Promise<void>;
+  reorder: (storeId: string, items: Array<{ menu_item_id: string; quantity: number; selected_size?: string | null }>) => Promise<void>;
   /** Loja atualmente no carrinho, se houver. */
   currentStoreId: string | null;
   updateQuantity: (id: string, quantity: number) => Promise<void>;
