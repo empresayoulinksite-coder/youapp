@@ -306,12 +306,32 @@ function CartPage() {
           lines.push(`*Total: ${fmtBRL(grandTotal)}*`);
           lines.push("", `💳 Pagamento: ${paymentMethod}`);
 
-          const customerName =
+          let customerName: string | undefined =
             authUser?.user_metadata?.full_name ||
             authUser?.user_metadata?.name ||
             authUser?.email?.split("@")[0];
+          let customerPhone: string | null = null;
+          if (authUser) {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("display_name, phone")
+              .eq("user_id", authUser.id)
+              .maybeSingle();
+            if (profile?.display_name) customerName = profile.display_name;
+            if (profile?.phone) customerPhone = profile.phone;
+          }
           if (customerName) {
             lines.push(`👤 Cliente: ${customerName}`);
+          }
+          if (customerPhone) {
+            const d = customerPhone.replace(/\D/g, "");
+            const formatted =
+              d.length === 11
+                ? `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`
+                : d.length === 10
+                  ? `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`
+                  : customerPhone;
+            lines.push(`📱 Contato: ${formatted}`);
           }
           let deliveryAddress: string | null = null;
           if (active) {
