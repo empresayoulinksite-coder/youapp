@@ -40,7 +40,7 @@ function CartPage() {
   const [storePaused, setStorePaused] = useState(false);
   const [storeWhatsapp, setStoreWhatsapp] = useState<string | null>(null);
   const [storeImageUrl, setStoreImageUrl] = useState<string | null>(null);
-  const [storePaymentMethods, setStorePaymentMethods] = useState<string | null>(null);
+  const [storePaymentMethods, setStorePaymentMethods] = useState<string[] | null>(null);
   const [now, setNow] = useState(() => new Date());
   const [submitting, setSubmitting] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
@@ -68,14 +68,16 @@ function CartPage() {
       .then(({ data }) => setStoreHours((data ?? []) as StoreHour[]));
     supabase
       .from("stores")
-      .select("is_paused, whatsapp, image_url, payment_methods")
+      .select("is_paused, whatsapp, image_url, payment_methods_list")
       .eq("id", storeId)
       .maybeSingle()
       .then(({ data }) => {
         setStorePaused(!!data?.is_paused);
         setStoreWhatsapp(data?.whatsapp ?? null);
         setStoreImageUrl(data?.image_url ?? null);
-        setStorePaymentMethods(data?.payment_methods ?? null);
+        setStorePaymentMethods(
+          Array.isArray(data?.payment_methods_list) ? data!.payment_methods_list : null,
+        );
       });
   }, [storeId]);
 
