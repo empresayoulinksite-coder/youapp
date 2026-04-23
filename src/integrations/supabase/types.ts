@@ -79,6 +79,13 @@ export type Database = {
           id: string
           menu_item_id: string
           notes: string | null
+          pizza_addons: Json | null
+          pizza_crust_id: string | null
+          pizza_crust_name: string | null
+          pizza_crust_price: number | null
+          pizza_flavors: Json | null
+          pizza_size_id: string | null
+          pizza_size_name: string | null
           quantity: number
           selected_size: string | null
           store_id: string
@@ -93,6 +100,13 @@ export type Database = {
           id?: string
           menu_item_id: string
           notes?: string | null
+          pizza_addons?: Json | null
+          pizza_crust_id?: string | null
+          pizza_crust_name?: string | null
+          pizza_crust_price?: number | null
+          pizza_flavors?: Json | null
+          pizza_size_id?: string | null
+          pizza_size_name?: string | null
           quantity?: number
           selected_size?: string | null
           store_id: string
@@ -107,6 +121,13 @@ export type Database = {
           id?: string
           menu_item_id?: string
           notes?: string | null
+          pizza_addons?: Json | null
+          pizza_crust_id?: string | null
+          pizza_crust_name?: string | null
+          pizza_crust_price?: number | null
+          pizza_flavors?: Json | null
+          pizza_size_id?: string | null
+          pizza_size_name?: string | null
           quantity?: number
           selected_size?: string | null
           store_id?: string
@@ -310,6 +331,36 @@ export type Database = {
           },
         ]
       }
+      menu_item_size_prices: {
+        Row: {
+          created_at: string
+          id: string
+          is_available: boolean
+          menu_item_id: string
+          pizza_size_id: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_available?: boolean
+          menu_item_id: string
+          pizza_size_id: string
+          price?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_available?: boolean
+          menu_item_id?: string
+          pizza_size_id?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       menu_item_variations: {
         Row: {
           created_at: string
@@ -435,6 +486,13 @@ export type Database = {
           name: string
           notes: string | null
           order_id: string
+          pizza_addons: Json | null
+          pizza_crust_id: string | null
+          pizza_crust_name: string | null
+          pizza_crust_price: number | null
+          pizza_flavors: Json | null
+          pizza_size_id: string | null
+          pizza_size_name: string | null
           quantity: number
           selected_size: string | null
           unit_price: number
@@ -450,6 +508,13 @@ export type Database = {
           name: string
           notes?: string | null
           order_id: string
+          pizza_addons?: Json | null
+          pizza_crust_id?: string | null
+          pizza_crust_name?: string | null
+          pizza_crust_price?: number | null
+          pizza_flavors?: Json | null
+          pizza_size_id?: string | null
+          pizza_size_name?: string | null
           quantity?: number
           selected_size?: string | null
           unit_price?: number
@@ -465,6 +530,13 @@ export type Database = {
           name?: string
           notes?: string | null
           order_id?: string
+          pizza_addons?: Json | null
+          pizza_crust_id?: string | null
+          pizza_crust_name?: string | null
+          pizza_crust_price?: number | null
+          pizza_flavors?: Json | null
+          pizza_size_id?: string | null
+          pizza_size_name?: string | null
           quantity?: number
           selected_size?: string | null
           unit_price?: number
@@ -539,6 +611,108 @@ export type Database = {
           updated_at?: string
           user_id?: string
           whatsapp_message?: string
+        }
+        Relationships: []
+      }
+      pizza_addons: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          position: number
+          price: number
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          position?: number
+          price?: number
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          position?: number
+          price?: number
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pizza_crusts: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          position: number
+          price: number
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          position?: number
+          price?: number
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          position?: number
+          price?: number
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pizza_sizes: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          max_flavors: number
+          name: string
+          position: number
+          slices: number
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_flavors?: number
+          name: string
+          position?: number
+          slices?: number
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_flavors?: number
+          name?: string
+          position?: number
+          slices?: number
+          store_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
