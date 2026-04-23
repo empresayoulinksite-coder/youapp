@@ -59,6 +59,7 @@ type Store = {
   whatsapp: string | null;
   lat: number | null;
   lng: number | null;
+  show_route: boolean;
 };
 
 async function lookupCep(rawCep: string) {
@@ -101,6 +102,7 @@ const empty: Partial<Store> = {
   payment_methods_list: [],
   min_order: 0,
   whatsapp: "",
+  show_route: false,
 };
 
 function AdminStores() {
@@ -150,6 +152,7 @@ function AdminStores() {
         whatsapp: s.whatsapp ? s.whatsapp.replace(/\D/g, "") : null,
         lat: s.lat ?? null,
         lng: s.lng ?? null,
+        show_route: !!s.show_route,
       };
 
       // Geocodifica automaticamente se temos endereço e ainda não temos coordenadas,
