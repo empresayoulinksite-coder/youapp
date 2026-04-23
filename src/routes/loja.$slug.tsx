@@ -170,9 +170,11 @@ function StorePage() {
     return () => clearInterval(t);
   }, []);
 
-  // Reset selected size whenever the modal opens with a different item
+  // Reset selecionados quando trocar/abrir item
   useEffect(() => {
     setSelectedSize(null);
+    setOrderMode("whole");
+    setSecondHalfId(null);
   }, [selectedItem?.id]);
 
   const withinHours = isStoreOpen(hours, now);
