@@ -9,6 +9,7 @@ import { isStoreOpen, nextOpeningLabel, groupByWeekday, formatTime, WEEKDAYS, ty
 import { BookingDialog, type ServiceLite } from "@/components/BookingDialog";
 import { StoreDistance } from "@/components/StoreDistance";
 import { normalizePaymentList, paymentLabelsFromList } from "@/lib/payment-methods";
+import { PizzaBuilderDialog, type PizzaConfigPayload } from "@/components/PizzaBuilderDialog";
 
 interface Store {
   id: string;
@@ -154,12 +155,13 @@ function StorePage() {
   };
   const isService = store.store_type === "service";
   const { user } = useAuth();
-  const { items: cartItems, addItem, addHalfHalf, switchStoreAndAdd, switchStoreAndAddHalfHalf, updateQuantity, count: cartCount } = useCart();
+  const { items: cartItems, addItem, addHalfHalf, addPizza, switchStoreAndAdd, switchStoreAndAddHalfHalf, switchStoreAndAddPizza, updateQuantity, count: cartCount } = useCart();
   const [tab, setTab] = useState<"menu" | "info" | "reviews">("menu");
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [orderMode, setOrderMode] = useState<"whole" | "half">("whole");
   const [secondHalfId, setSecondHalfId] = useState<string | null>(null);
+  const [pizzaBuilderItem, setPizzaBuilderItem] = useState<MenuItem | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingInitialId, setBookingInitialId] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
@@ -240,7 +242,35 @@ function StorePage() {
     }
   };
 
+  const tryAddPizza = async (storeId: string, payload: PizzaConfigPayload) => {
+    if (!open) {
+      toast.error(store.is_paused ? "Loja fechada pelo lojista." : "Loja fechada no momento.");
+      return;
+    }
+    try {
+      await addPizza(storeId, payload);
+    } catch (err) {
+      if (err instanceof DifferentStoreError) {
+        const ok = window.confirm(
+          "Você só pode pedir de uma loja por vez. Limpar o carrinho atual e adicionar esta pizza?",
+        );
+        if (ok) await switchStoreAndAddPizza(storeId, payload);
+      } else {
+        throw err;
+      }
+    }
+  };
+
   const itemQty = (id: string) => cartItems.filter((c) => c.menu_item_id === id).reduce((s, c) => s + c.quantity, 0);
+
+  const openItemModal = (item: MenuItem) => {
+    const cat = categories.find((c) => c.id === item.category_id);
+    if (cat?.is_pizza) {
+      setPizzaBuilderItem(item);
+    } else {
+      setSelectedItem(item);
+    }
+  };
 
   const avgRating = reviews.length
     ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
@@ -454,7 +484,7 @@ function StorePage() {
                       return (
                         <article
                           key={item.id}
-                          onClick={() => setSelectedItem(item)}
+                          onClick={() => openItemModal(item)}
                           className="bg-card rounded-2xl p-3 flex gap-3 shadow-[var(--shadow-card)] cursor-pointer active:scale-[0.99] transition-transform"
                         >
                           <div className="flex-1 min-w-0">
@@ -491,9 +521,17 @@ function StorePage() {
                             </div>
                             <div onClick={(e) => e.stopPropagation()}>
                               {user ? (
-                                item.sizes && item.sizes.length > 0 ? (
+                                cat.is_pizza ? (
                                   <button
-                                    onClick={() => setSelectedItem(item)}
+                                    onClick={() => openItemModal(item)}
+                                    className="text-brand bg-brand-soft rounded-full p-1.5"
+                                    aria-label="Montar pizza"
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </button>
+                                ) : item.sizes && item.sizes.length > 0 ? (
+                                  <button
+                                    onClick={() => openItemModal(item)}
                                     className="text-brand bg-brand-soft rounded-full p-1.5"
                                     aria-label="Escolher tamanho"
                                   >
@@ -831,6 +869,35 @@ function StorePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {pizzaBuilderItem && (
+        <PizzaBuilderDialog
+          open={!!pizzaBuilderItem}
+          onClose={() => setPizzaBuilderItem(null)}
+          storeId={store.id}
+          baseItem={{
+            id: pizzaBuilderItem.id,
+            name: pizzaBuilderItem.name,
+            emoji: pizzaBuilderItem.emoji,
+            image_url: pizzaBuilderItem.image_url,
+            description: pizzaBuilderItem.description,
+          }}
+          flavorItems={items
+            .filter((i) => i.category_id === pizzaBuilderItem.category_id)
+            .map((i) => ({
+              id: i.id,
+              name: i.name,
+              emoji: i.emoji,
+              description: i.description,
+              basePrice: Number(i.price),
+            }))}
+          disabled={!open}
+          onConfirm={async (payload) => {
+            await tryAddPizza(store.id, payload);
+            setPizzaBuilderItem(null);
+          }}
+        />
       )}
 
       <BookingDialog

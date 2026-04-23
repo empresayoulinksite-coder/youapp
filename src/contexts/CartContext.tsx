@@ -2,6 +2,18 @@ import { createContext, useContext, useEffect, useState, useCallback, ReactNode 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./AuthContext";
 
+export interface PizzaFlavorJson {
+  menu_item_id: string;
+  name: string;
+  price: number;
+}
+
+export interface PizzaAddonJson {
+  id: string;
+  name: string;
+  price: number;
+}
+
 export interface CartItemRow {
   id: string;
   user_id: string;
@@ -13,6 +25,13 @@ export interface CartItemRow {
   half_two_menu_item_id: string | null;
   half_two_name: string | null;
   unit_price_override: number | null;
+  pizza_size_id: string | null;
+  pizza_size_name: string | null;
+  pizza_flavors: PizzaFlavorJson[] | null;
+  pizza_crust_id: string | null;
+  pizza_crust_name: string | null;
+  pizza_crust_price: number | null;
+  pizza_addons: PizzaAddonJson[] | null;
   menu_items: {
     id: string;
     name: string;
@@ -38,6 +57,16 @@ export interface HalfHalfPayload {
   selectedSize: string | null;
 }
 
+export interface PizzaCartPayload {
+  baseMenuItemId: string;
+  sizeId: string;
+  sizeName: string;
+  flavors: PizzaFlavorJson[];
+  crust: { id: string; name: string; price: number } | null;
+  addons: PizzaAddonJson[];
+  unitPrice: number;
+}
+
 interface CartContextValue {
   items: CartItemRow[];
   count: number;
@@ -45,9 +74,11 @@ interface CartContextValue {
   loading: boolean;
   addItem: (storeId: string, menuItemId: string, selectedSize?: string | null) => Promise<void>;
   addHalfHalf: (storeId: string, payload: HalfHalfPayload) => Promise<void>;
+  addPizza: (storeId: string, payload: PizzaCartPayload) => Promise<void>;
   /** Limpa o carrinho atual e adiciona o item da nova loja. */
   switchStoreAndAdd: (storeId: string, menuItemId: string, selectedSize?: string | null) => Promise<void>;
   switchStoreAndAddHalfHalf: (storeId: string, payload: HalfHalfPayload) => Promise<void>;
+  switchStoreAndAddPizza: (storeId: string, payload: PizzaCartPayload) => Promise<void>;
   /** Limpa o carrinho e adiciona vários itens (usado em "Pedir de novo"). */
   reorder: (storeId: string, items: Array<{ menu_item_id: string; quantity: number; selected_size?: string | null }>) => Promise<void>;
   /** Loja atualmente no carrinho, se houver. */
@@ -79,7 +110,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     const { data, error } = await supabase
       .from("cart_items")
-      .select("id, user_id, store_id, menu_item_id, quantity, notes, selected_size, half_two_menu_item_id, half_two_name, unit_price_override, menu_items(id, name, price, emoji, image_url), stores(id, name, slug, emoji)")
+      .select("id, user_id, store_id, menu_item_id, quantity, notes, selected_size, half_two_menu_item_id, half_two_name, unit_price_override, pizza_size_id, pizza_size_name, pizza_flavors, pizza_crust_id, pizza_crust_name, pizza_crust_price, pizza_addons, menu_items(id, name, price, emoji, image_url), stores(id, name, slug, emoji)")
       .eq("user_id", user.id)
       .order("created_at", { ascending: true });
     if (!error && data) {
@@ -162,6 +193,40 @@ export function CartProvider({ children }: { children: ReactNode }) {
     await insertHalfHalf(storeId, p);
   };
 
+  const insertPizza = async (storeId: string, p: PizzaCartPayload) => {
+    if (!user) return;
+    const { error } = await supabase.from("cart_items").insert({
+      user_id: user.id,
+      store_id: storeId,
+      menu_item_id: p.baseMenuItemId,
+      quantity: 1,
+      unit_price_override: p.unitPrice,
+      pizza_size_id: p.sizeId,
+      pizza_size_name: p.sizeName,
+      pizza_flavors: p.flavors as any,
+      pizza_crust_id: p.crust?.id ?? null,
+      pizza_crust_name: p.crust?.name ?? null,
+      pizza_crust_price: p.crust?.price ?? null,
+      pizza_addons: p.addons as any,
+    });
+    if (!error) await refresh();
+  };
+
+  const addPizza = async (storeId: string, p: PizzaCartPayload) => {
+    if (!user) return;
+    const currentStoreId = items[0]?.store_id ?? null;
+    if (currentStoreId && currentStoreId !== storeId) {
+      throw new DifferentStoreError(currentStoreId, storeId);
+    }
+    await insertPizza(storeId, p);
+  };
+
+  const switchStoreAndAddPizza = async (storeId: string, p: PizzaCartPayload) => {
+    if (!user) return;
+    await supabase.from("cart_items").delete().eq("user_id", user.id);
+    await insertPizza(storeId, p);
+  };
+
   const reorder = async (
     storeId: string,
     newItems: Array<{ menu_item_id: string; quantity: number; selected_size?: string | null }>,
@@ -211,7 +276,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const currentStoreId = items[0]?.store_id ?? null;
 
   return (
-    <CartContext.Provider value={{ items, count, total, loading, currentStoreId, addItem, addHalfHalf, switchStoreAndAdd, switchStoreAndAddHalfHalf, reorder, updateQuantity, removeItem, clear, refresh }}>
+    <CartContext.Provider value={{ items, count, total, loading, currentStoreId, addItem, addHalfHalf, addPizza, switchStoreAndAdd, switchStoreAndAddHalfHalf, switchStoreAndAddPizza, reorder, updateQuantity, removeItem, clear, refresh }}>
       {children}
     </CartContext.Provider>
   );
