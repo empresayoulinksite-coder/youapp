@@ -416,18 +416,20 @@ function AdminProducts() {
     setEditing({
       category_id: categoryId || categories[0]?.id,
       emoji: "🍽️",
-      position: items.length,
-      is_available: true,
+      name: "",
       price: 0,
+      is_available: true,
       sizes: [],
     });
     setEditingVars([]);
+    setSizesInput("");
     setOpen(true);
   };
 
   const openEditItem = (m: MenuItem) => {
     setEditing(m);
     setEditingVars((variationsByItem[m.id] || []).map((v) => ({ ...v })));
+    setSizesInput((m.sizes ?? []).join(", "));
     setOpen(true);
   };
 
