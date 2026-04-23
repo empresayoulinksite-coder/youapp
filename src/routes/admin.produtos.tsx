@@ -510,7 +510,7 @@ function AdminProducts() {
               Configure tamanhos, sabores com preço por tamanho, bordas recheadas e adicionais.
             </p>
           </div>
-          <Link to="/admin/pizzas" search={{ store: storeId } as never}>
+          <Link to="/admin/pizzas">
             <Button size="sm" className="gap-2 bg-orange-600 hover:bg-orange-700 text-white">
               <Pizza className="h-4 w-4" />
               Gerenciar pizzas
