@@ -325,6 +325,8 @@ export function CheckoutReviewDialog({
                 notes: notes.trim(),
                 number: number.trim(),
                 complement: complement.trim(),
+                customerName: name.trim(),
+                customerPhone: phoneDigits,
               })
             }
             disabled={!canConfirm}
@@ -334,11 +336,15 @@ export function CheckoutReviewDialog({
               ? "Enviando..."
               : !address
                 ? "Cadastre um endereço"
-                : !hasNumber
-                  ? "Informe o número"
-                  : !paymentMethod
-                    ? "Escolha o pagamento"
-                    : "Confirmar e enviar pelo WhatsApp"}
+                : !hasName
+                  ? "Informe seu nome"
+                  : !hasPhone
+                    ? "Informe seu telefone"
+                    : !hasNumber
+                      ? "Informe o número"
+                      : !paymentMethod
+                        ? "Escolha o pagamento"
+                        : "Confirmar e enviar pelo WhatsApp"}
           </button>
         </div>
       </div>
