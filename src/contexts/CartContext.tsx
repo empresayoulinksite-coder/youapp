@@ -74,9 +74,11 @@ interface CartContextValue {
   loading: boolean;
   addItem: (storeId: string, menuItemId: string, selectedSize?: string | null) => Promise<void>;
   addHalfHalf: (storeId: string, payload: HalfHalfPayload) => Promise<void>;
+  addPizza: (storeId: string, payload: PizzaCartPayload) => Promise<void>;
   /** Limpa o carrinho atual e adiciona o item da nova loja. */
   switchStoreAndAdd: (storeId: string, menuItemId: string, selectedSize?: string | null) => Promise<void>;
   switchStoreAndAddHalfHalf: (storeId: string, payload: HalfHalfPayload) => Promise<void>;
+  switchStoreAndAddPizza: (storeId: string, payload: PizzaCartPayload) => Promise<void>;
   /** Limpa o carrinho e adiciona vários itens (usado em "Pedir de novo"). */
   reorder: (storeId: string, items: Array<{ menu_item_id: string; quantity: number; selected_size?: string | null }>) => Promise<void>;
   /** Loja atualmente no carrinho, se houver. */
