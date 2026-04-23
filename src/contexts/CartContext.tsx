@@ -131,6 +131,37 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (!error) await refresh();
   };
 
+  const insertHalfHalf = async (storeId: string, p: HalfHalfPayload) => {
+    if (!user) return;
+    const unitPrice = Math.max(Number(p.firstPrice) || 0, Number(p.secondPrice) || 0);
+    const { error } = await supabase.from("cart_items").insert({
+      user_id: user.id,
+      store_id: storeId,
+      menu_item_id: p.firstMenuItemId,
+      quantity: 1,
+      selected_size: p.selectedSize,
+      half_two_menu_item_id: p.secondMenuItemId,
+      half_two_name: p.secondName,
+      unit_price_override: unitPrice,
+    });
+    if (!error) await refresh();
+  };
+
+  const addHalfHalf = async (storeId: string, p: HalfHalfPayload) => {
+    if (!user) return;
+    const currentStoreId = items[0]?.store_id ?? null;
+    if (currentStoreId && currentStoreId !== storeId) {
+      throw new DifferentStoreError(currentStoreId, storeId);
+    }
+    await insertHalfHalf(storeId, p);
+  };
+
+  const switchStoreAndAddHalfHalf = async (storeId: string, p: HalfHalfPayload) => {
+    if (!user) return;
+    await supabase.from("cart_items").delete().eq("user_id", user.id);
+    await insertHalfHalf(storeId, p);
+  };
+
   const reorder = async (
     storeId: string,
     newItems: Array<{ menu_item_id: string; quantity: number; selected_size?: string | null }>,
@@ -170,12 +201,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (!error) await refresh();
   };
 
+  const unitPriceOf = (i: CartItemRow) =>
+    i.unit_price_override != null
+      ? Number(i.unit_price_override)
+      : Number(i.menu_items?.price ?? 0);
+
   const count = items.reduce((sum, i) => sum + i.quantity, 0);
-  const total = items.reduce((sum, i) => sum + (i.menu_items ? Number(i.menu_items.price) * i.quantity : 0), 0);
+  const total = items.reduce((sum, i) => sum + unitPriceOf(i) * i.quantity, 0);
   const currentStoreId = items[0]?.store_id ?? null;
 
   return (
-    <CartContext.Provider value={{ items, count, total, loading, currentStoreId, addItem, switchStoreAndAdd, reorder, updateQuantity, removeItem, clear, refresh }}>
+    <CartContext.Provider value={{ items, count, total, loading, currentStoreId, addItem, addHalfHalf, switchStoreAndAdd, switchStoreAndAddHalfHalf, reorder, updateQuantity, removeItem, clear, refresh }}>
       {children}
     </CartContext.Provider>
   );
