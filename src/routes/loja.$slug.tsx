@@ -731,6 +731,68 @@ function StorePage() {
                 </div>
               )}
 
+              {(() => {
+                const cat = categories.find((c) => c.id === selectedItem.category_id);
+                if (!cat?.is_pizza) return null;
+                const flavorOptions = items.filter(
+                  (i) => i.category_id === selectedItem.category_id && i.id !== selectedItem.id,
+                );
+                const second = flavorOptions.find((i) => i.id === secondHalfId) ?? null;
+                const halfPrice = second
+                  ? Math.max(Number(selectedItem.price), Number(second.price))
+                  : Number(selectedItem.price);
+                return (
+                  <div className="mt-5">
+                    <p className="text-sm font-semibold mb-2">Como você quer a pizza?</p>
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                      <button
+                        type="button"
+                        onClick={() => { setOrderMode("whole"); setSecondHalfId(null); }}
+                        className={`rounded-xl border-2 p-3 text-sm font-semibold transition-colors ${orderMode === "whole" ? "border-brand bg-brand-soft" : "border-border bg-card"}`}
+                      >
+                        🍕 Inteira
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setOrderMode("half")}
+                        className={`rounded-xl border-2 p-3 text-sm font-semibold transition-colors ${orderMode === "half" ? "border-brand bg-brand-soft" : "border-border bg-card"}`}
+                      >
+                        🍕½ Meio a meio
+                      </button>
+                    </div>
+                    {orderMode === "half" && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          1ª metade: <span className="font-semibold text-foreground">{selectedItem.name}</span> · Escolha o 2º sabor:
+                        </p>
+                        {flavorOptions.length === 0 ? (
+                          <p className="text-xs text-destructive">Sem outros sabores cadastrados nesta categoria.</p>
+                        ) : (
+                          <div className="max-h-48 overflow-y-auto space-y-1 border border-border rounded-xl p-2">
+                            {flavorOptions.map((f) => (
+                              <button
+                                key={f.id}
+                                type="button"
+                                onClick={() => setSecondHalfId(f.id)}
+                                className={`w-full flex items-center justify-between gap-2 p-2 rounded-lg text-left text-sm ${secondHalfId === f.id ? "bg-brand-soft border border-brand" : "border border-transparent hover:bg-muted"}`}
+                              >
+                                <span className="truncate font-medium">{f.name}</span>
+                                <span className="text-xs text-muted-foreground shrink-0">R$ {Number(f.price).toFixed(2).replace(".", ",")}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {second && (
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Preço do meio a meio: <span className="font-bold text-foreground">R$ {halfPrice.toFixed(2).replace(".", ",")}</span> (cobramos o sabor mais caro)
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
               <div className="mt-6 flex items-center gap-3">
                 {user ? (
                   <button
@@ -740,7 +802,16 @@ function StorePage() {
                         toast.error("Escolha um tamanho antes de adicionar.");
                         return;
                       }
-                      await tryAdd(store.id, selectedItem.id, selectedSize);
+                      if (orderMode === "half") {
+                        const second = items.find((i) => i.id === secondHalfId);
+                        if (!second) {
+                          toast.error("Escolha o 2º sabor da pizza.");
+                          return;
+                        }
+                        await tryAddHalfHalf(store.id, selectedItem, second, selectedSize);
+                      } else {
+                        await tryAdd(store.id, selectedItem.id, selectedSize);
+                      }
                       setSelectedItem(null);
                     }}
                     disabled={!open}
