@@ -1374,6 +1374,9 @@ function SortableItemRow({
       <Button size="icon" variant="ghost" onClick={onEdit}>
         <Pencil className="h-4 w-4" />
       </Button>
+      <Button size="icon" variant="ghost" onClick={onDuplicate} title="Duplicar produto">
+        <Copy className="h-4 w-4" />
+      </Button>
       <Button size="icon" variant="ghost" onClick={onDelete}>
         <Trash2 className="h-4 w-4 text-destructive" />
       </Button>
