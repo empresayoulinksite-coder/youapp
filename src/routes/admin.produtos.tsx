@@ -113,6 +113,7 @@ function AdminProducts() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<MenuItem> | null>(null);
   const [editingVars, setEditingVars] = useState<Variation[]>([]);
+  const [sizesInput, setSizesInput] = useState<string>("");
   const [uploading, setUploading] = useState(false);
 
   const [catOpen, setCatOpen] = useState(false);
@@ -415,18 +416,20 @@ function AdminProducts() {
     setEditing({
       category_id: categoryId || categories[0]?.id,
       emoji: "🍽️",
-      position: items.length,
-      is_available: true,
+      name: "",
       price: 0,
+      is_available: true,
       sizes: [],
     });
     setEditingVars([]);
+    setSizesInput("");
     setOpen(true);
   };
 
   const openEditItem = (m: MenuItem) => {
     setEditing(m);
     setEditingVars((variationsByItem[m.id] || []).map((v) => ({ ...v })));
+    setSizesInput((m.sizes ?? []).join(", "));
     setOpen(true);
   };
 
@@ -775,13 +778,22 @@ function AdminProducts() {
                   </p>
                 </div>
                 <Input
-                  value={(editing.sizes ?? []).join(", ")}
+                  value={sizesInput}
                   onChange={(e) => {
-                    const parts = e.target.value
+                    const raw = e.target.value;
+                    setSizesInput(raw);
+                    const parts = raw
                       .split(",")
                       .map((s) => s.trim())
                       .filter(Boolean);
                     setEditing({ ...editing, sizes: parts });
+                  }}
+                  onBlur={() => {
+                    const parts = sizesInput
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean);
+                    setSizesInput(parts.join(", "));
                   }}
                   placeholder="P, M, G, GG"
                 />
