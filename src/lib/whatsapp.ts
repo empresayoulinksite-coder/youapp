@@ -29,9 +29,9 @@ export function openWhatsapp(rawPhone: string, message: string) {
     action: {
       label: "Abrir WhatsApp",
       onClick: () => {
-        // No clique manual, usa wa.me que tem melhor compatibilidade mobile
-        // e é tratado como gesto do usuário (não bloqueado por popup blockers).
-        window.location.href = `https://wa.me/${phone}?text=${text}`;
+        // Usa a mesma URL api.whatsapp.com/send para preservar a codificação UTF-8
+        // dos emojis (wa.me costuma corromper emojis compostos em iOS/Safari).
+        window.location.href = primaryUrl;
       },
     },
     duration: 15000,
