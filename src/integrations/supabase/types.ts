@@ -995,6 +995,7 @@ export type Database = {
           id: string
           image_url: string | null
           is_paused: boolean
+          is_pizzeria: boolean
           lat: number | null
           lng: number | null
           min_order: number
@@ -1029,6 +1030,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_paused?: boolean
+          is_pizzeria?: boolean
           lat?: number | null
           lng?: number | null
           min_order?: number
@@ -1063,6 +1065,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_paused?: boolean
+          is_pizzeria?: boolean
           lat?: number | null
           lng?: number | null
           min_order?: number

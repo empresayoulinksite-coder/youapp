@@ -1,0 +1,1 @@
+ALTER TABLE public.stores ADD COLUMN IF NOT EXISTS is_pizzeria boolean NOT NULL DEFAULT false;
