@@ -18,6 +18,7 @@ import {
 import { uploadImage } from "@/lib/upload";
 import { StoreHoursEditor } from "@/components/StoreHoursEditor";
 import { geocodeAddress } from "@/lib/distance";
+import { PAYMENT_METHODS } from "@/lib/payment-methods";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminStores,
