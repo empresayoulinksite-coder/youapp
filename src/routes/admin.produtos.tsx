@@ -56,6 +56,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { uploadImage } from "@/lib/upload";
+import { PizzaCategoryWizard } from "@/components/PizzaCategoryWizard";
 
 export const Route = createFileRoute("/admin/produtos")({
   component: AdminProducts,
