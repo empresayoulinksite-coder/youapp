@@ -36,6 +36,7 @@ interface Store {
   lat: number | null;
   lng: number | null;
   show_route: boolean;
+  route_url: string | null;
 }
 
 interface MenuCategory {
