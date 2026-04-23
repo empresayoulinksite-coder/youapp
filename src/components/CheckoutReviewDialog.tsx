@@ -70,6 +70,8 @@ export function CheckoutReviewDialog({
   address,
   storeWhatsapp,
   acceptedPaymentMethods,
+  customerName: initialName,
+  customerPhone: initialPhone,
   submitting,
   onConfirm,
 }: Props) {
@@ -77,6 +79,8 @@ export function CheckoutReviewDialog({
   const [notes, setNotes] = useState("");
   const [number, setNumber] = useState("");
   const [complement, setComplement] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
 
   // Sempre que o endereço ativo mudar (ou abrir), pré-preenche número/complemento
   useEffect(() => {
@@ -84,6 +88,12 @@ export function CheckoutReviewDialog({
     setNumber(address?.number ?? "");
     setComplement(address?.complement ?? "");
   }, [open, address?.id, address?.number, address?.complement]);
+
+  useEffect(() => {
+    if (!open) return;
+    setName(initialName ?? "");
+    setPhone(initialPhone ? maskPhoneInput(initialPhone) : "");
+  }, [open, initialName, initialPhone]);
 
   if (!open) return null;
 
