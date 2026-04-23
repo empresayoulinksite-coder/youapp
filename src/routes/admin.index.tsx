@@ -156,10 +156,11 @@ function AdminStores() {
         show_route: !!s.show_route,
       };
 
-      // Geocodifica automaticamente se temos endereço e ainda não temos coordenadas,
-      // ou se o endereço foi alterado em relação ao salvo.
+      // Geocodifica automaticamente APENAS se temos endereço e ainda não temos coordenadas.
+      // Se admin já ajustou manualmente (lat/lng definidos), preservamos o ajuste.
       const hasAddress = !!(s.address || s.cep || s.city);
-      if (hasAddress) {
+      const hasCoords = s.lat != null && s.lng != null;
+      if (hasAddress && !hasCoords) {
         const coords = await geocodeAddress({
           address: s.address,
           neighborhood: s.neighborhood,
