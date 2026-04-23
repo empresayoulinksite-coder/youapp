@@ -84,6 +84,7 @@ type MenuItem = {
   image_url: string | null;
   position: number;
   is_available: boolean;
+  sizes: string[];
 };
 
 type Category = {
