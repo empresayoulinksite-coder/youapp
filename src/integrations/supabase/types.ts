@@ -78,6 +78,7 @@ export type Database = {
           menu_item_id: string
           notes: string | null
           quantity: number
+          selected_size: string | null
           store_id: string
           updated_at: string
           user_id: string
@@ -88,6 +89,7 @@ export type Database = {
           menu_item_id: string
           notes?: string | null
           quantity?: number
+          selected_size?: string | null
           store_id: string
           updated_at?: string
           user_id: string
@@ -98,6 +100,7 @@ export type Database = {
           menu_item_id?: string
           notes?: string | null
           quantity?: number
+          selected_size?: string | null
           store_id?: string
           updated_at?: string
           user_id?: string
@@ -353,6 +356,7 @@ export type Database = {
           position: number
           price: number
           promo: string | null
+          sizes: string[]
           store_id: string
           updated_at: string
         }
@@ -369,6 +373,7 @@ export type Database = {
           position?: number
           price: number
           promo?: string | null
+          sizes?: string[]
           store_id: string
           updated_at?: string
         }
@@ -385,6 +390,7 @@ export type Database = {
           position?: number
           price?: number
           promo?: string | null
+          sizes?: string[]
           store_id?: string
           updated_at?: string
         }
@@ -416,6 +422,7 @@ export type Database = {
           notes: string | null
           order_id: string
           quantity: number
+          selected_size: string | null
           unit_price: number
         }
         Insert: {
@@ -428,6 +435,7 @@ export type Database = {
           notes?: string | null
           order_id: string
           quantity?: number
+          selected_size?: string | null
           unit_price?: number
         }
         Update: {
@@ -440,6 +448,7 @@ export type Database = {
           notes?: string | null
           order_id?: string
           quantity?: number
+          selected_size?: string | null
           unit_price?: number
         }
         Relationships: [
