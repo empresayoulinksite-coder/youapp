@@ -749,6 +749,11 @@ function AdminStores() {
               </div>
             </div>
           )}
+          {editing && editing.id && (
+            <div className="mt-4">
+              <StoreBenefitsEditor storeId={editing.id} />
+            </div>
+          )}
           {editing && (editing.id || (editing as Partial<Store> & { __typed?: boolean }).__typed) && (
             <DialogFooter>
               <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
