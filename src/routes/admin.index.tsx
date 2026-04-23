@@ -684,6 +684,29 @@ function AdminStores() {
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={mapOpen} onOpenChange={setMapOpen}>
+        <DialogContent className="max-w-2xl p-0 overflow-hidden">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Ajustar localização da loja</DialogTitle>
+          </DialogHeader>
+          {mapOpen && editing && (
+            <StoreLocationAdjuster
+              initialLat={editing.lat ?? null}
+              initialLng={editing.lng ?? null}
+              fallbackQuery={[editing.address, editing.neighborhood, editing.city, editing.cep, "Brasil"]
+                .filter(Boolean)
+                .join(", ")}
+              onCancel={() => setMapOpen(false)}
+              onConfirm={(loc) => {
+                setEditing((prev) => ({ ...(prev || {}), lat: loc.lat, lng: loc.lng }));
+                setMapOpen(false);
+                toast.success("Localização ajustada");
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
