@@ -9,6 +9,7 @@ export interface CartItemRow {
   menu_item_id: string;
   quantity: number;
   notes: string | null;
+  selected_size: string | null;
   menu_items: {
     id: string;
     name: string;
@@ -29,11 +30,11 @@ interface CartContextValue {
   count: number;
   total: number;
   loading: boolean;
-  addItem: (storeId: string, menuItemId: string) => Promise<void>;
+  addItem: (storeId: string, menuItemId: string, selectedSize?: string | null) => Promise<void>;
   /** Limpa o carrinho atual e adiciona o item da nova loja. */
-  switchStoreAndAdd: (storeId: string, menuItemId: string) => Promise<void>;
+  switchStoreAndAdd: (storeId: string, menuItemId: string, selectedSize?: string | null) => Promise<void>;
   /** Limpa o carrinho e adiciona vários itens (usado em "Pedir de novo"). */
-  reorder: (storeId: string, items: Array<{ menu_item_id: string; quantity: number }>) => Promise<void>;
+  reorder: (storeId: string, items: Array<{ menu_item_id: string; quantity: number; selected_size?: string | null }>) => Promise<void>;
   /** Loja atualmente no carrinho, se houver. */
   currentStoreId: string | null;
   updateQuantity: (id: string, quantity: number) => Promise<void>;
@@ -63,7 +64,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     const { data, error } = await supabase
       .from("cart_items")
-      .select("id, user_id, store_id, menu_item_id, quantity, notes, menu_items(id, name, price, emoji, image_url), stores(id, name, slug, emoji)")
+      .select("id, user_id, store_id, menu_item_id, quantity, notes, selected_size, menu_items(id, name, price, emoji, image_url), stores(id, name, slug, emoji)")
       .eq("user_id", user.id)
       .order("created_at", { ascending: true });
     if (!error && data) {
@@ -76,13 +77,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     refresh();
   }, [refresh]);
 
-  const addItem = async (storeId: string, menuItemId: string) => {
+  const addItem = async (storeId: string, menuItemId: string, selectedSize: string | null = null) => {
     if (!user) return;
     const currentStoreId = items[0]?.store_id ?? null;
     if (currentStoreId && currentStoreId !== storeId) {
       throw new DifferentStoreError(currentStoreId, storeId);
     }
-    const existing = items.find((i) => i.menu_item_id === menuItemId);
+    const existing = items.find(
+      (i) => i.menu_item_id === menuItemId && (i.selected_size ?? null) === (selectedSize ?? null),
+    );
     if (existing) {
       await updateQuantity(existing.id, existing.quantity + 1);
       return;
@@ -92,11 +95,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       store_id: storeId,
       menu_item_id: menuItemId,
       quantity: 1,
+      selected_size: selectedSize,
     });
     if (!error) await refresh();
   };
 
-  const switchStoreAndAdd = async (storeId: string, menuItemId: string) => {
+  const switchStoreAndAdd = async (storeId: string, menuItemId: string, selectedSize: string | null = null) => {
     if (!user) return;
     await supabase.from("cart_items").delete().eq("user_id", user.id);
     const { error } = await supabase.from("cart_items").insert({
@@ -104,13 +108,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
       store_id: storeId,
       menu_item_id: menuItemId,
       quantity: 1,
+      selected_size: selectedSize,
     });
     if (!error) await refresh();
   };
 
   const reorder = async (
     storeId: string,
-    newItems: Array<{ menu_item_id: string; quantity: number }>,
+    newItems: Array<{ menu_item_id: string; quantity: number; selected_size?: string | null }>,
   ) => {
     if (!user) return;
     await supabase.from("cart_items").delete().eq("user_id", user.id);
@@ -120,6 +125,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         store_id: storeId,
         menu_item_id: i.menu_item_id,
         quantity: i.quantity,
+        selected_size: i.selected_size ?? null,
       }));
       await supabase.from("cart_items").insert(rows);
     }

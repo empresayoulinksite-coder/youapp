@@ -55,6 +55,7 @@ interface MenuItem {
   emoji: string;
   image_url: string | null;
   promo: string | null;
+  sizes: string[];
 }
 
 interface Coupon {
@@ -96,7 +97,7 @@ export const Route = createFileRoute("/loja/$slug")({
     return {
       store: store as Store,
       categories: (categoriesRes.data ?? []) as MenuCategory[],
-      items: (itemsRes.data ?? []).map((i) => ({ ...i, price: Number(i.price), original_price: i.original_price ? Number(i.original_price) : null })) as MenuItem[],
+      items: (itemsRes.data ?? []).map((i) => ({ ...i, price: Number(i.price), original_price: i.original_price ? Number(i.original_price) : null, sizes: Array.isArray(i.sizes) ? i.sizes : [] })) as MenuItem[],
       coupons: (couponsRes.data ?? []).map((c) => ({ ...c, min_order: Number(c.min_order) })) as Coupon[],
       reviews: (reviewsRes.data ?? []) as Review[],
       hours: (hoursRes.data ?? []) as StoreHour[],
@@ -155,6 +156,7 @@ function StorePage() {
   const { items: cartItems, addItem, switchStoreAndAdd, updateQuantity, count: cartCount } = useCart();
   const [tab, setTab] = useState<"menu" | "info" | "reviews">("menu");
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingInitialId, setBookingInitialId] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
@@ -165,11 +167,16 @@ function StorePage() {
     return () => clearInterval(t);
   }, []);
 
+  // Reset selected size whenever the modal opens with a different item
+  useEffect(() => {
+    setSelectedSize(null);
+  }, [selectedItem?.id]);
+
   const withinHours = isStoreOpen(hours, now);
   const open = !store.is_paused && withinHours;
   const nextOpen = !open && !store.is_paused ? nextOpeningLabel(hours, now) : null;
 
-  const tryAdd = async (storeId: string, menuItemId: string) => {
+  const tryAdd = async (storeId: string, menuItemId: string, size: string | null = null) => {
     if (!open) {
       const msg = store.is_paused
         ? "Loja temporariamente fechada pelo lojista."
@@ -180,14 +187,14 @@ function StorePage() {
       return;
     }
     try {
-      await addItem(storeId, menuItemId);
+      await addItem(storeId, menuItemId, size);
     } catch (err) {
       if (err instanceof DifferentStoreError) {
         const ok = window.confirm(
           "Você só pode pedir de uma loja por vez (o pedido vai pelo WhatsApp). Limpar o carrinho atual e adicionar este item?",
         );
         if (ok) {
-          await switchStoreAndAdd(storeId, menuItemId);
+          await switchStoreAndAdd(storeId, menuItemId, size);
         }
       } else {
         throw err;
@@ -195,7 +202,7 @@ function StorePage() {
     }
   };
 
-  const itemQty = (id: string) => cartItems.find((c) => c.menu_item_id === id)?.quantity ?? 0;
+  const itemQty = (id: string) => cartItems.filter((c) => c.menu_item_id === id).reduce((s, c) => s + c.quantity, 0);
 
   const avgRating = reviews.length
     ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
@@ -446,7 +453,19 @@ function StorePage() {
                             </div>
                             <div onClick={(e) => e.stopPropagation()}>
                               {user ? (
-                                qty > 0 ? (
+                                item.sizes && item.sizes.length > 0 ? (
+                                  <button
+                                    onClick={() => setSelectedItem(item)}
+                                    className="text-brand bg-brand-soft rounded-full p-1.5"
+                                    aria-label="Escolher tamanho"
+                                  >
+                                    {qty > 0 ? (
+                                      <span className="text-xs font-bold px-1">{qty}</span>
+                                    ) : (
+                                      <Plus className="h-4 w-4" />
+                                    )}
+                                  </button>
+                                ) : qty > 0 ? (
                                   <div className="flex items-center gap-2 bg-brand text-brand-foreground rounded-full px-2 py-1">
                                     <button className="p-0.5" aria-label="Diminuir">
                                       <QtyDecrement itemId={item.id} />
@@ -646,38 +665,51 @@ function StorePage() {
                 )}
               </div>
 
+              {selectedItem.sizes && selectedItem.sizes.length > 0 && (
+                <div className="mt-5">
+                  <p className="text-sm font-semibold mb-2">
+                    Escolha o tamanho <span className="text-destructive">*</span>
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedItem.sizes.map((s) => {
+                      const active = selectedSize === s;
+                      return (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => setSelectedSize(s)}
+                          className={
+                            "min-w-[48px] px-3 py-2 rounded-xl border text-sm font-semibold transition-colors " +
+                            (active
+                              ? "bg-brand text-brand-foreground border-brand"
+                              : "bg-card text-foreground border-border hover:border-brand")
+                          }
+                        >
+                          {s}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               <div className="mt-6 flex items-center gap-3">
                 {user ? (
-                  <>
-                    {itemQty(selectedItem.id) > 0 ? (
-                      <div className="flex items-center gap-3 bg-brand-soft rounded-full px-3 py-2">
-                        <button
-                          onClick={() => {
-                            const ci = cartItems.find((c) => c.menu_item_id === selectedItem.id);
-                            if (ci) updateQuantity(ci.id, ci.quantity - 1);
-                          }}
-                          className="text-brand"
-                          aria-label="Diminuir"
-                        >
-                          <Minus className="h-4 w-4" />
-                        </button>
-                        <span className="font-bold text-sm min-w-[20px] text-center">{itemQty(selectedItem.id)}</span>
-                        <button onClick={() => tryAdd(store.id, selectedItem.id)} className="text-brand" aria-label="Aumentar">
-                          <Plus className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ) : null}
-                    <button
-                      onClick={async () => {
-                        await tryAdd(store.id, selectedItem.id);
-                        setSelectedItem(null);
-                      }}
-                      disabled={!open}
-                      className="flex-1 bg-brand text-brand-foreground font-bold py-3 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {open ? "Adicionar à sacola" : "Loja fechada"}
-                    </button>
-                  </>
+                  <button
+                    onClick={async () => {
+                      const needsSize = selectedItem.sizes && selectedItem.sizes.length > 0;
+                      if (needsSize && !selectedSize) {
+                        toast.error("Escolha um tamanho antes de adicionar.");
+                        return;
+                      }
+                      await tryAdd(store.id, selectedItem.id, selectedSize);
+                      setSelectedItem(null);
+                    }}
+                    disabled={!open}
+                    className="flex-1 bg-brand text-brand-foreground font-bold py-3 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {open ? "Adicionar à sacola" : "Loja fechada"}
+                  </button>
                 ) : (
                   <Link
                     to="/auth"

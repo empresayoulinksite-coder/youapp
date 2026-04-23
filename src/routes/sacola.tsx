@@ -181,6 +181,9 @@ function CartPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm truncate">{item.menu_items?.name}</p>
+                    {item.selected_size && (
+                      <p className="text-[11px] font-semibold text-brand mt-0.5">Tamanho: {item.selected_size}</p>
+                    )}
                     <p className="text-xs text-muted-foreground">R$ {Number(item.menu_items?.price ?? 0).toFixed(2).replace(".", ",")}</p>
                     <div className="flex items-center gap-2 mt-2">
                       <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="bg-brand-soft text-brand rounded-full p-1">
@@ -323,7 +326,8 @@ function CartPage() {
             ...items.map((i) => {
               const name = i.menu_items?.name ?? "Item";
               const price = Number(i.menu_items?.price ?? 0);
-              return `• ${i.quantity}x ${name} — ${fmtBRL(price * i.quantity)}`;
+              const sizeSuffix = i.selected_size ? ` (Tamanho: ${i.selected_size})` : "";
+              return `• ${i.quantity}x ${name}${sizeSuffix} — ${fmtBRL(price * i.quantity)}`;
             }),
             "",
             `Subtotal: ${fmtBRL(total)}`,
@@ -414,6 +418,7 @@ function CartPage() {
                 unit_price: Number(i.menu_items?.price ?? 0),
                 emoji: i.menu_items?.emoji ?? null,
                 image_url: i.menu_items?.image_url ?? null,
+                selected_size: i.selected_size ?? null,
               }));
               await supabase.from("order_items").insert(itemRows);
             }

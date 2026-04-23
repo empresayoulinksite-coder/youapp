@@ -84,6 +84,7 @@ type MenuItem = {
   image_url: string | null;
   position: number;
   is_available: boolean;
+  sizes: string[];
 };
 
 type Category = {
@@ -256,6 +257,7 @@ function AdminProducts() {
         image_url: m.image_url || null,
         position: Number(m.position) || 0,
         is_available: m.is_available ?? true,
+        sizes: Array.isArray(m.sizes) ? m.sizes.filter((s) => s.trim()) : [],
       };
 
       let itemId = m.id;
@@ -416,6 +418,7 @@ function AdminProducts() {
       position: items.length,
       is_available: true,
       price: 0,
+      sizes: [],
     });
     setEditingVars([]);
     setOpen(true);
@@ -761,6 +764,36 @@ function AdminProducts() {
                   onChange={(e) => setEditing({ ...editing, promo: e.target.value })}
                   placeholder="Ex: -20%"
                 />
+              </div>
+
+              {/* Tamanhos disponíveis (e-commerce) */}
+              <div className="sm:col-span-2 rounded-md border p-3">
+                <div className="mb-2">
+                  <p className="text-sm font-semibold">Tamanhos disponíveis</p>
+                  <p className="text-xs text-muted-foreground">
+                    Separe por vírgula. Ex: P, M, G, GG, 38, 39, 40. Deixe vazio se o produto não tem tamanho.
+                  </p>
+                </div>
+                <Input
+                  value={(editing.sizes ?? []).join(", ")}
+                  onChange={(e) => {
+                    const parts = e.target.value
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean);
+                    setEditing({ ...editing, sizes: parts });
+                  }}
+                  placeholder="P, M, G, GG"
+                />
+                {(editing.sizes ?? []).length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {(editing.sizes ?? []).map((s, i) => (
+                      <Badge key={i} variant="secondary" className="text-xs">
+                        {s}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Variações */}

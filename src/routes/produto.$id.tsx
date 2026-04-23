@@ -16,6 +16,7 @@ interface Product {
   emoji: string;
   image_url: string | null;
   promo: string | null;
+  sizes: string[];
 }
 
 interface Store {
@@ -35,7 +36,7 @@ export const Route = createFileRoute("/produto/$id")({
   loader: async ({ params }): Promise<{ product: Product; store: Store; related: Product[] }> => {
     const { data: product, error } = await supabase
       .from("menu_items")
-      .select("id, store_id, name, description, price, original_price, emoji, image_url, promo")
+      .select("id, store_id, name, description, price, original_price, emoji, image_url, promo, sizes")
       .eq("id", params.id)
       .maybeSingle();
     if (error) throw error;
@@ -51,16 +52,16 @@ export const Route = createFileRoute("/produto/$id")({
 
     const { data: related } = await supabase
       .from("menu_items")
-      .select("id, store_id, name, description, price, original_price, emoji, image_url, promo")
+      .select("id, store_id, name, description, price, original_price, emoji, image_url, promo, sizes")
       .eq("store_id", product.store_id)
       .neq("id", product.id)
       .order("position")
       .limit(8);
 
     return {
-      product: product as Product,
+      product: { ...product, sizes: Array.isArray(product.sizes) ? product.sizes : [] } as Product,
       store: store as Store,
-      related: (related ?? []) as Product[],
+      related: ((related ?? []) as Product[]).map((p) => ({ ...p, sizes: Array.isArray(p.sizes) ? p.sizes : [] })),
     };
   },
   errorComponent: ({ error }) => (
@@ -104,6 +105,7 @@ function ProductPage() {
   const [qty, setQty] = useState(1);
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
 
   const fmt = (n: number) => `R$ ${Number(n).toFixed(2).replace(".", ",")}`;
   const hasDiscount =
@@ -112,16 +114,21 @@ function ProductPage() {
     ? Math.round((1 - Number(product.price) / Number(product.original_price)) * 100)
     : 0;
   const totalPrice = Number(product.price) * qty;
+  const hasSizes = product.sizes && product.sizes.length > 0;
 
   const handleAdd = async () => {
     if (!user) {
       window.location.href = "/auth";
       return;
     }
+    if (hasSizes && !selectedSize) {
+      toast.error("Escolha um tamanho antes de adicionar.");
+      return;
+    }
     setAdding(true);
     try {
       for (let i = 0; i < qty; i++) {
-        await addItem(store.id, product.id);
+        await addItem(store.id, product.id, selectedSize);
       }
     } catch (err) {
       if (err instanceof DifferentStoreError) {
@@ -129,9 +136,9 @@ function ProductPage() {
           "Você só pode pedir de uma loja por vez (o pedido vai pelo WhatsApp). Limpar o carrinho atual e adicionar este item?",
         );
         if (ok) {
-          await switchStoreAndAdd(store.id, product.id);
+          await switchStoreAndAdd(store.id, product.id, selectedSize);
           for (let i = 1; i < qty; i++) {
-            await addItem(store.id, product.id);
+            await addItem(store.id, product.id, selectedSize);
           }
         } else {
           setAdding(false);
@@ -226,6 +233,34 @@ function ProductPage() {
               em até 3x de {fmt(Number(product.price) / 3)} sem juros
             </p>
           </div>
+
+          {hasSizes && (
+            <div className="bg-card rounded-2xl p-4 shadow-[var(--shadow-card)]">
+              <h3 className="font-semibold text-sm mb-2">
+                Escolha o tamanho <span className="text-destructive">*</span>
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {product.sizes.map((s) => {
+                  const active = selectedSize === s;
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setSelectedSize(s)}
+                      className={
+                        "min-w-[48px] px-3 py-2 rounded-xl border text-sm font-semibold transition-colors " +
+                        (active
+                          ? "bg-brand text-brand-foreground border-brand"
+                          : "bg-card text-foreground border-border hover:border-brand")
+                      }
+                    >
+                      {s}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {product.description && (
             <div className="bg-card rounded-2xl p-4 shadow-[var(--shadow-card)]">
