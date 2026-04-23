@@ -41,6 +41,9 @@ function CartPage() {
   const [storeWhatsapp, setStoreWhatsapp] = useState<string | null>(null);
   const [storeImageUrl, setStoreImageUrl] = useState<string | null>(null);
   const [storePaymentMethods, setStorePaymentMethods] = useState<string[] | null>(null);
+  const [pickupEnabled, setPickupEnabled] = useState(false);
+  const [storeAddress, setStoreAddress] = useState<string | null>(null);
+  const [deliveryMode, setDeliveryMode] = useState<"delivery" | "pickup">("delivery");
   const [profileName, setProfileName] = useState<string | null>(null);
   const [profilePhone, setProfilePhone] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
