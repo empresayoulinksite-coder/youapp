@@ -800,6 +800,7 @@ export type Database = {
           name: string
           neighborhood: string | null
           payment_methods: string | null
+          payment_methods_list: string[]
           promo: string | null
           rating: number
           slot_minutes: number
@@ -830,6 +831,7 @@ export type Database = {
           name: string
           neighborhood?: string | null
           payment_methods?: string | null
+          payment_methods_list?: string[]
           promo?: string | null
           rating?: number
           slot_minutes?: number
@@ -860,6 +862,7 @@ export type Database = {
           name?: string
           neighborhood?: string | null
           payment_methods?: string | null
+          payment_methods_list?: string[]
           promo?: string | null
           rating?: number
           slot_minutes?: number
