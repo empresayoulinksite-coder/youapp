@@ -5,20 +5,21 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { ActiveAddress } from "@/contexts/AddressContext";
+import {
+  PAYMENT_METHODS,
+  PAYMENT_LABEL,
+  normalizePaymentList,
+  type PaymentMethodKey,
+} from "@/lib/payment-methods";
 
-export type PaymentMethod =
-  | "Pix"
-  | "Dinheiro"
-  | "Cartão de crédito"
-  | "Cartão de débito"
-  | "Vale refeição";
+export type PaymentMethod = string;
 
 interface Props {
   open: boolean;
   onClose: () => void;
   address: ActiveAddress | null;
   storeWhatsapp: string | null;
-  acceptedPaymentMethods?: string | null;
+  acceptedPaymentMethods?: string[] | null;
   submitting: boolean;
   onConfirm: (data: {
     paymentMethod: PaymentMethod;
@@ -27,14 +28,6 @@ interface Props {
     complement: string;
   }) => void;
 }
-
-const ALL_METHODS: PaymentMethod[] = [
-  "Pix",
-  "Dinheiro",
-  "Cartão de crédito",
-  "Cartão de débito",
-  "Vale refeição",
-];
 
 function formatPhone(raw: string): string {
   const digits = raw.replace(/\D/g, "");
