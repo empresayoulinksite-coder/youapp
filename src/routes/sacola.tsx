@@ -387,10 +387,24 @@ function CartPage() {
             `Olá, ${storeName}! Gostaria de fazer um pedido:`,
             "",
             ...items.map((i) => {
-              const name = i.menu_items?.name ?? "Item";
-              const price = Number(i.menu_items?.price ?? 0);
+              const isPizza = Array.isArray(i.pizza_flavors) && i.pizza_flavors.length > 0;
+              const unit = Number(i.unit_price_override ?? i.menu_items?.price ?? 0);
+              if (isPizza) {
+                const flavorsTxt = (i.pizza_flavors ?? []).map((f) => f.name).join(" + ");
+                const parts: string[] = [];
+                parts.push(`• ${i.quantity}x 🍕 Pizza ${i.pizza_size_name ?? ""} — ${fmtBRL(unit * i.quantity)}`.replace(/\s+—/, " —"));
+                parts.push(`   Sabores: ${flavorsTxt}`);
+                if (i.pizza_crust_name) parts.push(`   Borda: ${i.pizza_crust_name}`);
+                if (Array.isArray(i.pizza_addons) && i.pizza_addons.length > 0) {
+                  parts.push(`   Adicionais: ${i.pizza_addons.map((a) => a.name).join(", ")}`);
+                }
+                return parts.join("\n");
+              }
+              const name = i.half_two_name
+                ? `½ ${i.menu_items?.name} + ½ ${i.half_two_name}`
+                : (i.menu_items?.name ?? "Item");
               const sizeSuffix = i.selected_size ? ` (Tamanho: ${i.selected_size})` : "";
-              return `• ${i.quantity}x ${name}${sizeSuffix} — ${fmtBRL(price * i.quantity)}`;
+              return `• ${i.quantity}x ${name}${sizeSuffix} — ${fmtBRL(unit * i.quantity)}`;
             }),
             "",
             `Subtotal: ${fmtBRL(total)}`,
