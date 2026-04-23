@@ -905,8 +905,8 @@ function StorePage() {
               basePrice: Number(i.price),
             }))}
           disabled={!open}
-          onConfirm={async (payload) => {
-            await tryAddPizza(store.id, payload);
+          onConfirm={async (payloads) => {
+            await tryAddPizzas(store.id, payloads);
             setPizzaBuilderItem(null);
           }}
         />
