@@ -74,9 +74,12 @@ export function CheckoutReviewDialog({
   acceptedPaymentMethods,
   customerName: initialName,
   customerPhone: initialPhone,
+  deliveryMode = "delivery",
+  storeAddress,
   submitting,
   onConfirm,
 }: Props) {
+  const isPickup = deliveryMode === "pickup";
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [notes, setNotes] = useState("");
   const [number, setNumber] = useState("");
