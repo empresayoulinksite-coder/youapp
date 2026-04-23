@@ -1282,6 +1282,7 @@ function SortableCategory({
                     onDelete={() => onDeleteItem(m.id, m.name)}
                     onToggleAvailable={() => onToggleItemAvailable(m)}
                     onDuplicate={() => onDuplicateItem(m)}
+                    onPatch={(patch) => onPatchItem(m.id, patch)}
                   />
                 ))}
               </SortableContext>
