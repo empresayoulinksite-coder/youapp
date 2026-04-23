@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { X, MapPin, CreditCard, Phone, Pencil, Check } from "lucide-react";
+import { X, MapPin, CreditCard, Phone, Pencil, Check, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,13 +20,23 @@ interface Props {
   address: ActiveAddress | null;
   storeWhatsapp: string | null;
   acceptedPaymentMethods?: string[] | null;
+  customerName?: string | null;
+  customerPhone?: string | null;
   submitting: boolean;
   onConfirm: (data: {
     paymentMethod: PaymentMethod;
     notes: string;
     number: string;
     complement: string;
+    customerName: string;
+    customerPhone: string;
   }) => void;
+}
+
+function maskPhoneInput(v: string): string {
+  const d = v.replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 10) return d.replace(/(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3").trim().replace(/-$/, "");
+  return d.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3").trim().replace(/-$/, "");
 }
 
 function formatPhone(raw: string): string {
