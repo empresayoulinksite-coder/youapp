@@ -871,6 +871,35 @@ function StorePage() {
         </div>
       )}
 
+      {pizzaBuilderItem && (
+        <PizzaBuilderDialog
+          open={!!pizzaBuilderItem}
+          onClose={() => setPizzaBuilderItem(null)}
+          storeId={store.id}
+          baseItem={{
+            id: pizzaBuilderItem.id,
+            name: pizzaBuilderItem.name,
+            emoji: pizzaBuilderItem.emoji,
+            image_url: pizzaBuilderItem.image_url,
+            description: pizzaBuilderItem.description,
+          }}
+          flavorItems={items
+            .filter((i) => i.category_id === pizzaBuilderItem.category_id)
+            .map((i) => ({
+              id: i.id,
+              name: i.name,
+              emoji: i.emoji,
+              description: i.description,
+              basePrice: Number(i.price),
+            }))}
+          disabled={!open}
+          onConfirm={async (payload) => {
+            await tryAddPizza(store.id, payload);
+            setPizzaBuilderItem(null);
+          }}
+        />
+      )}
+
       <BookingDialog
         open={bookingOpen}
         onClose={() => setBookingOpen(false)}
