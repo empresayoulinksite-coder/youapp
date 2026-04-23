@@ -96,6 +96,9 @@ type Category = {
   position: number;
   is_available: boolean;
   is_pizza: boolean;
+  available_days?: number[] | null;
+  available_start?: string | null;
+  available_end?: string | null;
 };
 
 type StoreType = "food" | "ecommerce" | "service";
