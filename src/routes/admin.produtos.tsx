@@ -1270,6 +1270,7 @@ function SortableCategory({
                     onEdit={() => onEditItem(m)}
                     onDelete={() => onDeleteItem(m.id, m.name)}
                     onToggleAvailable={() => onToggleItemAvailable(m)}
+                    onDuplicate={() => onDuplicateItem(m)}
                   />
                 ))}
               </SortableContext>
