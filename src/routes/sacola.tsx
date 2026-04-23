@@ -405,7 +405,9 @@ function CartPage() {
             setProfilePhone(customerPhone || null);
           }
           let deliveryAddress: string | null = null;
-          if (active) {
+          if (deliveryMode === "pickup") {
+            lines.push(`🏪 Retirada no local${storeAddress ? `: ${storeAddress}` : ""}`);
+          } else if (active) {
             const finalNumber = number || active.number || "";
             const finalComplement = complement || active.complement || "";
             const addrParts = [
