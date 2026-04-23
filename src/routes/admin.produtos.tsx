@@ -257,6 +257,7 @@ function AdminProducts() {
         image_url: m.image_url || null,
         position: Number(m.position) || 0,
         is_available: m.is_available ?? true,
+        sizes: Array.isArray(m.sizes) ? m.sizes.filter((s) => s.trim()) : [],
       };
 
       let itemId = m.id;
