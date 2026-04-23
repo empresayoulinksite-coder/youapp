@@ -257,7 +257,7 @@ function CartPage() {
             </p>
           )}
           <button
-            onClick={async () => {
+            onClick={() => {
               if (!storeOpen) {
                 toast.error("A loja está fechada no momento.");
                 return;
@@ -266,96 +266,116 @@ function CartPage() {
                 toast.error("Loja sem WhatsApp cadastrado. Não é possível finalizar.");
                 return;
               }
-              setSubmitting(true);
-              const fmtBRL = (n: number) => `R$ ${n.toFixed(2).replace(".", ",")}`;
-              const lines = [
-                `Olá, ${storeName}! Gostaria de fazer um pedido:`,
-                "",
-                ...items.map((i) => {
-                  const name = i.menu_items?.name ?? "Item";
-                  const price = Number(i.menu_items?.price ?? 0);
-                  return `• ${i.quantity}x ${name} — ${fmtBRL(price * i.quantity)}`;
-                }),
-                "",
-                `Subtotal: ${fmtBRL(total)}`,
-              ];
-              if (discount > 0 && applied) {
-                lines.push(`Cupom ${applied.code}: -${fmtBRL(discount)}`);
-              }
-              lines.push(`*Total: ${fmtBRL(grandTotal)}*`);
-
-              const customerName =
-                authUser?.user_metadata?.full_name ||
-                authUser?.user_metadata?.name ||
-                authUser?.email?.split("@")[0];
-              if (customerName) {
-                lines.push("", `👤 Cliente: ${customerName}`);
-              }
-              let deliveryAddress: string | null = null;
-              if (active) {
-                const addrParts = [
-                  active.street,
-                  active.number,
-                  active.complement,
-                  active.neighborhood,
-                  active.city,
-                ].filter(Boolean);
-                if (addrParts.length > 0) {
-                  deliveryAddress = addrParts.join(", ");
-                  lines.push(`📍 Entrega: ${deliveryAddress}`);
-                }
-              }
-
-              const message = lines.join("\n");
-
-              // Salva o pedido no banco antes de abrir o WhatsApp
-              if (authUser && storeId) {
-                const firstStore = items[0]?.stores;
-                const { data: order, error: orderError } = await supabase
-                  .from("orders")
-                  .insert({
-                    user_id: authUser.id,
-                    store_id: storeId,
-                    store_name: storeName ?? firstStore?.name ?? "Loja",
-                    store_slug: storeSlug ?? firstStore?.slug ?? "",
-                    store_emoji: firstStore?.emoji ?? null,
-                    store_image_url: storeImageUrl,
-                    store_whatsapp: storeWhatsapp,
-                    total: grandTotal,
-                    discount,
-                    delivery_address: deliveryAddress,
-                    whatsapp_message: message,
-                    status: "sent",
-                  })
-                  .select("id")
-                  .single();
-                if (!orderError && order) {
-                  const itemRows = items.map((i) => ({
-                    order_id: order.id,
-                    menu_item_id: i.menu_item_id,
-                    name: i.menu_items?.name ?? "Item",
-                    quantity: i.quantity,
-                    unit_price: Number(i.menu_items?.price ?? 0),
-                    emoji: i.menu_items?.emoji ?? null,
-                    image_url: i.menu_items?.image_url ?? null,
-                  }));
-                  await supabase.from("order_items").insert(itemRows);
-                }
-              }
-
-              openWhatsapp(storeWhatsapp, message);
-              await clear();
-              clearCoupon();
-              setSubmitting(false);
-              toast.success("Pedido enviado! Continue no WhatsApp.");
+              setReviewOpen(true);
             }}
             disabled={!storeOpen || submitting}
             className="w-full bg-brand text-brand-foreground font-bold py-3.5 rounded-full shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {submitting ? "Enviando..." : storeOpen ? "Finalizar pedido pelo WhatsApp" : "Loja fechada"}
+            {storeOpen ? "Revisar e finalizar" : "Loja fechada"}
           </button>
         </div>
       )}
+
+      <CheckoutReviewDialog
+        open={reviewOpen}
+        onClose={() => !submitting && setReviewOpen(false)}
+        address={active}
+        storeWhatsapp={storeWhatsapp}
+        acceptedPaymentMethods={storePaymentMethods}
+        submitting={submitting}
+        onConfirm={async ({ paymentMethod, notes }) => {
+          if (!storeWhatsapp) return;
+          setSubmitting(true);
+          const fmtBRL = (n: number) => `R$ ${n.toFixed(2).replace(".", ",")}`;
+          const lines = [
+            `Olá, ${storeName}! Gostaria de fazer um pedido:`,
+            "",
+            ...items.map((i) => {
+              const name = i.menu_items?.name ?? "Item";
+              const price = Number(i.menu_items?.price ?? 0);
+              return `• ${i.quantity}x ${name} — ${fmtBRL(price * i.quantity)}`;
+            }),
+            "",
+            `Subtotal: ${fmtBRL(total)}`,
+          ];
+          if (discount > 0 && applied) {
+            lines.push(`Cupom ${applied.code}: -${fmtBRL(discount)}`);
+          }
+          lines.push(`*Total: ${fmtBRL(grandTotal)}*`);
+          lines.push("", `💳 Pagamento: ${paymentMethod}`);
+
+          const customerName =
+            authUser?.user_metadata?.full_name ||
+            authUser?.user_metadata?.name ||
+            authUser?.email?.split("@")[0];
+          if (customerName) {
+            lines.push(`👤 Cliente: ${customerName}`);
+          }
+          let deliveryAddress: string | null = null;
+          if (active) {
+            const addrParts = [
+              active.street,
+              active.number,
+              active.complement,
+              active.neighborhood,
+              active.city,
+            ].filter(Boolean);
+            if (addrParts.length > 0) {
+              deliveryAddress = addrParts.join(", ");
+              lines.push(`📍 Entrega: ${deliveryAddress}`);
+            }
+          }
+          if (notes) {
+            lines.push("", `📝 Obs: ${notes}`);
+          }
+
+          const message = lines.join("\n");
+
+          // Salva o pedido no banco antes de abrir o WhatsApp
+          if (authUser && storeId) {
+            const firstStore = items[0]?.stores;
+            const { data: order, error: orderError } = await supabase
+              .from("orders")
+              .insert({
+                user_id: authUser.id,
+                store_id: storeId,
+                store_name: storeName ?? firstStore?.name ?? "Loja",
+                store_slug: storeSlug ?? firstStore?.slug ?? "",
+                store_emoji: firstStore?.emoji ?? null,
+                store_image_url: storeImageUrl,
+                store_whatsapp: storeWhatsapp,
+                total: grandTotal,
+                discount,
+                delivery_address: deliveryAddress,
+                payment_method: paymentMethod,
+                customer_notes: notes || null,
+                whatsapp_message: message,
+                status: "sent",
+              })
+              .select("id")
+              .single();
+            if (!orderError && order) {
+              const itemRows = items.map((i) => ({
+                order_id: order.id,
+                menu_item_id: i.menu_item_id,
+                name: i.menu_items?.name ?? "Item",
+                quantity: i.quantity,
+                unit_price: Number(i.menu_items?.price ?? 0),
+                emoji: i.menu_items?.emoji ?? null,
+                image_url: i.menu_items?.image_url ?? null,
+              }));
+              await supabase.from("order_items").insert(itemRows);
+            }
+          }
+
+          openWhatsapp(storeWhatsapp, message);
+          await clear();
+          clearCoupon();
+          setSubmitting(false);
+          setReviewOpen(false);
+          toast.success("Pedido enviado! Continue no WhatsApp.");
+        }}
+      />
     </div>
   );
 }
