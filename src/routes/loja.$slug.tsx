@@ -521,9 +521,17 @@ function StorePage() {
                             </div>
                             <div onClick={(e) => e.stopPropagation()}>
                               {user ? (
-                                item.sizes && item.sizes.length > 0 ? (
+                                cat.is_pizza ? (
                                   <button
-                                    onClick={() => setSelectedItem(item)}
+                                    onClick={() => openItemModal(item)}
+                                    className="text-brand bg-brand-soft rounded-full p-1.5"
+                                    aria-label="Montar pizza"
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </button>
+                                ) : item.sizes && item.sizes.length > 0 ? (
+                                  <button
+                                    onClick={() => openItemModal(item)}
                                     className="text-brand bg-brand-soft rounded-full p-1.5"
                                     aria-label="Escolher tamanho"
                                   >
