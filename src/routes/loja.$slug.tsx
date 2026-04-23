@@ -484,7 +484,7 @@ function StorePage() {
                       return (
                         <article
                           key={item.id}
-                          onClick={() => setSelectedItem(item)}
+                          onClick={() => openItemModal(item)}
                           className="bg-card rounded-2xl p-3 flex gap-3 shadow-[var(--shadow-card)] cursor-pointer active:scale-[0.99] transition-transform"
                         >
                           <div className="flex-1 min-w-0">
