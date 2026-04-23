@@ -40,8 +40,10 @@ function CartPage() {
   const [storePaused, setStorePaused] = useState(false);
   const [storeWhatsapp, setStoreWhatsapp] = useState<string | null>(null);
   const [storeImageUrl, setStoreImageUrl] = useState<string | null>(null);
+  const [storePaymentMethods, setStorePaymentMethods] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
   const [submitting, setSubmitting] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
   const { active } = useAddress();
   const { user: authUser } = useAuth();
 
