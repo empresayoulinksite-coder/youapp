@@ -119,6 +119,11 @@ function CartPage() {
   const storeOpen = !storePaused && withinHours;
   const nextOpen = !storeOpen && !storePaused ? nextOpeningLabel(storeHours, now) : null;
 
+  // Garante que se a loja desabilitar retirada, voltamos para entrega
+  useEffect(() => {
+    if (!pickupEnabled && deliveryMode === "pickup") setDeliveryMode("delivery");
+  }, [pickupEnabled, deliveryMode]);
+
   const { discount, reason } = calculateDiscount(applied, total, storeId);
   const grandTotal = Math.max(0, total - discount);
 
