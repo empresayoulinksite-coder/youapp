@@ -625,6 +625,20 @@ function AdminProducts() {
                 placeholder="Ex: Pizzas Salgadas"
               />
             </div>
+            <div className="flex items-center justify-between rounded-md border p-3">
+              <div>
+                <p className="text-sm font-medium">Categoria de pizza 🍕</p>
+                <p className="text-xs text-muted-foreground">
+                  Permite que o cliente monte pedido meio a meio com 2 sabores desta categoria.
+                </p>
+              </div>
+              <Switch
+                checked={editingCat?.is_pizza ?? false}
+                onCheckedChange={(v) =>
+                  setEditingCat({ ...editingCat, is_pizza: v })
+                }
+              />
+            </div>
             {editingCat?.id && (
               <div className="flex items-center justify-between rounded-md border p-3">
                 <div>
