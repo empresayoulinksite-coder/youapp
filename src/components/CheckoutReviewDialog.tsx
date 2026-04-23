@@ -258,18 +258,26 @@ export function CheckoutReviewDialog({
         <div className="sticky bottom-0 bg-card border-t border-border p-4">
           <button
             onClick={() =>
-              paymentMethod && onConfirm({ paymentMethod, notes: notes.trim() })
+              paymentMethod &&
+              onConfirm({
+                paymentMethod,
+                notes: notes.trim(),
+                number: number.trim(),
+                complement: complement.trim(),
+              })
             }
             disabled={!canConfirm}
             className="w-full bg-brand text-brand-foreground font-bold py-3.5 rounded-full shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting
               ? "Enviando..."
-              : !addressText
+              : !address
                 ? "Cadastre um endereço"
-                : !paymentMethod
-                  ? "Escolha o pagamento"
-                  : "Confirmar e enviar pelo WhatsApp"}
+                : !hasNumber
+                  ? "Informe o número"
+                  : !paymentMethod
+                    ? "Escolha o pagamento"
+                    : "Confirmar e enviar pelo WhatsApp"}
           </button>
         </div>
       </div>
