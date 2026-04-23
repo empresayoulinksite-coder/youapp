@@ -326,7 +326,8 @@ function CartPage() {
             ...items.map((i) => {
               const name = i.menu_items?.name ?? "Item";
               const price = Number(i.menu_items?.price ?? 0);
-              return `• ${i.quantity}x ${name} — ${fmtBRL(price * i.quantity)}`;
+              const sizeSuffix = i.selected_size ? ` (Tamanho: ${i.selected_size})` : "";
+              return `• ${i.quantity}x ${name}${sizeSuffix} — ${fmtBRL(price * i.quantity)}`;
             }),
             "",
             `Subtotal: ${fmtBRL(total)}`,
