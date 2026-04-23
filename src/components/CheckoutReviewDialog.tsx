@@ -178,20 +178,30 @@ export function CheckoutReviewDialog({
             </div>
           </section>
 
-          {/* Endereço */}
+          {/* Endereço / Retirada */}
           <section>
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5" /> Endereço de entrega
+                <MapPin className="h-3.5 w-3.5" />
+                {isPickup ? "Retirada no local" : "Endereço de entrega"}
               </h3>
-              <Link
-                to="/perfil"
-                className="text-xs font-semibold text-brand flex items-center gap-1"
-              >
-                <Pencil className="h-3 w-3" /> Editar
-              </Link>
+              {!isPickup && (
+                <Link
+                  to="/perfil"
+                  className="text-xs font-semibold text-brand flex items-center gap-1"
+                >
+                  <Pencil className="h-3 w-3" /> Editar
+                </Link>
+              )}
             </div>
-            {address ? (
+            {isPickup ? (
+              <div className="rounded-xl border border-border bg-background p-3">
+                <p className="text-sm font-semibold">🏪 Você vai retirar na loja</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {storeAddress ?? "Confirme o endereço com a loja pelo WhatsApp."}
+                </p>
+              </div>
+            ) : address ? (
               <div className="rounded-xl border border-border bg-background p-3 space-y-3">
                 <div>
                   <p className="text-sm font-semibold">{address.label}</p>
