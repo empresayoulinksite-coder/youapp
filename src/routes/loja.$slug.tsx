@@ -43,6 +43,7 @@ interface MenuCategory {
   id: string;
   name: string;
   position: number;
+  is_pizza: boolean;
 }
 
 interface MenuItem {
