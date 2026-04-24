@@ -260,7 +260,7 @@ function PainelPage() {
         )}
 
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className={`grid w-full ${currentStore?.store_type === "service" ? "grid-cols-7" : "grid-cols-6"}`}>
             <TabsTrigger value="overview" className="gap-1.5">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Resumo</span>
@@ -285,6 +285,12 @@ function PainelPage() {
               <Clock3 className="h-4 w-4" />
               <span className="hidden sm:inline">Horários</span>
             </TabsTrigger>
+            {currentStore?.store_type === "service" && (
+              <TabsTrigger value="feed" className="gap-1.5">
+                <Images className="h-4 w-4" />
+                <span className="hidden sm:inline">Feed</span>
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="overview" className="mt-4">
@@ -326,6 +332,26 @@ function PainelPage() {
               </div>
             )}
           </TabsContent>
+
+          {currentStore?.store_type === "service" && storeId && (
+            <TabsContent value="feed" className="mt-4">
+              <StoreFeedEditor
+                storeId={storeId}
+                feedEnabled={!!currentStore.feed_enabled}
+                onToggleEnabled={async (v) => {
+                  const { error } = await supabase
+                    .from("stores")
+                    .update({ feed_enabled: v })
+                    .eq("id", storeId);
+                  if (error) toast.error(error.message);
+                  else {
+                    toast.success(v ? "Feed ativado" : "Feed desativado");
+                    qc.invalidateQueries({ queryKey: ["painel", "stores"] });
+                  }
+                }}
+              />
+            </TabsContent>
+          )}
         </Tabs>
       </main>
     </div>
