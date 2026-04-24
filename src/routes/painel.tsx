@@ -23,6 +23,7 @@ import { StoreHoursEditor } from "@/components/StoreHoursEditor";
 import { StoreWhatsappEditor } from "@/components/StoreWhatsappEditor";
 import { StoreDeliveryEditor } from "@/components/StoreDeliveryEditor";
 import { StoreBenefitsEditor } from "@/components/StoreBenefitsEditor";
+import { StoreFeedEditor } from "@/components/StoreFeedEditor";
 
 export const Route = createFileRoute("/painel")({
   component: PainelPage,
