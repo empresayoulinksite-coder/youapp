@@ -1254,6 +1254,7 @@ function SortableCategory({
   onToggleItemAvailable,
   onDuplicateItem,
   onPatchItem,
+  onPatchVariation,
   onPatchCategoryName,
   onDragItems,
   sensors,
@@ -1273,6 +1274,7 @@ function SortableCategory({
   onToggleItemAvailable: (m: MenuItem) => void;
   onDuplicateItem: (m: MenuItem) => void;
   onPatchItem: (id: string, patch: Partial<MenuItem>) => void;
+  onPatchVariation: (id: string, patch: { price?: number }) => void;
   onPatchCategoryName: (name: string) => void;
   onDragItems: (e: DragEndEvent) => void;
   sensors: ReturnType<typeof useSensors>;
