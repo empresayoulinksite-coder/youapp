@@ -797,6 +797,34 @@ function StorePage() {
                 </div>
               )}
 
+              {selectedItem.colors && selectedItem.colors.length > 0 && (
+                <div className="mt-5">
+                  <p className="text-sm font-semibold mb-2">
+                    Escolha a cor <span className="text-destructive">*</span>
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedItem.colors.map((c) => {
+                      const active = selectedColor === c;
+                      return (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setSelectedColor(c)}
+                          className={
+                            "px-3 py-2 rounded-xl border text-sm font-semibold transition-colors " +
+                            (active
+                              ? "bg-brand text-brand-foreground border-brand"
+                              : "bg-card text-foreground border-border hover:border-brand")
+                          }
+                        >
+                          {c}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {(() => {
                 const cat = categories.find((c) => c.id === selectedItem.category_id);
                 if (!cat?.is_pizza) return null;
