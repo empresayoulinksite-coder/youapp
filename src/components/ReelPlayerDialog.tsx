@@ -48,7 +48,7 @@ export function ReelPlayerDialog({
     const el = containerRef.current;
     if (!el) return;
     const child = el.children[startIndex] as HTMLElement | undefined;
-    if (child) el.scrollTo({ top: child.offsetTop, behavior: "auto" });
+    if (child) el.scrollTo({ left: child.offsetLeft, behavior: "auto" });
   }, [startIndex]);
 
   // Detect which reel is currently in view via IntersectionObserver
