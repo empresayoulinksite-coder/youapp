@@ -770,6 +770,21 @@ function AdminStores() {
                   else toast.success(v ? "Seção Reels ativada" : "Seção Reels desativada");
                 }}
               />
+              {editing.store_type === "service" && (
+                <StoreFeedEditor
+                  storeId={editing.id}
+                  feedEnabled={!!editing.feed_enabled}
+                  onToggleEnabled={async (v) => {
+                    setEditing({ ...editing, feed_enabled: v });
+                    const { error } = await supabase
+                      .from("stores")
+                      .update({ feed_enabled: v })
+                      .eq("id", editing.id!);
+                    if (error) toast.error(error.message);
+                    else toast.success(v ? "Feed ativado" : "Feed desativado");
+                  }}
+                />
+              )}
             </div>
           )}
           {editing && (editing.id || (editing as Partial<Store> & { __typed?: boolean }).__typed) && (
