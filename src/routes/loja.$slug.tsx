@@ -892,19 +892,29 @@ function StorePage() {
                   <button
                     onClick={async () => {
                       const needsSize = selectedItem.sizes && selectedItem.sizes.length > 0;
+                      const needsColor = selectedItem.colors && selectedItem.colors.length > 0;
                       if (needsSize && !selectedSize) {
                         toast.error("Escolha um tamanho antes de adicionar.");
                         return;
                       }
+                      if (needsColor && !selectedColor) {
+                        toast.error("Escolha uma cor antes de adicionar.");
+                        return;
+                      }
+                      const sizeParts = [
+                        selectedSize,
+                        selectedColor ? `Cor: ${selectedColor}` : null,
+                      ].filter(Boolean) as string[];
+                      const sizeForCart = sizeParts.length ? sizeParts.join(" · ") : null;
                       if (orderMode === "half") {
                         const second = items.find((i) => i.id === secondHalfId);
                         if (!second) {
                           toast.error("Escolha o 2º sabor da pizza.");
                           return;
                         }
-                        await tryAddHalfHalf(store.id, selectedItem, second, selectedSize);
+                        await tryAddHalfHalf(store.id, selectedItem, second, sizeForCart);
                       } else {
-                        await tryAdd(store.id, selectedItem.id, selectedSize);
+                        await tryAdd(store.id, selectedItem.id, sizeForCart);
                       }
                       setSelectedItem(null);
                     }}
