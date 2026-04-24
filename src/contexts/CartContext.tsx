@@ -123,7 +123,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     refresh();
   }, [refresh]);
 
-  const addItem = async (storeId: string, menuItemId: string, selectedSize: string | null = null) => {
+  const addItem = async (storeId: string, menuItemId: string, selectedSize: string | null = null, unitPriceOverride: number | null = null) => {
     if (!user) return;
     const currentStoreId = items[0]?.store_id ?? null;
     if (currentStoreId && currentStoreId !== storeId) {
@@ -145,11 +145,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       menu_item_id: menuItemId,
       quantity: 1,
       selected_size: selectedSize,
+      unit_price_override: unitPriceOverride,
     });
     if (!error) await refresh();
   };
 
-  const switchStoreAndAdd = async (storeId: string, menuItemId: string, selectedSize: string | null = null) => {
+  const switchStoreAndAdd = async (storeId: string, menuItemId: string, selectedSize: string | null = null, unitPriceOverride: number | null = null) => {
     if (!user) return;
     await supabase.from("cart_items").delete().eq("user_id", user.id);
     const { error } = await supabase.from("cart_items").insert({
@@ -158,6 +159,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       menu_item_id: menuItemId,
       quantity: 1,
       selected_size: selectedSize,
+      unit_price_override: unitPriceOverride,
     });
     if (!error) await refresh();
   };
