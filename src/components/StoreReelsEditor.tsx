@@ -87,7 +87,7 @@ export function StoreReelsEditor({
     },
     onSuccess: () => {
       invalidate();
-      toast.success("Reel removido");
+      toast.success("Flow removido");
     },
     onError: (e: any) => toast.error(e.message),
   });
