@@ -203,9 +203,16 @@ function ProductPage() {
             )}
             <button
               aria-label="Favoritar"
+              onClick={() => {
+                if (!user) {
+                  toast.error("Faça login para favoritar");
+                  return;
+                }
+                toggleFavorite(store.id);
+              }}
               className="absolute top-3 right-3 h-9 w-9 bg-card/90 backdrop-blur rounded-full flex items-center justify-center shadow"
             >
-              <Heart className="h-4 w-4" />
+              <Heart className={`h-4 w-4 ${fav ? "fill-brand text-brand" : ""}`} />
             </button>
           </div>
         </div>
