@@ -79,10 +79,41 @@ export const Route = createFileRoute("/produto/$id")({
       .order("position")
       .limit(8);
 
+    const relatedIds = (related ?? []).map((r) => r.id);
+    const allIds = [product.id, ...relatedIds];
+    const { data: variations } = await supabase
+      .from("menu_item_variations")
+      .select("id, menu_item_id, name, price, original_price, is_available, position")
+      .in("menu_item_id", allIds)
+      .eq("is_available", true)
+      .order("position");
+
+    const varsByItem = new Map<string, Variation[]>();
+    for (const v of (variations ?? []) as Array<Variation & { menu_item_id: string }>) {
+      const list = varsByItem.get(v.menu_item_id) ?? [];
+      list.push({
+        id: v.id,
+        name: v.name,
+        price: Number(v.price),
+        original_price: v.original_price !== null ? Number(v.original_price) : null,
+        is_available: v.is_available,
+        position: v.position,
+      });
+      varsByItem.set(v.menu_item_id, list);
+    }
+
     return {
-      product: { ...product, sizes: Array.isArray(product.sizes) ? product.sizes : [] } as Product,
+      product: {
+        ...product,
+        sizes: Array.isArray(product.sizes) ? product.sizes : [],
+        variations: varsByItem.get(product.id) ?? [],
+      } as Product,
       store: store as Store,
-      related: ((related ?? []) as Product[]).map((p) => ({ ...p, sizes: Array.isArray(p.sizes) ? p.sizes : [] })),
+      related: ((related ?? []) as Omit<Product, "variations">[]).map((p) => ({
+        ...p,
+        sizes: Array.isArray(p.sizes) ? p.sizes : [],
+        variations: varsByItem.get(p.id) ?? [],
+      })),
     };
   },
   errorComponent: ({ error }) => (
