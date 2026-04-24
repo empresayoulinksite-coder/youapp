@@ -1413,6 +1413,7 @@ function SortableCategory({
                     onToggleAvailable={() => onToggleItemAvailable(m)}
                     onDuplicate={() => onDuplicateItem(m)}
                     onPatch={(patch) => onPatchItem(m.id, patch)}
+                    onPatchVariation={onPatchVariation}
                   />
                 ))}
               </SortableContext>
