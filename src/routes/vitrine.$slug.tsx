@@ -236,7 +236,13 @@ function VitrinePage() {
   };
 
   const renderProductCard = (p: Product) => {
-    const hasDiscount = !!p.original_price && Number(p.original_price) > Number(p.price);
+    const hasVariations = (p.variations?.length ?? 0) > 0;
+    const minVarPrice = hasVariations
+      ? Math.min(...p.variations.map((v) => Number(v.price)))
+      : Number(p.price);
+    const displayPrice = hasVariations ? minVarPrice : Number(p.price);
+    // Quando há variações, ignoramos o desconto base (cada variação tem o seu).
+    const hasDiscount = !hasVariations && !!p.original_price && Number(p.original_price) > Number(p.price);
     const discountPct = hasDiscount
       ? Math.round((1 - Number(p.price) / Number(p.original_price)) * 100)
       : 0;
@@ -260,6 +266,11 @@ function VitrinePage() {
               -{discountPct}%
             </span>
           )}
+          {hasVariations && (
+            <span className="absolute top-2 right-2 text-[10px] font-bold text-foreground bg-card/90 backdrop-blur px-1.5 py-0.5 rounded">
+              {p.variations.length} opções
+            </span>
+          )}
         </Link>
         <div className="p-2.5 flex flex-col gap-1.5 flex-1">
           <Link
@@ -270,20 +281,33 @@ function VitrinePage() {
             {p.name}
           </Link>
           <div className="flex items-baseline gap-1.5 flex-wrap">
-            <span className="text-sm font-bold">{fmt(Number(p.price))}</span>
+            {hasVariations && (
+              <span className="text-[10px] text-muted-foreground">a partir de</span>
+            )}
+            <span className="text-sm font-bold">{fmt(Number(displayPrice))}</span>
             {hasDiscount && (
               <span className="text-[10px] text-muted-foreground line-through">
                 {fmt(Number(p.original_price))}
               </span>
             )}
           </div>
-          <button
-            onClick={() => handleAdd(p.id)}
-            disabled={adding === p.id}
-            className="mt-auto bg-brand text-brand-foreground text-xs font-bold py-2 rounded-full hover:opacity-90 active:scale-[.98] transition disabled:opacity-60"
-          >
-            {adding === p.id ? "Adicionado ✓" : "Comprar"}
-          </button>
+          {hasVariations ? (
+            <Link
+              to="/produto/$id"
+              params={{ id: p.id }}
+              className="mt-auto text-center bg-brand text-brand-foreground text-xs font-bold py-2 rounded-full hover:opacity-90 active:scale-[.98] transition"
+            >
+              Ver opções
+            </Link>
+          ) : (
+            <button
+              onClick={() => handleAdd(p.id)}
+              disabled={adding === p.id}
+              className="mt-auto bg-brand text-brand-foreground text-xs font-bold py-2 rounded-full hover:opacity-90 active:scale-[.98] transition disabled:opacity-60"
+            >
+              {adding === p.id ? "Adicionado ✓" : "Comprar"}
+            </button>
+          )}
         </div>
       </article>
     );
