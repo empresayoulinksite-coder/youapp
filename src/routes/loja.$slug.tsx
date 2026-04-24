@@ -11,6 +11,7 @@ import { StoreDistance } from "@/components/StoreDistance";
 import { normalizePaymentList, paymentLabelsFromList } from "@/lib/payment-methods";
 import { PizzaBuilderDialog, type PizzaConfigPayload } from "@/components/PizzaBuilderDialog";
 import { StoreReelsSection } from "@/components/StoreReelsSection";
+import { StoreFeedSection } from "@/components/StoreFeedSection";
 
 interface Store {
   id: string;
