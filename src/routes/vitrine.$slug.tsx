@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCart, DifferentStoreError } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFavorites } from "@/contexts/FavoritesContext";
+import { StoreReelsSection } from "@/components/StoreReelsSection";
 
 interface Store {
   id: string;

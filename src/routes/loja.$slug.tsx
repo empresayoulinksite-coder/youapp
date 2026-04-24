@@ -10,6 +10,7 @@ import { BookingDialog, type ServiceLite } from "@/components/BookingDialog";
 import { StoreDistance } from "@/components/StoreDistance";
 import { normalizePaymentList, paymentLabelsFromList } from "@/lib/payment-methods";
 import { PizzaBuilderDialog, type PizzaConfigPayload } from "@/components/PizzaBuilderDialog";
+import { StoreReelsSection } from "@/components/StoreReelsSection";
 
 interface Store {
   id: string;
@@ -386,6 +387,9 @@ function StorePage() {
       </nav>
 
       <main className="px-4 pt-5">
+        <div className="mb-5">
+          <StoreReelsSection storeId={store.id} />
+        </div>
         {tab === "menu" && isService && (
           <div className="space-y-3">
             {services.length === 0 ? (
