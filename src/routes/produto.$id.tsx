@@ -424,7 +424,7 @@ function ProductPage() {
             </div>
           )}
 
-
+          {product.description && (
             <div className="bg-card rounded-2xl p-4 shadow-[var(--shadow-card)]">
               <h3 className="font-semibold text-sm mb-1">Descrição</h3>
               <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
