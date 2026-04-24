@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { LogOut, Power, LayoutDashboard, Calendar, Scissors, Ticket, Clock3, ArrowLeft } from "lucide-react";
+import { LogOut, Power, LayoutDashboard, Calendar, Scissors, Ticket, Clock3, ArrowLeft, Users } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,6 +18,7 @@ import { OverviewTab } from "@/components/painel/OverviewTab";
 import { BookingsTab, type BookingRow, type StoreLite } from "@/components/painel/BookingsTab";
 import { ServicesTab } from "@/components/painel/ServicesTab";
 import { CouponsTab } from "@/components/painel/CouponsTab";
+import { CustomersTab } from "@/components/painel/CustomersTab";
 import { StoreHoursEditor } from "@/components/StoreHoursEditor";
 import { StoreWhatsappEditor } from "@/components/StoreWhatsappEditor";
 import { StoreDeliveryEditor } from "@/components/StoreDeliveryEditor";
@@ -258,7 +259,7 @@ function PainelPage() {
         )}
 
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview" className="gap-1.5">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Resumo</span>
@@ -266,6 +267,10 @@ function PainelPage() {
             <TabsTrigger value="bookings" className="gap-1.5">
               <Calendar className="h-4 w-4" />
               <span className="hidden sm:inline">Agenda</span>
+            </TabsTrigger>
+            <TabsTrigger value="customers" className="gap-1.5">
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">Clientes</span>
             </TabsTrigger>
             <TabsTrigger value="services" className="gap-1.5">
               <Scissors className="h-4 w-4" />
@@ -299,6 +304,10 @@ function PainelPage() {
                 loading={bookingsLoading}
               />
             )}
+          </TabsContent>
+
+          <TabsContent value="customers" className="mt-4">
+            {storeId && <CustomersTab storeId={storeId} bookings={bookings} />}
           </TabsContent>
 
           <TabsContent value="services" className="mt-4">
