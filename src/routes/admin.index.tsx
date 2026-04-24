@@ -22,6 +22,7 @@ import { PAYMENT_METHODS } from "@/lib/payment-methods";
 import { StoreLocationAdjuster } from "@/components/StoreLocationAdjuster";
 import { StoreBenefitsEditor } from "@/components/StoreBenefitsEditor";
 import { StoreReelsEditor } from "@/components/StoreReelsEditor";
+import { StoreFeedEditor } from "@/components/StoreFeedEditor";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminStores,
