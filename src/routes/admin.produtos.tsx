@@ -1304,7 +1304,34 @@ function SortableCategory({
           )}
         </button>
         <div className="flex flex-1 items-center gap-2">
-          <h3 className="font-semibold">{category.name}</h3>
+          {editingCatName ? (
+            <Input
+              autoFocus
+              value={catNameDraft}
+              onChange={(e) => setCatNameDraft(e.target.value)}
+              onBlur={commitCatName}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") commitCatName();
+                if (e.key === "Escape") {
+                  setCatNameDraft(category.name);
+                  setEditingCatName(false);
+                }
+              }}
+              className="h-7 max-w-xs text-sm font-semibold"
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setCatNameDraft(category.name);
+                setEditingCatName(true);
+              }}
+              className="font-semibold hover:underline"
+              title="Clique para editar o nome"
+            >
+              {category.name}
+            </button>
+          )}
           <span className="text-xs text-muted-foreground">
             ({items.length} {items.length === 1 ? "item" : "itens"})
           </span>
