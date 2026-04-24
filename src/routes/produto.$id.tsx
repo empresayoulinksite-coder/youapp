@@ -27,6 +27,7 @@ interface Product {
   image_url: string | null;
   promo: string | null;
   sizes: string[];
+  colors: string[];
   variations: Variation[];
 }
 
@@ -57,7 +58,7 @@ export const Route = createFileRoute("/produto/$id")({
   loader: async ({ params }): Promise<{ product: Product; store: Store; related: Product[] }> => {
     const { data: product, error } = await supabase
       .from("menu_items")
-      .select("id, store_id, name, description, price, original_price, emoji, image_url, promo, sizes")
+      .select("id, store_id, name, description, price, original_price, emoji, image_url, promo, sizes, colors")
       .eq("id", params.id)
       .maybeSingle();
     if (error) throw error;
@@ -73,7 +74,7 @@ export const Route = createFileRoute("/produto/$id")({
 
     const { data: related } = await supabase
       .from("menu_items")
-      .select("id, store_id, name, description, price, original_price, emoji, image_url, promo, sizes")
+      .select("id, store_id, name, description, price, original_price, emoji, image_url, promo, sizes, colors")
       .eq("store_id", product.store_id)
       .neq("id", product.id)
       .order("position")
@@ -106,12 +107,14 @@ export const Route = createFileRoute("/produto/$id")({
       product: {
         ...product,
         sizes: Array.isArray(product.sizes) ? product.sizes : [],
+        colors: Array.isArray(product.colors) ? product.colors : [],
         variations: varsByItem.get(product.id) ?? [],
       } as Product,
       store: store as Store,
       related: ((related ?? []) as Omit<Product, "variations">[]).map((p) => ({
         ...p,
         sizes: Array.isArray(p.sizes) ? p.sizes : [],
+        colors: Array.isArray(p.colors) ? p.colors : [],
         variations: varsByItem.get(p.id) ?? [],
       })),
     };
@@ -161,6 +164,7 @@ function ProductPage() {
   const [added, setAdded] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedVariationId, setSelectedVariationId] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
 
   const fmt = (n: number) => `R$ ${Number(n).toFixed(2).replace(".", ",")}`;
   const hasVariations = (product.variations?.length ?? 0) > 0;
@@ -188,7 +192,8 @@ function ProductPage() {
     ? Math.round((1 - Number(currentPrice) / Number(currentOriginalPrice)) * 100)
     : 0;
   const totalPrice = Number(currentPrice) * qty;
-  const hasSizes = !hasVariations && product.sizes && product.sizes.length > 0;
+  const hasSizes = product.sizes && product.sizes.length > 0;
+  const hasColors = product.colors && product.colors.length > 0;
 
   const handleAdd = async () => {
     if (!user) {
@@ -203,7 +208,15 @@ function ProductPage() {
       toast.error("Escolha um tamanho antes de adicionar.");
       return;
     }
-    const sizeForCart = selectedVariation ? selectedVariation.name : selectedSize;
+    if (hasColors && !selectedColor) {
+      toast.error("Escolha uma cor antes de adicionar.");
+      return;
+    }
+    const sizeParts = [
+      selectedVariation ? selectedVariation.name : selectedSize,
+      selectedColor ? `Cor: ${selectedColor}` : null,
+    ].filter(Boolean) as string[];
+    const sizeForCart = sizeParts.length ? sizeParts.join(" · ") : null;
     const priceOverride = selectedVariation ? Number(selectedVariation.price) : null;
     setAdding(true);
     try {
@@ -376,6 +389,34 @@ function ProductPage() {
                       }
                     >
                       {s}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {hasColors && (
+            <div className="bg-card rounded-2xl p-4 shadow-[var(--shadow-card)]">
+              <h3 className="font-semibold text-sm mb-2">
+                Escolha a cor <span className="text-destructive">*</span>
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {product.colors.map((c) => {
+                  const active = selectedColor === c;
+                  return (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setSelectedColor(c)}
+                      className={
+                        "px-3 py-2 rounded-xl border text-sm font-semibold transition-colors " +
+                        (active
+                          ? "bg-brand text-brand-foreground border-brand"
+                          : "bg-card text-foreground border-border hover:border-brand")
+                      }
+                    >
+                      {c}
                     </button>
                   );
                 })}

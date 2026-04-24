@@ -417,6 +417,7 @@ export type Database = {
       menu_items: {
         Row: {
           category_id: string
+          colors: string[]
           created_at: string
           description: string | null
           emoji: string
@@ -434,6 +435,7 @@ export type Database = {
         }
         Insert: {
           category_id: string
+          colors?: string[]
           created_at?: string
           description?: string | null
           emoji?: string
@@ -451,6 +453,7 @@ export type Database = {
         }
         Update: {
           category_id?: string
+          colors?: string[]
           created_at?: string
           description?: string | null
           emoji?: string

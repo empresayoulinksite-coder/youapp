@@ -88,6 +88,7 @@ type MenuItem = {
   position: number;
   is_available: boolean;
   sizes: string[];
+  colors: string[];
 };
 
 type Category = {
@@ -121,6 +122,7 @@ function AdminProducts() {
   const [editing, setEditing] = useState<Partial<MenuItem> | null>(null);
   const [editingVars, setEditingVars] = useState<Variation[]>([]);
   const [sizesInput, setSizesInput] = useState<string>("");
+  const [colorsInput, setColorsInput] = useState<string>("");
   const [uploading, setUploading] = useState(false);
 
   const [catOpen, setCatOpen] = useState(false);
@@ -276,6 +278,7 @@ function AdminProducts() {
         position: Number(m.position) || 0,
         is_available: m.is_available ?? true,
         sizes: Array.isArray(m.sizes) ? m.sizes.filter((s) => s.trim()) : [],
+        colors: Array.isArray(m.colors) ? m.colors.filter((s) => s.trim()) : [],
       };
 
       let itemId = m.id;
@@ -389,6 +392,7 @@ function AdminProducts() {
             position: idx,
             is_available: it.is_available,
             sizes: it.sizes ?? [],
+            colors: it.colors ?? [],
           })
           .select("id")
           .single();
@@ -451,6 +455,7 @@ function AdminProducts() {
           position: sameCat.length,
           is_available: it.is_available,
           sizes: it.sizes ?? [],
+          colors: it.colors ?? [],
         })
         .select("id")
         .single();
@@ -588,9 +593,11 @@ function AdminProducts() {
       price: 0,
       is_available: true,
       sizes: [],
+      colors: [],
     });
     setEditingVars([]);
     setSizesInput("");
+    setColorsInput("");
     setOpen(true);
   };
 
@@ -598,6 +605,7 @@ function AdminProducts() {
     setEditing(m);
     setEditingVars((variationsByItem[m.id] || []).map((v) => ({ ...v })));
     setSizesInput((m.sizes ?? []).join(", "));
+    setColorsInput((m.colors ?? []).join(", "));
     setOpen(true);
   };
 
@@ -1017,7 +1025,46 @@ function AdminProducts() {
                 )}
               </div>
 
-              {/* Variações */}
+              {/* Cores disponíveis (e-commerce) — não alteram o preço */}
+              <div className="sm:col-span-2 rounded-md border p-3">
+                <div className="mb-2">
+                  <p className="text-sm font-semibold">Cores disponíveis</p>
+                  <p className="text-xs text-muted-foreground">
+                    Separe por vírgula. Ex: Preto, Branco, Azul. A cor não altera o preço do produto.
+                  </p>
+                </div>
+                <Input
+                  value={colorsInput}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    setColorsInput(raw);
+                    const parts = raw
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean);
+                    setEditing({ ...editing, colors: parts });
+                  }}
+                  onBlur={() => {
+                    const parts = colorsInput
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean);
+                    setColorsInput(parts.join(", "));
+                  }}
+                  placeholder="Preto, Branco, Azul"
+                />
+                {(editing.colors ?? []).length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {(editing.colors ?? []).map((s, i) => (
+                      <Badge key={i} variant="secondary" className="text-xs">
+                        {s}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+
               <div className="sm:col-span-2 mt-2 rounded-md border p-3">
                 <div className="mb-2 flex items-center justify-between">
                   <div>
