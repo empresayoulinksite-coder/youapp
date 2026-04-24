@@ -88,6 +88,7 @@ type MenuItem = {
   position: number;
   is_available: boolean;
   sizes: string[];
+  colors: string[];
 };
 
 type Category = {
@@ -121,6 +122,7 @@ function AdminProducts() {
   const [editing, setEditing] = useState<Partial<MenuItem> | null>(null);
   const [editingVars, setEditingVars] = useState<Variation[]>([]);
   const [sizesInput, setSizesInput] = useState<string>("");
+  const [colorsInput, setColorsInput] = useState<string>("");
   const [uploading, setUploading] = useState(false);
 
   const [catOpen, setCatOpen] = useState(false);
@@ -276,6 +278,7 @@ function AdminProducts() {
         position: Number(m.position) || 0,
         is_available: m.is_available ?? true,
         sizes: Array.isArray(m.sizes) ? m.sizes.filter((s) => s.trim()) : [],
+        colors: Array.isArray(m.colors) ? m.colors.filter((s) => s.trim()) : [],
       };
 
       let itemId = m.id;
@@ -588,9 +591,11 @@ function AdminProducts() {
       price: 0,
       is_available: true,
       sizes: [],
+      colors: [],
     });
     setEditingVars([]);
     setSizesInput("");
+    setColorsInput("");
     setOpen(true);
   };
 
@@ -598,6 +603,7 @@ function AdminProducts() {
     setEditing(m);
     setEditingVars((variationsByItem[m.id] || []).map((v) => ({ ...v })));
     setSizesInput((m.sizes ?? []).join(", "));
+    setColorsInput((m.colors ?? []).join(", "));
     setOpen(true);
   };
 
