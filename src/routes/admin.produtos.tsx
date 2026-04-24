@@ -251,6 +251,18 @@ function AdminProducts() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const patchCategory = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { error } = await supabase
+        .from("menu_categories")
+        .update({ name })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-cats", storeId] }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const reorderCategories = useMutation({
     mutationFn: async (ordered: Category[]) => {
       await Promise.all(
@@ -786,6 +798,7 @@ function AdminProducts() {
                       onToggleItemAvailable={(m) => toggleItemAvailable.mutate(m)}
                       onDuplicateItem={(m) => duplicateItem.mutate(m)}
                       onPatchItem={(id, patch) => patchItem.mutate({ id, patch })}
+                      onPatchCategoryName={(name) => patchCategory.mutate({ id: cat.id, name })}
                       onDragItems={onDragItemsInCategory(cat.id)}
                       sensors={sensors}
                     />
@@ -1223,6 +1236,7 @@ function SortableCategory({
   onToggleItemAvailable,
   onDuplicateItem,
   onPatchItem,
+  onPatchCategoryName,
   onDragItems,
   sensors,
 }: {
@@ -1241,6 +1255,7 @@ function SortableCategory({
   onToggleItemAvailable: (m: MenuItem) => void;
   onDuplicateItem: (m: MenuItem) => void;
   onPatchItem: (id: string, patch: Partial<MenuItem>) => void;
+  onPatchCategoryName: (name: string) => void;
   onDragItems: (e: DragEndEvent) => void;
   sensors: ReturnType<typeof useSensors>;
 }) {
@@ -1250,6 +1265,24 @@ function SortableCategory({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+  };
+
+  const [editingCatName, setEditingCatName] = useState(false);
+  const [catNameDraft, setCatNameDraft] = useState(category.name);
+
+  const commitCatName = () => {
+    const v = catNameDraft.trim();
+    setEditingCatName(false);
+    if (!v || v === category.name) {
+      setCatNameDraft(category.name);
+      return;
+    }
+    if (v.length > 80) {
+      toast.error("Nome muito longo");
+      setCatNameDraft(category.name);
+      return;
+    }
+    onPatchCategoryName(v);
   };
 
   return (
@@ -1271,7 +1304,34 @@ function SortableCategory({
           )}
         </button>
         <div className="flex flex-1 items-center gap-2">
-          <h3 className="font-semibold">{category.name}</h3>
+          {editingCatName ? (
+            <Input
+              autoFocus
+              value={catNameDraft}
+              onChange={(e) => setCatNameDraft(e.target.value)}
+              onBlur={commitCatName}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") commitCatName();
+                if (e.key === "Escape") {
+                  setCatNameDraft(category.name);
+                  setEditingCatName(false);
+                }
+              }}
+              className="h-7 max-w-xs text-sm font-semibold"
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setCatNameDraft(category.name);
+                setEditingCatName(true);
+              }}
+              className="font-semibold hover:underline"
+              title="Clique para editar o nome"
+            >
+              {category.name}
+            </button>
+          )}
           <span className="text-xs text-muted-foreground">
             ({items.length} {items.length === 1 ? "item" : "itens"})
           </span>
