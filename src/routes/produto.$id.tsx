@@ -164,6 +164,7 @@ function ProductPage() {
   const [added, setAdded] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedVariationId, setSelectedVariationId] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
 
   const fmt = (n: number) => `R$ ${Number(n).toFixed(2).replace(".", ",")}`;
   const hasVariations = (product.variations?.length ?? 0) > 0;
@@ -191,7 +192,8 @@ function ProductPage() {
     ? Math.round((1 - Number(currentPrice) / Number(currentOriginalPrice)) * 100)
     : 0;
   const totalPrice = Number(currentPrice) * qty;
-  const hasSizes = !hasVariations && product.sizes && product.sizes.length > 0;
+  const hasSizes = product.sizes && product.sizes.length > 0;
+  const hasColors = product.colors && product.colors.length > 0;
 
   const handleAdd = async () => {
     if (!user) {
