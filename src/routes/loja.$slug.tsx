@@ -394,6 +394,13 @@ function StorePage() {
       <main className="px-4 pt-5">
         <div className="mb-5">
           <StoreReelsSection storeId={store.id} />
+          {isService && store.feed_enabled && (
+            <StoreFeedSection
+              storeId={store.id}
+              storeName={store.name}
+              storeSlug={store.slug}
+            />
+          )}
         </div>
         {tab === "menu" && isService && (
           <div className="space-y-3">
