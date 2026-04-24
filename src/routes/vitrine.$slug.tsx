@@ -489,8 +489,15 @@ function VitrinePage() {
                       {items.length} {items.length === 1 ? "item" : "itens"}
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    {items.map(renderProductCard)}
+                  <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 snap-x snap-mandatory pb-1">
+                    {items.map((p) => (
+                      <div
+                        key={p.id}
+                        className="shrink-0 snap-start w-[44%] sm:w-[30%] md:w-[23%]"
+                      >
+                        {renderProductCard(p)}
+                      </div>
+                    ))}
                   </div>
                 </section>
               );
@@ -509,8 +516,15 @@ function VitrinePage() {
                     {grouped.orphans.length} {grouped.orphans.length === 1 ? "item" : "itens"}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {grouped.orphans.map(renderProductCard)}
+                <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 snap-x snap-mandatory pb-1">
+                  {grouped.orphans.map((p) => (
+                    <div
+                      key={p.id}
+                      className="shrink-0 snap-start w-[44%] sm:w-[30%] md:w-[23%]"
+                    >
+                      {renderProductCard(p)}
+                    </div>
+                  ))}
                 </div>
               </section>
             )}
