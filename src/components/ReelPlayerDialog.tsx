@@ -26,7 +26,7 @@ export function ReelPlayerDialog({
     list.findIndex((r) => r.id === reel.id),
   );
   const [activeIndex, setActiveIndex] = useState(startIndex);
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState(false);
   const [progress, setProgress] = useState(0);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
@@ -78,7 +78,12 @@ export function ReelPlayerDialog({
       if (!v) return;
       if (i === activeIndex) {
         v.muted = muted;
-        v.play().catch(() => {});
+        v.play().catch(() => {
+          // Autoplay com som pode ser bloqueado; faz fallback para mutado
+          v.muted = true;
+          setMuted(true);
+          v.play().catch(() => {});
+        });
       } else {
         v.pause();
         v.currentTime = 0;
