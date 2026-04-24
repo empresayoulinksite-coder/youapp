@@ -368,6 +368,23 @@ function AdminProducts() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const patchVariation = useMutation({
+    mutationFn: async ({
+      id,
+      patch,
+    }: {
+      id: string;
+      patch: { price?: number; original_price?: number | null; name?: string; is_available?: boolean };
+    }) => {
+      const { error } = await supabase.from("menu_item_variations").update(patch).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-variations", storeId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const duplicateCategory = useMutation({
     mutationFn: async (cat: Category) => {
       const { data: newCat, error } = await supabase
@@ -798,6 +815,7 @@ function AdminProducts() {
                       onToggleItemAvailable={(m) => toggleItemAvailable.mutate(m)}
                       onDuplicateItem={(m) => duplicateItem.mutate(m)}
                       onPatchItem={(id, patch) => patchItem.mutate({ id, patch })}
+                      onPatchVariation={(id, patch) => patchVariation.mutate({ id, patch })}
                       onPatchCategoryName={(name) => patchCategory.mutate({ id: cat.id, name })}
                       onDragItems={onDragItemsInCategory(cat.id)}
                       sensors={sensors}
@@ -1236,6 +1254,7 @@ function SortableCategory({
   onToggleItemAvailable,
   onDuplicateItem,
   onPatchItem,
+  onPatchVariation,
   onPatchCategoryName,
   onDragItems,
   sensors,
@@ -1255,6 +1274,7 @@ function SortableCategory({
   onToggleItemAvailable: (m: MenuItem) => void;
   onDuplicateItem: (m: MenuItem) => void;
   onPatchItem: (id: string, patch: Partial<MenuItem>) => void;
+  onPatchVariation: (id: string, patch: { price?: number }) => void;
   onPatchCategoryName: (name: string) => void;
   onDragItems: (e: DragEndEvent) => void;
   sensors: ReturnType<typeof useSensors>;
@@ -1393,6 +1413,7 @@ function SortableCategory({
                     onToggleAvailable={() => onToggleItemAvailable(m)}
                     onDuplicate={() => onDuplicateItem(m)}
                     onPatch={(patch) => onPatchItem(m.id, patch)}
+                    onPatchVariation={onPatchVariation}
                   />
                 ))}
               </SortableContext>
@@ -1413,6 +1434,7 @@ function SortableItemRow({
   onToggleAvailable,
   onDuplicate,
   onPatch,
+  onPatchVariation,
 }: {
   item: MenuItem;
   variations: Variation[];
@@ -1421,6 +1443,7 @@ function SortableItemRow({
   onToggleAvailable: () => void;
   onDuplicate: () => void;
   onPatch: (patch: Partial<MenuItem>) => void;
+  onPatchVariation: (id: string, patch: { price?: number }) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: item.id });
@@ -1431,14 +1454,18 @@ function SortableItemRow({
   };
 
   const hasVariations = variations.length > 0;
+  // Variação de menor preço (a que aparece como "A partir de").
+  const cheapestVariation = hasVariations
+    ? variations.reduce((acc, v) => (Number(v.price) < Number(acc.price) ? v : acc), variations[0])
+    : null;
   const minPrice = hasVariations
-    ? Math.min(...variations.map((v) => Number(v.price)))
+    ? Number(cheapestVariation!.price)
     : Number(item.price);
 
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(item.name);
   const [editingPrice, setEditingPrice] = useState(false);
-  const [priceDraft, setPriceDraft] = useState(String(item.price ?? 0));
+  const [priceDraft, setPriceDraft] = useState(String(minPrice ?? 0));
 
   const commitName = () => {
     const v = nameDraft.trim();
@@ -1460,11 +1487,16 @@ function SortableItemRow({
     const n = Number(priceDraft.replace(",", "."));
     if (!Number.isFinite(n) || n < 0) {
       toast.error("Preço inválido");
-      setPriceDraft(String(item.price ?? 0));
+      setPriceDraft(String(minPrice ?? 0));
       return;
     }
-    if (n === Number(item.price)) return;
-    onPatch({ price: n });
+    if (hasVariations && cheapestVariation && cheapestVariation.id) {
+      if (n === Number(cheapestVariation.price)) return;
+      onPatchVariation(cheapestVariation.id, { price: n });
+    } else {
+      if (n === Number(item.price)) return;
+      onPatch({ price: n });
+    }
   };
 
   return (
@@ -1541,7 +1573,7 @@ function SortableItemRow({
         {hasVariations && (
           <p className="text-[10px] text-muted-foreground">A partir de</p>
         )}
-        {editingPrice && !hasVariations ? (
+        {editingPrice ? (
           <div className="flex items-center gap-1">
             <span className="text-sm font-semibold">R$</span>
             <Input
@@ -1555,7 +1587,7 @@ function SortableItemRow({
               onKeyDown={(e) => {
                 if (e.key === "Enter") commitPrice();
                 if (e.key === "Escape") {
-                  setPriceDraft(String(item.price ?? 0));
+                  setPriceDraft(String(minPrice ?? 0));
                   setEditingPrice(false);
                 }
               }}
@@ -1566,18 +1598,19 @@ function SortableItemRow({
           <button
             type="button"
             onClick={() => {
-              if (hasVariations) {
-                toast.info("Edite os preços nas variações deste produto");
+              if (hasVariations && variations.length > 1) {
+                // Múltiplas variações: abre o editor completo para evitar confusão.
+                toast.info("Edite os preços das variações no formulário");
                 onEdit();
                 return;
               }
-              setPriceDraft(String(item.price ?? 0));
+              setPriceDraft(String(minPrice ?? 0));
               setEditingPrice(true);
             }}
             className="text-sm font-semibold hover:underline"
             title={
-              hasVariations
-                ? "Produto com variações — edite no formulário"
+              hasVariations && variations.length > 1
+                ? "Produto com várias variações — edite no formulário"
                 : "Clique para editar o preço"
             }
           >
