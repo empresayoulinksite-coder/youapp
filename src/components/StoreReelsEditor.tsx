@@ -146,7 +146,7 @@ export function StoreReelsEditor({
         {isLoading && <p className="text-xs text-muted-foreground">Carregando...</p>}
 
         {!isLoading && reels.length === 0 && (
-          <p className="text-xs text-muted-foreground py-2">Nenhum reel cadastrado.</p>
+          <p className="text-xs text-muted-foreground py-2">Nenhum flow cadastrado.</p>
         )}
 
         {reels.map((r) => {
