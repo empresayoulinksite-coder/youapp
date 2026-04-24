@@ -73,6 +73,7 @@ export function ReelPlayerDialog({
 
   // Play active video, pause others
   useEffect(() => {
+    setProgress(0);
     videoRefs.current.forEach((v, i) => {
       if (!v) return;
       if (i === activeIndex) {
@@ -84,6 +85,17 @@ export function ReelPlayerDialog({
       }
     });
   }, [activeIndex, muted]);
+
+  // Track progress of active video
+  useEffect(() => {
+    const v = videoRefs.current[activeIndex];
+    if (!v) return;
+    const onTime = () => {
+      if (v.duration > 0) setProgress(v.currentTime / v.duration);
+    };
+    v.addEventListener("timeupdate", onTime);
+    return () => v.removeEventListener("timeupdate", onTime);
+  }, [activeIndex]);
 
   return (
     <div className="fixed inset-0 z-[60] bg-black flex items-center justify-center">
