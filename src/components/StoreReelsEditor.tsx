@@ -65,7 +65,7 @@ export function StoreReelsEditor({
     },
     onSuccess: () => {
       invalidate();
-      toast.success("Reel adicionado");
+      toast.success("Flow adicionado");
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -87,7 +87,7 @@ export function StoreReelsEditor({
     },
     onSuccess: () => {
       invalidate();
-      toast.success("Reel removido");
+      toast.success("Flow removido");
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -125,7 +125,7 @@ export function StoreReelsEditor({
     <div className="rounded-xl border bg-card p-4 space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h3 className="font-semibold text-sm">Reels da loja</h3>
+          <h3 className="font-semibold text-sm">Flow da loja</h3>
           <p className="text-xs text-muted-foreground">
             Vídeos curtos exibidos na vitrine. Apenas o admin gerencia.
           </p>
@@ -146,7 +146,7 @@ export function StoreReelsEditor({
         {isLoading && <p className="text-xs text-muted-foreground">Carregando...</p>}
 
         {!isLoading && reels.length === 0 && (
-          <p className="text-xs text-muted-foreground py-2">Nenhum reel cadastrado.</p>
+          <p className="text-xs text-muted-foreground py-2">Nenhum flow cadastrado.</p>
         )}
 
         {reels.map((r) => {
@@ -261,7 +261,7 @@ export function StoreReelsEditor({
                       variant="ghost"
                       size="sm"
                       onClick={() => {
-                        if (confirm("Remover este reel?")) remove.mutate(r.id);
+                        if (confirm("Remover este flow?")) remove.mutate(r.id);
                       }}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
@@ -274,7 +274,7 @@ export function StoreReelsEditor({
         })}
 
         <Button onClick={() => create.mutate()} variant="outline" size="sm" className="w-full">
-          <Plus className="h-4 w-4 mr-1" /> Adicionar reel
+          <Plus className="h-4 w-4 mr-1" /> Adicionar flow
         </Button>
       </div>
     </div>
