@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2, GripVertical, Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -149,133 +149,194 @@ export function StoreReelsEditor({
           <p className="text-xs text-muted-foreground py-2">Nenhum flow cadastrado.</p>
         )}
 
-        {reels.map((r) => {
-          const isUp = uploadingId === r.id;
-          const isThumbUp = uploadingId === r.id + ":thumb";
-          return (
-            <div key={r.id} className="rounded-lg border p-3 space-y-3 bg-background">
-              <div className="flex items-start gap-3">
-                <GripVertical className="h-4 w-4 text-muted-foreground mt-2 shrink-0" />
-                <div className="flex-1 space-y-2 min-w-0">
-                  <div className="grid sm:grid-cols-2 gap-2">
-                    <div>
-                      <Label className="text-xs">Título</Label>
-                      <Input
-                        value={r.title}
-                        onChange={(e) => update.mutate({ id: r.id, title: e.target.value })}
-                        placeholder="Hoje temos..."
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Posição</Label>
-                      <Input
-                        type="number"
-                        value={r.position}
-                        onChange={(e) =>
-                          update.mutate({ id: r.id, position: Number(e.target.value) })
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid sm:grid-cols-2 gap-2">
-                    <div>
-                      <Label className="text-xs">Texto do botão (opcional)</Label>
-                      <Input
-                        value={r.cta_label ?? ""}
-                        onChange={(e) =>
-                          update.mutate({ id: r.id, cta_label: e.target.value || null })
-                        }
-                        placeholder="Ver produto"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Link do botão (opcional)</Label>
-                      <Input
-                        value={r.cta_url ?? ""}
-                        onChange={(e) =>
-                          update.mutate({ id: r.id, cta_url: e.target.value || null })
-                        }
-                        placeholder="https://... ou /produto/123"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid sm:grid-cols-2 gap-3 pt-1">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">Vídeo (mp4/webm)</Label>
-                      <div className="flex items-center gap-2">
-                        <label className="inline-flex items-center gap-2 text-xs px-3 py-2 rounded-md bg-muted hover:bg-muted/70 cursor-pointer">
-                          {isUp ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-                          {r.video_url ? "Trocar" : "Enviar"}
-                          <input
-                            type="file"
-                            accept="video/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              const f = e.target.files?.[0];
-                              if (f) handleUploadVideo(r, f);
-                              e.target.value = "";
-                            }}
-                          />
-                        </label>
-                        {r.video_url && (
-                          <video src={r.video_url} className="h-12 w-9 rounded object-cover bg-black" muted />
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">Capa (opcional)</Label>
-                      <div className="flex items-center gap-2">
-                        <label className="inline-flex items-center gap-2 text-xs px-3 py-2 rounded-md bg-muted hover:bg-muted/70 cursor-pointer">
-                          {isThumbUp ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-                          {r.thumbnail_url ? "Trocar" : "Enviar"}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              const f = e.target.files?.[0];
-                              if (f) handleUploadThumb(r, f);
-                              e.target.value = "";
-                            }}
-                          />
-                        </label>
-                        {r.thumbnail_url && (
-                          <img src={r.thumbnail_url} alt="" className="h-12 w-9 rounded object-cover" />
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2">
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={r.is_active}
-                        onCheckedChange={(v) => update.mutate({ id: r.id, is_active: v })}
-                      />
-                      <span className="text-xs text-muted-foreground">Ativo</span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        if (confirm("Remover este flow?")) remove.mutate(r.id);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        {reels.map((r) => (
+          <ReelRow
+            key={r.id}
+            reel={r}
+            uploadingId={uploadingId}
+            onPatch={(patch) => update.mutate({ id: r.id, ...patch })}
+            onRemove={() => {
+              if (confirm("Remover este flow?")) remove.mutate(r.id);
+            }}
+            onUploadVideo={(f) => handleUploadVideo(r, f)}
+            onUploadThumb={(f) => handleUploadThumb(r, f)}
+          />
+        ))}
 
         <Button onClick={() => create.mutate()} variant="outline" size="sm" className="w-full">
           <Plus className="h-4 w-4 mr-1" /> Adicionar flow
         </Button>
+      </div>
+    </div>
+  );
+}
+
+function ReelRow({
+  reel,
+  uploadingId,
+  onPatch,
+  onRemove,
+  onUploadVideo,
+  onUploadThumb,
+}: {
+  reel: Reel;
+  uploadingId: string | null;
+  onPatch: (patch: Partial<Reel>) => void;
+  onRemove: () => void;
+  onUploadVideo: (f: File) => void;
+  onUploadThumb: (f: File) => void;
+}) {
+  const isUp = uploadingId === reel.id;
+  const isThumbUp = uploadingId === reel.id + ":thumb";
+
+  // Local draft state — avoids losing characters when the query refetches
+  const [title, setTitle] = useState(reel.title);
+  const [position, setPosition] = useState(String(reel.position));
+  const [ctaLabel, setCtaLabel] = useState(reel.cta_label ?? "");
+  const [ctaUrl, setCtaUrl] = useState(reel.cta_url ?? "");
+  const focusedRef = useRef<string | null>(null);
+
+  // Sync from server only when the field is not focused (prevents overwriting in-progress typing)
+  useEffect(() => {
+    if (focusedRef.current !== "title") setTitle(reel.title);
+  }, [reel.title]);
+  useEffect(() => {
+    if (focusedRef.current !== "position") setPosition(String(reel.position));
+  }, [reel.position]);
+  useEffect(() => {
+    if (focusedRef.current !== "ctaLabel") setCtaLabel(reel.cta_label ?? "");
+  }, [reel.cta_label]);
+  useEffect(() => {
+    if (focusedRef.current !== "ctaUrl") setCtaUrl(reel.cta_url ?? "");
+  }, [reel.cta_url]);
+
+  return (
+    <div className="rounded-lg border p-3 space-y-3 bg-background">
+      <div className="flex items-start gap-3">
+        <GripVertical className="h-4 w-4 text-muted-foreground mt-2 shrink-0" />
+        <div className="flex-1 space-y-2 min-w-0">
+          <div className="grid sm:grid-cols-2 gap-2">
+            <div>
+              <Label className="text-xs">Título</Label>
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                onFocus={() => (focusedRef.current = "title")}
+                onBlur={() => {
+                  focusedRef.current = null;
+                  if (title !== reel.title) onPatch({ title });
+                }}
+                placeholder="Hoje temos..."
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Posição</Label>
+              <Input
+                type="number"
+                value={position}
+                onChange={(e) => setPosition(e.target.value)}
+                onFocus={() => (focusedRef.current = "position")}
+                onBlur={() => {
+                  focusedRef.current = null;
+                  const n = Number(position);
+                  if (!Number.isNaN(n) && n !== reel.position) onPatch({ position: n });
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-2">
+            <div>
+              <Label className="text-xs">Texto do botão (opcional)</Label>
+              <Input
+                value={ctaLabel}
+                onChange={(e) => setCtaLabel(e.target.value)}
+                onFocus={() => (focusedRef.current = "ctaLabel")}
+                onBlur={() => {
+                  focusedRef.current = null;
+                  const next = ctaLabel || null;
+                  if (next !== (reel.cta_label ?? null)) onPatch({ cta_label: next });
+                }}
+                placeholder="Ver produto"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Link do botão (opcional)</Label>
+              <Input
+                value={ctaUrl}
+                onChange={(e) => setCtaUrl(e.target.value)}
+                onFocus={() => (focusedRef.current = "ctaUrl")}
+                onBlur={() => {
+                  focusedRef.current = null;
+                  const next = ctaUrl || null;
+                  if (next !== (reel.cta_url ?? null)) onPatch({ cta_url: next });
+                }}
+                placeholder="https://... ou /produto/123"
+              />
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-3 pt-1">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Vídeo (mp4/webm)</Label>
+              <div className="flex items-center gap-2">
+                <label className="inline-flex items-center gap-2 text-xs px-3 py-2 rounded-md bg-muted hover:bg-muted/70 cursor-pointer">
+                  {isUp ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                  {reel.video_url ? "Trocar" : "Enviar"}
+                  <input
+                    type="file"
+                    accept="video/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) onUploadVideo(f);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+                {reel.video_url && (
+                  <video src={reel.video_url} className="h-12 w-9 rounded object-cover bg-black" muted />
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">Capa (opcional)</Label>
+              <div className="flex items-center gap-2">
+                <label className="inline-flex items-center gap-2 text-xs px-3 py-2 rounded-md bg-muted hover:bg-muted/70 cursor-pointer">
+                  {isThumbUp ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                  {reel.thumbnail_url ? "Trocar" : "Enviar"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) onUploadThumb(f);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+                {reel.thumbnail_url && (
+                  <img src={reel.thumbnail_url} alt="" className="h-12 w-9 rounded object-cover" />
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-2">
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={reel.is_active}
+                onCheckedChange={(v) => onPatch({ is_active: v })}
+              />
+              <span className="text-xs text-muted-foreground">Ativo</span>
+            </div>
+            <Button variant="ghost" size="sm" onClick={onRemove}>
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
