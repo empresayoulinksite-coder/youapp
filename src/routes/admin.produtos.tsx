@@ -1267,6 +1267,24 @@ function SortableCategory({
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const [editingCatName, setEditingCatName] = useState(false);
+  const [catNameDraft, setCatNameDraft] = useState(category.name);
+
+  const commitCatName = () => {
+    const v = catNameDraft.trim();
+    setEditingCatName(false);
+    if (!v || v === category.name) {
+      setCatNameDraft(category.name);
+      return;
+    }
+    if (v.length > 80) {
+      toast.error("Nome muito longo");
+      setCatNameDraft(category.name);
+      return;
+    }
+    onPatchCategoryName(v);
+  };
+
   return (
     <div ref={setNodeRef} style={style} className="rounded-lg border bg-card">
       <div className="flex items-center gap-2 border-b p-3">
