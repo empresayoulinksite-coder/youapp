@@ -160,29 +160,55 @@ function ProductPage() {
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedVariationId, setSelectedVariationId] = useState<string | null>(null);
 
   const fmt = (n: number) => `R$ ${Number(n).toFixed(2).replace(".", ",")}`;
+  const hasVariations = (product.variations?.length ?? 0) > 0;
+  const selectedVariation = hasVariations
+    ? product.variations.find((v) => v.id === selectedVariationId) ?? null
+    : null;
+
+  // Preço corrente: variação selecionada > preço base. Se houver variações sem seleção,
+  // mostramos "a partir de" usando o menor preço.
+  const minVariationPrice = hasVariations
+    ? Math.min(...product.variations.map((v) => Number(v.price)))
+    : Number(product.price);
+  const currentPrice = selectedVariation
+    ? Number(selectedVariation.price)
+    : hasVariations
+      ? minVariationPrice
+      : Number(product.price);
+  const currentOriginalPrice = selectedVariation
+    ? selectedVariation.original_price
+    : product.original_price;
+
   const hasDiscount =
-    !!product.original_price && Number(product.original_price) > Number(product.price);
+    !!currentOriginalPrice && Number(currentOriginalPrice) > Number(currentPrice);
   const discountPct = hasDiscount
-    ? Math.round((1 - Number(product.price) / Number(product.original_price)) * 100)
+    ? Math.round((1 - Number(currentPrice) / Number(currentOriginalPrice)) * 100)
     : 0;
-  const totalPrice = Number(product.price) * qty;
-  const hasSizes = product.sizes && product.sizes.length > 0;
+  const totalPrice = Number(currentPrice) * qty;
+  const hasSizes = !hasVariations && product.sizes && product.sizes.length > 0;
 
   const handleAdd = async () => {
     if (!user) {
       window.location.href = "/auth";
       return;
     }
+    if (hasVariations && !selectedVariation) {
+      toast.error("Escolha uma opção antes de adicionar.");
+      return;
+    }
     if (hasSizes && !selectedSize) {
       toast.error("Escolha um tamanho antes de adicionar.");
       return;
     }
+    const sizeForCart = selectedVariation ? selectedVariation.name : selectedSize;
+    const priceOverride = selectedVariation ? Number(selectedVariation.price) : null;
     setAdding(true);
     try {
       for (let i = 0; i < qty; i++) {
-        await addItem(store.id, product.id, selectedSize);
+        await addItem(store.id, product.id, sizeForCart, priceOverride);
       }
     } catch (err) {
       if (err instanceof DifferentStoreError) {
@@ -190,9 +216,9 @@ function ProductPage() {
           "Você só pode pedir de uma loja por vez (o pedido vai pelo WhatsApp). Limpar o carrinho atual e adicionar este item?",
         );
         if (ok) {
-          await switchStoreAndAdd(store.id, product.id, selectedSize);
+          await switchStoreAndAdd(store.id, product.id, sizeForCart, priceOverride);
           for (let i = 1; i < qty; i++) {
-            await addItem(store.id, product.id, selectedSize);
+            await addItem(store.id, product.id, sizeForCart, priceOverride);
           }
         } else {
           setAdding(false);
