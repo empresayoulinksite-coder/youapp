@@ -274,7 +274,7 @@ export function StoreReelsEditor({
         })}
 
         <Button onClick={() => create.mutate()} variant="outline" size="sm" className="w-full">
-          <Plus className="h-4 w-4 mr-1" /> Adicionar reel
+          <Plus className="h-4 w-4 mr-1" /> Adicionar flow
         </Button>
       </div>
     </div>
