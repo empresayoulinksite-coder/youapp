@@ -1,11 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, Trash2, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { WEEKDAYS, formatTime, type StoreHour } from "@/lib/store-hours";
+
+const ALWAYS_OPEN_OPEN = "00:00";
+const ALWAYS_OPEN_CLOSE = "23:59";
 
 interface DraftInterval {
   id?: string;
@@ -133,10 +137,49 @@ export function StoreHoursEditor({ storeId }: { storeId: string }) {
     }
   };
 
+  const isAlwaysOpen = useMemo(() => {
+    for (let day = 0; day < 7; day++) {
+      const ivs = draft[day];
+      if (ivs.length !== 1) return false;
+      const iv = ivs[0];
+      if (!iv.is_active) return false;
+      if (formatTime(iv.opens_at) !== ALWAYS_OPEN_OPEN) return false;
+      if (formatTime(iv.closes_at) !== ALWAYS_OPEN_CLOSE) return false;
+    }
+    return true;
+  }, [draft]);
+
+  const setAlwaysOpen = (v: boolean) => {
+    if (v) {
+      const next: DraftMap = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
+      for (let day = 0; day < 7; day++) {
+        next[day] = [{ opens_at: ALWAYS_OPEN_OPEN, closes_at: ALWAYS_OPEN_CLOSE, is_active: true }];
+      }
+      setDraft(next);
+    } else {
+      setDraft({ 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] });
+    }
+  };
+
   if (loading) return <p className="text-sm text-muted-foreground">Carregando horários...</p>;
 
   return (
     <div className="space-y-3">
+      <div className="flex items-center justify-between gap-3 rounded-lg border bg-background p-3">
+        <div className="min-w-0">
+          <Label htmlFor={`always-open-${storeId}`} className="text-sm font-semibold">
+            Loja sempre aberta
+          </Label>
+          <p className="text-[11px] text-muted-foreground">
+            Ative para manter a loja aberta 24h em todos os dias.
+          </p>
+        </div>
+        <Switch
+          id={`always-open-${storeId}`}
+          checked={isAlwaysOpen}
+          onCheckedChange={setAlwaysOpen}
+        />
+      </div>
       <p className="text-xs text-muted-foreground">
         Defina os intervalos em que a loja está aberta. Fora desses horários, os clientes não poderão fazer pedidos.
       </p>
