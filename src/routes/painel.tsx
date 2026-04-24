@@ -18,6 +18,7 @@ import { OverviewTab } from "@/components/painel/OverviewTab";
 import { BookingsTab, type BookingRow, type StoreLite } from "@/components/painel/BookingsTab";
 import { ServicesTab } from "@/components/painel/ServicesTab";
 import { CouponsTab } from "@/components/painel/CouponsTab";
+import { CustomersTab } from "@/components/painel/CustomersTab";
 import { StoreHoursEditor } from "@/components/StoreHoursEditor";
 import { StoreWhatsappEditor } from "@/components/StoreWhatsappEditor";
 import { StoreDeliveryEditor } from "@/components/StoreDeliveryEditor";
