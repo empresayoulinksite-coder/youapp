@@ -369,7 +369,13 @@ function AdminProducts() {
   });
 
   const patchVariation = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: Partial<Variation> }) => {
+    mutationFn: async ({
+      id,
+      patch,
+    }: {
+      id: string;
+      patch: { price?: number; original_price?: number | null; name?: string; is_available?: boolean };
+    }) => {
       const { error } = await supabase.from("menu_item_variations").update(patch).eq("id", id);
       if (error) throw error;
     },
