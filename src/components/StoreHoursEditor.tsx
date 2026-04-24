@@ -1,11 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, Trash2, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { WEEKDAYS, formatTime, type StoreHour } from "@/lib/store-hours";
+
+const ALWAYS_OPEN_OPEN = "00:00";
+const ALWAYS_OPEN_CLOSE = "23:59";
 
 interface DraftInterval {
   id?: string;
