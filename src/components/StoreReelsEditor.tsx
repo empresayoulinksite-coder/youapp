@@ -125,7 +125,7 @@ export function StoreReelsEditor({
     <div className="rounded-xl border bg-card p-4 space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h3 className="font-semibold text-sm">Flow da loja</h3>
+          <h3 className="font-semibold text-sm">YouFlow da loja</h3>
           <p className="text-xs text-muted-foreground">
             Vídeos curtos exibidos na vitrine. Apenas o admin gerencia.
           </p>
