@@ -92,9 +92,33 @@ export const Route = createFileRoute("/vitrine/$slug")({
     if (itemsErr) throw itemsErr;
     if (catsErr) throw catsErr;
 
+    const itemIds = (items ?? []).map((i) => i.id);
+    const varsByItem = new Map<string, Variation[]>();
+    if (itemIds.length > 0) {
+      const { data: variations } = await supabase
+        .from("menu_item_variations")
+        .select("id, menu_item_id, name, price, original_price")
+        .in("menu_item_id", itemIds)
+        .eq("is_available", true)
+        .order("position");
+      for (const v of (variations ?? []) as Array<{ id: string; menu_item_id: string; name: string; price: number; original_price: number | null }>) {
+        const list = varsByItem.get(v.menu_item_id) ?? [];
+        list.push({
+          id: v.id,
+          name: v.name,
+          price: Number(v.price),
+          original_price: v.original_price !== null ? Number(v.original_price) : null,
+        });
+        varsByItem.set(v.menu_item_id, list);
+      }
+    }
+
     return {
       store: store as Store,
-      products: (items ?? []) as Product[],
+      products: ((items ?? []) as Omit<Product, "variations">[]).map((p) => ({
+        ...p,
+        variations: varsByItem.get(p.id) ?? [],
+      })),
       categories: (cats ?? []) as CategoryRow[],
     };
   },
