@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { LogOut, Power, LayoutDashboard, Calendar, Scissors, Ticket, Clock3 } from "lucide-react";
+import { LogOut, Power, LayoutDashboard, Calendar, Scissors, Ticket, Clock3, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -180,6 +180,12 @@ function PainelPage() {
                 </SelectContent>
               </Select>
             )}
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/">
+                <ArrowLeft className="h-4 w-4" />
+                Voltar ao app
+              </Link>
+            </Button>
             <Button
               variant="outline"
               size="sm"
