@@ -22,6 +22,13 @@ interface Store {
   promo: string | null;
 }
 
+interface Variation {
+  id: string;
+  name: string;
+  price: number;
+  original_price: number | null;
+}
+
 interface Product {
   id: string;
   category_id: string;
@@ -32,6 +39,7 @@ interface Product {
   emoji: string;
   image_url: string | null;
   promo: string | null;
+  variations: Variation[];
 }
 
 interface CategoryRow {
@@ -84,9 +92,33 @@ export const Route = createFileRoute("/vitrine/$slug")({
     if (itemsErr) throw itemsErr;
     if (catsErr) throw catsErr;
 
+    const itemIds = (items ?? []).map((i) => i.id);
+    const varsByItem = new Map<string, Variation[]>();
+    if (itemIds.length > 0) {
+      const { data: variations } = await supabase
+        .from("menu_item_variations")
+        .select("id, menu_item_id, name, price, original_price")
+        .in("menu_item_id", itemIds)
+        .eq("is_available", true)
+        .order("position");
+      for (const v of (variations ?? []) as Array<{ id: string; menu_item_id: string; name: string; price: number; original_price: number | null }>) {
+        const list = varsByItem.get(v.menu_item_id) ?? [];
+        list.push({
+          id: v.id,
+          name: v.name,
+          price: Number(v.price),
+          original_price: v.original_price !== null ? Number(v.original_price) : null,
+        });
+        varsByItem.set(v.menu_item_id, list);
+      }
+    }
+
     return {
       store: store as Store,
-      products: (items ?? []) as Product[],
+      products: ((items ?? []) as Omit<Product, "variations">[]).map((p) => ({
+        ...p,
+        variations: varsByItem.get(p.id) ?? [],
+      })),
       categories: (cats ?? []) as CategoryRow[],
     };
   },
@@ -204,7 +236,13 @@ function VitrinePage() {
   };
 
   const renderProductCard = (p: Product) => {
-    const hasDiscount = !!p.original_price && Number(p.original_price) > Number(p.price);
+    const hasVariations = (p.variations?.length ?? 0) > 0;
+    const minVarPrice = hasVariations
+      ? Math.min(...p.variations.map((v) => Number(v.price)))
+      : Number(p.price);
+    const displayPrice = hasVariations ? minVarPrice : Number(p.price);
+    // Quando há variações, ignoramos o desconto base (cada variação tem o seu).
+    const hasDiscount = !hasVariations && !!p.original_price && Number(p.original_price) > Number(p.price);
     const discountPct = hasDiscount
       ? Math.round((1 - Number(p.price) / Number(p.original_price)) * 100)
       : 0;
@@ -228,6 +266,11 @@ function VitrinePage() {
               -{discountPct}%
             </span>
           )}
+          {hasVariations && (
+            <span className="absolute top-2 right-2 text-[10px] font-bold text-foreground bg-card/90 backdrop-blur px-1.5 py-0.5 rounded">
+              {p.variations.length} opções
+            </span>
+          )}
         </Link>
         <div className="p-2.5 flex flex-col gap-1.5 flex-1">
           <Link
@@ -238,20 +281,33 @@ function VitrinePage() {
             {p.name}
           </Link>
           <div className="flex items-baseline gap-1.5 flex-wrap">
-            <span className="text-sm font-bold">{fmt(Number(p.price))}</span>
+            {hasVariations && (
+              <span className="text-[10px] text-muted-foreground">a partir de</span>
+            )}
+            <span className="text-sm font-bold">{fmt(Number(displayPrice))}</span>
             {hasDiscount && (
               <span className="text-[10px] text-muted-foreground line-through">
                 {fmt(Number(p.original_price))}
               </span>
             )}
           </div>
-          <button
-            onClick={() => handleAdd(p.id)}
-            disabled={adding === p.id}
-            className="mt-auto bg-brand text-brand-foreground text-xs font-bold py-2 rounded-full hover:opacity-90 active:scale-[.98] transition disabled:opacity-60"
-          >
-            {adding === p.id ? "Adicionado ✓" : "Comprar"}
-          </button>
+          {hasVariations ? (
+            <Link
+              to="/produto/$id"
+              params={{ id: p.id }}
+              className="mt-auto text-center bg-brand text-brand-foreground text-xs font-bold py-2 rounded-full hover:opacity-90 active:scale-[.98] transition"
+            >
+              Ver opções
+            </Link>
+          ) : (
+            <button
+              onClick={() => handleAdd(p.id)}
+              disabled={adding === p.id}
+              className="mt-auto bg-brand text-brand-foreground text-xs font-bold py-2 rounded-full hover:opacity-90 active:scale-[.98] transition disabled:opacity-60"
+            >
+              {adding === p.id ? "Adicionado ✓" : "Comprar"}
+            </button>
+          )}
         </div>
       </article>
     );

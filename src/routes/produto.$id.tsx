@@ -7,6 +7,15 @@ import { useCart, DifferentStoreError } from "@/contexts/CartContext";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { toast } from "sonner";
 
+interface Variation {
+  id: string;
+  name: string;
+  price: number;
+  original_price: number | null;
+  is_available: boolean;
+  position: number;
+}
+
 interface Product {
   id: string;
   store_id: string;
@@ -18,6 +27,7 @@ interface Product {
   image_url: string | null;
   promo: string | null;
   sizes: string[];
+  variations: Variation[];
 }
 
 interface Store {
@@ -69,10 +79,41 @@ export const Route = createFileRoute("/produto/$id")({
       .order("position")
       .limit(8);
 
+    const relatedIds = (related ?? []).map((r) => r.id);
+    const allIds = [product.id, ...relatedIds];
+    const { data: variations } = await supabase
+      .from("menu_item_variations")
+      .select("id, menu_item_id, name, price, original_price, is_available, position")
+      .in("menu_item_id", allIds)
+      .eq("is_available", true)
+      .order("position");
+
+    const varsByItem = new Map<string, Variation[]>();
+    for (const v of (variations ?? []) as Array<Variation & { menu_item_id: string }>) {
+      const list = varsByItem.get(v.menu_item_id) ?? [];
+      list.push({
+        id: v.id,
+        name: v.name,
+        price: Number(v.price),
+        original_price: v.original_price !== null ? Number(v.original_price) : null,
+        is_available: v.is_available,
+        position: v.position,
+      });
+      varsByItem.set(v.menu_item_id, list);
+    }
+
     return {
-      product: { ...product, sizes: Array.isArray(product.sizes) ? product.sizes : [] } as Product,
+      product: {
+        ...product,
+        sizes: Array.isArray(product.sizes) ? product.sizes : [],
+        variations: varsByItem.get(product.id) ?? [],
+      } as Product,
       store: store as Store,
-      related: ((related ?? []) as Product[]).map((p) => ({ ...p, sizes: Array.isArray(p.sizes) ? p.sizes : [] })),
+      related: ((related ?? []) as Omit<Product, "variations">[]).map((p) => ({
+        ...p,
+        sizes: Array.isArray(p.sizes) ? p.sizes : [],
+        variations: varsByItem.get(p.id) ?? [],
+      })),
     };
   },
   errorComponent: ({ error }) => (
@@ -119,29 +160,55 @@ function ProductPage() {
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedVariationId, setSelectedVariationId] = useState<string | null>(null);
 
   const fmt = (n: number) => `R$ ${Number(n).toFixed(2).replace(".", ",")}`;
+  const hasVariations = (product.variations?.length ?? 0) > 0;
+  const selectedVariation = hasVariations
+    ? product.variations.find((v) => v.id === selectedVariationId) ?? null
+    : null;
+
+  // Preço corrente: variação selecionada > preço base. Se houver variações sem seleção,
+  // mostramos "a partir de" usando o menor preço.
+  const minVariationPrice = hasVariations
+    ? Math.min(...product.variations.map((v) => Number(v.price)))
+    : Number(product.price);
+  const currentPrice = selectedVariation
+    ? Number(selectedVariation.price)
+    : hasVariations
+      ? minVariationPrice
+      : Number(product.price);
+  const currentOriginalPrice = selectedVariation
+    ? selectedVariation.original_price
+    : product.original_price;
+
   const hasDiscount =
-    !!product.original_price && Number(product.original_price) > Number(product.price);
+    !!currentOriginalPrice && Number(currentOriginalPrice) > Number(currentPrice);
   const discountPct = hasDiscount
-    ? Math.round((1 - Number(product.price) / Number(product.original_price)) * 100)
+    ? Math.round((1 - Number(currentPrice) / Number(currentOriginalPrice)) * 100)
     : 0;
-  const totalPrice = Number(product.price) * qty;
-  const hasSizes = product.sizes && product.sizes.length > 0;
+  const totalPrice = Number(currentPrice) * qty;
+  const hasSizes = !hasVariations && product.sizes && product.sizes.length > 0;
 
   const handleAdd = async () => {
     if (!user) {
       window.location.href = "/auth";
       return;
     }
+    if (hasVariations && !selectedVariation) {
+      toast.error("Escolha uma opção antes de adicionar.");
+      return;
+    }
     if (hasSizes && !selectedSize) {
       toast.error("Escolha um tamanho antes de adicionar.");
       return;
     }
+    const sizeForCart = selectedVariation ? selectedVariation.name : selectedSize;
+    const priceOverride = selectedVariation ? Number(selectedVariation.price) : null;
     setAdding(true);
     try {
       for (let i = 0; i < qty; i++) {
-        await addItem(store.id, product.id, selectedSize);
+        await addItem(store.id, product.id, sizeForCart, priceOverride);
       }
     } catch (err) {
       if (err instanceof DifferentStoreError) {
@@ -149,9 +216,9 @@ function ProductPage() {
           "Você só pode pedir de uma loja por vez (o pedido vai pelo WhatsApp). Limpar o carrinho atual e adicionar este item?",
         );
         if (ok) {
-          await switchStoreAndAdd(store.id, product.id, selectedSize);
+          await switchStoreAndAdd(store.id, product.id, sizeForCart, priceOverride);
           for (let i = 1; i < qty; i++) {
-            await addItem(store.id, product.id, selectedSize);
+            await addItem(store.id, product.id, sizeForCart, priceOverride);
           }
         } else {
           setAdding(false);
@@ -237,22 +304,56 @@ function ProductPage() {
 
           <div className="bg-card rounded-2xl p-4 shadow-[var(--shadow-card)]">
             <div className="flex items-baseline gap-2 flex-wrap">
-              <span className="text-3xl font-extrabold text-brand">{fmt(Number(product.price))}</span>
+              {hasVariations && !selectedVariation && (
+                <span className="text-xs text-muted-foreground">a partir de</span>
+              )}
+              <span className="text-3xl font-extrabold text-brand">{fmt(Number(currentPrice))}</span>
               {hasDiscount && (
                 <span className="text-sm text-muted-foreground line-through">
-                  {fmt(Number(product.original_price))}
+                  {fmt(Number(currentOriginalPrice))}
                 </span>
               )}
               {hasDiscount && (
                 <span className="text-xs font-bold text-success bg-success/10 px-2 py-0.5 rounded-full">
-                  Você economiza {fmt(Number(product.original_price) - Number(product.price))}
+                  Você economiza {fmt(Number(currentOriginalPrice) - Number(currentPrice))}
                 </span>
               )}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              em até 3x de {fmt(Number(product.price) / 3)} sem juros
+              em até 3x de {fmt(Number(currentPrice) / 3)} sem juros
             </p>
           </div>
+
+          {hasVariations && (
+            <div className="bg-card rounded-2xl p-4 shadow-[var(--shadow-card)]">
+              <h3 className="font-semibold text-sm mb-2">
+                Escolha uma opção <span className="text-destructive">*</span>
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {product.variations.map((v) => {
+                  const active = selectedVariationId === v.id;
+                  return (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => setSelectedVariationId(v.id)}
+                      className={
+                        "px-3 py-2 rounded-xl border text-sm font-semibold transition-colors flex flex-col items-start gap-0.5 " +
+                        (active
+                          ? "bg-brand text-brand-foreground border-brand"
+                          : "bg-card text-foreground border-border hover:border-brand")
+                      }
+                    >
+                      <span>{v.name}</span>
+                      <span className={"text-[11px] font-medium " + (active ? "opacity-90" : "text-muted-foreground")}>
+                        {fmt(Number(v.price))}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {hasSizes && (
             <div className="bg-card rounded-2xl p-4 shadow-[var(--shadow-card)]">
