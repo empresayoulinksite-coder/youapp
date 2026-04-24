@@ -179,6 +179,7 @@ function StorePage() {
   // Reset selecionados quando trocar/abrir item
   useEffect(() => {
     setSelectedSize(null);
+    setSelectedColor(null);
     setOrderMode("whole");
     setSecondHalfId(null);
   }, [selectedItem?.id]);
