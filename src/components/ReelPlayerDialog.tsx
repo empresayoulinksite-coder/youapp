@@ -86,16 +86,37 @@ export function ReelPlayerDialog({
     });
   }, [activeIndex, muted]);
 
-  // Track progress of active video
+  // Track progress of active video and auto-advance on end
   useEffect(() => {
     const v = videoRefs.current[activeIndex];
     if (!v) return;
     const onTime = () => {
       if (v.duration > 0) setProgress(v.currentTime / v.duration);
     };
+    const goNext = () => {
+      setProgress(1);
+      const nextIdx = activeIndex + 1;
+      if (nextIdx < list.length) {
+        const root = containerRef.current;
+        const child = root?.children[nextIdx] as HTMLElement | undefined;
+        if (root && child) {
+          root.scrollTo({ left: child.offsetLeft, behavior: "smooth" });
+        } else {
+          setActiveIndex(nextIdx);
+        }
+      } else {
+        // Last video: loop it
+        v.currentTime = 0;
+        v.play().catch(() => {});
+      }
+    };
     v.addEventListener("timeupdate", onTime);
-    return () => v.removeEventListener("timeupdate", onTime);
-  }, [activeIndex]);
+    v.addEventListener("ended", goNext);
+    return () => {
+      v.removeEventListener("timeupdate", onTime);
+      v.removeEventListener("ended", goNext);
+    };
+  }, [activeIndex, list.length]);
 
   return (
     <div className="fixed inset-0 z-[60] bg-black flex items-center justify-center">
@@ -158,7 +179,7 @@ export function ReelPlayerDialog({
                 src={r.video_url}
                 poster={r.thumbnail_url ?? undefined}
                 playsInline
-                loop
+                loop={activeIndex === list.length - 1}
                 muted={muted}
                 preload={Math.abs(i - activeIndex) <= 1 ? "auto" : "none"}
                 className="absolute inset-0 h-full w-full object-contain bg-black"
