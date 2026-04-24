@@ -7,6 +7,15 @@ import { useCart, DifferentStoreError } from "@/contexts/CartContext";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { toast } from "sonner";
 
+interface Variation {
+  id: string;
+  name: string;
+  price: number;
+  original_price: number | null;
+  is_available: boolean;
+  position: number;
+}
+
 interface Product {
   id: string;
   store_id: string;
@@ -18,6 +27,7 @@ interface Product {
   image_url: string | null;
   promo: string | null;
   sizes: string[];
+  variations: Variation[];
 }
 
 interface Store {
