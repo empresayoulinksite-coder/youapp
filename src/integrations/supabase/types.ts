@@ -946,6 +946,56 @@ export type Database = {
           },
         ]
       }
+      store_reels: {
+        Row: {
+          created_at: string
+          cta_label: string | null
+          cta_url: string | null
+          id: string
+          is_active: boolean
+          position: number
+          store_id: string
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          video_url: string
+        }
+        Insert: {
+          created_at?: string
+          cta_label?: string | null
+          cta_url?: string | null
+          id?: string
+          is_active?: boolean
+          position?: number
+          store_id: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          video_url: string
+        }
+        Update: {
+          created_at?: string
+          cta_label?: string | null
+          cta_url?: string | null
+          id?: string
+          is_active?: boolean
+          position?: number
+          store_id?: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          video_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_reels_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_reviews: {
         Row: {
           author_name: string
@@ -1025,6 +1075,7 @@ export type Database = {
           pickup_enabled: boolean
           promo: string | null
           rating: number
+          reels_enabled: boolean
           route_url: string | null
           show_route: boolean
           slot_minutes: number
@@ -1070,6 +1121,7 @@ export type Database = {
           pickup_enabled?: boolean
           promo?: string | null
           rating?: number
+          reels_enabled?: boolean
           route_url?: string | null
           show_route?: boolean
           slot_minutes?: number
@@ -1115,6 +1167,7 @@ export type Database = {
           pickup_enabled?: boolean
           promo?: string | null
           rating?: number
+          reels_enabled?: boolean
           route_url?: string | null
           show_route?: boolean
           slot_minutes?: number
