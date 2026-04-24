@@ -78,7 +78,12 @@ export function ReelPlayerDialog({
       if (!v) return;
       if (i === activeIndex) {
         v.muted = muted;
-        v.play().catch(() => {});
+        v.play().catch(() => {
+          // Autoplay com som pode ser bloqueado; faz fallback para mutado
+          v.muted = true;
+          setMuted(true);
+          v.play().catch(() => {});
+        });
       } else {
         v.pause();
         v.currentTime = 0;
