@@ -4,6 +4,7 @@ import { ChevronLeft, ShoppingBag, Heart, Star, Truck, ShieldCheck, RotateCcw, M
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart, DifferentStoreError } from "@/contexts/CartContext";
+import { useFavorites } from "@/contexts/FavoritesContext";
 import { toast } from "sonner";
 
 interface Product {
