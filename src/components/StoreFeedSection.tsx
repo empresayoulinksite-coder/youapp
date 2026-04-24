@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Heart, Bookmark, Share2, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
