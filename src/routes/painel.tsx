@@ -259,7 +259,7 @@ function PainelPage() {
         )}
 
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview" className="gap-1.5">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Resumo</span>
@@ -267,6 +267,10 @@ function PainelPage() {
             <TabsTrigger value="bookings" className="gap-1.5">
               <Calendar className="h-4 w-4" />
               <span className="hidden sm:inline">Agenda</span>
+            </TabsTrigger>
+            <TabsTrigger value="customers" className="gap-1.5">
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">Clientes</span>
             </TabsTrigger>
             <TabsTrigger value="services" className="gap-1.5">
               <Scissors className="h-4 w-4" />
