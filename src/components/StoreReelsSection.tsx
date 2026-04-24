@@ -59,7 +59,7 @@ export function StoreReelsSection({ storeId }: { storeId: string }) {
       </div>
 
       {openReel && (
-        <ReelPlayerDialog reel={openReel} onClose={() => setOpenReel(null)} />
+        <ReelPlayerDialog reel={openReel} reels={reels} onClose={() => setOpenReel(null)} />
       )}
     </section>
   );
