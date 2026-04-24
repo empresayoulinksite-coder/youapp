@@ -261,7 +261,7 @@ export function StoreReelsEditor({
                       variant="ghost"
                       size="sm"
                       onClick={() => {
-                        if (confirm("Remover este reel?")) remove.mutate(r.id);
+                        if (confirm("Remover este flow?")) remove.mutate(r.id);
                       }}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
