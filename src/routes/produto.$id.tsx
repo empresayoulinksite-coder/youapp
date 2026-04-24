@@ -396,7 +396,35 @@ function ProductPage() {
             </div>
           )}
 
-          {product.description && (
+          {hasColors && (
+            <div className="bg-card rounded-2xl p-4 shadow-[var(--shadow-card)]">
+              <h3 className="font-semibold text-sm mb-2">
+                Escolha a cor <span className="text-destructive">*</span>
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {product.colors.map((c) => {
+                  const active = selectedColor === c;
+                  return (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setSelectedColor(c)}
+                      className={
+                        "px-3 py-2 rounded-xl border text-sm font-semibold transition-colors " +
+                        (active
+                          ? "bg-brand text-brand-foreground border-brand"
+                          : "bg-card text-foreground border-border hover:border-brand")
+                      }
+                    >
+                      {c}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+
             <div className="bg-card rounded-2xl p-4 shadow-[var(--shadow-card)]">
               <h3 className="font-semibold text-sm mb-1">Descrição</h3>
               <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
