@@ -879,6 +879,108 @@ export type Database = {
           },
         ]
       }
+      store_feed_favorites: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_feed_favorites_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "store_feed_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_feed_likes: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_feed_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "store_feed_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_feed_posts: {
+        Row: {
+          caption: string
+          created_at: string
+          id: string
+          image_urls: string[]
+          is_active: boolean
+          likes_count: number
+          position: number
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          caption?: string
+          created_at?: string
+          id?: string
+          image_urls?: string[]
+          is_active?: boolean
+          likes_count?: number
+          position?: number
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          caption?: string
+          created_at?: string
+          id?: string
+          image_urls?: string[]
+          is_active?: boolean
+          likes_count?: number
+          position?: number
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_feed_posts_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_hours: {
         Row: {
           closes_at: string
@@ -1062,6 +1164,7 @@ export type Database = {
           delivery_time: string
           distance: string
           emoji: string
+          feed_enabled: boolean
           free_delivery: boolean
           hours: string | null
           id: string
@@ -1108,6 +1211,7 @@ export type Database = {
           delivery_time?: string
           distance?: string
           emoji?: string
+          feed_enabled?: boolean
           free_delivery?: boolean
           hours?: string | null
           id?: string
@@ -1154,6 +1258,7 @@ export type Database = {
           delivery_time?: string
           distance?: string
           emoji?: string
+          feed_enabled?: boolean
           free_delivery?: boolean
           hours?: string | null
           id?: string

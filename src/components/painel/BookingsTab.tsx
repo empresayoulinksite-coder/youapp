@@ -75,6 +75,8 @@ export type StoreLite = {
   whatsapp: string | null;
   is_paused: boolean;
   pickup_enabled?: boolean;
+  store_type?: "food" | "ecommerce" | "service";
+  feed_enabled?: boolean;
 };
 
 const STATUS_LABEL: Record<BookingRow["status"], string> = {

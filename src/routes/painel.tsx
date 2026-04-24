@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { LogOut, Power, LayoutDashboard, Calendar, Scissors, Ticket, Clock3, ArrowLeft, Users } from "lucide-react";
+import { LogOut, Power, LayoutDashboard, Calendar, Scissors, Ticket, Clock3, ArrowLeft, Users, Images } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,6 +23,7 @@ import { StoreHoursEditor } from "@/components/StoreHoursEditor";
 import { StoreWhatsappEditor } from "@/components/StoreWhatsappEditor";
 import { StoreDeliveryEditor } from "@/components/StoreDeliveryEditor";
 import { StoreBenefitsEditor } from "@/components/StoreBenefitsEditor";
+import { StoreFeedEditor } from "@/components/StoreFeedEditor";
 
 export const Route = createFileRoute("/painel")({
   component: PainelPage,
@@ -45,7 +46,7 @@ function PainelPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("store_owners")
-        .select("stores(id, name, slot_minutes, whatsapp, is_paused, pickup_enabled)")
+        .select("stores(id, name, slot_minutes, whatsapp, is_paused, pickup_enabled, store_type, feed_enabled)")
         .eq("user_id", user!.id);
       if (error) throw error;
       return ((data ?? [])
@@ -259,7 +260,7 @@ function PainelPage() {
         )}
 
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className={`grid w-full ${currentStore?.store_type === "service" ? "grid-cols-7" : "grid-cols-6"}`}>
             <TabsTrigger value="overview" className="gap-1.5">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Resumo</span>
@@ -284,6 +285,12 @@ function PainelPage() {
               <Clock3 className="h-4 w-4" />
               <span className="hidden sm:inline">Horários</span>
             </TabsTrigger>
+            {currentStore?.store_type === "service" && (
+              <TabsTrigger value="feed" className="gap-1.5">
+                <Images className="h-4 w-4" />
+                <span className="hidden sm:inline">Feed</span>
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="overview" className="mt-4">
@@ -325,6 +332,26 @@ function PainelPage() {
               </div>
             )}
           </TabsContent>
+
+          {currentStore?.store_type === "service" && storeId && (
+            <TabsContent value="feed" className="mt-4">
+              <StoreFeedEditor
+                storeId={storeId}
+                feedEnabled={!!currentStore.feed_enabled}
+                onToggleEnabled={async (v) => {
+                  const { error } = await supabase
+                    .from("stores")
+                    .update({ feed_enabled: v })
+                    .eq("id", storeId);
+                  if (error) toast.error(error.message);
+                  else {
+                    toast.success(v ? "Feed ativado" : "Feed desativado");
+                    qc.invalidateQueries({ queryKey: ["painel", "stores"] });
+                  }
+                }}
+              />
+            </TabsContent>
+          )}
         </Tabs>
       </main>
     </div>

@@ -11,6 +11,7 @@ import { StoreDistance } from "@/components/StoreDistance";
 import { normalizePaymentList, paymentLabelsFromList } from "@/lib/payment-methods";
 import { PizzaBuilderDialog, type PizzaConfigPayload } from "@/components/PizzaBuilderDialog";
 import { StoreReelsSection } from "@/components/StoreReelsSection";
+import { StoreFeedSection } from "@/components/StoreFeedSection";
 
 interface Store {
   id: string;
@@ -40,6 +41,7 @@ interface Store {
   lng: number | null;
   show_route: boolean;
   route_url: string | null;
+  feed_enabled?: boolean;
 }
 
 interface MenuCategory {
@@ -392,6 +394,13 @@ function StorePage() {
       <main className="px-4 pt-5">
         <div className="mb-5">
           <StoreReelsSection storeId={store.id} />
+          {isService && store.feed_enabled && (
+            <StoreFeedSection
+              storeId={store.id}
+              storeName={store.name}
+              storeSlug={store.slug}
+            />
+          )}
         </div>
         {tab === "menu" && isService && (
           <div className="space-y-3">
