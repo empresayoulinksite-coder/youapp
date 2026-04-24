@@ -304,22 +304,56 @@ function ProductPage() {
 
           <div className="bg-card rounded-2xl p-4 shadow-[var(--shadow-card)]">
             <div className="flex items-baseline gap-2 flex-wrap">
-              <span className="text-3xl font-extrabold text-brand">{fmt(Number(product.price))}</span>
+              {hasVariations && !selectedVariation && (
+                <span className="text-xs text-muted-foreground">a partir de</span>
+              )}
+              <span className="text-3xl font-extrabold text-brand">{fmt(Number(currentPrice))}</span>
               {hasDiscount && (
                 <span className="text-sm text-muted-foreground line-through">
-                  {fmt(Number(product.original_price))}
+                  {fmt(Number(currentOriginalPrice))}
                 </span>
               )}
               {hasDiscount && (
                 <span className="text-xs font-bold text-success bg-success/10 px-2 py-0.5 rounded-full">
-                  Você economiza {fmt(Number(product.original_price) - Number(product.price))}
+                  Você economiza {fmt(Number(currentOriginalPrice) - Number(currentPrice))}
                 </span>
               )}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              em até 3x de {fmt(Number(product.price) / 3)} sem juros
+              em até 3x de {fmt(Number(currentPrice) / 3)} sem juros
             </p>
           </div>
+
+          {hasVariations && (
+            <div className="bg-card rounded-2xl p-4 shadow-[var(--shadow-card)]">
+              <h3 className="font-semibold text-sm mb-2">
+                Escolha uma opção <span className="text-destructive">*</span>
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {product.variations.map((v) => {
+                  const active = selectedVariationId === v.id;
+                  return (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => setSelectedVariationId(v.id)}
+                      className={
+                        "px-3 py-2 rounded-xl border text-sm font-semibold transition-colors flex flex-col items-start gap-0.5 " +
+                        (active
+                          ? "bg-brand text-brand-foreground border-brand"
+                          : "bg-card text-foreground border-border hover:border-brand")
+                      }
+                    >
+                      <span>{v.name}</span>
+                      <span className={"text-[11px] font-medium " + (active ? "opacity-90" : "text-muted-foreground")}>
+                        {fmt(Number(v.price))}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {hasSizes && (
             <div className="bg-card rounded-2xl p-4 shadow-[var(--shadow-card)]">
