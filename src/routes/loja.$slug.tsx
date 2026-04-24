@@ -60,6 +60,7 @@ interface MenuItem {
   image_url: string | null;
   promo: string | null;
   sizes: string[];
+  colors: string[];
 }
 
 interface Coupon {
