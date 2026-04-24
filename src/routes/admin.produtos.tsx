@@ -1434,6 +1434,7 @@ function SortableItemRow({
   onToggleAvailable,
   onDuplicate,
   onPatch,
+  onPatchVariation,
 }: {
   item: MenuItem;
   variations: Variation[];
@@ -1442,6 +1443,7 @@ function SortableItemRow({
   onToggleAvailable: () => void;
   onDuplicate: () => void;
   onPatch: (patch: Partial<MenuItem>) => void;
+  onPatchVariation: (id: string, patch: { price?: number }) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: item.id });
@@ -1452,14 +1454,18 @@ function SortableItemRow({
   };
 
   const hasVariations = variations.length > 0;
+  // Variação de menor preço (a que aparece como "A partir de").
+  const cheapestVariation = hasVariations
+    ? variations.reduce((acc, v) => (Number(v.price) < Number(acc.price) ? v : acc), variations[0])
+    : null;
   const minPrice = hasVariations
-    ? Math.min(...variations.map((v) => Number(v.price)))
+    ? Number(cheapestVariation!.price)
     : Number(item.price);
 
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(item.name);
   const [editingPrice, setEditingPrice] = useState(false);
-  const [priceDraft, setPriceDraft] = useState(String(item.price ?? 0));
+  const [priceDraft, setPriceDraft] = useState(String(minPrice ?? 0));
 
   const commitName = () => {
     const v = nameDraft.trim();
@@ -1481,11 +1487,16 @@ function SortableItemRow({
     const n = Number(priceDraft.replace(",", "."));
     if (!Number.isFinite(n) || n < 0) {
       toast.error("Preço inválido");
-      setPriceDraft(String(item.price ?? 0));
+      setPriceDraft(String(minPrice ?? 0));
       return;
     }
-    if (n === Number(item.price)) return;
-    onPatch({ price: n });
+    if (hasVariations && cheapestVariation) {
+      if (n === Number(cheapestVariation.price)) return;
+      onPatchVariation(cheapestVariation.id, { price: n });
+    } else {
+      if (n === Number(item.price)) return;
+      onPatch({ price: n });
+    }
   };
 
   return (
