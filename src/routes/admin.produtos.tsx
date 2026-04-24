@@ -251,6 +251,18 @@ function AdminProducts() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const patchCategory = useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Partial<Category> }) => {
+      const { error } = await supabase
+        .from("menu_categories")
+        .update(patch)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-cats", storeId] }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const reorderCategories = useMutation({
     mutationFn: async (ordered: Category[]) => {
       await Promise.all(
