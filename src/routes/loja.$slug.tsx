@@ -102,7 +102,7 @@ export const Route = createFileRoute("/loja/$slug")({
     return {
       store: store as Store,
       categories: (categoriesRes.data ?? []) as MenuCategory[],
-      items: (itemsRes.data ?? []).map((i) => ({ ...i, price: Number(i.price), original_price: i.original_price ? Number(i.original_price) : null, sizes: Array.isArray(i.sizes) ? i.sizes : [] })) as MenuItem[],
+      items: (itemsRes.data ?? []).map((i) => ({ ...i, price: Number(i.price), original_price: i.original_price ? Number(i.original_price) : null, sizes: Array.isArray(i.sizes) ? i.sizes : [], colors: Array.isArray((i as { colors?: string[] }).colors) ? (i as { colors: string[] }).colors : [] })) as MenuItem[],
       coupons: (couponsRes.data ?? []).map((c) => ({ ...c, min_order: Number(c.min_order) })) as Coupon[],
       reviews: (reviewsRes.data ?? []) as Review[],
       hours: (hoursRes.data ?? []) as StoreHour[],
