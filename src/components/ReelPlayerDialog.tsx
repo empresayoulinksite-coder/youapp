@@ -99,16 +99,34 @@ export function ReelPlayerDialog({
 
   return (
     <div className="fixed inset-0 z-[60] bg-black flex items-center justify-center">
+      {/* Progress bars (Instagram-style) */}
+      <div className="absolute top-2 inset-x-0 z-20 px-3 flex gap-1 max-w-md mx-auto">
+        {list.map((_, i) => {
+          const fill = i < activeIndex ? 1 : i === activeIndex ? progress : 0;
+          return (
+            <div key={i} className="h-0.5 flex-1 rounded-full bg-white/30 overflow-hidden">
+              <div
+                className="h-full bg-white"
+                style={{
+                  width: `${Math.min(100, Math.max(0, fill * 100))}%`,
+                  transition: i === activeIndex ? "width 120ms linear" : "none",
+                }}
+              />
+            </div>
+          );
+        })}
+      </div>
+
       <button
         onClick={onClose}
-        className="absolute top-4 left-4 z-20 h-10 w-10 rounded-full bg-white/10 backdrop-blur flex items-center justify-center text-white"
+        className="absolute top-6 left-4 z-20 h-10 w-10 rounded-full bg-white/10 backdrop-blur flex items-center justify-center text-white"
         aria-label="Fechar"
       >
         <X className="h-5 w-5" />
       </button>
       <button
         onClick={() => setMuted((m) => !m)}
-        className="absolute top-4 right-4 z-20 h-10 w-10 rounded-full bg-white/10 backdrop-blur flex items-center justify-center text-white"
+        className="absolute top-6 right-4 z-20 h-10 w-10 rounded-full bg-white/10 backdrop-blur flex items-center justify-center text-white"
         aria-label={muted ? "Ativar som" : "Silenciar"}
       >
         {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
