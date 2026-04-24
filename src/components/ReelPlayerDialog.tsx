@@ -48,7 +48,7 @@ export function ReelPlayerDialog({
     const el = containerRef.current;
     if (!el) return;
     const child = el.children[startIndex] as HTMLElement | undefined;
-    if (child) el.scrollTo({ top: child.offsetTop, behavior: "auto" });
+    if (child) el.scrollTo({ left: child.offsetLeft, behavior: "auto" });
   }, [startIndex]);
 
   // Detect which reel is currently in view via IntersectionObserver
@@ -103,7 +103,7 @@ export function ReelPlayerDialog({
 
       <div
         ref={containerRef}
-        className="h-full w-full max-w-md mx-auto overflow-y-auto snap-y snap-mandatory no-scrollbar bg-black"
+        className="h-full w-full max-w-md mx-auto overflow-x-auto overflow-y-hidden flex snap-x snap-mandatory no-scrollbar bg-black"
       >
         {list.map((r, i) => {
           const ctaUrl = r.cta_url?.trim();
@@ -112,7 +112,7 @@ export function ReelPlayerDialog({
             <div
               key={r.id}
               data-idx={i}
-              className="relative h-full w-full snap-start snap-always flex items-center justify-center"
+              className="relative h-full w-full shrink-0 snap-start snap-always flex items-center justify-center"
               onClick={() => {
                 const v = videoRefs.current[i];
                 if (!v) return;
