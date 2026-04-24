@@ -40,6 +40,7 @@ interface Store {
   lng: number | null;
   show_route: boolean;
   route_url: string | null;
+  feed_enabled?: boolean;
 }
 
 interface MenuCategory {
