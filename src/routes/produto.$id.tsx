@@ -4,6 +4,7 @@ import { ChevronLeft, ShoppingBag, Heart, Star, Truck, ShieldCheck, RotateCcw, M
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart, DifferentStoreError } from "@/contexts/CartContext";
+import { useFavorites } from "@/contexts/FavoritesContext";
 import { toast } from "sonner";
 
 interface Product {
@@ -112,6 +113,8 @@ function ProductPage() {
   };
   const { user } = useAuth();
   const { count: cartCount, addItem, switchStoreAndAdd } = useCart();
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const fav = isFavorite(store.id);
   const [qty, setQty] = useState(1);
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
@@ -200,9 +203,16 @@ function ProductPage() {
             )}
             <button
               aria-label="Favoritar"
+              onClick={() => {
+                if (!user) {
+                  toast.error("Faça login para favoritar");
+                  return;
+                }
+                toggleFavorite(store.id);
+              }}
               className="absolute top-3 right-3 h-9 w-9 bg-card/90 backdrop-blur rounded-full flex items-center justify-center shadow"
             >
-              <Heart className="h-4 w-4" />
+              <Heart className={`h-4 w-4 ${fav ? "fill-brand text-brand" : ""}`} />
             </button>
           </div>
         </div>
