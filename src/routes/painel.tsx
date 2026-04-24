@@ -306,6 +306,10 @@ function PainelPage() {
             )}
           </TabsContent>
 
+          <TabsContent value="customers" className="mt-4">
+            {storeId && <CustomersTab storeId={storeId} bookings={bookings} />}
+          </TabsContent>
+
           <TabsContent value="services" className="mt-4">
             {storeId && <ServicesTab storeId={storeId} />}
           </TabsContent>
