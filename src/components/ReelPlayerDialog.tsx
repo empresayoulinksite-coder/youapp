@@ -179,7 +179,7 @@ export function ReelPlayerDialog({
                 src={r.video_url}
                 poster={r.thumbnail_url ?? undefined}
                 playsInline
-                loop
+                loop={activeIndex === list.length - 1}
                 muted={muted}
                 preload={Math.abs(i - activeIndex) <= 1 ? "auto" : "none"}
                 className="absolute inset-0 h-full w-full object-contain bg-black"
