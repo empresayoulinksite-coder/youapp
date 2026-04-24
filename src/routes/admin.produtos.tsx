@@ -252,10 +252,10 @@ function AdminProducts() {
   });
 
   const patchCategory = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: Partial<Category> }) => {
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
       const { error } = await supabase
         .from("menu_categories")
-        .update(patch)
+        .update({ name })
         .eq("id", id);
       if (error) throw error;
     },
