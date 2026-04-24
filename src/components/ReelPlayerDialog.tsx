@@ -27,6 +27,7 @@ export function ReelPlayerDialog({
   );
   const [activeIndex, setActiveIndex] = useState(startIndex);
   const [muted, setMuted] = useState(true);
+  const [progress, setProgress] = useState(0);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
 
