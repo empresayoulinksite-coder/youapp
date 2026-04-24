@@ -60,6 +60,7 @@ interface MenuItem {
   image_url: string | null;
   promo: string | null;
   sizes: string[];
+  colors: string[];
 }
 
 interface Coupon {
@@ -101,7 +102,7 @@ export const Route = createFileRoute("/loja/$slug")({
     return {
       store: store as Store,
       categories: (categoriesRes.data ?? []) as MenuCategory[],
-      items: (itemsRes.data ?? []).map((i) => ({ ...i, price: Number(i.price), original_price: i.original_price ? Number(i.original_price) : null, sizes: Array.isArray(i.sizes) ? i.sizes : [] })) as MenuItem[],
+      items: (itemsRes.data ?? []).map((i) => ({ ...i, price: Number(i.price), original_price: i.original_price ? Number(i.original_price) : null, sizes: Array.isArray(i.sizes) ? i.sizes : [], colors: Array.isArray((i as { colors?: string[] }).colors) ? (i as { colors: string[] }).colors : [] })) as MenuItem[],
       coupons: (couponsRes.data ?? []).map((c) => ({ ...c, min_order: Number(c.min_order) })) as Coupon[],
       reviews: (reviewsRes.data ?? []) as Review[],
       hours: (hoursRes.data ?? []) as StoreHour[],
@@ -161,6 +162,7 @@ function StorePage() {
   const [tab, setTab] = useState<"menu" | "info" | "reviews">("menu");
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [orderMode, setOrderMode] = useState<"whole" | "half">("whole");
   const [secondHalfId, setSecondHalfId] = useState<string | null>(null);
   const [pizzaBuilderItem, setPizzaBuilderItem] = useState<MenuItem | null>(null);
@@ -177,6 +179,7 @@ function StorePage() {
   // Reset selecionados quando trocar/abrir item
   useEffect(() => {
     setSelectedSize(null);
+    setSelectedColor(null);
     setOrderMode("whole");
     setSecondHalfId(null);
   }, [selectedItem?.id]);
@@ -794,6 +797,34 @@ function StorePage() {
                 </div>
               )}
 
+              {selectedItem.colors && selectedItem.colors.length > 0 && (
+                <div className="mt-5">
+                  <p className="text-sm font-semibold mb-2">
+                    Escolha a cor <span className="text-destructive">*</span>
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedItem.colors.map((c) => {
+                      const active = selectedColor === c;
+                      return (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setSelectedColor(c)}
+                          className={
+                            "px-3 py-2 rounded-xl border text-sm font-semibold transition-colors " +
+                            (active
+                              ? "bg-brand text-brand-foreground border-brand"
+                              : "bg-card text-foreground border-border hover:border-brand")
+                          }
+                        >
+                          {c}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {(() => {
                 const cat = categories.find((c) => c.id === selectedItem.category_id);
                 if (!cat?.is_pizza) return null;
@@ -861,19 +892,29 @@ function StorePage() {
                   <button
                     onClick={async () => {
                       const needsSize = selectedItem.sizes && selectedItem.sizes.length > 0;
+                      const needsColor = selectedItem.colors && selectedItem.colors.length > 0;
                       if (needsSize && !selectedSize) {
                         toast.error("Escolha um tamanho antes de adicionar.");
                         return;
                       }
+                      if (needsColor && !selectedColor) {
+                        toast.error("Escolha uma cor antes de adicionar.");
+                        return;
+                      }
+                      const sizeParts = [
+                        selectedSize,
+                        selectedColor ? `Cor: ${selectedColor}` : null,
+                      ].filter(Boolean) as string[];
+                      const sizeForCart = sizeParts.length ? sizeParts.join(" · ") : null;
                       if (orderMode === "half") {
                         const second = items.find((i) => i.id === secondHalfId);
                         if (!second) {
                           toast.error("Escolha o 2º sabor da pizza.");
                           return;
                         }
-                        await tryAddHalfHalf(store.id, selectedItem, second, selectedSize);
+                        await tryAddHalfHalf(store.id, selectedItem, second, sizeForCart);
                       } else {
-                        await tryAdd(store.id, selectedItem.id, selectedSize);
+                        await tryAdd(store.id, selectedItem.id, sizeForCart);
                       }
                       setSelectedItem(null);
                     }}
