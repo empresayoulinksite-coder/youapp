@@ -113,6 +113,8 @@ function ProductPage() {
   };
   const { user } = useAuth();
   const { count: cartCount, addItem, switchStoreAndAdd } = useCart();
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const fav = isFavorite(store.id);
   const [qty, setQty] = useState(1);
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
