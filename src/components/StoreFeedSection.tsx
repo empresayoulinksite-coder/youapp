@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Heart, Bookmark, Share2, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
@@ -174,30 +174,54 @@ function FeedPostCard({
   onShare: () => void;
 }) {
   const [idx, setIdx] = useState(0);
+  const scrollerRef = useRef<HTMLDivElement>(null);
   const total = post.image_urls.length;
   const hasImages = total > 0;
 
-  const next = () => setIdx((i) => Math.min(i + 1, total - 1));
-  const prev = () => setIdx((i) => Math.max(i - 1, 0));
+  const scrollTo = (i: number) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const target = Math.max(0, Math.min(i, total - 1));
+    el.scrollTo({ left: target * el.clientWidth, behavior: "smooth" });
+  };
+
+  const onScroll = () => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const i = Math.round(el.scrollLeft / el.clientWidth);
+    if (i !== idx) setIdx(i);
+  };
 
   return (
     <article id={`feed-${post.id}`} className="rounded-xl overflow-hidden bg-card border">
       {hasImages && (
         <div className="relative bg-black aspect-square">
-          <img
-            src={post.image_urls[idx]}
-            alt=""
-            className="w-full h-full object-cover"
-          />
+          <div
+            ref={scrollerRef}
+            onScroll={onScroll}
+            className="flex h-full w-full overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar"
+            style={{ scrollbarWidth: "none" }}
+          >
+            {post.image_urls.map((url, i) => (
+              <div key={i} className="shrink-0 w-full h-full snap-center">
+                <img
+                  src={url}
+                  alt=""
+                  draggable={false}
+                  className="w-full h-full object-cover select-none"
+                />
+              </div>
+            ))}
+          </div>
           {total > 1 && (
             <>
-              <span className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full">
+              <span className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full pointer-events-none">
                 {idx + 1}/{total}
               </span>
               {idx > 0 && (
                 <button
-                  onClick={prev}
-                  className="absolute left-1 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-1"
+                  onClick={() => scrollTo(idx - 1)}
+                  className="hidden sm:flex absolute left-1 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-1"
                   aria-label="Anterior"
                 >
                   <ChevronLeft className="h-5 w-5" />
@@ -205,14 +229,14 @@ function FeedPostCard({
               )}
               {idx < total - 1 && (
                 <button
-                  onClick={next}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-1"
+                  onClick={() => scrollTo(idx + 1)}
+                  className="hidden sm:flex absolute right-1 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-1"
                   aria-label="Próxima"
                 >
                   <ChevronRight className="h-5 w-5" />
                 </button>
               )}
-              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 pointer-events-none">
                 {post.image_urls.map((_, i) => (
                   <span
                     key={i}
