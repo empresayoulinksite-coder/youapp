@@ -21,6 +21,7 @@ import { geocodeAddress } from "@/lib/distance";
 import { PAYMENT_METHODS } from "@/lib/payment-methods";
 import { StoreLocationAdjuster } from "@/components/StoreLocationAdjuster";
 import { StoreBenefitsEditor } from "@/components/StoreBenefitsEditor";
+import { StoreReelsEditor } from "@/components/StoreReelsEditor";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminStores,
@@ -66,6 +67,7 @@ type Store = {
   route_url: string | null;
   pickup_enabled: boolean;
   is_pizzeria: boolean;
+  reels_enabled: boolean;
 };
 
 async function lookupCep(rawCep: string) {
@@ -751,8 +753,21 @@ function AdminStores() {
             </div>
           )}
           {editing && editing.id && (
-            <div className="mt-4">
+            <div className="mt-4 space-y-4">
               <StoreBenefitsEditor storeId={editing.id} />
+              <StoreReelsEditor
+                storeId={editing.id}
+                reelsEnabled={!!editing.reels_enabled}
+                onToggleEnabled={async (v) => {
+                  setEditing({ ...editing, reels_enabled: v });
+                  const { error } = await supabase
+                    .from("stores")
+                    .update({ reels_enabled: v })
+                    .eq("id", editing.id!);
+                  if (error) toast.error(error.message);
+                  else toast.success(v ? "Seção Reels ativada" : "Seção Reels desativada");
+                }}
+              />
             </div>
           )}
           {editing && (editing.id || (editing as Partial<Store> & { __typed?: boolean }).__typed) && (
