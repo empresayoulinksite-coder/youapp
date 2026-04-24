@@ -1573,7 +1573,7 @@ function SortableItemRow({
         {hasVariations && (
           <p className="text-[10px] text-muted-foreground">A partir de</p>
         )}
-        {editingPrice && !hasVariations ? (
+        {editingPrice ? (
           <div className="flex items-center gap-1">
             <span className="text-sm font-semibold">R$</span>
             <Input
@@ -1587,7 +1587,7 @@ function SortableItemRow({
               onKeyDown={(e) => {
                 if (e.key === "Enter") commitPrice();
                 if (e.key === "Escape") {
-                  setPriceDraft(String(item.price ?? 0));
+                  setPriceDraft(String(minPrice ?? 0));
                   setEditingPrice(false);
                 }
               }}
@@ -1598,18 +1598,19 @@ function SortableItemRow({
           <button
             type="button"
             onClick={() => {
-              if (hasVariations) {
-                toast.info("Edite os preços nas variações deste produto");
+              if (hasVariations && variations.length > 1) {
+                // Múltiplas variações: abre o editor completo para evitar confusão.
+                toast.info("Edite os preços das variações no formulário");
                 onEdit();
                 return;
               }
-              setPriceDraft(String(item.price ?? 0));
+              setPriceDraft(String(minPrice ?? 0));
               setEditingPrice(true);
             }}
             className="text-sm font-semibold hover:underline"
             title={
-              hasVariations
-                ? "Produto com variações — edite no formulário"
+              hasVariations && variations.length > 1
+                ? "Produto com várias variações — edite no formulário"
                 : "Clique para editar o preço"
             }
           >
