@@ -1,5 +1,12 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { DollarSign, Calendar, CheckCircle2, XCircle, TrendingUp, Clock } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { BookingRow } from "./BookingsTab";
 
 function brl(n: number) {
@@ -14,79 +21,162 @@ function startOfDay(d: Date) {
 function startOfMonth(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), 1);
 }
+function endOfMonth(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth() + 1, 1);
+}
+
+const MONTH_NAMES = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+];
 
 export function OverviewTab({ bookings }: { bookings: BookingRow[] }) {
+  const now = new Date();
+  const currentMonthKey = `${now.getFullYear()}-${now.getMonth()}`;
+  const [monthKey, setMonthKey] = useState(currentMonthKey);
+
+  // Build list of available months (last 12 + any month with bookings)
+  const monthOptions = useMemo(() => {
+    const set = new Map<string, { year: number; month: number }>();
+    // Last 12 months
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      set.set(`${d.getFullYear()}-${d.getMonth()}`, {
+        year: d.getFullYear(),
+        month: d.getMonth(),
+      });
+    }
+    // Any month from bookings
+    for (const b of bookings) {
+      const d = new Date(b.starts_at);
+      set.set(`${d.getFullYear()}-${d.getMonth()}`, {
+        year: d.getFullYear(),
+        month: d.getMonth(),
+      });
+    }
+    return Array.from(set.entries())
+      .map(([key, v]) => ({ key, ...v }))
+      .sort((a, b) => (b.year - a.year) * 100 + (b.month - a.month));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookings]);
+
   const stats = useMemo(() => {
-    const now = new Date();
+    const [yStr, mStr] = monthKey.split("-");
+    const y = Number(yStr);
+    const m = Number(mStr);
+    const monthStart = new Date(y, m, 1);
+    const monthEnd = endOfMonth(monthStart);
+    const isCurrentMonth = monthKey === currentMonthKey;
+
     const today = startOfDay(now);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const monthStart = startOfMonth(now);
 
     const completed = bookings.filter((b) => b.status === "completed");
     const cancelled = bookings.filter((b) => b.status === "cancelled");
 
-    const completedToday = completed.filter((b) => {
+    const completedToday = isCurrentMonth
+      ? completed.filter((b) => {
+          const t = new Date(b.starts_at);
+          return t >= today && t < tomorrow;
+        })
+      : [];
+
+    const completedMonth = completed.filter((b) => {
       const t = new Date(b.starts_at);
-      return t >= today && t < tomorrow;
+      return t >= monthStart && t < monthEnd;
     });
-    const completedMonth = completed.filter((b) => new Date(b.starts_at) >= monthStart);
 
     const revenueToday = completedToday.reduce((s, b) => s + Number(b.total_price), 0);
     const revenueMonth = completedMonth.reduce((s, b) => s + Number(b.total_price), 0);
 
-    const upcoming = bookings
-      .filter((b) => (b.status === "pending" || b.status === "confirmed") && new Date(b.starts_at) >= now)
-      .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())
-      .slice(0, 5);
+    const upcoming = isCurrentMonth
+      ? bookings
+          .filter((b) => (b.status === "pending" || b.status === "confirmed") && new Date(b.starts_at) >= now)
+          .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())
+          .slice(0, 5)
+      : [];
 
     const ticketAvg = completedMonth.length > 0 ? revenueMonth / completedMonth.length : 0;
 
-    const pending = bookings.filter((b) => b.status === "pending").length;
+    const pending = isCurrentMonth ? bookings.filter((b) => b.status === "pending").length : 0;
 
     return {
+      isCurrentMonth,
       revenueToday,
       revenueMonth,
       completedToday: completedToday.length,
       completedMonth: completedMonth.length,
-      cancelledMonth: cancelled.filter((b) => new Date(b.starts_at) >= monthStart).length,
+      cancelledMonth: cancelled.filter((b) => {
+        const t = new Date(b.starts_at);
+        return t >= monthStart && t < monthEnd;
+      }).length,
       ticketAvg,
       pending,
       upcoming,
     };
-  }, [bookings]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookings, monthKey]);
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs text-muted-foreground">Período</p>
+          <p className="text-sm font-semibold">
+            {stats.isCurrentMonth ? "Mês atual" : "Mês selecionado"}
+          </p>
+        </div>
+        <Select value={monthKey} onValueChange={setMonthKey}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {monthOptions.map((o) => (
+              <SelectItem key={o.key} value={o.key}>
+                {MONTH_NAMES[o.month]} {o.year}
+                {o.key === currentMonthKey ? " (atual)" : ""}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          icon={DollarSign}
-          label="Faturamento hoje"
-          value={brl(stats.revenueToday)}
-          accent="text-success"
-        />
+        {stats.isCurrentMonth && (
+          <StatCard
+            icon={DollarSign}
+            label="Faturamento hoje"
+            value={brl(stats.revenueToday)}
+            accent="text-success"
+          />
+        )}
         <StatCard
           icon={TrendingUp}
           label="Faturamento do mês"
           value={brl(stats.revenueMonth)}
           accent="text-primary"
         />
-        <StatCard
-          icon={CheckCircle2}
-          label="Atendimentos hoje"
-          value={String(stats.completedToday)}
-        />
+        {stats.isCurrentMonth && (
+          <StatCard
+            icon={CheckCircle2}
+            label="Atendimentos hoje"
+            value={String(stats.completedToday)}
+          />
+        )}
         <StatCard
           icon={Calendar}
           label="Atendimentos no mês"
           value={String(stats.completedMonth)}
         />
-        <StatCard
-          icon={Clock}
-          label="Pendentes de confirmação"
-          value={String(stats.pending)}
-          accent={stats.pending > 0 ? "text-amber-600" : undefined}
-        />
+        {stats.isCurrentMonth && (
+          <StatCard
+            icon={Clock}
+            label="Pendentes de confirmação"
+            value={String(stats.pending)}
+            accent={stats.pending > 0 ? "text-amber-600" : undefined}
+          />
+        )}
         <StatCard
           icon={XCircle}
           label="Cancelados no mês"
@@ -100,53 +190,55 @@ export function OverviewTab({ bookings }: { bookings: BookingRow[] }) {
         />
       </div>
 
-      <div className="rounded-lg border bg-card">
-        <div className="border-b px-4 py-3">
-          <h3 className="font-semibold text-sm">Próximos atendimentos</h3>
+      {stats.isCurrentMonth && (
+        <div className="rounded-lg border bg-card">
+          <div className="border-b px-4 py-3">
+            <h3 className="font-semibold text-sm">Próximos atendimentos</h3>
+          </div>
+          {stats.upcoming.length === 0 ? (
+            <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+              Nada agendado.
+            </p>
+          ) : (
+            <ul className="divide-y">
+              {stats.upcoming.map((b) => {
+                const t = new Date(b.starts_at);
+                return (
+                  <li key={b.id} className="flex items-center justify-between gap-3 px-4 py-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">
+                        {b.services?.name ?? "Serviço"} ·{" "}
+                        {b.profiles?.display_name ?? "Cliente"}
+                      </p>
+                      <p className="text-xs text-muted-foreground capitalize">
+                        {t.toLocaleDateString("pt-BR", {
+                          weekday: "short",
+                          day: "2-digit",
+                          month: "short",
+                        })}{" "}
+                        ·{" "}
+                        {t.toLocaleTimeString("pt-BR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
+                    <span
+                      className={
+                        b.status === "pending"
+                          ? "rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700"
+                          : "rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary"
+                      }
+                    >
+                      {b.status === "pending" ? "Pendente" : "Confirmado"}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
-        {stats.upcoming.length === 0 ? (
-          <p className="px-4 py-6 text-center text-sm text-muted-foreground">
-            Nada agendado.
-          </p>
-        ) : (
-          <ul className="divide-y">
-            {stats.upcoming.map((b) => {
-              const t = new Date(b.starts_at);
-              return (
-                <li key={b.id} className="flex items-center justify-between gap-3 px-4 py-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">
-                      {b.services?.name ?? "Serviço"} ·{" "}
-                      {b.profiles?.display_name ?? "Cliente"}
-                    </p>
-                    <p className="text-xs text-muted-foreground capitalize">
-                      {t.toLocaleDateString("pt-BR", {
-                        weekday: "short",
-                        day: "2-digit",
-                        month: "short",
-                      })}{" "}
-                      ·{" "}
-                      {t.toLocaleTimeString("pt-BR", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                  </div>
-                  <span
-                    className={
-                      b.status === "pending"
-                        ? "rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700"
-                        : "rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary"
-                    }
-                  >
-                    {b.status === "pending" ? "Pendente" : "Confirmado"}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
+      )}
     </div>
   );
 }
