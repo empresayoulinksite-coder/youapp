@@ -22,6 +22,13 @@ interface Store {
   promo: string | null;
 }
 
+interface Variation {
+  id: string;
+  name: string;
+  price: number;
+  original_price: number | null;
+}
+
 interface Product {
   id: string;
   category_id: string;
@@ -32,6 +39,7 @@ interface Product {
   emoji: string;
   image_url: string | null;
   promo: string | null;
+  variations: Variation[];
 }
 
 interface CategoryRow {
