@@ -103,7 +103,7 @@ export function ReelPlayerDialog({
 
       <div
         ref={containerRef}
-        className="h-full w-full max-w-md mx-auto overflow-y-auto snap-y snap-mandatory no-scrollbar bg-black"
+        className="h-full w-full max-w-md mx-auto overflow-x-auto overflow-y-hidden flex snap-x snap-mandatory no-scrollbar bg-black"
       >
         {list.map((r, i) => {
           const ctaUrl = r.cta_url?.trim();
