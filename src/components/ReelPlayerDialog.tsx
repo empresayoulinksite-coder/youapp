@@ -112,7 +112,7 @@ export function ReelPlayerDialog({
             <div
               key={r.id}
               data-idx={i}
-              className="relative h-full w-full snap-start snap-always flex items-center justify-center"
+              className="relative h-full w-full shrink-0 snap-start snap-always flex items-center justify-center"
               onClick={() => {
                 const v = videoRefs.current[i];
                 if (!v) return;
