@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCart, DifferentStoreError } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFavorites } from "@/contexts/FavoritesContext";
+import { StoreReelsSection } from "@/components/StoreReelsSection";
 
 interface Store {
   id: string;
@@ -392,6 +393,7 @@ function VitrinePage() {
 
       {/* Seções de produtos por categoria */}
       <main className="mx-auto max-w-5xl px-4 py-5 space-y-8">
+        <StoreReelsSection storeId={store.id} />
         {totalCount === 0 ? (
           <div className="bg-card border border-border rounded-2xl p-8 text-center">
             <p className="text-sm text-muted-foreground">
