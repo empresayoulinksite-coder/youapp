@@ -208,7 +208,15 @@ function ProductPage() {
       toast.error("Escolha um tamanho antes de adicionar.");
       return;
     }
-    const sizeForCart = selectedVariation ? selectedVariation.name : selectedSize;
+    if (hasColors && !selectedColor) {
+      toast.error("Escolha uma cor antes de adicionar.");
+      return;
+    }
+    const sizeParts = [
+      selectedVariation ? selectedVariation.name : selectedSize,
+      selectedColor ? `Cor: ${selectedColor}` : null,
+    ].filter(Boolean) as string[];
+    const sizeForCart = sizeParts.length ? sizeParts.join(" · ") : null;
     const priceOverride = selectedVariation ? Number(selectedVariation.price) : null;
     setAdding(true);
     try {
