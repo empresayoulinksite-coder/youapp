@@ -180,6 +180,12 @@ function PainelPage() {
                 </SelectContent>
               </Select>
             )}
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/">
+                <ArrowLeft className="h-4 w-4" />
+                Voltar ao app
+              </Link>
+            </Button>
             <Button
               variant="outline"
               size="sm"
