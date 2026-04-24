@@ -69,6 +69,7 @@ type Store = {
   pickup_enabled: boolean;
   is_pizzeria: boolean;
   reels_enabled: boolean;
+  feed_enabled: boolean;
 };
 
 async function lookupCep(rawCep: string) {
