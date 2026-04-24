@@ -1025,7 +1025,46 @@ function AdminProducts() {
                 )}
               </div>
 
-              {/* Variações */}
+              {/* Cores disponíveis (e-commerce) — não alteram o preço */}
+              <div className="sm:col-span-2 rounded-md border p-3">
+                <div className="mb-2">
+                  <p className="text-sm font-semibold">Cores disponíveis</p>
+                  <p className="text-xs text-muted-foreground">
+                    Separe por vírgula. Ex: Preto, Branco, Azul. A cor não altera o preço do produto.
+                  </p>
+                </div>
+                <Input
+                  value={colorsInput}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    setColorsInput(raw);
+                    const parts = raw
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean);
+                    setEditing({ ...editing, colors: parts });
+                  }}
+                  onBlur={() => {
+                    const parts = colorsInput
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean);
+                    setColorsInput(parts.join(", "));
+                  }}
+                  placeholder="Preto, Branco, Azul"
+                />
+                {(editing.colors ?? []).length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {(editing.colors ?? []).map((s, i) => (
+                      <Badge key={i} variant="secondary" className="text-xs">
+                        {s}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+
               <div className="sm:col-span-2 mt-2 rounded-md border p-3">
                 <div className="mb-2 flex items-center justify-between">
                   <div>
