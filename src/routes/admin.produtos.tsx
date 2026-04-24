@@ -1490,7 +1490,7 @@ function SortableItemRow({
       setPriceDraft(String(minPrice ?? 0));
       return;
     }
-    if (hasVariations && cheapestVariation) {
+    if (hasVariations && cheapestVariation && cheapestVariation.id) {
       if (n === Number(cheapestVariation.price)) return;
       onPatchVariation(cheapestVariation.id, { price: n });
     } else {
