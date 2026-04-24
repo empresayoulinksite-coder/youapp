@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export async function uploadImage(
-  bucket: "store-images" | "menu-images" | "story-media",
+  bucket: "store-images" | "menu-images" | "story-media" | "store-reels",
   file: File,
 ): Promise<string> {
   const ext = file.name.split(".").pop() ?? "jpg";
