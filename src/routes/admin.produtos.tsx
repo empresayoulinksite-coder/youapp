@@ -392,6 +392,7 @@ function AdminProducts() {
             position: idx,
             is_available: it.is_available,
             sizes: it.sizes ?? [],
+            colors: it.colors ?? [],
           })
           .select("id")
           .single();
@@ -454,6 +455,7 @@ function AdminProducts() {
           position: sameCat.length,
           is_available: it.is_available,
           sizes: it.sizes ?? [],
+          colors: it.colors ?? [],
         })
         .select("id")
         .single();
