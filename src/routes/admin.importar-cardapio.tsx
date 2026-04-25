@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -369,10 +369,15 @@ function UrlImporter({ onParsed }: { onParsed: (c: ParsedCategory[]) => void }) 
 function ImageImporter({ onParsed }: { onParsed: (c: ParsedCategory[]) => void }) {
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const fn = useServerFn(importMenuFromImage);
 
   const onFile = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Envie um arquivo de imagem");
+      return;
+    }
     if (file.size > 6 * 1024 * 1024) {
       toast.error("Imagem muito grande (máx 6MB)");
       return;
@@ -381,6 +386,28 @@ function ImageImporter({ onParsed }: { onParsed: (c: ParsedCategory[]) => void }
     reader.onload = () => setPreview(reader.result as string);
     reader.readAsDataURL(file);
   };
+
+  // Paste from clipboard (Ctrl+V / Cmd+V) anywhere on the page while this importer is mounted
+  useEffect(() => {
+    const onPaste = (e: ClipboardEvent) => {
+      if (preview || loading) return;
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.type.startsWith("image/")) {
+          const file = item.getAsFile();
+          if (file) {
+            e.preventDefault();
+            onFile(file);
+            toast.success("Imagem colada");
+            return;
+          }
+        }
+      }
+    };
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  }, [preview, loading]);
 
   const submit = async () => {
     if (!preview) return;
@@ -401,7 +428,7 @@ function ImageImporter({ onParsed }: { onParsed: (c: ParsedCategory[]) => void }
       <div>
         <Label>Foto do cardápio</Label>
         <p className="mt-1 text-xs text-muted-foreground">
-          Tire ou envie uma foto nítida do cardápio. A IA vai ler os itens e preços.
+          Tire, envie, cole (Ctrl+V) ou arraste uma foto/print nítido do cardápio. A IA vai ler os itens e preços.
         </p>
       </div>
       <input
@@ -425,10 +452,24 @@ function ImageImporter({ onParsed }: { onParsed: (c: ParsedCategory[]) => void }
           </div>
         </div>
       ) : (
-        <Button variant="outline" onClick={() => inputRef.current?.click()} className="w-full">
-          <ImageIcon className="mr-2 h-4 w-4" />
-          Escolher foto
-        </Button>
+        <div
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragOver(false);
+            const file = e.dataTransfer.files?.[0];
+            if (file) onFile(file);
+          }}
+          onClick={() => inputRef.current?.click()}
+          className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed p-8 text-center transition ${
+            dragOver ? "border-primary bg-primary/5" : "border-muted-foreground/30 hover:border-primary/50"
+          }`}
+        >
+          <ImageIcon className="h-8 w-8 text-muted-foreground" />
+          <p className="text-sm font-medium">Escolher foto, colar (Ctrl+V) ou arrastar</p>
+          <p className="text-xs text-muted-foreground">PNG, JPG até 6MB</p>
+        </div>
       )}
     </div>
   );
