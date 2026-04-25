@@ -220,25 +220,23 @@ function AdminServices() {
 
     let succeeded = 0;
     try {
-      await Promise.all(
-        list.map(async (f, idx) => {
-          try {
-            const url = await uploadImage("menu-images", f);
-            setEditing((prev) => ({
-              ...prev,
-              gallery_urls: [...(prev?.gallery_urls ?? []), url],
-            }));
-            succeeded += 1;
-          } finally {
-            setGalleryUploads((prev) => prev.filter((p) => p.id !== placeholders[idx].id));
-            setGalleryProgress((prev) => {
-              const done = prev.done + 1;
-              toast.loading(`Enviando ${done} de ${total} foto(s)...`, { id: toastId });
-              return { done, total: prev.total };
-            });
-          }
-        }),
-      );
+      await runWithConcurrency(list, 4, async (f, idx) => {
+        try {
+          const url = await uploadImage("menu-images", f);
+          setEditing((prev) => ({
+            ...prev,
+            gallery_urls: [...(prev?.gallery_urls ?? []), url],
+          }));
+          succeeded += 1;
+        } finally {
+          setGalleryUploads((prev) => prev.filter((p) => p.id !== placeholders[idx].id));
+          setGalleryProgress((prev) => {
+            const done = prev.done + 1;
+            toast.loading(`Enviando ${done} de ${total} foto(s)...`, { id: toastId });
+            return { done, total: prev.total };
+          });
+        }
+      });
       if (succeeded === total) {
         toast.success(`${succeeded} foto(s) enviada(s) com sucesso!`, { id: toastId });
       } else {
