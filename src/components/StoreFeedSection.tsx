@@ -33,7 +33,7 @@ export function StoreFeedSection({
   storeId: string;
   storeName: string;
   storeSlug: string;
-  onSeeServices?: () => void;
+  onSeeServices?: (categoryId: string | null) => void;
 }) {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -175,7 +175,7 @@ export function StoreFeedSection({
             onLike={() => toggleLike.mutate({ postId: p.id, liked: likedIds.includes(p.id) })}
             onFavorite={() => toggleFavorite.mutate({ postId: p.id, fav: favoriteIds.includes(p.id) })}
             onShare={() => handleShare(p)}
-            onSeeServices={onSeeServices}
+            onSeeServices={onSeeServices ? () => onSeeServices(p.category_id) : undefined}
           />
         ))}
       </div>
