@@ -69,6 +69,7 @@ type Store = {
   payment_methods_list: string[];
   min_order: number;
   is_paused: boolean;
+  is_hidden: boolean;
   whatsapp: string | null;
   lat: number | null;
   lng: number | null;
