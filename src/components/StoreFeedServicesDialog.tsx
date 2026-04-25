@@ -4,6 +4,7 @@ import { ArrowLeft, Clock, Images } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ServiceGalleryDialog } from "@/components/ServiceGalleryDialog";
+import { optimizedImageUrl } from "@/lib/image-url";
 
 type Service = {
   id: string;
