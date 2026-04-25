@@ -558,6 +558,7 @@ function AdminProducts() {
       qc.invalidateQueries({ queryKey: ["admin-cats", storeId] });
       qc.invalidateQueries({ queryKey: ["admin-items", storeId] });
       qc.invalidateQueries({ queryKey: ["admin-variations"] });
+      qc.invalidateQueries({ queryKey: ["admin-size-prices"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
