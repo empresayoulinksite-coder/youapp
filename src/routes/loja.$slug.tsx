@@ -668,6 +668,7 @@ function StorePage() {
             {categories.map((cat) => {
               const catItems = items.filter((i) => i.category_id === cat.id);
               if (!catItems.length) return null;
+              if (activeCategoryId && cat.id !== activeCategoryId) return null;
               return (
                 <section key={cat.id} data-category-id={cat.id} className="scroll-mt-[150px]">
                   <h3 className="font-bold text-base mb-3">{cat.name}</h3>
