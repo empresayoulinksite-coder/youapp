@@ -432,6 +432,40 @@ function AdminServices() {
                   />
                 </div>
               </div>
+              <div>
+                <Label>Categoria do feed</Label>
+                <Select
+                  value={editing.feed_category_id ?? "none"}
+                  onValueChange={(v) =>
+                    setEditing({
+                      ...editing,
+                      feed_category_id: v === "none" ? null : v,
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        feedCategories.length === 0
+                          ? "Nenhuma categoria do feed"
+                          : "Sem categoria"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem categoria</SelectItem>
+                    {feedCategories.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Vincule o serviço a um álbum do feed para que apareça quando o
+                  cliente clicar em "Ver serviço completo".
+                </p>
+              </div>
               <div className="flex items-center gap-3 pt-1">
                 <Switch
                   checked={editing.is_active ?? true}
