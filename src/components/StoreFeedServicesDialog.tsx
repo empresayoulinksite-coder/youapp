@@ -1,8 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Clock, CalendarClock } from "lucide-react";
+import { ArrowLeft, Clock, Images } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { ServiceGalleryDialog } from "@/components/ServiceGalleryDialog";
 
 type Service = {
   id: string;
@@ -12,6 +13,7 @@ type Service = {
   duration_minutes: number;
   image_url: string | null;
   feed_category_id: string | null;
+  gallery_urls: string[];
 };
 
 type FeedCategory = { id: string; name: string };
