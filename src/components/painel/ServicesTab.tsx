@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Tag } from "lucide-react";
+import { Plus, Pencil, Trash2, Tag, X, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { uploadImage } from "@/lib/upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +36,7 @@ type Service = {
   position: number;
   image_url: string | null;
   feed_category_id: string | null;
+  gallery_urls: string[];
 };
 
 type FeedCategory = { id: string; name: string };
@@ -48,6 +50,8 @@ type Draft = {
   duration_minutes: string;
   is_active: boolean;
   feed_category_id: string | null;
+  image_url: string | null;
+  gallery_urls: string[];
 };
 
 const emptyDraft: Draft = {
@@ -58,6 +62,8 @@ const emptyDraft: Draft = {
   duration_minutes: "30",
   is_active: true,
   feed_category_id: null,
+  image_url: null,
+  gallery_urls: [],
 };
 
 function brl(n: number) {
@@ -67,6 +73,40 @@ function brl(n: number) {
 export function ServicesTab({ storeId }: { storeId: string }) {
   const qc = useQueryClient();
   const [editing, setEditing] = useState<Draft | null>(null);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+
+  const handleCoverUpload = async (file: File) => {
+    setEditing((prev) => prev);
+    setUploadingCover(true);
+    try {
+      const url = await uploadImage("menu-images", file);
+      setEditing((prev) => (prev ? { ...prev, image_url: url } : prev));
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
+  const handleGalleryUpload = async (files: FileList) => {
+    setUploadingGallery(true);
+    try {
+      const urls: string[] = [];
+      for (const f of Array.from(files)) {
+        const url = await uploadImage("menu-images", f);
+        urls.push(url);
+      }
+      setEditing((prev) =>
+        prev ? { ...prev, gallery_urls: [...prev.gallery_urls, ...urls] } : prev,
+      );
+      toast.success(`${urls.length} foto(s) adicionada(s)`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setUploadingGallery(false);
+    }
+  };
 
   const { data: services = [], isLoading } = useQuery({
     queryKey: ["painel", "services", storeId],
@@ -110,6 +150,8 @@ export function ServicesTab({ storeId }: { storeId: string }) {
         duration_minutes: duration,
         is_active: d.is_active,
         feed_category_id: d.feed_category_id || null,
+        image_url: d.image_url || null,
+        gallery_urls: d.gallery_urls,
       };
       if (!payload.name) throw new Error("Nome obrigatório");
 
@@ -212,6 +254,8 @@ export function ServicesTab({ storeId }: { storeId: string }) {
                       duration_minutes: String(s.duration_minutes),
                       is_active: s.is_active,
                       feed_category_id: s.feed_category_id,
+                      image_url: s.image_url,
+                      gallery_urls: s.gallery_urls ?? [],
                     })
                   }
                 >
@@ -245,11 +289,36 @@ export function ServicesTab({ storeId }: { storeId: string }) {
 
       {editing && (
         <Dialog open onOpenChange={(o) => !o && setEditing(null)}>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editing.id ? "Editar serviço" : "Novo serviço"}</DialogTitle>
             </DialogHeader>
             <div className="space-y-3">
+              <div>
+                <Label>Foto de capa</Label>
+                <div className="mt-1 flex items-center gap-3">
+                  {editing.image_url ? (
+                    <img
+                      src={editing.image_url}
+                      alt=""
+                      className="h-16 w-16 rounded object-cover"
+                    />
+                  ) : (
+                    <div className="h-16 w-16 rounded bg-muted flex items-center justify-center text-2xl">
+                      ✂️
+                    </div>
+                  )}
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    disabled={uploadingCover}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleCoverUpload(f);
+                    }}
+                  />
+                </div>
+              </div>
               <div>
                 <Label>Nome</Label>
                 <Input
@@ -322,6 +391,58 @@ export function ServicesTab({ storeId }: { storeId: string }) {
                 <p className="mt-1 text-[11px] text-muted-foreground">
                   Vincule a um álbum do feed para aparecer no botão "Ver serviço completo".
                 </p>
+              </div>
+              <div>
+                <Label>Galeria de fotos do serviço</Label>
+                <p className="text-[11px] text-muted-foreground mb-2">
+                  Adicione várias fotos. O cliente verá um feed estilo Instagram ao
+                  abrir o serviço.
+                </p>
+                {editing.gallery_urls.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2 mb-2">
+                    {editing.gallery_urls.map((url, i) => (
+                      <div key={`${url}-${i}`} className="relative aspect-square">
+                        <img
+                          src={url}
+                          alt=""
+                          className="w-full h-full object-cover rounded-md"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setEditing({
+                              ...editing,
+                              gallery_urls: editing.gallery_urls.filter(
+                                (_, idx) => idx !== i,
+                              ),
+                            })
+                          }
+                          className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full p-0.5"
+                          aria-label="Remover"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <label
+                  className={`flex items-center justify-center gap-2 border border-dashed rounded-md py-3 text-sm cursor-pointer hover:bg-muted/50 ${uploadingGallery ? "opacity-50 pointer-events-none" : ""}`}
+                >
+                  <ImagePlus className="h-4 w-4" />
+                  {uploadingGallery ? "Enviando..." : "Adicionar fotos"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                      const files = e.target.files;
+                      if (files && files.length > 0) handleGalleryUpload(files);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
               </div>
               <div className="flex items-center gap-2">
                 <Switch

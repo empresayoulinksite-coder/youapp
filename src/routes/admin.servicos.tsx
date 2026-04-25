@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Pause, Play, Clock, DollarSign } from "lucide-react";
+import { Plus, Pencil, Trash2, Pause, Play, Clock, DollarSign, ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,7 @@ type Service = {
   is_active: boolean;
   position: number;
   feed_category_id: string | null;
+  gallery_urls: string[];
 };
 
 type ServiceStore = {
@@ -59,6 +60,7 @@ const empty: Partial<Service> = {
   is_active: true,
   position: 0,
   feed_category_id: null,
+  gallery_urls: [],
 };
 
 function AdminServices() {
@@ -123,6 +125,7 @@ function AdminServices() {
         is_active: s.is_active ?? true,
         position: Number(s.position) || services.length,
         feed_category_id: s.feed_category_id || null,
+        gallery_urls: s.gallery_urls ?? [],
       };
       if (s.id) {
         const { error } = await supabase.from("services").update(payload).eq("id", s.id);
@@ -180,6 +183,8 @@ function AdminServices() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const [uploadingGallery, setUploadingGallery] = useState(false);
+
   const handleFile = async (file: File) => {
     setUploading(true);
     try {
@@ -190,6 +195,25 @@ function AdminServices() {
       toast.error((e as Error).message);
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleGalleryFiles = async (files: FileList) => {
+    setUploadingGallery(true);
+    try {
+      const urls: string[] = [];
+      for (const f of Array.from(files)) {
+        urls.push(await uploadImage("menu-images", f));
+      }
+      setEditing((prev) => ({
+        ...prev,
+        gallery_urls: [...(prev?.gallery_urls ?? []), ...urls],
+      }));
+      toast.success(`${urls.length} foto(s) adicionada(s)`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setUploadingGallery(false);
     }
   };
 
@@ -465,6 +489,58 @@ function AdminServices() {
                   Vincule o serviço a um álbum do feed para que apareça quando o
                   cliente clicar em "Ver serviço completo".
                 </p>
+              </div>
+              <div>
+                <Label>Galeria de fotos do serviço</Label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Adicione várias fotos. O cliente verá um feed estilo Instagram ao
+                  abrir o serviço.
+                </p>
+                {editing.gallery_urls && editing.gallery_urls.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2 mb-2">
+                    {editing.gallery_urls.map((url, i) => (
+                      <div key={`${url}-${i}`} className="relative aspect-square">
+                        <img
+                          src={url}
+                          alt=""
+                          className="w-full h-full object-cover rounded-md"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setEditing({
+                              ...editing,
+                              gallery_urls: (editing.gallery_urls ?? []).filter(
+                                (_, idx) => idx !== i,
+                              ),
+                            })
+                          }
+                          className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full p-0.5"
+                          aria-label="Remover"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <label
+                  className={`flex items-center justify-center gap-2 border border-dashed rounded-md py-3 text-sm cursor-pointer hover:bg-muted/50 ${uploadingGallery ? "opacity-50 pointer-events-none" : ""}`}
+                >
+                  <ImagePlus className="h-4 w-4" />
+                  {uploadingGallery ? "Enviando..." : "Adicionar fotos"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                      const files = e.target.files;
+                      if (files && files.length > 0) handleGalleryFiles(files);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
               </div>
               <div className="flex items-center gap-3 pt-1">
                 <Switch
