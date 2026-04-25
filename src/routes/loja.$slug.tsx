@@ -420,10 +420,17 @@ function StorePage() {
           storeId={store.id}
           categoryId={albumsInitialCategory}
           isAuthenticated={!!user}
+          bookingMode={store.booking_mode === "quote" ? "quote" : "booking"}
           onPickService={(serviceId) => {
             setAlbumsOpen(false);
             if (!user) {
               navigate({ to: "/auth" });
+              return;
+            }
+            const svc = services.find((x) => x.id === serviceId);
+            if (store.booking_mode === "quote") {
+              if (!svc) return;
+              setQuoteService(svc);
               return;
             }
             if (!open) {
