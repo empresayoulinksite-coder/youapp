@@ -546,65 +546,166 @@ export const applyBulkEdit = createServerFn({ method: "POST" })
     await ensureAdminFromToken(data.accessToken);
 
     let applied = 0;
+
+    // Split changes by type so we can batch aggressively.
+    const deletes: string[] = [];
+    const activates: string[] = [];
+    const deactivates: string[] = [];
+    // menu_items price/name/desc updates that share the SAME payload can be batched with .in()
+    const itemPriceGroups = new Map<number, string[]>(); // price -> [menu_item_id]
+    // Other menu_items updates (name/desc, or price combined w/ other fields) go individually
+    const itemMisc: { id: string; update: { price?: number; description?: string; name?: string } }[] =
+      [];
+    // size_price updates batched by price
+    const sizePriceUpdateGroups = new Map<number, string[]>(); // price -> [size_price_id]
+    // size_price inserts (no row yet)
+    const sizePriceInserts: { menu_item_id: string; pizza_size_id: string; price: number }[] = [];
+
     for (const c of data.changes) {
-      let ok = false;
       const action = c.action ?? "update";
-
       if (action === "delete") {
-        const { error } = await supabaseAdmin.from("menu_items").delete().eq("id", c.menu_item_id);
-        if (error) console.error("delete menu_items error", c.menu_item_id, error);
-        else ok = true;
-        if (ok) applied++;
+        deletes.push(c.menu_item_id);
+        continue;
+      }
+      if (action === "activate") {
+        activates.push(c.menu_item_id);
+        continue;
+      }
+      if (action === "deactivate") {
+        deactivates.push(c.menu_item_id);
         continue;
       }
 
-      if (action === "activate" || action === "deactivate") {
-        const { error } = await supabaseAdmin
-          .from("menu_items")
-          .update({ is_available: action === "activate" })
-          .eq("id", c.menu_item_id);
-        if (error) console.error("toggle availability error", c.menu_item_id, error);
-        else ok = true;
-        if (ok) applied++;
+      // price/desc/name updates
+      if (c.new_price != null && c.pizza_size_id) {
+        if (c.size_price_id) {
+          const arr = sizePriceUpdateGroups.get(c.new_price) ?? [];
+          arr.push(c.size_price_id);
+          sizePriceUpdateGroups.set(c.new_price, arr);
+        } else {
+          sizePriceInserts.push({
+            menu_item_id: c.menu_item_id,
+            pizza_size_id: c.pizza_size_id,
+            price: c.new_price,
+          });
+        }
+        // size price changes don't touch menu_items
         continue;
       }
 
-      // update + adjust_price share the same write paths
       const update: { price?: number; description?: string; name?: string } = {};
       if (c.new_description != null) update.description = c.new_description;
       if (c.new_name != null) update.name = c.new_name;
-      if (c.new_price != null && !c.pizza_size_id) update.price = c.new_price;
-      if (Object.keys(update).length > 0) {
-        const { error } = await supabaseAdmin
-          .from("menu_items")
-          .update(update)
-          .eq("id", c.menu_item_id);
-        if (error) console.error("update menu_items error", c.menu_item_id, error);
-        else ok = true;
-      }
+      if (c.new_price != null) update.price = c.new_price;
 
-      if (c.new_price != null && c.pizza_size_id) {
-        if (c.size_price_id) {
-          const { error } = await supabaseAdmin
-            .from("menu_item_size_prices")
-            .update({ price: c.new_price })
-            .eq("id", c.size_price_id);
-          if (error) console.error("update size_price error", c.size_price_id, error);
-          else ok = true;
-        } else {
-          const { error } = await supabaseAdmin
-            .from("menu_item_size_prices")
-            .insert({
-              menu_item_id: c.menu_item_id,
-              pizza_size_id: c.pizza_size_id,
-              price: c.new_price,
-            });
-          if (error) console.error("insert size_price error", error);
-          else ok = true;
-        }
+      // If only price is changing, group it for batched .in() update
+      if (
+        update.price != null &&
+        update.description === undefined &&
+        update.name === undefined
+      ) {
+        const arr = itemPriceGroups.get(update.price) ?? [];
+        arr.push(c.menu_item_id);
+        itemPriceGroups.set(update.price, arr);
+      } else if (Object.keys(update).length > 0) {
+        itemMisc.push({ id: c.menu_item_id, update });
       }
-
-      if (ok) applied++;
     }
+
+    // Helper: run an array of promise factories with bounded concurrency
+    async function runConcurrent<T>(tasks: (() => Promise<T>)[], limit = 10): Promise<T[]> {
+      const results: T[] = [];
+      let i = 0;
+      const workers = Array.from({ length: Math.min(limit, tasks.length) }, async () => {
+        while (i < tasks.length) {
+          const idx = i++;
+          results[idx] = await tasks[idx]();
+        }
+      });
+      await Promise.all(workers);
+      return results;
+    }
+
+    // Chunk helper to keep IN() lists reasonable
+    function chunk<T>(arr: T[], size: number): T[][] {
+      const out: T[][] = [];
+      for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+      return out;
+    }
+
+    // 1) Deletes (batched by .in)
+    for (const ids of chunk(deletes, 200)) {
+      const { error } = await supabaseAdmin.from("menu_items").delete().in("id", ids);
+      if (error) console.error("bulk delete error", error);
+      else applied += ids.length;
+    }
+
+    // 2) Activate / deactivate (batched)
+    for (const ids of chunk(activates, 200)) {
+      const { error } = await supabaseAdmin
+        .from("menu_items")
+        .update({ is_available: true })
+        .in("id", ids);
+      if (error) console.error("bulk activate error", error);
+      else applied += ids.length;
+    }
+    for (const ids of chunk(deactivates, 200)) {
+      const { error } = await supabaseAdmin
+        .from("menu_items")
+        .update({ is_available: false })
+        .in("id", ids);
+      if (error) console.error("bulk deactivate error", error);
+      else applied += ids.length;
+    }
+
+    // 3) menu_items price-only updates: one query per distinct price
+    const itemPriceTasks: (() => Promise<void>)[] = [];
+    for (const [price, ids] of itemPriceGroups) {
+      for (const idChunk of chunk(ids, 200)) {
+        itemPriceTasks.push(async () => {
+          const { error } = await supabaseAdmin
+            .from("menu_items")
+            .update({ price })
+            .in("id", idChunk);
+          if (error) console.error("bulk item price error", error);
+          else applied += idChunk.length;
+        });
+      }
+    }
+    await runConcurrent(itemPriceTasks, 8);
+
+    // 4) menu_items misc (name/description or mixed): individual but in parallel
+    await runConcurrent(
+      itemMisc.map((m) => async () => {
+        const { error } = await supabaseAdmin.from("menu_items").update(m.update).eq("id", m.id);
+        if (error) console.error("update menu_items error", m.id, error);
+        else applied++;
+      }),
+      10,
+    );
+
+    // 5) size_prices updates grouped by price
+    const sizeTasks: (() => Promise<void>)[] = [];
+    for (const [price, ids] of sizePriceUpdateGroups) {
+      for (const idChunk of chunk(ids, 200)) {
+        sizeTasks.push(async () => {
+          const { error } = await supabaseAdmin
+            .from("menu_item_size_prices")
+            .update({ price })
+            .in("id", idChunk);
+          if (error) console.error("bulk size_price update error", error);
+          else applied += idChunk.length;
+        });
+      }
+    }
+    await runConcurrent(sizeTasks, 8);
+
+    // 6) size_prices inserts (batched)
+    for (const rows of chunk(sizePriceInserts, 200)) {
+      const { error } = await supabaseAdmin.from("menu_item_size_prices").insert(rows);
+      if (error) console.error("bulk size_price insert error", error);
+      else applied += rows.length;
+    }
+
     return { applied };
   });
