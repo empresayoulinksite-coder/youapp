@@ -189,6 +189,48 @@ function StorePage() {
     return () => clearInterval(t);
   }, []);
 
+  // Categorias visíveis (com itens) para o filtro sticky estilo iFood
+  const visibleCategories = categories.filter((c) => items.some((i) => i.category_id === c.id));
+
+  // Scrollspy: marca a categoria ativa conforme rolagem
+  useEffect(() => {
+    if (tab !== "menu" || isService || visibleCategories.length === 0) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]) {
+          const id = (visible[0].target as HTMLElement).dataset.categoryId;
+          if (id) setActiveCategoryId(id);
+        }
+      },
+      { rootMargin: "-160px 0px -60% 0px", threshold: 0 },
+    );
+    visibleCategories.forEach((c) => {
+      const el = document.querySelector(`[data-category-id="${c.id}"]`);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, [tab, isService, visibleCategories.map((c) => c.id).join(",")]);
+
+  // Mantém o item ativo visível na barra horizontal
+  useEffect(() => {
+    if (!activeCategoryId) return;
+    const btn = document.querySelector(`[data-cat-pill="${activeCategoryId}"]`) as HTMLElement | null;
+    btn?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }, [activeCategoryId]);
+
+  const scrollToCategory = (id: string) => {
+    setActiveCategoryId(id);
+    setMenuSheetOpen(false);
+    const el = document.querySelector(`[data-category-id="${id}"]`) as HTMLElement | null;
+    if (el) {
+      const top = el.getBoundingClientRect().top + window.scrollY - 150;
+      window.scrollTo({ top, behavior: "smooth" });
+    }
+  };
+
   // Reset selecionados quando trocar/abrir item
   useEffect(() => {
     setSelectedSize(null);
