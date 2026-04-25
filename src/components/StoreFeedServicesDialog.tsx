@@ -33,13 +33,17 @@ export function StoreFeedServicesDialog({
   isAuthenticated: boolean;
   onPickService: (serviceId: string) => void;
 }) {
+  const [activeService, setActiveService] = useState<Service | null>(null);
+
   const { data: services = [] } = useQuery({
     queryKey: ["feed-services-dialog", storeId, categoryId],
     enabled: open,
     queryFn: async () => {
       let q = supabase
         .from("services")
-        .select("id, name, description, price, duration_minutes, image_url, feed_category_id")
+        .select(
+          "id, name, description, price, duration_minutes, image_url, feed_category_id, gallery_urls",
+        )
         .eq("store_id", storeId)
         .eq("is_active", true)
         .order("position", { ascending: true });
