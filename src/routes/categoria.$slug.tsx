@@ -83,7 +83,7 @@ interface ItemWithStore extends MenuItemRow {
 
 export const Route = createFileRoute("/categoria/$slug")({
   loader: async ({ params }) => {
-    const cat = findCategoryBySlug(params.slug);
+    const cat = await resolveCategory(params.slug);
     if (!cat) throw notFound();
 
     const { data: storesData, error: storesErr } = await supabase
@@ -156,12 +156,12 @@ export const Route = createFileRoute("/categoria/$slug")({
 
 function CategoryPage() {
   const { category, stores, items } = Route.useLoaderData() as {
-    category: ReturnType<typeof findCategoryBySlug> & {};
+    category: ResolvedCategory;
     stores: StoreRow[];
     items: ItemWithStore[];
   };
-  const Icon = category.Icon;
-  const isEcom = isEcommerceCategorySlug(category.slug);
+  const Icon = getCategoryIcon(category.icon);
+  const isEcom = category.isEcommerce;
 
   // Agrupa até 4 itens em destaque por loja (promo primeiro)
   const itemsByStore = new Map<string, ItemWithStore[]>();
