@@ -303,12 +303,22 @@ function AdminProducts() {
       vars: Variation[];
       pizzaPrices: Record<string, string>;
     }) => {
+      const cat = categories.find((c) => c.id === m.category_id);
+      const isPizza = !!cat?.is_pizza && pizzaSizes.length > 0;
+      const pizzaAutoPrice = isPizza
+        ? Math.max(
+            0,
+            ...pizzaSizes
+              .map((s) => Number(pizzaPrices[s.id]))
+              .filter((n) => !isNaN(n) && n > 0),
+          )
+        : 0;
       const payload = {
         store_id: storeId,
         category_id: m.category_id!,
         name: m.name!,
         description: m.description || null,
-        price: Number(m.price) || 0,
+        price: isPizza ? pizzaAutoPrice : Number(m.price) || 0,
         original_price: m.original_price ? Number(m.original_price) : null,
         promo: m.promo || null,
         emoji: m.emoji || "🍽️",
