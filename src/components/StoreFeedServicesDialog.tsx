@@ -27,6 +27,7 @@ export function StoreFeedServicesDialog({
   categoryId,
   isAuthenticated,
   onPickService,
+  bookingMode = "booking",
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -34,6 +35,7 @@ export function StoreFeedServicesDialog({
   categoryId: string | null;
   isAuthenticated: boolean;
   onPickService: (serviceId: string) => void;
+  bookingMode?: "booking" | "quote";
 }) {
   const [activeService, setActiveService] = useState<Service | null>(null);
 
