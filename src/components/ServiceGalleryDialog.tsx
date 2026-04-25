@@ -23,12 +23,14 @@ export function ServiceGalleryDialog({
   service,
   isAuthenticated,
   onBook,
+  bookingMode = "booking",
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   service: ServiceLike | null;
   isAuthenticated: boolean;
   onBook: (serviceId: string) => void;
+  bookingMode?: "booking" | "quote";
 }) {
   const [lightbox, setLightbox] = useState<number | null>(null);
 
