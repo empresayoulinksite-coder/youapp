@@ -1421,6 +1421,14 @@ function AdminProducts() {
         initial={pizzaWizardInitial}
         position={categories.length}
       />
+
+      {storeId && (
+        <BulkEditAIDialog
+          open={aiBulkOpen}
+          onOpenChange={setAiBulkOpen}
+          storeId={storeId}
+        />
+      )}
     </div>
   );
 }
