@@ -183,6 +183,8 @@ function AdminServices() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const [uploadingGallery, setUploadingGallery] = useState(false);
+
   const handleFile = async (file: File) => {
     setUploading(true);
     try {
@@ -193,6 +195,25 @@ function AdminServices() {
       toast.error((e as Error).message);
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleGalleryFiles = async (files: FileList) => {
+    setUploadingGallery(true);
+    try {
+      const urls: string[] = [];
+      for (const f of Array.from(files)) {
+        urls.push(await uploadImage("menu-images", f));
+      }
+      setEditing((prev) => ({
+        ...prev,
+        gallery_urls: [...(prev?.gallery_urls ?? []), ...urls],
+      }));
+      toast.success(`${urls.length} foto(s) adicionada(s)`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setUploadingGallery(false);
     }
   };
 
