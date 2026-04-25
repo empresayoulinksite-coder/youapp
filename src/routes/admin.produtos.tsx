@@ -1588,6 +1588,7 @@ function SortableCategory({
                     key={m.id}
                     item={m}
                     variations={variationsByItem[m.id] || []}
+                    pizzaPrice={isPizzaCategory ? (pizzaPriceByItem[m.id] ?? 0) : null}
                     onEdit={() => onEditItem(m)}
                     onDelete={() => onDeleteItem(m.id, m.name)}
                     onToggleAvailable={() => onToggleItemAvailable(m)}
