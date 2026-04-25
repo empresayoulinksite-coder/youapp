@@ -16,6 +16,7 @@ import {
   Upload,
   Pizza,
   Copy,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -58,6 +59,7 @@ import {
 } from "@/components/ui/dialog";
 import { uploadImage } from "@/lib/upload";
 import { PizzaCategoryWizard } from "@/components/PizzaCategoryWizard";
+import { BulkEditAIDialog } from "@/components/BulkEditAIDialog";
 
 export const Route = createFileRoute("/admin/produtos")({
   component: AdminProducts,
