@@ -82,6 +82,19 @@ export function ServicesTab({ storeId }: { storeId: string }) {
     },
   });
 
+  const { data: feedCategories = [] } = useQuery({
+    queryKey: ["painel", "feed-categories", storeId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("store_feed_categories")
+        .select("id, name")
+        .eq("store_id", storeId)
+        .order("position", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as FeedCategory[];
+    },
+  });
+
   const save = useMutation({
     mutationFn: async (d: Draft) => {
       const price = Number(d.price.replace(",", "."));
@@ -96,6 +109,7 @@ export function ServicesTab({ storeId }: { storeId: string }) {
         price,
         duration_minutes: duration,
         is_active: d.is_active,
+        feed_category_id: d.feed_category_id || null,
       };
       if (!payload.name) throw new Error("Nome obrigatório");
 
