@@ -491,7 +491,7 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
         continue;
       }
 
-      // action === "update"
+      // action === "update" or single-product "set_price"
       if (e.new_price == null && e.new_description == null && e.new_name == null) continue;
 
       const useSizePrice = isPizza && matchedSize && e.new_price != null;
@@ -507,7 +507,7 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
 
       changes.push({
         menu_item_id: bestItem.id,
-        action: "update",
+        action: action === "set_price" ? "set_price" : "update",
         current_name: bestItem.name,
         current_price: useSizePrice && currentSizePrice != null ? currentSizePrice : Number(bestItem.price),
         current_description: bestItem.description ?? null,
