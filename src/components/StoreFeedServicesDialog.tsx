@@ -93,64 +93,77 @@ export function StoreFeedServicesDialog({
               Nenhum serviço disponível nesta categoria.
             </p>
           ) : (
-            services.map((s) => (
-              <article
-                key={s.id}
-                onClick={() => onPickService(s.id)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onPickService(s.id);
-                  }
-                }}
-                className="bg-card rounded-2xl p-3 flex gap-3 shadow-[var(--shadow-card)] cursor-pointer transition-colors hover:bg-accent/40 focus:outline-none focus:ring-2 focus:ring-brand"
-              >
-                <div className="h-20 w-20 rounded-xl overflow-hidden bg-brand-soft flex items-center justify-center text-3xl shrink-0">
-                  {s.image_url ? (
-                    <img
-                      src={s.image_url}
-                      alt={s.name}
-                      loading="lazy"
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <span>✂️</span>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold truncate">{s.name}</h4>
-                  {s.description && (
-                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                      {s.description}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="font-bold text-sm">
-                      R$ {s.price.toFixed(2).replace(".", ",")}
-                    </span>
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Clock className="h-3 w-3" /> {s.duration_minutes} min
-                    </span>
+            services.map((s) => {
+              const photoCount = s.gallery_urls?.length || (s.image_url ? 1 : 0);
+              return (
+                <article
+                  key={s.id}
+                  onClick={() => setActiveService(s)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setActiveService(s);
+                    }
+                  }}
+                  className="bg-card rounded-2xl p-3 flex gap-3 shadow-[var(--shadow-card)] cursor-pointer transition-colors hover:bg-accent/40 focus:outline-none focus:ring-2 focus:ring-brand"
+                >
+                  <div className="relative h-20 w-20 rounded-xl overflow-hidden bg-brand-soft flex items-center justify-center text-3xl shrink-0">
+                    {s.image_url ? (
+                      <img
+                        src={s.image_url}
+                        alt={s.name}
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span>✂️</span>
+                    )}
+                    {photoCount > 1 && (
+                      <span className="absolute bottom-1 right-1 text-[10px] font-semibold text-white bg-black/60 rounded-full px-1.5 py-0.5 inline-flex items-center gap-0.5">
+                        <Images className="h-3 w-3" /> {photoCount}
+                      </span>
+                    )}
                   </div>
-                  <div className="mt-2">
-                    <span className="text-xs font-bold bg-brand text-brand-foreground rounded-full px-3 py-1.5 inline-flex items-center gap-1">
-                      {isAuthenticated ? (
-                        <>
-                          <CalendarClock className="h-3.5 w-3.5" /> Agendar
-                        </>
-                      ) : (
-                        "Entrar para agendar"
-                      )}
-                    </span>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold truncate">{s.name}</h4>
+                    {s.description && (
+                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                        {s.description}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="font-bold text-sm">
+                        R$ {s.price.toFixed(2).replace(".", ",")}
+                      </span>
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Clock className="h-3 w-3" /> {s.duration_minutes} min
+                      </span>
+                    </div>
+                    <div className="mt-2">
+                      <span className="text-xs font-bold bg-brand text-brand-foreground rounded-full px-3 py-1.5 inline-flex items-center gap-1">
+                        <Images className="h-3.5 w-3.5" /> Ver fotos
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </article>
-            ))
+                </article>
+              );
+            })
           )}
         </div>
       </DialogContent>
+
+      <ServiceGalleryDialog
+        open={!!activeService}
+        onOpenChange={(o) => !o && setActiveService(null)}
+        service={activeService}
+        isAuthenticated={isAuthenticated}
+        onBook={(serviceId) => {
+          setActiveService(null);
+          onPickService(serviceId);
+        }}
+      />
     </Dialog>
   );
 }
