@@ -116,6 +116,8 @@ export function ServicesTab({ storeId }: { storeId: string }) {
         duration_minutes: duration,
         is_active: d.is_active,
         feed_category_id: d.feed_category_id || null,
+        image_url: d.image_url || null,
+        gallery_urls: d.gallery_urls,
       };
       if (!payload.name) throw new Error("Nome obrigatório");
 
