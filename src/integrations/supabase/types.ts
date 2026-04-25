@@ -1237,6 +1237,7 @@ export type Database = {
           hours: string | null
           id: string
           image_url: string | null
+          is_hidden: boolean
           is_paused: boolean
           is_pizzeria: boolean
           lat: number | null
@@ -1285,6 +1286,7 @@ export type Database = {
           hours?: string | null
           id?: string
           image_url?: string | null
+          is_hidden?: boolean
           is_paused?: boolean
           is_pizzeria?: boolean
           lat?: number | null
@@ -1333,6 +1335,7 @@ export type Database = {
           hours?: string | null
           id?: string
           image_url?: string | null
+          is_hidden?: boolean
           is_paused?: boolean
           is_pizzeria?: boolean
           lat?: number | null
