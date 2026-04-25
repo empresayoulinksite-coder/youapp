@@ -361,6 +361,7 @@ export function ServicesTab({ storeId }: { storeId: string }) {
                     value={editing.price}
                     onChange={(e) => setEditing({ ...editing, price: e.target.value })}
                     placeholder="0,00"
+                    disabled={!editing.show_price}
                   />
                 </div>
                 <div>
@@ -373,6 +374,33 @@ export function ServicesTab({ storeId }: { storeId: string }) {
                     onChange={(e) =>
                       setEditing({ ...editing, duration_minutes: e.target.value })
                     }
+                    disabled={!editing.show_duration}
+                  />
+                </div>
+              </div>
+              <div className="rounded-md border p-3 space-y-2 bg-muted/30">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">Mostrar preço</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Desligue para ocultar o valor para os clientes.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={editing.show_price}
+                    onCheckedChange={(v) => setEditing({ ...editing, show_price: v })}
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">Mostrar duração</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Desligue para ocultar o tempo do serviço.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={editing.show_duration}
+                    onCheckedChange={(v) => setEditing({ ...editing, show_duration: v })}
                   />
                 </div>
               </div>
