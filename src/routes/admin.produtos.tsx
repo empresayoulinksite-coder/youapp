@@ -693,16 +693,31 @@ function AdminProducts() {
     setEditingVars([]);
     setSizesInput("");
     setColorsInput("");
+    setEditingPizzaPrices({});
     setOpen(true);
   };
 
-  const openEditItem = (m: MenuItem) => {
+  const openEditItem = async (m: MenuItem) => {
     setEditing(m);
     setEditingVars((variationsByItem[m.id] || []).map((v) => ({ ...v })));
     setSizesInput((m.sizes ?? []).join(", "));
     setColorsInput((m.colors ?? []).join(", "));
+    setEditingPizzaPrices({});
     setOpen(true);
+    const cat = categories.find((c) => c.id === m.category_id);
+    if (cat?.is_pizza) {
+      const { data } = await supabase
+        .from("menu_item_size_prices")
+        .select("pizza_size_id,price")
+        .eq("menu_item_id", m.id);
+      const map: Record<string, string> = {};
+      (data ?? []).forEach((p) => {
+        map[p.pizza_size_id] = String(p.price);
+      });
+      setEditingPizzaPrices(map);
+    }
   };
+
 
   // ---------- Render ----------
   return (
