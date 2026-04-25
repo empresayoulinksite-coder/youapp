@@ -1440,6 +1440,8 @@ function SortableCategory({
   category: Category;
   items: MenuItem[];
   variationsByItem: Record<string, Variation[]>;
+  pizzaPriceByItem: Record<string, number>;
+  isPizzaCategory: boolean;
   collapsed: boolean;
   onToggle: () => void;
   onEditCategory: () => void;
