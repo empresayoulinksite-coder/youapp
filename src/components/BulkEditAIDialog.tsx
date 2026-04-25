@@ -17,6 +17,14 @@ import {
   applyBulkEdit,
   type PreviewChange,
 } from "@/server/bulk-edit.functions";
+import { supabase } from "@/integrations/supabase/client";
+
+async function getAccessToken(): Promise<string> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error("Faça login novamente");
+  return token;
+}
 
 interface Props {
   open: boolean;
@@ -40,10 +48,15 @@ export function BulkEditAIDialog({ open, onOpenChange, storeId }: Props) {
   );
 
   const previewMut = useMutation({
-    mutationFn: async () => previewBulkEdit({ data: { storeId, prompt } }),
+    mutationFn: async () => {
+      const accessToken = await getAccessToken();
+      return previewBulkEdit({ data: { storeId, prompt, accessToken } });
+    },
     onSuccess: (res) => {
       setPreview(res);
-      if (res.changes.length === 0 && res.not_found.length === 0) {
+      const changes = res?.changes ?? [];
+      const notFound = res?.not_found ?? [];
+      if (changes.length === 0 && notFound.length === 0) {
         toast.info("A IA não identificou alterações.");
       }
     },
@@ -51,7 +64,10 @@ export function BulkEditAIDialog({ open, onOpenChange, storeId }: Props) {
   });
 
   const applyMut = useMutation({
-    mutationFn: async () => applyBulkEdit({ data: { changes: preview!.changes } }),
+    mutationFn: async () => {
+      const accessToken = await getAccessToken();
+      return applyBulkEdit({ data: { changes: preview!.changes, accessToken } });
+    },
     onSuccess: (res) => {
       toast.success(`${res.applied} produto(s) atualizado(s).`);
       qc.invalidateQueries({ queryKey: ["admin-products"] });
