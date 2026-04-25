@@ -171,6 +171,8 @@ function StorePage() {
   const [pizzaBuilderItem, setPizzaBuilderItem] = useState<MenuItem | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingInitialId, setBookingInitialId] = useState<string | null>(null);
+  const [albumsOpen, setAlbumsOpen] = useState(false);
+  const [albumsInitialCategory, setAlbumsInitialCategory] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
 
   // refresh "now" every minute so the open/closed badge updates without a refresh
