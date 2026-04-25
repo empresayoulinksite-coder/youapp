@@ -117,6 +117,8 @@ export const Route = createFileRoute("/loja/$slug")({
         price: Number(s.price),
         duration_minutes: Number(s.duration_minutes),
         image_url: s.image_url as string | null,
+        show_price: s.show_price ?? true,
+        show_duration: s.show_duration ?? true,
       })),
     };
   },
