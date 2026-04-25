@@ -197,6 +197,21 @@ function AdminProducts() {
     },
   });
 
+  const { data: pizzaSizes = [] } = useQuery({
+    queryKey: ["admin-pizza-sizes", storeId],
+    enabled: !!storeId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pizza_sizes")
+        .select("id,name,position")
+        .eq("store_id", storeId)
+        .eq("is_active", true)
+        .order("position");
+      if (error) throw error;
+      return data as { id: string; name: string; position: number }[];
+    },
+  });
+
   // ---------- Mutations ----------
   const saveCategory = useMutation({
     mutationFn: async (c: Partial<Category>) => {
