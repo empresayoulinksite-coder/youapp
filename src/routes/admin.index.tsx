@@ -147,6 +147,39 @@ function AdminStores() {
     },
   });
 
+  const { data: dynamicCategoryOptions = [] } = useQuery({
+    queryKey: ["admin-home-category-options"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("home_categories")
+        .select("label, matches")
+        .eq("is_active", true)
+        .order("position", { ascending: true });
+      if (error) throw error;
+      const seen = new Set<string>();
+      const out: Array<{ value: string; label: string }> = [];
+      for (const opt of CATEGORY_OPTIONS) {
+        const key = opt.value.toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          out.push(opt);
+        }
+      }
+      for (const row of data ?? []) {
+        const values = [row.label, ...(row.matches ?? [])];
+        for (const v of values) {
+          const name = (v ?? "").trim();
+          if (!name) continue;
+          const key = name.toLowerCase();
+          if (seen.has(key)) continue;
+          seen.add(key);
+          out.push({ value: name, label: name });
+        }
+      }
+      return out.sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
+    },
+  });
+
   const save = useMutation({
     mutationFn: async (s: Partial<Store>) => {
       const payload = {
