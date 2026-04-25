@@ -620,6 +620,7 @@ function AdminProducts() {
       toast.success("Produto duplicado");
       qc.invalidateQueries({ queryKey: ["admin-items", storeId] });
       qc.invalidateQueries({ queryKey: ["admin-variations"] });
+      qc.invalidateQueries({ queryKey: ["admin-size-prices"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
