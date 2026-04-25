@@ -987,6 +987,7 @@ function AdminProducts() {
           if (!o) {
             setEditing(null);
             setEditingVars([]);
+            setEditingPizzaPrices({});
           }
         }}
       >
