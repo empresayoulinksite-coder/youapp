@@ -478,7 +478,7 @@ export function ServicesTab({ storeId }: { storeId: string }) {
                   Adicione várias fotos. O cliente verá um feed estilo Instagram ao
                   abrir o serviço.
                 </p>
-                {editing.gallery_urls.length > 0 && (
+                {(editing.gallery_urls.length > 0 || galleryUploads.length > 0) && (
                   <div className="grid grid-cols-3 gap-2 mb-2">
                     {editing.gallery_urls.map((url, i) => (
                       <div key={`${url}-${i}`} className="relative aspect-square">
@@ -504,18 +504,43 @@ export function ServicesTab({ storeId }: { storeId: string }) {
                         </button>
                       </div>
                     ))}
+                    {galleryUploads.map((u) => (
+                      <div
+                        key={u.id}
+                        className="relative aspect-square rounded-md overflow-hidden"
+                      >
+                        <img
+                          src={u.preview}
+                          alt=""
+                          className="w-full h-full object-cover opacity-50"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                          <Loader2 className="h-6 w-6 text-white animate-spin" />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
                 <label
                   className={`flex items-center justify-center gap-2 border border-dashed rounded-md py-3 text-sm cursor-pointer hover:bg-muted/50 ${uploadingGallery ? "opacity-50 pointer-events-none" : ""}`}
                 >
-                  <ImagePlus className="h-4 w-4" />
-                  {uploadingGallery ? "Enviando..." : "Adicionar fotos"}
+                  {uploadingGallery ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Enviando {galleryProgress.done} de {galleryProgress.total}...
+                    </>
+                  ) : (
+                    <>
+                      <ImagePlus className="h-4 w-4" />
+                      Adicionar fotos
+                    </>
+                  )}
                   <input
                     type="file"
                     accept="image/*"
                     multiple
                     className="hidden"
+                    disabled={uploadingGallery}
                     onChange={(e) => {
                       const files = e.target.files;
                       if (files && files.length > 0) handleGalleryUpload(files);
