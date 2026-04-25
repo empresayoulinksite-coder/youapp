@@ -894,6 +894,8 @@ function AdminProducts() {
                       category={cat}
                       items={itemsByCategory[cat.id] || []}
                       variationsByItem={variationsByItem}
+                      pizzaPriceByItem={pizzaPriceByItem}
+                      isPizzaCategory={!!cat.is_pizza}
                       collapsed={!!collapsed[cat.id]}
                       onToggle={() =>
                         setCollapsed((p) => ({ ...p, [cat.id]: !p[cat.id] }))
