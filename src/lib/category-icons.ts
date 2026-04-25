@@ -30,17 +30,20 @@ import {
   Truck,
   Store,
   Tag,
+  Video,
+  CupSoda,
   type LucideIcon,
 } from "lucide-react";
 
-// "Acai" reaproveita o glifo de uvas (Grape) — visualmente similar e ainda
-// não existe ícone próprio para açaí na Lucide.
+// "Acai" usa o glifo CupSoda (copo/pote) — visualmente representa um pote de açaí.
+// "Filmmaker" usa Video (câmera de vídeo).
 export const CATEGORY_ICONS: Record<string, LucideIcon> = {
   UtensilsCrossed,
   Pizza,
   Beef,
   IceCream,
-  Acai: Grape,
+  Acai: CupSoda,
+  Filmmaker: Video,
   Coffee,
   Sandwich,
   Soup,
@@ -68,6 +71,8 @@ export const CATEGORY_ICONS: Record<string, LucideIcon> = {
   Truck,
   Store,
   Tag,
+  Video,
+  CupSoda,
 };
 
 export const CATEGORY_ICON_NAMES = Object.keys(CATEGORY_ICONS);
