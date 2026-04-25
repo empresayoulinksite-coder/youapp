@@ -284,9 +284,10 @@ function ImportMenuPage() {
                   onChange={(e) => updateCategoryName(ci, e.target.value)}
                   className="font-semibold"
                 />
-                <Button size="sm" variant="ghost" onClick={() => addItem(ci)}>
+                <Button size="sm" variant="ghost" onClick={() => addItem(ci)} title="Adicionar item em branco">
                   <Plus className="h-4 w-4" />
                 </Button>
+                <AddMoreImageDialog onParsed={(items) => appendItemsToCategory(ci, items)} />
                 <Button size="sm" variant="ghost" onClick={() => removeCategory(ci)}>
                   <Trash2 className="h-4 w-4 text-destructive" />
                 </Button>
