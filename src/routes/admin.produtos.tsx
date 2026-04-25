@@ -123,6 +123,9 @@ function AdminProducts() {
   const [editingVars, setEditingVars] = useState<Variation[]>([]);
   const [sizesInput, setSizesInput] = useState<string>("");
   const [colorsInput, setColorsInput] = useState<string>("");
+  const [editingPizzaPrices, setEditingPizzaPrices] = useState<
+    Record<string, string>
+  >({});
   const [uploading, setUploading] = useState(false);
 
   const [catOpen, setCatOpen] = useState(false);
@@ -191,6 +194,21 @@ function AdminProducts() {
         (map[k] ||= []).push(v);
       });
       return map;
+    },
+  });
+
+  const { data: pizzaSizes = [] } = useQuery({
+    queryKey: ["admin-pizza-sizes", storeId],
+    enabled: !!storeId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pizza_sizes")
+        .select("id,name,position")
+        .eq("store_id", storeId)
+        .eq("is_active", true)
+        .order("position");
+      if (error) throw error;
+      return data as { id: string; name: string; position: number }[];
     },
   });
 
@@ -276,7 +294,15 @@ function AdminProducts() {
   });
 
   const saveItem = useMutation({
-    mutationFn: async ({ m, vars }: { m: Partial<MenuItem>; vars: Variation[] }) => {
+    mutationFn: async ({
+      m,
+      vars,
+      pizzaPrices,
+    }: {
+      m: Partial<MenuItem>;
+      vars: Variation[];
+      pizzaPrices: Record<string, string>;
+    }) => {
       const payload = {
         store_id: storeId,
         category_id: m.category_id!,
@@ -333,14 +359,54 @@ function AdminProducts() {
           await supabase.from("menu_item_variations").insert(data);
         }
       }
+
+      // Sincroniza preços por tamanho (pizzas)
+      const cat = categories.find((c) => c.id === m.category_id);
+      if (cat?.is_pizza && pizzaSizes.length) {
+        const { data: existingPrices } = await supabase
+          .from("menu_item_size_prices")
+          .select("id,pizza_size_id")
+          .eq("menu_item_id", itemId!);
+        const byId = new Map(
+          (existingPrices ?? []).map((p) => [p.pizza_size_id, p.id]),
+        );
+        for (const size of pizzaSizes) {
+          const raw = pizzaPrices[size.id];
+          const num = raw === "" || raw === undefined ? null : Number(raw);
+          const existsId = byId.get(size.id);
+          if (num === null || isNaN(num)) {
+            if (existsId) {
+              await supabase
+                .from("menu_item_size_prices")
+                .delete()
+                .eq("id", existsId);
+            }
+            continue;
+          }
+          if (existsId) {
+            await supabase
+              .from("menu_item_size_prices")
+              .update({ price: num })
+              .eq("id", existsId);
+          } else {
+            await supabase.from("menu_item_size_prices").insert({
+              menu_item_id: itemId!,
+              pizza_size_id: size.id,
+              price: num,
+            });
+          }
+        }
+      }
     },
     onSuccess: () => {
       toast.success("Produto salvo");
       qc.invalidateQueries({ queryKey: ["admin-items", storeId] });
       qc.invalidateQueries({ queryKey: ["admin-variations"] });
+      qc.invalidateQueries({ queryKey: ["pizza-size-prices"] });
       setOpen(false);
       setEditing(null);
       setEditingVars([]);
+      setEditingPizzaPrices({});
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -627,16 +693,31 @@ function AdminProducts() {
     setEditingVars([]);
     setSizesInput("");
     setColorsInput("");
+    setEditingPizzaPrices({});
     setOpen(true);
   };
 
-  const openEditItem = (m: MenuItem) => {
+  const openEditItem = async (m: MenuItem) => {
     setEditing(m);
     setEditingVars((variationsByItem[m.id] || []).map((v) => ({ ...v })));
     setSizesInput((m.sizes ?? []).join(", "));
     setColorsInput((m.colors ?? []).join(", "));
+    setEditingPizzaPrices({});
     setOpen(true);
+    const cat = categories.find((c) => c.id === m.category_id);
+    if (cat?.is_pizza) {
+      const { data } = await supabase
+        .from("menu_item_size_prices")
+        .select("pizza_size_id,price")
+        .eq("menu_item_id", m.id);
+      const map: Record<string, string> = {};
+      (data ?? []).forEach((p) => {
+        map[p.pizza_size_id] = String(p.price);
+      });
+      setEditingPizzaPrices(map);
+    }
   };
+
 
   // ---------- Render ----------
   return (
@@ -906,6 +987,7 @@ function AdminProducts() {
           if (!o) {
             setEditing(null);
             setEditingVars([]);
+            setEditingPizzaPrices({});
           }
         }}
       >
@@ -1096,6 +1178,47 @@ function AdminProducts() {
               </div>
 
 
+              {/* Preços por tamanho (pizzas) */}
+              {(() => {
+                const cat = categories.find(
+                  (c) => c.id === editing.category_id,
+                );
+                if (!cat?.is_pizza || pizzaSizes.length === 0) return null;
+                return (
+                  <div className="sm:col-span-2 rounded-md border p-3">
+                    <div className="mb-2">
+                      <p className="text-sm font-semibold">
+                        🍕 Preço por tamanho de pizza
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Defina o preço deste sabor em cada tamanho. Deixe vazio
+                        para não vender neste tamanho.
+                      </p>
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {pizzaSizes.map((s) => (
+                        <div key={s.id}>
+                          <Label className="text-xs">{s.name} (R$)</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min={0}
+                            placeholder="0,00"
+                            value={editingPizzaPrices[s.id] ?? ""}
+                            onChange={(e) =>
+                              setEditingPizzaPrices((prev) => ({
+                                ...prev,
+                                [s.id]: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="sm:col-span-2 mt-2 rounded-md border p-3">
                 <div className="mb-2 flex items-center justify-between">
                   <div>
@@ -1214,7 +1337,12 @@ function AdminProducts() {
                 !editing?.category_id
               }
               onClick={() =>
-                editing && saveItem.mutate({ m: editing, vars: editingVars })
+                editing &&
+                saveItem.mutate({
+                  m: editing,
+                  vars: editingVars,
+                  pizzaPrices: editingPizzaPrices,
+                })
               }
             >
               {saveItem.isPending ? "Salvando..." : "Salvar"}
