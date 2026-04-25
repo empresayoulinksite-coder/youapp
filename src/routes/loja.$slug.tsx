@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound, useRouter, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Star, Clock, Bike, MapPin, CreditCard, Tag, Plus, Minus, ShoppingBag, MessageSquare, X, CalendarClock, Navigation } from "lucide-react";
+import { ArrowLeft, Star, Clock, Bike, MapPin, CreditCard, Tag, Plus, Minus, ShoppingBag, MessageSquare, X, CalendarClock, Navigation, Menu } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -179,12 +180,56 @@ function StorePage() {
   const [albumsOpen, setAlbumsOpen] = useState(false);
   const [albumsInitialCategory, setAlbumsInitialCategory] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
+  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
+  const [menuSheetOpen, setMenuSheetOpen] = useState(false);
 
   // refresh "now" every minute so the open/closed badge updates without a refresh
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(t);
   }, []);
+
+  // Categorias visíveis (com itens) para o filtro sticky estilo iFood
+  const visibleCategories = categories.filter((c) => items.some((i) => i.category_id === c.id));
+
+  // Scrollspy: marca a categoria ativa conforme rolagem
+  useEffect(() => {
+    if (tab !== "menu" || isService || visibleCategories.length === 0) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]) {
+          const id = (visible[0].target as HTMLElement).dataset.categoryId;
+          if (id) setActiveCategoryId(id);
+        }
+      },
+      { rootMargin: "-160px 0px -60% 0px", threshold: 0 },
+    );
+    visibleCategories.forEach((c) => {
+      const el = document.querySelector(`[data-category-id="${c.id}"]`);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, [tab, isService, visibleCategories.map((c) => c.id).join(",")]);
+
+  // Mantém o item ativo visível na barra horizontal
+  useEffect(() => {
+    if (!activeCategoryId) return;
+    const btn = document.querySelector(`[data-cat-pill="${activeCategoryId}"]`) as HTMLElement | null;
+    btn?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }, [activeCategoryId]);
+
+  const scrollToCategory = (id: string) => {
+    setActiveCategoryId(id);
+    setMenuSheetOpen(false);
+    const el = document.querySelector(`[data-category-id="${id}"]`) as HTMLElement | null;
+    if (el) {
+      const top = el.getBoundingClientRect().top + window.scrollY - 150;
+      window.scrollTo({ top, behavior: "smooth" });
+    }
+  };
 
   // Reset selecionados quando trocar/abrir item
   useEffect(() => {
@@ -401,6 +446,67 @@ function StorePage() {
         ))}
       </nav>
 
+      {/* Filtro de categorias estilo iFood */}
+      {tab === "menu" && !isService && visibleCategories.length > 0 && (
+        <div className="sticky top-[93px] bg-surface z-20 border-b border-border">
+          <div className="flex items-stretch">
+            <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
+              <SheetTrigger asChild>
+                <button
+                  className="px-3 flex items-center justify-center text-foreground border-r border-border shrink-0"
+                  aria-label="Ver todas as categorias"
+                >
+                  <Menu className="h-5 w-5" />
+                </button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[80vw] sm:w-80">
+                <SheetHeader>
+                  <SheetTitle>Categorias</SheetTitle>
+                </SheetHeader>
+                <ul className="mt-4 space-y-1">
+                  {visibleCategories.map((c) => {
+                    const count = items.filter((i) => i.category_id === c.id).length;
+                    const active = activeCategoryId === c.id;
+                    return (
+                      <li key={c.id}>
+                        <button
+                          onClick={() => scrollToCategory(c.id)}
+                          className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                            active ? "bg-brand-soft text-brand font-semibold" : "hover:bg-accent"
+                          }`}
+                        >
+                          <span className="truncate">{c.name}</span>
+                          <span className="text-xs text-muted-foreground ml-2">{count}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </SheetContent>
+            </Sheet>
+            <div className="flex-1 overflow-x-auto no-scrollbar">
+              <div className="flex gap-5 px-4 py-3 whitespace-nowrap">
+                {visibleCategories.map((c) => {
+                  const active = activeCategoryId === c.id;
+                  return (
+                    <button
+                      key={c.id}
+                      data-cat-pill={c.id}
+                      onClick={() => scrollToCategory(c.id)}
+                      className={`text-sm pb-1 -mb-1 border-b-2 transition-colors ${
+                        active ? "border-brand text-brand font-bold" : "border-transparent text-muted-foreground"
+                      }`}
+                    >
+                      {c.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <main className="px-4 pt-5">
         <div className="mb-5">
           <StoreReelsSection storeId={store.id} />
@@ -578,7 +684,7 @@ function StorePage() {
               const catItems = items.filter((i) => i.category_id === cat.id);
               if (!catItems.length) return null;
               return (
-                <section key={cat.id}>
+                <section key={cat.id} data-category-id={cat.id} className="scroll-mt-[150px]">
                   <h3 className="font-bold text-base mb-3">{cat.name}</h3>
                   <div className="space-y-2">
                     {catItems.map((item) => {
