@@ -409,7 +409,7 @@ function StorePage() {
           )}
         </div>
         {tab === "menu" && isService && (
-          <div className="space-y-3">
+          <div id="services-list" className="space-y-3">
             {services.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-12">
                 Esta loja ainda não cadastrou serviços.
