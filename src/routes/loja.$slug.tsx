@@ -399,11 +399,17 @@ function StorePage() {
               storeId={store.id}
               storeName={store.name}
               storeSlug={store.slug}
+              onSeeServices={() => {
+                setTab("menu");
+                setTimeout(() => {
+                  document.getElementById("services-list")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }, 50);
+              }}
             />
           )}
         </div>
         {tab === "menu" && isService && (
-          <div className="space-y-3">
+          <div id="services-list" className="space-y-3">
             {services.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-12">
                 Esta loja ainda não cadastrou serviços.
