@@ -446,6 +446,67 @@ function StorePage() {
         ))}
       </nav>
 
+      {/* Filtro de categorias estilo iFood */}
+      {tab === "menu" && !isService && visibleCategories.length > 0 && (
+        <div className="sticky top-[93px] bg-surface z-20 border-b border-border">
+          <div className="flex items-stretch">
+            <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
+              <SheetTrigger asChild>
+                <button
+                  className="px-3 flex items-center justify-center text-foreground border-r border-border shrink-0"
+                  aria-label="Ver todas as categorias"
+                >
+                  <Menu className="h-5 w-5" />
+                </button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[80vw] sm:w-80">
+                <SheetHeader>
+                  <SheetTitle>Categorias</SheetTitle>
+                </SheetHeader>
+                <ul className="mt-4 space-y-1">
+                  {visibleCategories.map((c) => {
+                    const count = items.filter((i) => i.category_id === c.id).length;
+                    const active = activeCategoryId === c.id;
+                    return (
+                      <li key={c.id}>
+                        <button
+                          onClick={() => scrollToCategory(c.id)}
+                          className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                            active ? "bg-brand-soft text-brand font-semibold" : "hover:bg-accent"
+                          }`}
+                        >
+                          <span className="truncate">{c.name}</span>
+                          <span className="text-xs text-muted-foreground ml-2">{count}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </SheetContent>
+            </Sheet>
+            <div className="flex-1 overflow-x-auto no-scrollbar">
+              <div className="flex gap-5 px-4 py-3 whitespace-nowrap">
+                {visibleCategories.map((c) => {
+                  const active = activeCategoryId === c.id;
+                  return (
+                    <button
+                      key={c.id}
+                      data-cat-pill={c.id}
+                      onClick={() => scrollToCategory(c.id)}
+                      className={`text-sm pb-1 -mb-1 border-b-2 transition-colors ${
+                        active ? "border-brand text-brand font-bold" : "border-transparent text-muted-foreground"
+                      }`}
+                    >
+                      {c.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <main className="px-4 pt-5">
         <div className="mb-5">
           <StoreReelsSection storeId={store.id} />
