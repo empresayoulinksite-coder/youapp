@@ -371,8 +371,7 @@ function AdminProducts() {
       }
 
       // Sincroniza preços por tamanho (pizzas)
-      const cat = categories.find((c) => c.id === m.category_id);
-      if (cat?.is_pizza && pizzaSizes.length) {
+      if (isPizza) {
         const { data: existingPrices } = await supabase
           .from("menu_item_size_prices")
           .select("id,pizza_size_id")
