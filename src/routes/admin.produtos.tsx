@@ -431,6 +431,7 @@ function AdminProducts() {
       toast.success("Produto salvo");
       qc.invalidateQueries({ queryKey: ["admin-items", storeId] });
       qc.invalidateQueries({ queryKey: ["admin-variations"] });
+      qc.invalidateQueries({ queryKey: ["admin-size-prices"] });
       qc.invalidateQueries({ queryKey: ["pizza-size-prices"] });
       setOpen(false);
       setEditing(null);
