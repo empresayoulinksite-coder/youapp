@@ -23,6 +23,14 @@ import { StoreLocationAdjuster } from "@/components/StoreLocationAdjuster";
 import { StoreBenefitsEditor } from "@/components/StoreBenefitsEditor";
 import { StoreReelsEditor } from "@/components/StoreReelsEditor";
 import { StoreFeedEditor } from "@/components/StoreFeedEditor";
+import { CATEGORY_OPTIONS } from "@/lib/categories";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminStores,
@@ -433,11 +441,24 @@ function AdminStores() {
               </div>
               <div>
                 <Label>Categoria</Label>
-                <Input
+                <Select
                   value={editing.category || ""}
-                  onChange={(e) => setEditing({ ...editing, category: e.target.value })}
-                  placeholder="Pizza, Lanches, Doces..."
-                />
+                  onValueChange={(v) => setEditing({ ...editing, category: v })}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Selecione a categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CATEGORY_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="mt-1 text-[10px] text-muted-foreground">
+                  Use uma destas opções para a loja aparecer no botão correspondente da home.
+                </p>
               </div>
               <div>
                 <Label>Avaliação</Label>

@@ -70,3 +70,10 @@ export const isEcommerceStoreCategory = (storeCategory: string) => {
   );
 };
 
+// Lista de labels canônicos para usar em formulários (dropdown de cadastro de loja).
+// Garante que o valor salvo em stores.category combine com os botões da home.
+// Ignora "restaurantes" pois é um agrupador (engloba várias categorias específicas).
+export const CATEGORY_OPTIONS: { value: string; label: string }[] = categories
+  .filter((c) => c.slug !== "restaurantes")
+  .map((c) => ({ value: c.matches[0], label: c.label }));
+
