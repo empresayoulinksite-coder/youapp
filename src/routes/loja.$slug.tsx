@@ -510,14 +510,20 @@ function StorePage() {
                           {s.description}
                         </p>
                       )}
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="font-bold text-sm">
-                          R$ {s.price.toFixed(2).replace(".", ",")}
-                        </span>
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Clock className="h-3 w-3" /> {s.duration_minutes} min
-                        </span>
-                      </div>
+                      {(s.show_price !== false || s.show_duration !== false) && (
+                        <div className="flex items-center gap-2 mt-2">
+                          {s.show_price !== false && (
+                            <span className="font-bold text-sm">
+                              R$ {s.price.toFixed(2).replace(".", ",")}
+                            </span>
+                          )}
+                          {s.show_duration !== false && (
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Clock className="h-3 w-3" /> {s.duration_minutes} min
+                            </span>
+                          )}
+                        </div>
+                      )}
                       <div className="mt-2">
                         <span
                           className="text-xs font-bold bg-brand text-brand-foreground rounded-full px-3 py-1.5 inline-flex items-center gap-1"
