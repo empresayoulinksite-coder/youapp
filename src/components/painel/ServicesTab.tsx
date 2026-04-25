@@ -15,6 +15,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 
 type Service = {
@@ -27,7 +34,10 @@ type Service = {
   is_active: boolean;
   position: number;
   image_url: string | null;
+  feed_category_id: string | null;
 };
+
+type FeedCategory = { id: string; name: string };
 
 type Draft = {
   id?: string;
@@ -37,6 +47,7 @@ type Draft = {
   promoPrice: string;
   duration_minutes: string;
   is_active: boolean;
+  feed_category_id: string | null;
 };
 
 const emptyDraft: Draft = {
@@ -46,6 +57,7 @@ const emptyDraft: Draft = {
   promoPrice: "",
   duration_minutes: "30",
   is_active: true,
+  feed_category_id: null,
 };
 
 function brl(n: number) {
