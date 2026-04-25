@@ -24,9 +24,11 @@ export function StoriesBar() {
     queryFn: async () => {
       const { data } = await supabase
         .from("stories")
-        .select("id, store_id, title, media_url, media_type, thumbnail_url, cta_label, position, stores(slug, name, image_url, emoji)")
+        .select("id, store_id, title, media_url, media_type, thumbnail_url, cta_label, position, stores(slug, name, image_url, emoji, is_hidden)")
         .order("position", { ascending: true });
-      return (data ?? []).map((r: any) => ({ ...r, store: r.stores ?? null })) as StoryRow[];
+      return (data ?? [])
+        .filter((r: any) => !r.stores || r.stores.is_hidden !== true)
+        .map((r: any) => ({ ...r, store: r.stores ?? null })) as StoryRow[];
     },
   });
 
