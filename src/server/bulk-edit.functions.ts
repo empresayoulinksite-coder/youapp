@@ -178,8 +178,25 @@ function extractSize(productName: string): { base: string; sizeKeyword: string |
   return { base: baseTokens.join(" ").trim(), sizeKeyword };
 }
 
+export const listStoreCategories = createServerFn({ method: "POST" })
+  .inputValidator((input: { storeId: string; accessToken: string }) => {
+    if (!input?.storeId) throw new Error("storeId inválido");
+    if (!input?.accessToken) throw new Error("Não autenticado");
+    return input;
+  })
+  .handler(async ({ data }) => {
+    await ensureAdminFromToken(data.accessToken);
+    const { data: cats, error } = await supabaseAdmin
+      .from("menu_categories")
+      .select("id, name, position")
+      .eq("store_id", data.storeId)
+      .order("position", { ascending: true });
+    if (error) throw new Error(error.message);
+    return { categories: cats ?? [] };
+  });
+
 export const previewBulkEdit = createServerFn({ method: "POST" })
-  .inputValidator((input: { storeId: string; prompt: string; accessToken: string }) => {
+  .inputValidator((input: { storeId: string; prompt: string; accessToken: string; categoryId?: string | null }) => {
     if (!input?.storeId || typeof input.storeId !== "string") throw new Error("storeId inválido");
     if (!input?.prompt || typeof input.prompt !== "string") throw new Error("Descreva as alterações");
     if (input.prompt.length > 10_000) throw new Error("Texto muito longo (máx 10.000 caracteres)");
@@ -191,10 +208,12 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
 
     const edits = await callAI(data.prompt);
 
-    const { data: items, error } = await supabaseAdmin
+    let query = supabaseAdmin
       .from("menu_items")
       .select("id, name, price, description, category_id, menu_categories!inner(is_pizza)")
       .eq("store_id", data.storeId);
+    if (data.categoryId) query = query.eq("category_id", data.categoryId);
+    const { data: items, error } = await query;
     if (error) throw new Error(error.message);
 
     const { data: sizes } = await supabaseAdmin

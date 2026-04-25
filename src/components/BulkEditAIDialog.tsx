@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Sparkles, Loader2, ArrowRight, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -12,9 +12,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   previewBulkEdit,
   applyBulkEdit,
+  listStoreCategories,
   type PreviewChange,
 } from "@/server/bulk-edit.functions";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +41,8 @@ interface Props {
   storeId: string;
 }
 
+const ALL_CATEGORIES = "__all__";
+
 const EXAMPLE = `Pizza Calabresa - R$ 49,90 - descrição: massa fina, calabresa fatiada e cebola roxa
 Coca-Cola 2L - R$ 12,00
 Pizza Marguerita - descrição: molho de tomate, muçarela de búfala e manjericão fresco`;
@@ -43,14 +54,36 @@ function fmt(v: number) {
 export function BulkEditAIDialog({ open, onOpenChange, storeId }: Props) {
   const qc = useQueryClient();
   const [prompt, setPrompt] = useState("");
+  const [categoryId, setCategoryId] = useState<string>(ALL_CATEGORIES);
   const [preview, setPreview] = useState<{ changes: PreviewChange[]; not_found: string[] } | null>(
     null,
   );
 
+  const catsQuery = useQuery({
+    queryKey: ["bulk-edit-categories", storeId],
+    enabled: open && !!storeId,
+    queryFn: async () => {
+      const accessToken = await getAccessToken();
+      return listStoreCategories({ data: { storeId, accessToken } });
+    },
+  });
+
+  useEffect(() => {
+    if (!open) return;
+    setCategoryId(ALL_CATEGORIES);
+  }, [open, storeId]);
+
   const previewMut = useMutation({
     mutationFn: async () => {
       const accessToken = await getAccessToken();
-      return previewBulkEdit({ data: { storeId, prompt, accessToken } });
+      return previewBulkEdit({
+        data: {
+          storeId,
+          prompt,
+          accessToken,
+          categoryId: categoryId === ALL_CATEGORIES ? null : categoryId,
+        },
+      });
     },
     onSuccess: (res) => {
       setPreview(res);
@@ -83,6 +116,7 @@ export function BulkEditAIDialog({ open, onOpenChange, storeId }: Props) {
   function reset() {
     setPrompt("");
     setPreview(null);
+    setCategoryId(ALL_CATEGORIES);
   }
 
   return (
@@ -107,6 +141,27 @@ export function BulkEditAIDialog({ open, onOpenChange, storeId }: Props) {
               Escreva os produtos que quer alterar, com nome, novo preço e/ou nova descrição.
               A IA vai localizar cada produto na loja e mostrar um preview antes de aplicar.
             </p>
+            <div className="space-y-1.5">
+              <Label htmlFor="bulk-edit-category" className="text-sm">
+                Categoria a alterar
+              </Label>
+              <Select value={categoryId} onValueChange={setCategoryId}>
+                <SelectTrigger id="bulk-edit-category">
+                  <SelectValue placeholder="Selecione a categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL_CATEGORIES}>Todas as categorias</SelectItem>
+                  {(catsQuery.data?.categories ?? []).map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Restringe a busca da IA aos produtos dessa categoria.
+              </p>
+            </div>
             <Textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
