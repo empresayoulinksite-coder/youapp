@@ -23,7 +23,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { uploadImage } from "@/lib/upload";
+import { uploadImage, runWithConcurrency } from "@/lib/upload";
 
 export const Route = createFileRoute("/admin/servicos")({
   component: AdminServices,
