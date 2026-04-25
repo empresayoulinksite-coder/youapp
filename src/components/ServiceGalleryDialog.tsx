@@ -12,6 +12,8 @@ type ServiceLike = {
   duration_minutes: number;
   image_url: string | null;
   gallery_urls: string[];
+  show_price?: boolean;
+  show_duration?: boolean;
 };
 
 export function ServiceGalleryDialog({
@@ -55,14 +57,20 @@ export function ServiceGalleryDialog({
           </button>
           <div className="flex-1 min-w-0">
             <h2 className="text-base font-semibold truncate">{service.name}</h2>
-            <p className="text-[11px] text-muted-foreground flex items-center gap-2">
-              <span className="font-semibold text-foreground">
-                R$ {service.price.toFixed(2).replace(".", ",")}
-              </span>
-              <span className="flex items-center gap-1">
-                <Clock className="h-3 w-3" /> {service.duration_minutes} min
-              </span>
-            </p>
+            {(service.show_price !== false || service.show_duration !== false) && (
+              <p className="text-[11px] text-muted-foreground flex items-center gap-2">
+                {service.show_price !== false && (
+                  <span className="font-semibold text-foreground">
+                    R$ {service.price.toFixed(2).replace(".", ",")}
+                  </span>
+                )}
+                {service.show_duration !== false && (
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" /> {service.duration_minutes} min
+                  </span>
+                )}
+              </p>
+            )}
           </div>
         </header>
 
