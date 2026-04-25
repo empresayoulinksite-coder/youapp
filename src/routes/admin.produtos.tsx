@@ -197,6 +197,26 @@ function AdminProducts() {
     },
   });
 
+  const { data: pizzaPriceByItem = {} } = useQuery({
+    queryKey: ["admin-size-prices", storeId, items.map((i) => i.id).join(",")],
+    enabled: !!storeId && items.length > 0,
+    queryFn: async () => {
+      const ids = items.map((i) => i.id);
+      const { data, error } = await supabase
+        .from("menu_item_size_prices")
+        .select("menu_item_id,price")
+        .in("menu_item_id", ids);
+      if (error) throw error;
+      const map: Record<string, number> = {};
+      (data ?? []).forEach((p) => {
+        const cur = map[p.menu_item_id] ?? 0;
+        const v = Number(p.price) || 0;
+        if (v > cur) map[p.menu_item_id] = v;
+      });
+      return map;
+    },
+  });
+
   const { data: pizzaSizes = [] } = useQuery({
     queryKey: ["admin-pizza-sizes", storeId],
     enabled: !!storeId,
