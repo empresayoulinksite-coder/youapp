@@ -82,7 +82,7 @@ const TOOL_SCHEMA = {
               product_name: { type: "string" },
               action: {
                 type: "string",
-                enum: ["update", "activate", "deactivate", "delete", "adjust_price"],
+                enum: ["update", "activate", "deactivate", "delete", "adjust_price", "set_price"],
               },
               new_price: { type: "number" },
               new_description: { type: "string" },
