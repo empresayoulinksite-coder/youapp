@@ -40,6 +40,7 @@ type Service = {
   is_active: boolean;
   position: number;
   feed_category_id: string | null;
+  gallery_urls: string[];
 };
 
 type ServiceStore = {
@@ -59,6 +60,7 @@ const empty: Partial<Service> = {
   is_active: true,
   position: 0,
   feed_category_id: null,
+  gallery_urls: [],
 };
 
 function AdminServices() {
