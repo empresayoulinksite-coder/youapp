@@ -54,12 +54,14 @@ CAMPO "action" — escolha UM por item:
 - "deactivate": desativar/pausar/indisponibilizar/esgotar um produto.
 - "delete": excluir/remover/apagar um produto do cardápio.
 - "adjust_price": ajuste de preço por percentual ou valor fixo (ex: "aumente 10%", "desconto de R$ 5", "20% off").
+- "set_price": DEFINIR um preço fixo idêntico (ex: "todos os produtos a R$ 29,90", "deixe tudo por R$ 50", "Pizza Calabresa por R$ 45").
 
 REGRAS:
 - "product_name": nome do produto EXATAMENTE como escrito, INCLUINDO tamanhos como "Grande", "Broto", "Média", "P", "M", "G".
 - Para "update": preencha new_price (number em reais, ex 49.90) e/ou new_description e/ou new_name (apenas se renomear explicitamente).
 - Para "adjust_price": preencha adjust_percent (ex: 10 = +10%, -15 = -15%) OU adjust_amount (delta fixo em reais, positivo ou negativo). Não preencha new_price.
-- Para ajuste em TODOS os produtos (ex: "aumente todos os preços em 10%", "20% off em tudo"), use action="adjust_price", apply_to_all=true e product_name="*".
+- Para "set_price": preencha new_price com o valor desejado.
+- Para ajuste em TODOS os produtos (ex: "aumente todos os preços em 10%", "20% off em tudo", "deixe todos os produtos a R$ 29,90"), use apply_to_all=true e product_name="*".
 - Para "activate"/"deactivate"/"delete": só preencha product_name e action.
 - Cada produto distinto = um item separado. "Pizza Grande" e "Broto" são DOIS itens.
 - Não invente produtos.`;
