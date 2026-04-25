@@ -53,6 +53,7 @@ Excluir Suco de Uva 300ml
 const ACTION_LABEL: Record<string, { label: string; tone: string }> = {
   update: { label: "Alterar", tone: "bg-primary/10 text-primary" },
   adjust_price: { label: "Ajuste de preço", tone: "bg-blue-500/10 text-blue-600" },
+  set_price: { label: "Preço fixo", tone: "bg-indigo-500/10 text-indigo-600" },
   activate: { label: "Ativar", tone: "bg-emerald-500/10 text-emerald-600" },
   deactivate: { label: "Desativar", tone: "bg-amber-500/10 text-amber-600" },
   delete: { label: "Excluir", tone: "bg-destructive/10 text-destructive" },
