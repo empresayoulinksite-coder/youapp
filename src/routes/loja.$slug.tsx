@@ -460,6 +460,10 @@ function StorePage() {
                     navigate({ to: "/auth" });
                     return;
                   }
+                  if (store.booking_mode === "quote") {
+                    setQuoteService(s);
+                    return;
+                  }
                   if (!open) {
                     toast.error(
                       store.is_paused
