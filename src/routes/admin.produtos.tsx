@@ -123,6 +123,9 @@ function AdminProducts() {
   const [editingVars, setEditingVars] = useState<Variation[]>([]);
   const [sizesInput, setSizesInput] = useState<string>("");
   const [colorsInput, setColorsInput] = useState<string>("");
+  const [editingPizzaPrices, setEditingPizzaPrices] = useState<
+    Record<string, string>
+  >({});
   const [uploading, setUploading] = useState(false);
 
   const [catOpen, setCatOpen] = useState(false);
