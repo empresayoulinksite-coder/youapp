@@ -179,7 +179,7 @@ function Lightbox({
       </span>
 
       <img
-        src={images[index]}
+        src={optimizedImageUrl(images[index], { width: 1600, quality: 85 })}
         alt=""
         className="max-h-full max-w-full object-contain select-none"
         draggable={false}
