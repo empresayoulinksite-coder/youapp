@@ -455,7 +455,7 @@ function StorePage() {
                     return (
                       <li key={c.id}>
                         <button
-                          onClick={() => scrollToCategory(c.id)}
+                          onClick={() => selectCategory(c.id)}
                           className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors ${
                             active ? "bg-brand-soft text-brand font-semibold" : "hover:bg-accent"
                           }`}
@@ -477,7 +477,7 @@ function StorePage() {
                     <button
                       key={c.id}
                       data-cat-pill={c.id}
-                      onClick={() => scrollToCategory(c.id)}
+                      onClick={() => selectCategory(c.id)}
                       className={`text-sm pb-1 -mb-1 border-b-2 transition-colors ${
                         active ? "border-brand text-brand font-bold" : "border-transparent text-muted-foreground"
                       }`}
