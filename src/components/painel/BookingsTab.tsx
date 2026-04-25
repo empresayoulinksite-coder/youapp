@@ -77,6 +77,7 @@ export type StoreLite = {
   pickup_enabled?: boolean;
   store_type?: "food" | "ecommerce" | "service";
   feed_enabled?: boolean;
+  booking_mode?: "booking" | "quote";
 };
 
 const STATUS_LABEL: Record<BookingRow["status"], string> = {
