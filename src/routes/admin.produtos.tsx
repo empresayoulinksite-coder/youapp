@@ -303,12 +303,22 @@ function AdminProducts() {
       vars: Variation[];
       pizzaPrices: Record<string, string>;
     }) => {
+      const cat = categories.find((c) => c.id === m.category_id);
+      const isPizza = !!cat?.is_pizza && pizzaSizes.length > 0;
+      const pizzaAutoPrice = isPizza
+        ? Math.max(
+            0,
+            ...pizzaSizes
+              .map((s) => Number(pizzaPrices[s.id]))
+              .filter((n) => !isNaN(n) && n > 0),
+          )
+        : 0;
       const payload = {
         store_id: storeId,
         category_id: m.category_id!,
         name: m.name!,
         description: m.description || null,
-        price: Number(m.price) || 0,
+        price: isPizza ? pizzaAutoPrice : Number(m.price) || 0,
         original_price: m.original_price ? Number(m.original_price) : null,
         promo: m.promo || null,
         emoji: m.emoji || "🍽️",
@@ -361,8 +371,7 @@ function AdminProducts() {
       }
 
       // Sincroniza preços por tamanho (pizzas)
-      const cat = categories.find((c) => c.id === m.category_id);
-      if (cat?.is_pizza && pizzaSizes.length) {
+      if (isPizza) {
         const { data: existingPrices } = await supabase
           .from("menu_item_size_prices")
           .select("id,pizza_size_id")
@@ -1055,20 +1064,37 @@ function AdminProducts() {
                   }
                 />
               </div>
-              <div>
-                <Label>Preço base (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={editing.price ?? ""}
-                  onChange={(e) =>
-                    setEditing({ ...editing, price: Number(e.target.value) })
-                  }
-                />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Usado quando não há variações
-                </p>
-              </div>
+              {(() => {
+                const cat = categories.find((c) => c.id === editing.category_id);
+                const isPizza = !!cat?.is_pizza && pizzaSizes.length > 0;
+                const autoPrice = isPizza
+                  ? Math.max(
+                      0,
+                      ...pizzaSizes
+                        .map((s) => Number(editingPizzaPrices[s.id]))
+                        .filter((n) => !isNaN(n) && n > 0),
+                    )
+                  : null;
+                return (
+                  <div>
+                    <Label>Preço base (R$)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      disabled={isPizza}
+                      value={isPizza ? (autoPrice || 0) : (editing.price ?? "")}
+                      onChange={(e) =>
+                        setEditing({ ...editing, price: Number(e.target.value) })
+                      }
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {isPizza
+                        ? "Definido automaticamente pelo maior tamanho (Grande)"
+                        : "Usado quando não há variações"}
+                    </p>
+                  </div>
+                );
+              })()}
               <div>
                 <Label>Preço original (riscado)</Label>
                 <Input
