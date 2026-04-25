@@ -13,7 +13,9 @@ import {
   Download,
   Sparkles,
   CheckCircle2,
+  ImagePlus,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import Papa from "papaparse";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
