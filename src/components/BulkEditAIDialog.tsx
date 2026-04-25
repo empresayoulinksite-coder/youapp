@@ -45,7 +45,18 @@ const ALL_CATEGORIES = "__all__";
 
 const EXAMPLE = `Pizza Calabresa - R$ 49,90 - descrição: massa fina, calabresa fatiada e cebola roxa
 Coca-Cola 2L - R$ 12,00
-Pizza Marguerita - descrição: molho de tomate, muçarela de búfala e manjericão fresco`;
+Aumentar todos os preços em 10%
+Desativar Pizza Doce de Banana
+Excluir Suco de Uva 300ml
+20% de desconto na Pizza Grande de Calabresa`;
+
+const ACTION_LABEL: Record<string, { label: string; tone: string }> = {
+  update: { label: "Alterar", tone: "bg-primary/10 text-primary" },
+  adjust_price: { label: "Ajuste de preço", tone: "bg-blue-500/10 text-blue-600" },
+  activate: { label: "Ativar", tone: "bg-emerald-500/10 text-emerald-600" },
+  deactivate: { label: "Desativar", tone: "bg-amber-500/10 text-amber-600" },
+  delete: { label: "Excluir", tone: "bg-destructive/10 text-destructive" },
+};
 
 function fmt(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -138,8 +149,9 @@ export function BulkEditAIDialog({ open, onOpenChange, storeId }: Props) {
         {!preview ? (
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Escreva os produtos que quer alterar, com nome, novo preço e/ou nova descrição.
-              A IA vai localizar cada produto na loja e mostrar um preview antes de aplicar.
+              Descreva o que quer fazer: alterar nome/preço/descrição, ativar ou desativar produtos,
+              excluir do cardápio ou aplicar ajuste em massa (ex: "aumente todos os preços em 10%").
+              A IA mostra um preview antes de aplicar.
             </p>
             <div className="space-y-1.5">
               <Label htmlFor="bulk-edit-category" className="text-sm">
@@ -182,38 +194,53 @@ export function BulkEditAIDialog({ open, onOpenChange, storeId }: Props) {
                 <p className="text-sm font-medium">
                   {preview.changes.length} alteração(ões) prontas para aplicar:
                 </p>
-                {preview.changes.map((c) => (
-                  <div
-                    key={c.menu_item_id + c.matched_query}
-                    className="rounded-lg border p-3 text-sm space-y-1"
-                  >
-                    <div className="flex items-center gap-2 font-medium">
-                      <span>{c.current_name}</span>
-                      {normalize(c.matched_query) !== normalize(c.current_name) && (
-                        <Badge variant="outline" className="text-xs">
-                          buscou: "{c.matched_query}"
-                        </Badge>
+                {preview.changes.map((c, idx) => {
+                  const meta = ACTION_LABEL[c.action] ?? ACTION_LABEL.update;
+                  return (
+                    <div
+                      key={c.menu_item_id + (c.pizza_size_id ?? "") + c.matched_query + idx}
+                      className="rounded-lg border p-3 text-sm space-y-1"
+                    >
+                      <div className="flex items-center gap-2 font-medium flex-wrap">
+                        <span className={`text-xs px-2 py-0.5 rounded ${meta.tone}`}>
+                          {meta.label}
+                        </span>
+                        <span>
+                          {c.current_name}
+                          {c.pizza_size_name ? ` — ${c.pizza_size_name}` : ""}
+                        </span>
+                        {normalize(c.matched_query) !== normalize(c.current_name) && (
+                          <Badge variant="outline" className="text-xs">
+                            buscou: "{c.matched_query}"
+                          </Badge>
+                        )}
+                      </div>
+                      {c.action === "delete" && (
+                        <p className="text-xs text-destructive">Produto será excluído permanentemente.</p>
+                      )}
+                      {(c.action === "activate" || c.action === "deactivate") && (
+                        <p className="text-xs text-muted-foreground">
+                          {c.action === "activate" ? "Disponível" : "Indisponível"} no cardápio.
+                        </p>
+                      )}
+                      {c.new_name && <Row label="Nome" before={c.current_name} after={c.new_name} />}
+                      {c.new_price != null && (
+                        <Row
+                          label="Preço"
+                          before={fmt(c.current_price)}
+                          after={fmt(c.new_price)}
+                        />
+                      )}
+                      {c.new_description != null && (
+                        <Row
+                          label="Descrição"
+                          before={c.current_description || "(vazia)"}
+                          after={c.new_description}
+                        />
                       )}
                     </div>
-                    {c.new_name && (
-                      <Row label="Nome" before={c.current_name} after={c.new_name} />
-                    )}
-                    {c.new_price != null && (
-                      <Row
-                        label="Preço"
-                        before={fmt(c.current_price)}
-                        after={fmt(c.new_price)}
-                      />
-                    )}
-                    {c.new_description != null && (
-                      <Row
-                        label="Descrição"
-                        before={c.current_description || "(vazia)"}
-                        after={c.new_description}
-                      />
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
