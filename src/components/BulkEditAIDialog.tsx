@@ -46,6 +46,7 @@ const ALL_CATEGORIES = "__all__";
 const EXAMPLE = `Pizza Calabresa - R$ 49,90 - descrição: massa fina, calabresa fatiada e cebola roxa
 Coca-Cola 2L - R$ 12,00
 Aumentar todos os preços em 10%
+Deixe todos os produtos a R$ 29,90
 Desativar Pizza Doce de Banana
 Excluir Suco de Uva 300ml
 20% de desconto na Pizza Grande de Calabresa`;
@@ -53,6 +54,7 @@ Excluir Suco de Uva 300ml
 const ACTION_LABEL: Record<string, { label: string; tone: string }> = {
   update: { label: "Alterar", tone: "bg-primary/10 text-primary" },
   adjust_price: { label: "Ajuste de preço", tone: "bg-blue-500/10 text-blue-600" },
+  set_price: { label: "Preço fixo", tone: "bg-indigo-500/10 text-indigo-600" },
   activate: { label: "Ativar", tone: "bg-emerald-500/10 text-emerald-600" },
   deactivate: { label: "Desativar", tone: "bg-amber-500/10 text-amber-600" },
   delete: { label: "Excluir", tone: "bg-destructive/10 text-destructive" },
