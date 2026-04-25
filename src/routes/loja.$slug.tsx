@@ -359,22 +359,24 @@ function StorePage() {
           <span>•</span>
           <StoreDistance store={store} />
         </div>
-        <div className="flex items-center gap-3 text-xs mt-2">
-          {store.delivery_enabled === false ? (
-            <span className="flex items-center gap-1 text-muted-foreground font-semibold">
-              <Bike className="h-3.5 w-3.5" /> Apenas retirada
-            </span>
-          ) : (
-            <>
-              <span className="flex items-center gap-1 text-muted-foreground">
-                <Clock className="h-3.5 w-3.5" /> {store.delivery_time}
+        {!isService && (
+          <div className="flex items-center gap-3 text-xs mt-2">
+            {store.delivery_enabled === false ? (
+              <span className="flex items-center gap-1 text-muted-foreground font-semibold">
+                <Bike className="h-3.5 w-3.5" /> Apenas retirada
               </span>
-              <span className={`flex items-center gap-1 ${store.free_delivery ? "text-success font-semibold" : "text-muted-foreground"}`}>
-                <Bike className="h-3.5 w-3.5" /> {store.delivery_fee}
-              </span>
-            </>
-          )}
-        </div>
+            ) : (
+              <>
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  <Clock className="h-3.5 w-3.5" /> {store.delivery_time}
+                </span>
+                <span className={`flex items-center gap-1 ${store.free_delivery ? "text-success font-semibold" : "text-muted-foreground"}`}>
+                  <Bike className="h-3.5 w-3.5" /> {store.delivery_fee}
+                </span>
+              </>
+            )}
+          </div>
+        )}
         {store.min_order > 0 && (
           <p className="text-[11px] text-muted-foreground mt-2">Pedido mínimo: R$ {store.min_order.toFixed(2).replace(".", ",")}</p>
         )}
