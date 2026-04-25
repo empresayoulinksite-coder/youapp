@@ -10,6 +10,7 @@ import {
   Cookie,
   Beer,
   Apple,
+  Grape,
   Pill,
   Dog,
   ShoppingBag,
@@ -32,11 +33,14 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+// "Acai" reaproveita o glifo de uvas (Grape) — visualmente similar e ainda
+// não existe ícone próprio para açaí na Lucide.
 export const CATEGORY_ICONS: Record<string, LucideIcon> = {
   UtensilsCrossed,
   Pizza,
   Beef,
   IceCream,
+  Acai: Grape,
   Coffee,
   Sandwich,
   Soup,
@@ -44,6 +48,7 @@ export const CATEGORY_ICONS: Record<string, LucideIcon> = {
   Cookie,
   Beer,
   Apple,
+  Grape,
   Pill,
   Dog,
   ShoppingBag,
