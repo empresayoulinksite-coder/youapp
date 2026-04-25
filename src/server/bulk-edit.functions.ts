@@ -98,6 +98,7 @@ async function callAI(prompt: string): Promise<ParsedEdit[]> {
 
   const parsed = JSON.parse(toolCall.function.arguments) as { edits: ParsedEdit[] };
   if (!Array.isArray(parsed.edits)) throw new Error("Formato inválido da IA");
+  console.log("[bulk-edit] AI parsed edits:", JSON.stringify(parsed.edits));
   return parsed.edits;
 }
 
