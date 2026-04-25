@@ -96,9 +96,11 @@ export function ServiceGalleryDialog({
                   className="block w-full overflow-hidden rounded-xl bg-muted"
                 >
                   <img
-                    src={url}
+                    src={optimizedImageUrl(url, { width: 800, quality: 75 })}
                     alt={`${service.name} ${i + 1}`}
-                    loading="lazy"
+                    loading={i === 0 ? "eager" : "lazy"}
+                    decoding="async"
+                    fetchPriority={i === 0 ? "high" : "auto"}
                     className="w-full h-auto object-cover"
                   />
                 </button>
@@ -110,8 +112,17 @@ export function ServiceGalleryDialog({
         {/* CTA */}
         <div className="p-3 border-t shrink-0 bg-background">
           <Button onClick={() => onBook(service.id)} className="w-full" size="lg">
-            <CalendarClock className="h-4 w-4 mr-2" />
-            {isAuthenticated ? "Agendar serviço" : "Entrar para agendar"}
+            {bookingMode === "quote" ? (
+              <>
+                <MessageCircle className="h-4 w-4 mr-2" />
+                {isAuthenticated ? "Fazer orçamento" : "Entrar para fazer orçamento"}
+              </>
+            ) : (
+              <>
+                <CalendarClock className="h-4 w-4 mr-2" />
+                {isAuthenticated ? "Agendar serviço" : "Entrar para agendar"}
+              </>
+            )}
           </Button>
         </div>
 
