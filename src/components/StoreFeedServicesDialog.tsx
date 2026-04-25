@@ -117,9 +117,10 @@ export function StoreFeedServicesDialog({
                   <div className="relative h-20 w-20 rounded-xl overflow-hidden bg-brand-soft flex items-center justify-center text-3xl shrink-0">
                     {s.image_url ? (
                       <img
-                        src={s.image_url}
+                        src={optimizedImageUrl(s.image_url, { width: 200, quality: 70 })}
                         alt={s.name}
                         loading="lazy"
+                        decoding="async"
                         className="h-full w-full object-cover"
                       />
                     ) : (
