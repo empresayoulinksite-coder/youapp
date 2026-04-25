@@ -72,6 +72,8 @@ export function BulkEditAIDialog({ open, onOpenChange, storeId }: Props) {
       toast.success(`${res.applied} produto(s) atualizado(s).`);
       qc.invalidateQueries({ queryKey: ["admin-products"] });
       qc.invalidateQueries({ queryKey: ["menu-items"] });
+      qc.invalidateQueries({ queryKey: ["admin-size-prices"] });
+      qc.invalidateQueries({ queryKey: ["pizza-size-prices"] });
       reset();
       onOpenChange(false);
     },
