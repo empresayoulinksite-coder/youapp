@@ -1222,6 +1222,7 @@ export type Database = {
           benefit_return_enabled: boolean
           benefit_return_subtitle: string
           benefit_return_title: string
+          booking_mode: string
           category: string
           cep: string | null
           city: string | null
@@ -1269,6 +1270,7 @@ export type Database = {
           benefit_return_enabled?: boolean
           benefit_return_subtitle?: string
           benefit_return_title?: string
+          booking_mode?: string
           category: string
           cep?: string | null
           city?: string | null
@@ -1316,6 +1318,7 @@ export type Database = {
           benefit_return_enabled?: boolean
           benefit_return_subtitle?: string
           benefit_return_title?: string
+          booking_mode?: string
           category?: string
           cep?: string | null
           city?: string | null
