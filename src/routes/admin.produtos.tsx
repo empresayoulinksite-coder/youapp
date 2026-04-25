@@ -1296,7 +1296,12 @@ function AdminProducts() {
                 !editing?.category_id
               }
               onClick={() =>
-                editing && saveItem.mutate({ m: editing, vars: editingVars })
+                editing &&
+                saveItem.mutate({
+                  m: editing,
+                  vars: editingVars,
+                  pizzaPrices: editingPizzaPrices,
+                })
               }
             >
               {saveItem.isPending ? "Salvando..." : "Salvar"}
