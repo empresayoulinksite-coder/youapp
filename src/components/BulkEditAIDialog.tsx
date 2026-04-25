@@ -141,6 +141,27 @@ export function BulkEditAIDialog({ open, onOpenChange, storeId }: Props) {
               Escreva os produtos que quer alterar, com nome, novo preço e/ou nova descrição.
               A IA vai localizar cada produto na loja e mostrar um preview antes de aplicar.
             </p>
+            <div className="space-y-1.5">
+              <Label htmlFor="bulk-edit-category" className="text-sm">
+                Categoria a alterar
+              </Label>
+              <Select value={categoryId} onValueChange={setCategoryId}>
+                <SelectTrigger id="bulk-edit-category">
+                  <SelectValue placeholder="Selecione a categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL_CATEGORIES}>Todas as categorias</SelectItem>
+                  {(catsQuery.data?.categories ?? []).map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Restringe a busca da IA aos produtos dessa categoria.
+              </p>
+            </div>
             <Textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
