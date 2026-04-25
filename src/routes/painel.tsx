@@ -124,6 +124,26 @@ function PainelPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const updateBookingMode = useMutation({
+    mutationFn: async (mode: "booking" | "quote") => {
+      if (!storeId) return;
+      const { error } = await supabase
+        .from("stores")
+        .update({ booking_mode: mode })
+        .eq("id", storeId);
+      if (error) throw error;
+    },
+    onSuccess: (_d, mode) => {
+      toast.success(
+        mode === "quote"
+          ? "Modo orçamento ativado — clientes vão direto ao WhatsApp"
+          : "Modo agendamento ativado — clientes escolhem data e hora",
+      );
+      qc.invalidateQueries({ queryKey: ["painel", "stores"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   if (authLoading || storesLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
