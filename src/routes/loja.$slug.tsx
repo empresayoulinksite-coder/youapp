@@ -180,6 +180,8 @@ function StorePage() {
   const [albumsOpen, setAlbumsOpen] = useState(false);
   const [albumsInitialCategory, setAlbumsInitialCategory] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
+  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
+  const [menuSheetOpen, setMenuSheetOpen] = useState(false);
 
   // refresh "now" every minute so the open/closed badge updates without a refresh
   useEffect(() => {
