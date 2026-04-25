@@ -17,6 +17,14 @@ import {
   applyBulkEdit,
   type PreviewChange,
 } from "@/server/bulk-edit.functions";
+import { supabase } from "@/integrations/supabase/client";
+
+async function getAccessToken(): Promise<string> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error("Faça login novamente");
+  return token;
+}
 
 interface Props {
   open: boolean;
