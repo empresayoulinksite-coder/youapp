@@ -16,6 +16,7 @@ import {
   Upload,
   Pizza,
   Copy,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -58,6 +59,7 @@ import {
 } from "@/components/ui/dialog";
 import { uploadImage } from "@/lib/upload";
 import { PizzaCategoryWizard } from "@/components/PizzaCategoryWizard";
+import { BulkEditAIDialog } from "@/components/BulkEditAIDialog";
 
 export const Route = createFileRoute("/admin/produtos")({
   component: AdminProducts,
@@ -132,6 +134,7 @@ function AdminProducts() {
   const [editingCat, setEditingCat] = useState<Partial<Category> | null>(null);
   const [pizzaWizardOpen, setPizzaWizardOpen] = useState(false);
   const [pizzaWizardInitial, setPizzaWizardInitial] = useState<Category | null>(null);
+  const [aiBulkOpen, setAiBulkOpen] = useState(false);
 
   const { data: stores = [] } = useQuery({
     queryKey: ["admin-stores-list", storeType],
@@ -867,6 +870,12 @@ function AdminProducts() {
               </Link>
             </Button>
             <Button
+              variant="outline"
+              onClick={() => setAiBulkOpen(true)}
+            >
+              <Sparkles className="h-4 w-4" /> Assistente IA
+            </Button>
+            <Button
               disabled={categories.length === 0}
               onClick={() => openNewItem()}
             >
@@ -1412,6 +1421,14 @@ function AdminProducts() {
         initial={pizzaWizardInitial}
         position={categories.length}
       />
+
+      {storeId && (
+        <BulkEditAIDialog
+          open={aiBulkOpen}
+          onOpenChange={setAiBulkOpen}
+          storeId={storeId}
+        />
+      )}
     </div>
   );
 }
