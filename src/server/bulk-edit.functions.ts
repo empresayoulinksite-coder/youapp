@@ -269,6 +269,52 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
     for (const e of edits) {
       const action: BulkAction = e.action ?? "update";
 
+      // ===== Set fixed price applied to ALL items in scope =====
+      if (action === "set_price" && e.apply_to_all && e.new_price != null) {
+        const target = Number(e.new_price);
+        for (const it of items ?? []) {
+          const isPizza =
+            (it as { menu_categories?: { is_pizza?: boolean } }).menu_categories?.is_pizza === true;
+          if (isPizza) {
+            const itemSizes = (sizePrices ?? []).filter((sp) => sp.menu_item_id === it.id);
+            for (const sp of itemSizes) {
+              const cur = Number(sp.price);
+              if (cur === target) continue;
+              const sizeName = sizes?.find((s) => s.id === sp.pizza_size_id)?.name ?? null;
+              changes.push({
+                menu_item_id: it.id,
+                action: "set_price",
+                current_name: it.name,
+                current_price: cur,
+                current_description: it.description ?? null,
+                new_name: null,
+                new_price: target,
+                new_description: null,
+                matched_query: e.product_name,
+                pizza_size_id: sp.pizza_size_id,
+                pizza_size_name: sizeName,
+                size_price_id: sp.id,
+              });
+            }
+          } else {
+            const cur = Number(it.price);
+            if (cur === target) continue;
+            changes.push({
+              menu_item_id: it.id,
+              action: "set_price",
+              current_name: it.name,
+              current_price: cur,
+              current_description: it.description ?? null,
+              new_name: null,
+              new_price: target,
+              new_description: null,
+              matched_query: e.product_name,
+            });
+          }
+        }
+        continue;
+      }
+
       // ===== Bulk adjust applied to ALL items in scope =====
       if (action === "adjust_price" && e.apply_to_all) {
         for (const it of items ?? []) {
