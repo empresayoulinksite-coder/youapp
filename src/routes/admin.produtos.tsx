@@ -1784,6 +1784,11 @@ function SortableItemRow({
           <button
             type="button"
             onClick={() => {
+              if (isPizza) {
+                toast.info("Preço é definido pelos tamanhos da pizza");
+                onEdit();
+                return;
+              }
               if (hasVariations && variations.length > 1) {
                 // Múltiplas variações: abre o editor completo para evitar confusão.
                 toast.info("Edite os preços das variações no formulário");
