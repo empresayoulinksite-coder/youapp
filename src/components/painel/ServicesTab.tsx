@@ -220,6 +220,8 @@ export function ServicesTab({ storeId }: { storeId: string }) {
                       duration_minutes: String(s.duration_minutes),
                       is_active: s.is_active,
                       feed_category_id: s.feed_category_id,
+                      image_url: s.image_url,
+                      gallery_urls: s.gallery_urls ?? [],
                     })
                   }
                 >
