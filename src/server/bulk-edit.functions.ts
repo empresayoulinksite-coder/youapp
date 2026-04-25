@@ -148,6 +148,36 @@ async function ensureAdminFromToken(accessToken: string): Promise<string> {
   return userId;
 }
 
+// Known pizza size keywords -> match against pizza_sizes.name
+const SIZE_KEYWORDS = [
+  "grande",
+  "broto",
+  "media",
+  "média",
+  "pequena",
+  "familia",
+  "família",
+  "gigante",
+  "individual",
+  "p",
+  "m",
+  "g",
+];
+
+function extractSize(productName: string): { base: string; sizeKeyword: string | null } {
+  const tokens = normalize(productName).split(" ");
+  let sizeKeyword: string | null = null;
+  const baseTokens: string[] = [];
+  for (const t of tokens) {
+    if (!sizeKeyword && SIZE_KEYWORDS.includes(t)) {
+      sizeKeyword = t;
+    } else {
+      baseTokens.push(t);
+    }
+  }
+  return { base: baseTokens.join(" ").trim(), sizeKeyword };
+}
+
 export const previewBulkEdit = createServerFn({ method: "POST" })
   .inputValidator((input: { storeId: string; prompt: string; accessToken: string }) => {
     if (!input?.storeId || typeof input.storeId !== "string") throw new Error("storeId inválido");
@@ -163,22 +193,43 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
 
     const { data: items, error } = await supabaseAdmin
       .from("menu_items")
-      .select("id, name, price, description")
+      .select("id, name, price, description, category_id, menu_categories!inner(is_pizza)")
       .eq("store_id", data.storeId);
     if (error) throw new Error(error.message);
+
+    const { data: sizes } = await supabaseAdmin
+      .from("pizza_sizes")
+      .select("id, name")
+      .eq("store_id", data.storeId)
+      .eq("is_active", true);
+
+    const { data: sizePrices } = await supabaseAdmin
+      .from("menu_item_size_prices")
+      .select("id, menu_item_id, pizza_size_id, price");
 
     const changes: PreviewChange[] = [];
     const notFound: string[] = [];
 
     for (const e of edits) {
-      let bestId = "";
+      const { base, sizeKeyword } = extractSize(e.product_name);
+      const queryName = base || e.product_name;
+
+      // Find matching pizza_size by keyword
+      let matchedSize: { id: string; name: string } | null = null;
+      if (sizeKeyword && sizes) {
+        matchedSize =
+          sizes.find((s) => normalize(s.name) === sizeKeyword) ??
+          sizes.find((s) => normalize(s.name).startsWith(sizeKeyword)) ??
+          null;
+      }
+
+      // Find best matching menu_item using BASE name
       let bestScore = 0;
-      let bestItem: { id: string; name: string; price: number; description: string | null } | null = null;
+      let bestItem: (typeof items)[number] | null = null;
       for (const it of items ?? []) {
-        const s = similarity(it.name, e.product_name);
+        const s = similarity(it.name, queryName);
         if (s > bestScore) {
           bestScore = s;
-          bestId = it.id;
           bestItem = it;
         }
       }
@@ -186,17 +237,34 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
         notFound.push(e.product_name);
         continue;
       }
-      // Skip if no actual change requested
       if (e.new_price == null && e.new_description == null && e.new_name == null) continue;
+
+      // For pizza items with a size keyword, route price to menu_item_size_prices
+      const isPizza = (bestItem as { menu_categories?: { is_pizza?: boolean } }).menu_categories?.is_pizza === true;
+      const useSizePrice = isPizza && matchedSize && e.new_price != null;
+
+      let currentSizePrice: number | null = null;
+      let sizePriceRowId: string | null = null;
+      if (useSizePrice && matchedSize) {
+        const row = (sizePrices ?? []).find(
+          (sp) => sp.menu_item_id === bestItem!.id && sp.pizza_size_id === matchedSize!.id,
+        );
+        currentSizePrice = row ? Number(row.price) : null;
+        sizePriceRowId = row?.id ?? null;
+      }
+
       changes.push({
         menu_item_id: bestItem.id,
         current_name: bestItem.name,
-        current_price: Number(bestItem.price),
+        current_price: useSizePrice && currentSizePrice != null ? currentSizePrice : Number(bestItem.price),
         current_description: bestItem.description ?? null,
         new_name: e.new_name ?? null,
         new_price: e.new_price != null ? Number(e.new_price) : null,
         new_description: e.new_description ?? null,
         matched_query: e.product_name,
+        pizza_size_id: useSizePrice ? matchedSize!.id : null,
+        pizza_size_name: useSizePrice ? matchedSize!.name : null,
+        size_price_id: sizePriceRowId,
       });
     }
 
@@ -216,20 +284,48 @@ export const applyBulkEdit = createServerFn({ method: "POST" })
 
     let applied = 0;
     for (const c of data.changes) {
+      let ok = false;
+
+      // 1) menu_items update (description, name, and price ONLY when not size-specific)
       const update: { price?: number; description?: string; name?: string } = {};
-      if (c.new_price != null) update.price = c.new_price;
       if (c.new_description != null) update.description = c.new_description;
       if (c.new_name != null) update.name = c.new_name;
-      if (Object.keys(update).length === 0) continue;
-      const { error } = await supabaseAdmin
-        .from("menu_items")
-        .update(update)
-        .eq("id", c.menu_item_id);
-      if (error) {
-        console.error("update error", c.menu_item_id, error);
-        continue;
+      if (c.new_price != null && !c.pizza_size_id) update.price = c.new_price;
+      if (Object.keys(update).length > 0) {
+        const { error } = await supabaseAdmin
+          .from("menu_items")
+          .update(update)
+          .eq("id", c.menu_item_id);
+        if (error) {
+          console.error("update menu_items error", c.menu_item_id, error);
+        } else {
+          ok = true;
+        }
       }
-      applied++;
+
+      // 2) menu_item_size_prices upsert (when price targets a pizza size)
+      if (c.new_price != null && c.pizza_size_id) {
+        if (c.size_price_id) {
+          const { error } = await supabaseAdmin
+            .from("menu_item_size_prices")
+            .update({ price: c.new_price })
+            .eq("id", c.size_price_id);
+          if (error) console.error("update size_price error", c.size_price_id, error);
+          else ok = true;
+        } else {
+          const { error } = await supabaseAdmin
+            .from("menu_item_size_prices")
+            .insert({
+              menu_item_id: c.menu_item_id,
+              pizza_size_id: c.pizza_size_id,
+              price: c.new_price,
+            });
+          if (error) console.error("insert size_price error", error);
+          else ok = true;
+        }
+      }
+
+      if (ok) applied++;
     }
     return { applied };
   });
