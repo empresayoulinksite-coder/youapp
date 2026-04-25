@@ -1,7 +1,46 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { categories, findCategoryBySlug, norm, isEcommerceCategorySlug } from "@/lib/categories";
+import { getCategoryIcon } from "@/lib/category-icons";
 import { ChevronLeft, Star, Clock, Bike } from "lucide-react";
+
+type ResolvedCategory = {
+  slug: string;
+  label: string;
+  tint: string;
+  icon: string;
+  matches: string[];
+  isEcommerce: boolean;
+};
+
+async function resolveCategory(slug: string): Promise<ResolvedCategory | null> {
+  const { data } = await supabase
+    .from("home_categories")
+    .select("slug,label,icon,tint,matches,is_ecommerce,is_active")
+    .eq("slug", slug)
+    .eq("is_active", true)
+    .maybeSingle();
+  if (data) {
+    return {
+      slug: data.slug,
+      label: data.label,
+      tint: data.tint,
+      icon: data.icon,
+      matches: data.matches ?? [],
+      isEcommerce: !!data.is_ecommerce,
+    };
+  }
+  const fallback = findCategoryBySlug(slug);
+  if (!fallback) return null;
+  return {
+    slug: fallback.slug,
+    label: fallback.label,
+    tint: fallback.tint,
+    icon: "ShoppingBag",
+    matches: fallback.matches,
+    isEcommerce: isEcommerceCategorySlug(fallback.slug),
+  };
+}
 
 import { StoreDistance } from "@/components/StoreDistance";
 
@@ -44,7 +83,7 @@ interface ItemWithStore extends MenuItemRow {
 
 export const Route = createFileRoute("/categoria/$slug")({
   loader: async ({ params }) => {
-    const cat = findCategoryBySlug(params.slug);
+    const cat = await resolveCategory(params.slug);
     if (!cat) throw notFound();
 
     const { data: storesData, error: storesErr } = await supabase
@@ -117,12 +156,12 @@ export const Route = createFileRoute("/categoria/$slug")({
 
 function CategoryPage() {
   const { category, stores, items } = Route.useLoaderData() as {
-    category: ReturnType<typeof findCategoryBySlug> & {};
+    category: ResolvedCategory;
     stores: StoreRow[];
     items: ItemWithStore[];
   };
-  const Icon = category.Icon;
-  const isEcom = isEcommerceCategorySlug(category.slug);
+  const Icon = getCategoryIcon(category.icon);
+  const isEcom = category.isEcommerce;
 
   // Agrupa até 4 itens em destaque por loja (promo primeiro)
   const itemsByStore = new Map<string, ItemWithStore[]>();
