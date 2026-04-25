@@ -1,10 +1,11 @@
 import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Heart, Bookmark, Share2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Heart, Bookmark, Share2, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface FeedPost {
   id: string;
@@ -14,16 +15,25 @@ interface FeedPost {
   is_active: boolean;
   likes_count: number;
   created_at: string;
+  category_id: string | null;
+  show_services_cta: boolean;
+}
+
+interface FeedCategory {
+  id: string;
+  name: string;
 }
 
 export function StoreFeedSection({
   storeId,
   storeName,
   storeSlug,
+  onSeeServices,
 }: {
   storeId: string;
   storeName: string;
   storeSlug: string;
+  onSeeServices?: () => void;
 }) {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -41,6 +51,19 @@ export function StoreFeedSection({
       return (data ?? []) as FeedPost[];
     },
   });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["store-feed-categories", storeId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("store_feed_categories")
+        .select("id, name")
+        .eq("store_id", storeId);
+      if (error) throw error;
+      return (data ?? []) as FeedCategory[];
+    },
+  });
+  const catMap = new Map(categories.map((c) => [c.id, c.name]));
 
   const { data: likedIds = [] } = useQuery({
     queryKey: ["store-feed-likes", storeId, user?.id],
@@ -146,11 +169,13 @@ export function StoreFeedSection({
           <FeedPostCard
             key={p.id}
             post={p}
+            categoryName={p.category_id ? catMap.get(p.category_id) ?? null : null}
             liked={likedIds.includes(p.id)}
             favorited={favoriteIds.includes(p.id)}
             onLike={() => toggleLike.mutate({ postId: p.id, liked: likedIds.includes(p.id) })}
             onFavorite={() => toggleFavorite.mutate({ postId: p.id, fav: favoriteIds.includes(p.id) })}
             onShare={() => handleShare(p)}
+            onSeeServices={onSeeServices}
           />
         ))}
       </div>
@@ -160,18 +185,22 @@ export function StoreFeedSection({
 
 function FeedPostCard({
   post,
+  categoryName,
   liked,
   favorited,
   onLike,
   onFavorite,
   onShare,
+  onSeeServices,
 }: {
   post: FeedPost;
+  categoryName: string | null;
   liked: boolean;
   favorited: boolean;
   onLike: () => void;
   onFavorite: () => void;
   onShare: () => void;
+  onSeeServices?: () => void;
 }) {
   const [idx, setIdx] = useState(0);
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -206,13 +235,18 @@ function FeedPostCard({
               <div key={i} className="shrink-0 w-full h-full snap-center">
                 <img
                   src={url}
-                  alt=""
+                  alt={categoryName ?? ""}
                   draggable={false}
                   className="w-full h-full object-cover select-none"
                 />
               </div>
             ))}
           </div>
+          {categoryName && (
+            <span className="absolute top-2 left-2 bg-black/60 text-white text-[11px] font-medium px-2 py-0.5 rounded-full pointer-events-none">
+              {categoryName}
+            </span>
+          )}
           {total > 1 && (
             <>
               <span className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full pointer-events-none">
@@ -270,6 +304,17 @@ function FeedPostCard({
           </p>
         )}
         {post.caption && <p className="text-sm whitespace-pre-wrap">{post.caption}</p>}
+        {post.show_services_cta && onSeeServices && (
+          <Button
+            onClick={onSeeServices}
+            variant="outline"
+            size="sm"
+            className="w-full mt-2"
+          >
+            Ver serviço completo
+            <ArrowRight className="h-4 w-4 ml-1" />
+          </Button>
+        )}
       </div>
     </article>
   );
