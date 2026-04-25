@@ -43,6 +43,7 @@ interface Store {
   show_route: boolean;
   route_url: string | null;
   feed_enabled?: boolean;
+  booking_mode?: "booking" | "quote";
 }
 
 interface MenuCategory {
