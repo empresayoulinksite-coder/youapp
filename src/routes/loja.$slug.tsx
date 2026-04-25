@@ -12,7 +12,7 @@ import { normalizePaymentList, paymentLabelsFromList } from "@/lib/payment-metho
 import { PizzaBuilderDialog, type PizzaConfigPayload } from "@/components/PizzaBuilderDialog";
 import { StoreReelsSection } from "@/components/StoreReelsSection";
 import { StoreFeedSection } from "@/components/StoreFeedSection";
-import { StoreFeedAlbumsDialog } from "@/components/StoreFeedAlbumsDialog";
+import { StoreFeedServicesDialog } from "@/components/StoreFeedServicesDialog";
 
 interface Store {
   id: string;
