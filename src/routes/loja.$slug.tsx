@@ -13,6 +13,7 @@ import { PizzaBuilderDialog, type PizzaConfigPayload } from "@/components/PizzaB
 import { StoreReelsSection } from "@/components/StoreReelsSection";
 import { StoreFeedSection } from "@/components/StoreFeedSection";
 import { StoreFeedServicesDialog } from "@/components/StoreFeedServicesDialog";
+import { QuoteReviewDialog } from "@/components/QuoteReviewDialog";
 
 interface Store {
   id: string;
