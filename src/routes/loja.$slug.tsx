@@ -1044,6 +1044,15 @@ function StorePage() {
         initialServiceId={bookingInitialId}
         onCreated={() => router.invalidate()}
       />
+
+      <QuoteReviewDialog
+        open={!!quoteService}
+        onOpenChange={(o) => !o && setQuoteService(null)}
+        service={quoteService}
+        storeName={store.name}
+        storeWhatsapp={store.whatsapp}
+        customerName={(user?.user_metadata?.display_name as string) || null}
+      />
     </div>
   );
 }
