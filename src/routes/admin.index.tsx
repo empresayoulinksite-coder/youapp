@@ -770,7 +770,7 @@ function AdminStores() {
                   else toast.success(v ? "Seção Reels ativada" : "Seção Reels desativada");
                 }}
               />
-              {editing.store_type === "service" && (
+              {(
                 <StoreFeedEditor
                   storeId={editing.id}
                   feedEnabled={!!editing.feed_enabled}
