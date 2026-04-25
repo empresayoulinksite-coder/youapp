@@ -137,7 +137,7 @@ export function QuoteReviewDialog({
             </p>
           </div>
 
-          <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-xs text-emerald-900">
+          <div className="rounded-xl bg-muted/60 border p-3 text-xs text-muted-foreground">
             Ao enviar, vamos abrir o WhatsApp com a mensagem pronta. Você pode revisar
             antes de enviar para o profissional.
           </div>
@@ -146,7 +146,7 @@ export function QuoteReviewDialog({
         <div className="p-3 border-t shrink-0 bg-background">
           <Button
             onClick={handleSend}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+            className="w-full"
             size="lg"
           >
             <MessageCircle className="h-4 w-4 mr-2" />
