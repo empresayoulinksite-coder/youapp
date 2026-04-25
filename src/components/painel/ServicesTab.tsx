@@ -362,7 +362,7 @@ export function ServicesTab({ storeId }: { storeId: string }) {
                   )}
                   <Input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,.heic,.heif,.HEIC,.HEIF"
                     disabled={uploadingCover}
                     onChange={(e) => {
                       const f = e.target.files?.[0];
@@ -537,7 +537,7 @@ export function ServicesTab({ storeId }: { storeId: string }) {
                   )}
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,.heic,.heif,.HEIC,.HEIF"
                     multiple
                     className="hidden"
                     disabled={uploadingGallery}

@@ -438,7 +438,7 @@ function AdminServices() {
                   )}
                   <Input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,.heic,.heif,.HEIC,.HEIF"
                     disabled={uploading}
                     onChange={(e) => {
                       const f = e.target.files?.[0];
@@ -622,7 +622,7 @@ function AdminServices() {
                   )}
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,.heic,.heif,.HEIC,.HEIF"
                     multiple
                     className="hidden"
                     disabled={uploadingGallery}
