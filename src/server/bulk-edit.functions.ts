@@ -26,15 +26,15 @@ export interface PreviewResult {
 
 const SYSTEM_PROMPT = `Você ajuda um administrador de loja a aplicar alterações em massa em produtos.
 O usuário escreve em linguagem natural (português BR) instruções sobre vários produtos.
-Sua tarefa: extrair uma lista estruturada de alterações.
+Sua tarefa: extrair uma lista estruturada de alterações, UMA POR PRODUTO mencionado.
 
-Regras:
-- "product_name": o nome EXATO ou aproximado do produto que o usuário mencionou (sem preço nem descrição).
-- "new_price": novo preço em REAIS (number, sem R$, ponto decimal). Aceite vírgula como decimal e converta. Omita se não foi mencionado preço.
-- "new_description": nova descrição do produto. Omita se não foi mencionada.
-- "new_name": novo nome SE o usuário pedir explicitamente para renomear. Caso contrário omita.
-- Cada produto vira um item separado no array.
-- Não invente produtos nem campos.`;
+Regras CRÍTICAS:
+- "product_name": o nome do produto EXATAMENTE como o usuário escreveu, INCLUINDO variações de tamanho como "Grande", "Broto", "Média", "Pequena", "Família", "P", "M", "G". Ex: se o usuário escreve "Pizza Grande de Calabresa", use "Pizza Grande de Calabresa". Se escreve "Broto de Calabresa", use "Broto de Calabresa". NÃO remova essas palavras.
+- "new_price": novo preço em REAIS como number (ex: 49.90). Aceite formatos "R$ 50", "50,00", "50.00", "50 reais". SEMPRE extraia se houver qualquer número ao lado do produto que pareça preço. Omita SOMENTE se realmente não houver preço.
+- "new_description": nova descrição/ingredientes do produto. Extraia QUALQUER texto descritivo após o nome (ex: "deliciosa pizza com molho artesanal", "feita com mussarela e calabresa fatiada"). Omita só se não houver nenhuma descrição.
+- "new_name": SOMENTE se o usuário pedir explicitamente para renomear ("renomear para X", "trocar nome para X"). NUNCA preencha apenas porque o nome no comando difere do cadastrado.
+- Cada produto distinto mencionado pelo usuário = um item separado no array. "Pizza Grande" e "Broto" da mesma pizza são DOIS itens separados, cada um com seu próprio preço e descrição.
+- Não invente produtos, preços ou descrições que não estejam no texto.`;
 
 const TOOL_SCHEMA = {
   type: "function" as const,
@@ -98,6 +98,7 @@ async function callAI(prompt: string): Promise<ParsedEdit[]> {
 
   const parsed = JSON.parse(toolCall.function.arguments) as { edits: ParsedEdit[] };
   if (!Array.isArray(parsed.edits)) throw new Error("Formato inválido da IA");
+  console.log("[bulk-edit] AI parsed edits:", JSON.stringify(parsed.edits));
   return parsed.edits;
 }
 
