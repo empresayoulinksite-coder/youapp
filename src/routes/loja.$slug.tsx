@@ -12,6 +12,7 @@ import { normalizePaymentList, paymentLabelsFromList } from "@/lib/payment-metho
 import { PizzaBuilderDialog, type PizzaConfigPayload } from "@/components/PizzaBuilderDialog";
 import { StoreReelsSection } from "@/components/StoreReelsSection";
 import { StoreFeedSection } from "@/components/StoreFeedSection";
+import { StoreFeedAlbumsDialog } from "@/components/StoreFeedAlbumsDialog";
 
 interface Store {
   id: string;
@@ -399,15 +400,21 @@ function StorePage() {
               storeId={store.id}
               storeName={store.name}
               storeSlug={store.slug}
-              onSeeServices={() => {
-                setTab("menu");
-                setTimeout(() => {
-                  document.getElementById("services-list")?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }, 50);
+              onSeeServices={(categoryId) => {
+                setAlbumsInitialCategory(categoryId);
+                setAlbumsOpen(true);
               }}
             />
           )}
         </div>
+        <StoreFeedAlbumsDialog
+          open={albumsOpen}
+          onOpenChange={setAlbumsOpen}
+          storeId={store.id}
+          storeName={store.name}
+          storeWhatsapp={store.whatsapp}
+          initialCategoryId={albumsInitialCategory}
+        />
         {tab === "menu" && isService && (
           <div id="services-list" className="space-y-3">
             {services.length === 0 ? (
