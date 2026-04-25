@@ -879,6 +879,41 @@ export type Database = {
           },
         ]
       }
+      store_feed_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          position: number
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          position?: number
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          position?: number
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_feed_categories_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_feed_favorites: {
         Row: {
           created_at: string
@@ -940,38 +975,51 @@ export type Database = {
       store_feed_posts: {
         Row: {
           caption: string
+          category_id: string | null
           created_at: string
           id: string
           image_urls: string[]
           is_active: boolean
           likes_count: number
           position: number
+          show_services_cta: boolean
           store_id: string
           updated_at: string
         }
         Insert: {
           caption?: string
+          category_id?: string | null
           created_at?: string
           id?: string
           image_urls?: string[]
           is_active?: boolean
           likes_count?: number
           position?: number
+          show_services_cta?: boolean
           store_id: string
           updated_at?: string
         }
         Update: {
           caption?: string
+          category_id?: string | null
           created_at?: string
           id?: string
           image_urls?: string[]
           is_active?: boolean
           likes_count?: number
           position?: number
+          show_services_cta?: boolean
           store_id?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "store_feed_posts_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "store_feed_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "store_feed_posts_store_id_fkey"
             columns: ["store_id"]
