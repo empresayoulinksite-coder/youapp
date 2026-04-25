@@ -715,7 +715,7 @@ function AdminProducts() {
   const openNewItem = (categoryId?: string) => {
     setEditing({
       category_id: categoryId || categories[0]?.id,
-      emoji: "🍽️",
+      emoji: isPizzeria ? "🍕" : "🍽️",
       name: "",
       price: 0,
       is_available: true,
