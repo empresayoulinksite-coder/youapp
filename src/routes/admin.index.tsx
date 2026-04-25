@@ -353,6 +353,15 @@ function AdminStores() {
                 </Button>
                 <Button
                   size="sm"
+                  variant="outline"
+                  title={s.is_hidden ? "Mostrar no app" : "Ocultar do app"}
+                  onClick={() => toggleHidden.mutate({ id: s.id, is_hidden: !s.is_hidden })}
+                  disabled={toggleHidden.isPending}
+                >
+                  {s.is_hidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                </Button>
+                <Button
+                  size="sm"
                   variant="destructive"
                   onClick={() => {
                     if (confirm(`Excluir ${s.name}?`)) del.mutate(s.id);
