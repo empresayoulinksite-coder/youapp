@@ -1178,6 +1178,47 @@ function AdminProducts() {
               </div>
 
 
+              {/* Preços por tamanho (pizzas) */}
+              {(() => {
+                const cat = categories.find(
+                  (c) => c.id === editing.category_id,
+                );
+                if (!cat?.is_pizza || pizzaSizes.length === 0) return null;
+                return (
+                  <div className="sm:col-span-2 rounded-md border p-3">
+                    <div className="mb-2">
+                      <p className="text-sm font-semibold">
+                        🍕 Preço por tamanho de pizza
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Defina o preço deste sabor em cada tamanho. Deixe vazio
+                        para não vender neste tamanho.
+                      </p>
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {pizzaSizes.map((s) => (
+                        <div key={s.id}>
+                          <Label className="text-xs">{s.name} (R$)</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min={0}
+                            placeholder="0,00"
+                            value={editingPizzaPrices[s.id] ?? ""}
+                            onChange={(e) =>
+                              setEditingPizzaPrices((prev) => ({
+                                ...prev,
+                                [s.id]: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="sm:col-span-2 mt-2 rounded-md border p-3">
                 <div className="mb-2 flex items-center justify-between">
                   <div>
