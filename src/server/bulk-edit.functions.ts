@@ -128,26 +128,31 @@ function similarity(a: string, b: string): number {
   return inter / Math.max(ta.size, tb.size);
 }
 
-async function ensureAdmin(supabase: any, userId: string) {
-  const { data, error } = await supabase
+async function ensureAdminFromToken(accessToken: string): Promise<string> {
+  if (!accessToken) throw new Error("Não autenticado");
+  const { data: userData, error: authErr } = await supabaseAdmin.auth.getUser(accessToken);
+  if (authErr || !userData?.user) throw new Error("Sessão inválida");
+  const userId = userData.user.id;
+  const { data, error } = await supabaseAdmin
     .from("user_roles")
     .select("role")
     .eq("user_id", userId)
     .eq("role", "admin")
     .maybeSingle();
   if (error || !data) throw new Error("Acesso restrito a administradores");
+  return userId;
 }
 
 export const previewBulkEdit = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: { storeId: string; prompt: string }) => {
+  .inputValidator((input: { storeId: string; prompt: string; accessToken: string }) => {
     if (!input?.storeId || typeof input.storeId !== "string") throw new Error("storeId inválido");
     if (!input?.prompt || typeof input.prompt !== "string") throw new Error("Descreva as alterações");
     if (input.prompt.length > 10_000) throw new Error("Texto muito longo (máx 10.000 caracteres)");
+    if (!input?.accessToken) throw new Error("Não autenticado");
     return input;
   })
-  .handler(async ({ data, context }) => {
-    await ensureAdmin(context.supabase, context.userId);
+  .handler(async ({ data }) => {
+    await ensureAdminFromToken(data.accessToken);
 
     const edits = await callAI(data.prompt);
 
