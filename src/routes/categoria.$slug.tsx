@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { findCategoryBySlug, norm, isEcommerceCategorySlug } from "@/lib/categories";
+import { categories, findCategoryBySlug, norm, isEcommerceCategorySlug } from "@/lib/categories";
 import { getCategoryIcon } from "@/lib/category-icons";
 import { ChevronLeft, Star, Clock, Bike } from "lucide-react";
 
