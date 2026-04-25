@@ -171,6 +171,7 @@ export function StoreFeedServicesDialog({
         onOpenChange={(o) => !o && setActiveService(null)}
         service={activeService}
         isAuthenticated={isAuthenticated}
+        bookingMode={bookingMode}
         onBook={(serviceId) => {
           setActiveService(null);
           onPickService(serviceId);
