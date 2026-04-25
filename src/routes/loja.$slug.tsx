@@ -399,6 +399,12 @@ function StorePage() {
               storeId={store.id}
               storeName={store.name}
               storeSlug={store.slug}
+              onSeeServices={() => {
+                setTab("menu");
+                setTimeout(() => {
+                  document.getElementById("services-list")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }, 50);
+              }}
             />
           )}
         </div>
