@@ -97,6 +97,20 @@ function AdminServices() {
     },
   });
 
+  const { data: feedCategories = [] } = useQuery({
+    queryKey: ["admin-services-feed-cats", storeId],
+    enabled: !!storeId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("store_feed_categories")
+        .select("id, name")
+        .eq("store_id", storeId)
+        .order("position", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as FeedCategory[];
+    },
+  });
+
   const save = useMutation({
     mutationFn: async (s: Partial<Service>) => {
       const payload = {
@@ -108,6 +122,7 @@ function AdminServices() {
         image_url: s.image_url || null,
         is_active: s.is_active ?? true,
         position: Number(s.position) || services.length,
+        feed_category_id: s.feed_category_id || null,
       };
       if (s.id) {
         const { error } = await supabase.from("services").update(payload).eq("id", s.id);
