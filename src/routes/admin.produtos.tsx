@@ -1610,6 +1610,7 @@ function SortableCategory({
 function SortableItemRow({
   item,
   variations,
+  pizzaPrice,
   onEdit,
   onDelete,
   onToggleAvailable,
@@ -1619,6 +1620,7 @@ function SortableItemRow({
 }: {
   item: MenuItem;
   variations: Variation[];
+  pizzaPrice: number | null;
   onEdit: () => void;
   onDelete: () => void;
   onToggleAvailable: () => void;
@@ -1635,13 +1637,16 @@ function SortableItemRow({
   };
 
   const hasVariations = variations.length > 0;
+  const isPizza = pizzaPrice !== null;
   // Variação de menor preço (a que aparece como "A partir de").
   const cheapestVariation = hasVariations
     ? variations.reduce((acc, v) => (Number(v.price) < Number(acc.price) ? v : acc), variations[0])
     : null;
-  const minPrice = hasVariations
-    ? Number(cheapestVariation!.price)
-    : Number(item.price);
+  const minPrice = isPizza
+    ? Number(pizzaPrice)
+    : hasVariations
+      ? Number(cheapestVariation!.price)
+      : Number(item.price);
 
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(item.name);
