@@ -17,6 +17,10 @@ export interface PreviewChange {
   new_price: number | null;
   new_description: string | null;
   matched_query: string;
+  // Optional: when the price applies to a specific pizza size
+  pizza_size_id?: string | null;
+  pizza_size_name?: string | null;
+  size_price_id?: string | null; // existing menu_item_size_prices row id, if any
 }
 
 export interface PreviewResult {
