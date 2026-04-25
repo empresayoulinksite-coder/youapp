@@ -294,7 +294,15 @@ function AdminProducts() {
   });
 
   const saveItem = useMutation({
-    mutationFn: async ({ m, vars }: { m: Partial<MenuItem>; vars: Variation[] }) => {
+    mutationFn: async ({
+      m,
+      vars,
+      pizzaPrices,
+    }: {
+      m: Partial<MenuItem>;
+      vars: Variation[];
+      pizzaPrices: Record<string, string>;
+    }) => {
       const payload = {
         store_id: storeId,
         category_id: m.category_id!,
@@ -351,14 +359,54 @@ function AdminProducts() {
           await supabase.from("menu_item_variations").insert(data);
         }
       }
+
+      // Sincroniza preços por tamanho (pizzas)
+      const cat = categories.find((c) => c.id === m.category_id);
+      if (cat?.is_pizza && pizzaSizes.length) {
+        const { data: existingPrices } = await supabase
+          .from("menu_item_size_prices")
+          .select("id,pizza_size_id")
+          .eq("menu_item_id", itemId!);
+        const byId = new Map(
+          (existingPrices ?? []).map((p) => [p.pizza_size_id, p.id]),
+        );
+        for (const size of pizzaSizes) {
+          const raw = pizzaPrices[size.id];
+          const num = raw === "" || raw === undefined ? null : Number(raw);
+          const existsId = byId.get(size.id);
+          if (num === null || isNaN(num)) {
+            if (existsId) {
+              await supabase
+                .from("menu_item_size_prices")
+                .delete()
+                .eq("id", existsId);
+            }
+            continue;
+          }
+          if (existsId) {
+            await supabase
+              .from("menu_item_size_prices")
+              .update({ price: num })
+              .eq("id", existsId);
+          } else {
+            await supabase.from("menu_item_size_prices").insert({
+              menu_item_id: itemId!,
+              pizza_size_id: size.id,
+              price: num,
+            });
+          }
+        }
+      }
     },
     onSuccess: () => {
       toast.success("Produto salvo");
       qc.invalidateQueries({ queryKey: ["admin-items", storeId] });
       qc.invalidateQueries({ queryKey: ["admin-variations"] });
+      qc.invalidateQueries({ queryKey: ["pizza-size-prices"] });
       setOpen(false);
       setEditing(null);
       setEditingVars([]);
+      setEditingPizzaPrices({});
     },
     onError: (e: Error) => toast.error(e.message),
   });
