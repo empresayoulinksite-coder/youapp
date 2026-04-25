@@ -1418,6 +1418,8 @@ function SortableCategory({
   category,
   items,
   variationsByItem,
+  pizzaPriceByItem,
+  isPizzaCategory,
   collapsed,
   onToggle,
   onEditCategory,
