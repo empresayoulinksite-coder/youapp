@@ -490,6 +490,58 @@ function AdminServices() {
                   cliente clicar em "Ver serviço completo".
                 </p>
               </div>
+              <div>
+                <Label>Galeria de fotos do serviço</Label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Adicione várias fotos. O cliente verá um feed estilo Instagram ao
+                  abrir o serviço.
+                </p>
+                {editing.gallery_urls && editing.gallery_urls.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2 mb-2">
+                    {editing.gallery_urls.map((url, i) => (
+                      <div key={`${url}-${i}`} className="relative aspect-square">
+                        <img
+                          src={url}
+                          alt=""
+                          className="w-full h-full object-cover rounded-md"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setEditing({
+                              ...editing,
+                              gallery_urls: (editing.gallery_urls ?? []).filter(
+                                (_, idx) => idx !== i,
+                              ),
+                            })
+                          }
+                          className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full p-0.5"
+                          aria-label="Remover"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <label
+                  className={`flex items-center justify-center gap-2 border border-dashed rounded-md py-3 text-sm cursor-pointer hover:bg-muted/50 ${uploadingGallery ? "opacity-50 pointer-events-none" : ""}`}
+                >
+                  <ImagePlus className="h-4 w-4" />
+                  {uploadingGallery ? "Enviando..." : "Adicionar fotos"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                      const files = e.target.files;
+                      if (files && files.length > 0) handleGalleryFiles(files);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+              </div>
               <div className="flex items-center gap-3 pt-1">
                 <Switch
                   checked={editing.is_active ?? true}
