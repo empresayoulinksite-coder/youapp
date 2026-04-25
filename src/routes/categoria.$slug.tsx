@@ -52,6 +52,7 @@ export const Route = createFileRoute("/categoria/$slug")({
       .select(
         "id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, promo, address, neighborhood, city, cep, lat, lng",
       )
+      .eq("is_hidden", false)
       .order("rating", { ascending: false });
     if (storesErr) throw storesErr;
 

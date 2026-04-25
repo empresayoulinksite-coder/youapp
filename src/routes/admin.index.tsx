@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, UtensilsCrossed, ShoppingBag, Briefcase, Pause, Play } from "lucide-react";
+import { Plus, Pencil, Trash2, UtensilsCrossed, ShoppingBag, Briefcase, Pause, Play, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -69,6 +69,7 @@ type Store = {
   payment_methods_list: string[];
   min_order: number;
   is_paused: boolean;
+  is_hidden: boolean;
   whatsapp: string | null;
   lat: number | null;
   lng: number | null;
@@ -239,6 +240,18 @@ function AdminStores() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const toggleHidden = useMutation({
+    mutationFn: async ({ id, is_hidden }: { id: string; is_hidden: boolean }) => {
+      const { error } = await supabase.from("stores").update({ is_hidden }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      toast.success(vars.is_hidden ? "Loja oculta do app" : "Loja visível no app");
+      qc.invalidateQueries({ queryKey: ["admin-stores"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const handleFile = async (file: File) => {
     setUploading(true);
     try {
@@ -295,6 +308,11 @@ function AdminStores() {
                         Pausada
                       </span>
                     )}
+                    {s.is_hidden && (
+                      <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                        Oculta
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
@@ -332,6 +350,15 @@ function AdminStores() {
                   }}
                 >
                   <Pencil className="h-3 w-3" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  title={s.is_hidden ? "Mostrar no app" : "Ocultar do app"}
+                  onClick={() => toggleHidden.mutate({ id: s.id, is_hidden: !s.is_hidden })}
+                  disabled={toggleHidden.isPending}
+                >
+                  {s.is_hidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                 </Button>
                 <Button
                   size="sm"

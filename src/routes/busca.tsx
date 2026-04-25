@@ -28,6 +28,7 @@ export const Route = createFileRoute("/busca")({
       .select(
         "id, slug, name, emoji, image_url, category, rating, delivery_time, delivery_fee, free_delivery, delivery_enabled",
       )
+      .eq("is_hidden", false)
       .order("name");
     if (error) throw error;
     return { stores: (data ?? []) as StoreRow[] };

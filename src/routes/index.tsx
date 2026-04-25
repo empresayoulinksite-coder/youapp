@@ -79,6 +79,7 @@ export const Route = createFileRoute("/")({
     const { data, error } = await supabase
       .from("stores")
       .select("id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, delivery_enabled, promo, neighborhood, city, address, cep, lat, lng")
+      .eq("is_hidden", false)
       .order("name");
     if (error) throw error;
     const stores = (data ?? []) as StoreRow[];

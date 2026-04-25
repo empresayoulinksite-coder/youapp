@@ -57,6 +57,7 @@ function FavoritesPage() {
         "id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, delivery_enabled, promo",
       )
       .in("id", ids)
+      .eq("is_hidden", false)
       .then(({ data }) => {
         setStores((data ?? []) as StoreRow[]);
         setFetching(false);
