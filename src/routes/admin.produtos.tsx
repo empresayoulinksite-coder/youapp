@@ -197,6 +197,26 @@ function AdminProducts() {
     },
   });
 
+  const { data: pizzaPriceByItem = {} } = useQuery({
+    queryKey: ["admin-size-prices", storeId, items.map((i) => i.id).join(",")],
+    enabled: !!storeId && items.length > 0,
+    queryFn: async () => {
+      const ids = items.map((i) => i.id);
+      const { data, error } = await supabase
+        .from("menu_item_size_prices")
+        .select("menu_item_id,price")
+        .in("menu_item_id", ids);
+      if (error) throw error;
+      const map: Record<string, number> = {};
+      (data ?? []).forEach((p) => {
+        const cur = map[p.menu_item_id] ?? 0;
+        const v = Number(p.price) || 0;
+        if (v > cur) map[p.menu_item_id] = v;
+      });
+      return map;
+    },
+  });
+
   const { data: pizzaSizes = [] } = useQuery({
     queryKey: ["admin-pizza-sizes", storeId],
     enabled: !!storeId,
@@ -874,6 +894,8 @@ function AdminProducts() {
                       category={cat}
                       items={itemsByCategory[cat.id] || []}
                       variationsByItem={variationsByItem}
+                      pizzaPriceByItem={pizzaPriceByItem}
+                      isPizzaCategory={!!cat.is_pizza}
                       collapsed={!!collapsed[cat.id]}
                       onToggle={() =>
                         setCollapsed((p) => ({ ...p, [cat.id]: !p[cat.id] }))
@@ -1396,6 +1418,8 @@ function SortableCategory({
   category,
   items,
   variationsByItem,
+  pizzaPriceByItem,
+  isPizzaCategory,
   collapsed,
   onToggle,
   onEditCategory,
@@ -1416,6 +1440,8 @@ function SortableCategory({
   category: Category;
   items: MenuItem[];
   variationsByItem: Record<string, Variation[]>;
+  pizzaPriceByItem: Record<string, number>;
+  isPizzaCategory: boolean;
   collapsed: boolean;
   onToggle: () => void;
   onEditCategory: () => void;
@@ -1562,6 +1588,7 @@ function SortableCategory({
                     key={m.id}
                     item={m}
                     variations={variationsByItem[m.id] || []}
+                    pizzaPrice={isPizzaCategory ? (pizzaPriceByItem[m.id] ?? 0) : null}
                     onEdit={() => onEditItem(m)}
                     onDelete={() => onDeleteItem(m.id, m.name)}
                     onToggleAvailable={() => onToggleItemAvailable(m)}
@@ -1583,6 +1610,7 @@ function SortableCategory({
 function SortableItemRow({
   item,
   variations,
+  pizzaPrice,
   onEdit,
   onDelete,
   onToggleAvailable,
@@ -1592,6 +1620,7 @@ function SortableItemRow({
 }: {
   item: MenuItem;
   variations: Variation[];
+  pizzaPrice: number | null;
   onEdit: () => void;
   onDelete: () => void;
   onToggleAvailable: () => void;
@@ -1608,13 +1637,16 @@ function SortableItemRow({
   };
 
   const hasVariations = variations.length > 0;
+  const isPizza = pizzaPrice !== null;
   // Variação de menor preço (a que aparece como "A partir de").
   const cheapestVariation = hasVariations
     ? variations.reduce((acc, v) => (Number(v.price) < Number(acc.price) ? v : acc), variations[0])
     : null;
-  const minPrice = hasVariations
-    ? Number(cheapestVariation!.price)
-    : Number(item.price);
+  const minPrice = isPizza
+    ? Number(pizzaPrice)
+    : hasVariations
+      ? Number(cheapestVariation!.price)
+      : Number(item.price);
 
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(item.name);
@@ -1752,6 +1784,11 @@ function SortableItemRow({
           <button
             type="button"
             onClick={() => {
+              if (isPizza) {
+                toast.info("Preço é definido pelos tamanhos da pizza");
+                onEdit();
+                return;
+              }
               if (hasVariations && variations.length > 1) {
                 // Múltiplas variações: abre o editor completo para evitar confusão.
                 toast.info("Edite os preços das variações no formulário");
