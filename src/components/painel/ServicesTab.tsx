@@ -289,11 +289,36 @@ export function ServicesTab({ storeId }: { storeId: string }) {
 
       {editing && (
         <Dialog open onOpenChange={(o) => !o && setEditing(null)}>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editing.id ? "Editar serviço" : "Novo serviço"}</DialogTitle>
             </DialogHeader>
             <div className="space-y-3">
+              <div>
+                <Label>Foto de capa</Label>
+                <div className="mt-1 flex items-center gap-3">
+                  {editing.image_url ? (
+                    <img
+                      src={editing.image_url}
+                      alt=""
+                      className="h-16 w-16 rounded object-cover"
+                    />
+                  ) : (
+                    <div className="h-16 w-16 rounded bg-muted flex items-center justify-center text-2xl">
+                      ✂️
+                    </div>
+                  )}
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    disabled={uploadingCover}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleCoverUpload(f);
+                    }}
+                  />
+                </div>
+              </div>
               <div>
                 <Label>Nome</Label>
                 <Input
