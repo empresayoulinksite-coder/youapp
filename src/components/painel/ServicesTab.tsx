@@ -290,6 +290,39 @@ export function ServicesTab({ storeId }: { storeId: string }) {
                   />
                 </div>
               </div>
+              <div>
+                <Label>Categoria do feed</Label>
+                <Select
+                  value={editing.feed_category_id ?? "none"}
+                  onValueChange={(v) =>
+                    setEditing({
+                      ...editing,
+                      feed_category_id: v === "none" ? null : v,
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        feedCategories.length === 0
+                          ? "Crie categorias no feed primeiro"
+                          : "Sem categoria"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem categoria</SelectItem>
+                    {feedCategories.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Vincule a um álbum do feed para aparecer no botão "Ver serviço completo".
+                </p>
+              </div>
               <div className="flex items-center gap-2">
                 <Switch
                   checked={editing.is_active}
