@@ -572,3 +572,129 @@ function CsvImporter({ onParsed }: { onParsed: (c: ParsedCategory[]) => void }) 
     </div>
   );
 }
+
+function AddMoreImageDialog({ onParsed }: { onParsed: (items: ParsedItem[]) => void }) {
+  const [open, setOpen] = useState(false);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const fn = useServerFn(importMenuFromImage);
+
+  const onFile = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Envie um arquivo de imagem");
+      return;
+    }
+    if (file.size > 6 * 1024 * 1024) {
+      toast.error("Imagem muito grande (máx 6MB)");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const onPaste = (e: ClipboardEvent) => {
+      if (preview || loading) return;
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.type.startsWith("image/")) {
+          const file = item.getAsFile();
+          if (file) {
+            e.preventDefault();
+            onFile(file);
+            toast.success("Imagem colada");
+            return;
+          }
+        }
+      }
+    };
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  }, [open, preview, loading]);
+
+  const reset = () => {
+    setPreview(null);
+    setLoading(false);
+  };
+
+  const submit = async () => {
+    if (!preview) return;
+    setLoading(true);
+    try {
+      const res = await fn({ data: { imageDataUrl: preview } });
+      const allItems = res.categories.flatMap((c) => c.items);
+      if (allItems.length === 0) {
+        toast.error("Nenhum item encontrado na imagem");
+        return;
+      }
+      onParsed(allItems);
+      reset();
+      setOpen(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao importar");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset(); }}>
+      <Button size="sm" variant="ghost" onClick={() => setOpen(true)} title="Importar mais itens com foto">
+        <ImagePlus className="h-4 w-4" />
+      </Button>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Importar mais itens nesta categoria</DialogTitle>
+          <DialogDescription>
+            Envie, cole (Ctrl+V) ou arraste outra foto. Os itens extraídos serão adicionados ao final desta categoria.
+          </DialogDescription>
+        </DialogHeader>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])}
+        />
+        {preview ? (
+          <div className="space-y-3">
+            <img src={preview} alt="Preview" className="max-h-72 w-full rounded-md border object-contain" />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setPreview(null)} disabled={loading}>
+                Trocar foto
+              </Button>
+              <Button onClick={submit} disabled={loading}>
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                Extrair e adicionar
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOver(false);
+              const file = e.dataTransfer.files?.[0];
+              if (file) onFile(file);
+            }}
+            onClick={() => inputRef.current?.click()}
+            className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed p-8 text-center transition ${
+              dragOver ? "border-primary bg-primary/5" : "border-muted-foreground/30 hover:border-primary/50"
+            }`}
+          >
+            <ImageIcon className="h-8 w-8 text-muted-foreground" />
+            <p className="text-sm font-medium">Escolher foto, colar (Ctrl+V) ou arrastar</p>
+            <p className="text-xs text-muted-foreground">PNG, JPG até 6MB</p>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
