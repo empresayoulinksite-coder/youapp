@@ -134,6 +134,7 @@ function AdminProducts() {
   const [editingCat, setEditingCat] = useState<Partial<Category> | null>(null);
   const [pizzaWizardOpen, setPizzaWizardOpen] = useState(false);
   const [pizzaWizardInitial, setPizzaWizardInitial] = useState<Category | null>(null);
+  const [aiBulkOpen, setAiBulkOpen] = useState(false);
 
   const { data: stores = [] } = useQuery({
     queryKey: ["admin-stores-list", storeType],
@@ -867,6 +868,12 @@ function AdminProducts() {
               <Link to="/admin/importar-cardapio">
                 <Upload className="h-4 w-4" /> Importar cardápio
               </Link>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setAiBulkOpen(true)}
+            >
+              <Sparkles className="h-4 w-4" /> Assistente IA
             </Button>
             <Button
               disabled={categories.length === 0}
