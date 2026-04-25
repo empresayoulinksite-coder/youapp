@@ -193,38 +193,53 @@ export function BulkEditAIDialog({ open, onOpenChange, storeId }: Props) {
                 <p className="text-sm font-medium">
                   {preview.changes.length} alteração(ões) prontas para aplicar:
                 </p>
-                {preview.changes.map((c) => (
-                  <div
-                    key={c.menu_item_id + c.matched_query}
-                    className="rounded-lg border p-3 text-sm space-y-1"
-                  >
-                    <div className="flex items-center gap-2 font-medium">
-                      <span>{c.current_name}</span>
-                      {normalize(c.matched_query) !== normalize(c.current_name) && (
-                        <Badge variant="outline" className="text-xs">
-                          buscou: "{c.matched_query}"
-                        </Badge>
+                {preview.changes.map((c, idx) => {
+                  const meta = ACTION_LABEL[c.action] ?? ACTION_LABEL.update;
+                  return (
+                    <div
+                      key={c.menu_item_id + (c.pizza_size_id ?? "") + c.matched_query + idx}
+                      className="rounded-lg border p-3 text-sm space-y-1"
+                    >
+                      <div className="flex items-center gap-2 font-medium flex-wrap">
+                        <span className={`text-xs px-2 py-0.5 rounded ${meta.tone}`}>
+                          {meta.label}
+                        </span>
+                        <span>
+                          {c.current_name}
+                          {c.pizza_size_name ? ` — ${c.pizza_size_name}` : ""}
+                        </span>
+                        {normalize(c.matched_query) !== normalize(c.current_name) && (
+                          <Badge variant="outline" className="text-xs">
+                            buscou: "{c.matched_query}"
+                          </Badge>
+                        )}
+                      </div>
+                      {c.action === "delete" && (
+                        <p className="text-xs text-destructive">Produto será excluído permanentemente.</p>
+                      )}
+                      {(c.action === "activate" || c.action === "deactivate") && (
+                        <p className="text-xs text-muted-foreground">
+                          {c.action === "activate" ? "Disponível" : "Indisponível"} no cardápio.
+                        </p>
+                      )}
+                      {c.new_name && <Row label="Nome" before={c.current_name} after={c.new_name} />}
+                      {c.new_price != null && (
+                        <Row
+                          label="Preço"
+                          before={fmt(c.current_price)}
+                          after={fmt(c.new_price)}
+                        />
+                      )}
+                      {c.new_description != null && (
+                        <Row
+                          label="Descrição"
+                          before={c.current_description || "(vazia)"}
+                          after={c.new_description}
+                        />
                       )}
                     </div>
-                    {c.new_name && (
-                      <Row label="Nome" before={c.current_name} after={c.new_name} />
-                    )}
-                    {c.new_price != null && (
-                      <Row
-                        label="Preço"
-                        before={fmt(c.current_price)}
-                        after={fmt(c.new_price)}
-                      />
-                    )}
-                    {c.new_description != null && (
-                      <Row
-                        label="Descrição"
-                        before={c.current_description || "(vazia)"}
-                        after={c.new_description}
-                      />
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
