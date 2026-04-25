@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Pause, Play, Clock, DollarSign, ImagePlus, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Pause, Play, Clock, DollarSign, ImagePlus, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -190,6 +190,8 @@ function AdminServices() {
   });
 
   const [uploadingGallery, setUploadingGallery] = useState(false);
+  const [galleryUploads, setGalleryUploads] = useState<{ id: string; preview: string }[]>([]);
+  const [galleryProgress, setGalleryProgress] = useState({ done: 0, total: 0 });
 
   const handleFile = async (file: File) => {
     setUploading(true);
@@ -205,20 +207,51 @@ function AdminServices() {
   };
 
   const handleGalleryFiles = async (files: FileList) => {
+    const list = Array.from(files);
+    const total = list.length;
+    const placeholders = list.map((f) => ({
+      id: `${f.name}-${f.size}-${Math.random().toString(36).slice(2, 8)}`,
+      preview: URL.createObjectURL(f),
+    }));
+    setGalleryUploads(placeholders);
+    setGalleryProgress({ done: 0, total });
     setUploadingGallery(true);
+    const toastId = toast.loading(`Enviando 0 de ${total} foto(s)...`);
+
+    let succeeded = 0;
     try {
-      const urls = await Promise.all(
-        Array.from(files).map((f) => uploadImage("menu-images", f)),
+      await Promise.all(
+        list.map(async (f, idx) => {
+          try {
+            const url = await uploadImage("menu-images", f);
+            setEditing((prev) => ({
+              ...prev,
+              gallery_urls: [...(prev?.gallery_urls ?? []), url],
+            }));
+            succeeded += 1;
+          } finally {
+            setGalleryUploads((prev) => prev.filter((p) => p.id !== placeholders[idx].id));
+            setGalleryProgress((prev) => {
+              const done = prev.done + 1;
+              toast.loading(`Enviando ${done} de ${total} foto(s)...`, { id: toastId });
+              return { done, total: prev.total };
+            });
+          }
+        }),
       );
-      setEditing((prev) => ({
-        ...prev,
-        gallery_urls: [...(prev?.gallery_urls ?? []), ...urls],
-      }));
-      toast.success(`${urls.length} foto(s) adicionada(s)`);
-    } catch (e) {
-      toast.error((e as Error).message);
+      if (succeeded === total) {
+        toast.success(`${succeeded} foto(s) enviada(s) com sucesso!`, { id: toastId });
+      } else {
+        toast.error(
+          `${succeeded} de ${total} enviada(s). Algumas falharam, tente novamente.`,
+          { id: toastId },
+        );
+      }
     } finally {
+      placeholders.forEach((p) => URL.revokeObjectURL(p.preview));
       setUploadingGallery(false);
+      setGalleryUploads([]);
+      setGalleryProgress({ done: 0, total: 0 });
     }
   };
 
@@ -529,9 +562,10 @@ function AdminServices() {
                   Adicione várias fotos. O cliente verá um feed estilo Instagram ao
                   abrir o serviço.
                 </p>
-                {editing.gallery_urls && editing.gallery_urls.length > 0 && (
+                {((editing.gallery_urls && editing.gallery_urls.length > 0) ||
+                  galleryUploads.length > 0) && (
                   <div className="grid grid-cols-3 gap-2 mb-2">
-                    {editing.gallery_urls.map((url, i) => (
+                    {(editing.gallery_urls ?? []).map((url, i) => (
                       <div key={`${url}-${i}`} className="relative aspect-square">
                         <img
                           src={url}
@@ -555,18 +589,43 @@ function AdminServices() {
                         </button>
                       </div>
                     ))}
+                    {galleryUploads.map((u) => (
+                      <div
+                        key={u.id}
+                        className="relative aspect-square rounded-md overflow-hidden"
+                      >
+                        <img
+                          src={u.preview}
+                          alt=""
+                          className="w-full h-full object-cover opacity-50"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                          <Loader2 className="h-6 w-6 text-white animate-spin" />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
                 <label
                   className={`flex items-center justify-center gap-2 border border-dashed rounded-md py-3 text-sm cursor-pointer hover:bg-muted/50 ${uploadingGallery ? "opacity-50 pointer-events-none" : ""}`}
                 >
-                  <ImagePlus className="h-4 w-4" />
-                  {uploadingGallery ? "Enviando..." : "Adicionar fotos"}
+                  {uploadingGallery ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Enviando {galleryProgress.done} de {galleryProgress.total}...
+                    </>
+                  ) : (
+                    <>
+                      <ImagePlus className="h-4 w-4" />
+                      Adicionar fotos
+                    </>
+                  )}
                   <input
                     type="file"
                     accept="image/*"
                     multiple
                     className="hidden"
+                    disabled={uploadingGallery}
                     onChange={(e) => {
                       const files = e.target.files;
                       if (files && files.length > 0) handleGalleryFiles(files);
