@@ -15,6 +15,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 
 type Service = {
@@ -27,7 +34,10 @@ type Service = {
   is_active: boolean;
   position: number;
   image_url: string | null;
+  feed_category_id: string | null;
 };
+
+type FeedCategory = { id: string; name: string };
 
 type Draft = {
   id?: string;
@@ -37,6 +47,7 @@ type Draft = {
   promoPrice: string;
   duration_minutes: string;
   is_active: boolean;
+  feed_category_id: string | null;
 };
 
 const emptyDraft: Draft = {
@@ -46,6 +57,7 @@ const emptyDraft: Draft = {
   promoPrice: "",
   duration_minutes: "30",
   is_active: true,
+  feed_category_id: null,
 };
 
 function brl(n: number) {
@@ -70,6 +82,19 @@ export function ServicesTab({ storeId }: { storeId: string }) {
     },
   });
 
+  const { data: feedCategories = [] } = useQuery({
+    queryKey: ["painel", "feed-categories", storeId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("store_feed_categories")
+        .select("id, name")
+        .eq("store_id", storeId)
+        .order("position", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as FeedCategory[];
+    },
+  });
+
   const save = useMutation({
     mutationFn: async (d: Draft) => {
       const price = Number(d.price.replace(",", "."));
@@ -84,6 +109,7 @@ export function ServicesTab({ storeId }: { storeId: string }) {
         price,
         duration_minutes: duration,
         is_active: d.is_active,
+        feed_category_id: d.feed_category_id || null,
       };
       if (!payload.name) throw new Error("Nome obrigatório");
 
@@ -185,6 +211,7 @@ export function ServicesTab({ storeId }: { storeId: string }) {
                       promoPrice: "",
                       duration_minutes: String(s.duration_minutes),
                       is_active: s.is_active,
+                      feed_category_id: s.feed_category_id,
                     })
                   }
                 >
@@ -262,6 +289,39 @@ export function ServicesTab({ storeId }: { storeId: string }) {
                     }
                   />
                 </div>
+              </div>
+              <div>
+                <Label>Categoria do feed</Label>
+                <Select
+                  value={editing.feed_category_id ?? "none"}
+                  onValueChange={(v) =>
+                    setEditing({
+                      ...editing,
+                      feed_category_id: v === "none" ? null : v,
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        feedCategories.length === 0
+                          ? "Crie categorias no feed primeiro"
+                          : "Sem categoria"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem categoria</SelectItem>
+                    {feedCategories.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Vincule a um álbum do feed para aparecer no botão "Ver serviço completo".
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 <Switch

@@ -793,6 +793,7 @@ export type Database = {
           created_at: string
           description: string | null
           duration_minutes: number
+          feed_category_id: string | null
           id: string
           image_url: string | null
           is_active: boolean
@@ -806,6 +807,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           duration_minutes?: number
+          feed_category_id?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -819,6 +821,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           duration_minutes?: number
+          feed_category_id?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -829,6 +832,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "services_feed_category_id_fkey"
+            columns: ["feed_category_id"]
+            isOneToOne: false
+            referencedRelation: "store_feed_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "services_store_id_fkey"
             columns: ["store_id"]

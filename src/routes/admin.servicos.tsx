@@ -39,6 +39,7 @@ type Service = {
   image_url: string | null;
   is_active: boolean;
   position: number;
+  feed_category_id: string | null;
 };
 
 type ServiceStore = {
@@ -46,6 +47,8 @@ type ServiceStore = {
   name: string;
   slot_minutes: number;
 };
+
+type FeedCategory = { id: string; name: string };
 
 const empty: Partial<Service> = {
   name: "",
@@ -55,6 +58,7 @@ const empty: Partial<Service> = {
   image_url: "",
   is_active: true,
   position: 0,
+  feed_category_id: null,
 };
 
 function AdminServices() {
@@ -93,6 +97,20 @@ function AdminServices() {
     },
   });
 
+  const { data: feedCategories = [] } = useQuery({
+    queryKey: ["admin-services-feed-cats", storeId],
+    enabled: !!storeId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("store_feed_categories")
+        .select("id, name")
+        .eq("store_id", storeId)
+        .order("position", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as FeedCategory[];
+    },
+  });
+
   const save = useMutation({
     mutationFn: async (s: Partial<Service>) => {
       const payload = {
@@ -104,6 +122,7 @@ function AdminServices() {
         image_url: s.image_url || null,
         is_active: s.is_active ?? true,
         position: Number(s.position) || services.length,
+        feed_category_id: s.feed_category_id || null,
       };
       if (s.id) {
         const { error } = await supabase.from("services").update(payload).eq("id", s.id);
@@ -412,6 +431,40 @@ function AdminServices() {
                     }
                   />
                 </div>
+              </div>
+              <div>
+                <Label>Categoria do feed</Label>
+                <Select
+                  value={editing.feed_category_id ?? "none"}
+                  onValueChange={(v) =>
+                    setEditing({
+                      ...editing,
+                      feed_category_id: v === "none" ? null : v,
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        feedCategories.length === 0
+                          ? "Nenhuma categoria do feed"
+                          : "Sem categoria"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem categoria</SelectItem>
+                    {feedCategories.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Vincule o serviço a um álbum do feed para que apareça quando o
+                  cliente clicar em "Ver serviço completo".
+                </p>
               </div>
               <div className="flex items-center gap-3 pt-1">
                 <Switch

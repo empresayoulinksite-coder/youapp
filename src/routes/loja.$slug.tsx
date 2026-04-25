@@ -12,7 +12,7 @@ import { normalizePaymentList, paymentLabelsFromList } from "@/lib/payment-metho
 import { PizzaBuilderDialog, type PizzaConfigPayload } from "@/components/PizzaBuilderDialog";
 import { StoreReelsSection } from "@/components/StoreReelsSection";
 import { StoreFeedSection } from "@/components/StoreFeedSection";
-import { StoreFeedAlbumsDialog } from "@/components/StoreFeedAlbumsDialog";
+import { StoreFeedServicesDialog } from "@/components/StoreFeedServicesDialog";
 
 interface Store {
   id: string;
@@ -409,13 +409,31 @@ function StorePage() {
             />
           )}
         </div>
-        <StoreFeedAlbumsDialog
+        <StoreFeedServicesDialog
           open={albumsOpen}
           onOpenChange={setAlbumsOpen}
           storeId={store.id}
-          storeName={store.name}
-          storeWhatsapp={store.whatsapp}
-          initialCategoryId={albumsInitialCategory}
+          categoryId={albumsInitialCategory}
+          isAuthenticated={!!user}
+          onPickService={(serviceId) => {
+            setAlbumsOpen(false);
+            if (!user) {
+              navigate({ to: "/auth" });
+              return;
+            }
+            if (!open) {
+              toast.error(
+                store.is_paused
+                  ? "Loja fechada pelo lojista."
+                  : nextOpen
+                    ? `Fechada agora. ${nextOpen}.`
+                    : "Loja fechada agora.",
+              );
+              return;
+            }
+            setBookingInitialId(serviceId);
+            setBookingOpen(true);
+          }}
         />
         {tab === "menu" && isService && (
           <div id="services-list" className="space-y-3">
