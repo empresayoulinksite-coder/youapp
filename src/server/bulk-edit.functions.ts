@@ -6,7 +6,8 @@ export type BulkAction =
   | "activate" // disponibilizar
   | "deactivate" // pausar/indisponibilizar
   | "delete" // excluir produto
-  | "adjust_price"; // ajuste em massa por % ou valor
+  | "adjust_price" // ajuste em massa por % ou valor
+  | "set_price"; // definir preço fixo (ex: "todos a R$ 29,90")
 
 export interface ParsedEdit {
   product_name: string;
