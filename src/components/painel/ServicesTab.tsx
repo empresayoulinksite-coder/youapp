@@ -92,11 +92,9 @@ export function ServicesTab({ storeId }: { storeId: string }) {
   const handleGalleryUpload = async (files: FileList) => {
     setUploadingGallery(true);
     try {
-      const urls: string[] = [];
-      for (const f of Array.from(files)) {
-        const url = await uploadImage("menu-images", f);
-        urls.push(url);
-      }
+      const urls = await Promise.all(
+        Array.from(files).map((f) => uploadImage("menu-images", f)),
+      );
       setEditing((prev) =>
         prev ? { ...prev, gallery_urls: [...prev.gallery_urls, ...urls] } : prev,
       );
