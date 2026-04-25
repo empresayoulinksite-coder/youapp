@@ -149,8 +149,9 @@ export function BulkEditAIDialog({ open, onOpenChange, storeId }: Props) {
         {!preview ? (
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Escreva os produtos que quer alterar, com nome, novo preço e/ou nova descrição.
-              A IA vai localizar cada produto na loja e mostrar um preview antes de aplicar.
+              Descreva o que quer fazer: alterar nome/preço/descrição, ativar ou desativar produtos,
+              excluir do cardápio ou aplicar ajuste em massa (ex: "aumente todos os preços em 10%").
+              A IA mostra um preview antes de aplicar.
             </p>
             <div className="space-y-1.5">
               <Label htmlFor="bulk-edit-category" className="text-sm">
