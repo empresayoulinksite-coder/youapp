@@ -1055,20 +1055,37 @@ function AdminProducts() {
                   }
                 />
               </div>
-              <div>
-                <Label>Preço base (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={editing.price ?? ""}
-                  onChange={(e) =>
-                    setEditing({ ...editing, price: Number(e.target.value) })
-                  }
-                />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Usado quando não há variações
-                </p>
-              </div>
+              {(() => {
+                const cat = categories.find((c) => c.id === editing.category_id);
+                const isPizza = !!cat?.is_pizza && pizzaSizes.length > 0;
+                const autoPrice = isPizza
+                  ? Math.max(
+                      0,
+                      ...pizzaSizes
+                        .map((s) => Number(editingPizzaPrices[s.id]))
+                        .filter((n) => !isNaN(n) && n > 0),
+                    )
+                  : null;
+                return (
+                  <div>
+                    <Label>Preço base (R$)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      disabled={isPizza}
+                      value={isPizza ? (autoPrice || 0) : (editing.price ?? "")}
+                      onChange={(e) =>
+                        setEditing({ ...editing, price: Number(e.target.value) })
+                      }
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {isPizza
+                        ? "Definido automaticamente pelo maior tamanho (Grande)"
+                        : "Usado quando não há variações"}
+                    </p>
+                  </div>
+                );
+              })()}
               <div>
                 <Label>Preço original (riscado)</Label>
                 <Input
