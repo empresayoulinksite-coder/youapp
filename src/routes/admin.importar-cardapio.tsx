@@ -50,13 +50,17 @@ function ImportMenuPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("stores")
-        .select("id,name")
+        .select("id,name,is_pizzeria,category")
         .eq("store_type", storeType)
         .order("name");
       if (error) throw error;
       return data;
     },
   });
+
+  const currentStore = stores.find((s) => s.id === storeId);
+  const isPizzeria = !!currentStore && (currentStore.is_pizzeria === true || currentStore.category === "Pizza");
+  const defaultEmoji = isPizzeria ? "🍕" : "🍽️";
 
   const totalItems = useMemo(
     () => categories.reduce((acc, c) => acc + c.items.length, 0),
