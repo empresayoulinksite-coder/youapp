@@ -623,7 +623,7 @@ function StorePage() {
               const catItems = items.filter((i) => i.category_id === cat.id);
               if (!catItems.length) return null;
               return (
-                <section key={cat.id}>
+                <section key={cat.id} data-category-id={cat.id} className="scroll-mt-[150px]">
                   <h3 className="font-bold text-base mb-3">{cat.name}</h3>
                   <div className="space-y-2">
                     {catItems.map((item) => {
