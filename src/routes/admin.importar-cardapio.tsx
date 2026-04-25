@@ -109,6 +109,24 @@ function ImportMenuPage() {
   };
   const updateCategoryName = (ci: number, name: string) =>
     setCategories((prev) => prev.map((c, i) => (i !== ci ? c : { ...c, name })));
+  const appendItemsToCategory = (ci: number, items: ParsedItem[]) => {
+    const cleaned = items
+      .filter((i) => i?.name?.trim())
+      .map((i) => ({
+        name: i.name.trim(),
+        description: i.description?.trim() || null,
+        price: Number(i.price) || 0,
+        original_price: i.original_price ? Number(i.original_price) : null,
+      }));
+    if (cleaned.length === 0) {
+      toast.error("Nenhum item novo encontrado");
+      return;
+    }
+    setCategories((prev) =>
+      prev.map((c, i) => (i !== ci ? c : { ...c, items: [...c.items, ...cleaned] })),
+    );
+    toast.success(`${cleaned.length} itens adicionados a "${categories[ci]?.name}"`);
+  };
 
   const saveAll = async () => {
     if (!storeId) {
