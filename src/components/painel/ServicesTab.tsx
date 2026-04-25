@@ -211,6 +211,7 @@ export function ServicesTab({ storeId }: { storeId: string }) {
                       promoPrice: "",
                       duration_minutes: String(s.duration_minutes),
                       is_active: s.is_active,
+                      feed_category_id: s.feed_category_id,
                     })
                   }
                 >
