@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, X, CalendarClock, Clock } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, X, CalendarClock, Clock, MessageCircle } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { optimizedImageUrl } from "@/lib/image-url";
 
 type ServiceLike = {
   id: string;
