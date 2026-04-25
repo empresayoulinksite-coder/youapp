@@ -164,7 +164,7 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
     for (const e of edits) {
       let bestId = "";
       let bestScore = 0;
-      let bestItem: typeof items![number] | null = null;
+      let bestItem: { id: string; name: string; price: number; description: string | null } | null = null;
       for (const it of items ?? []) {
         const s = similarity(it.name, e.product_name);
         if (s > bestScore) {
@@ -207,7 +207,7 @@ export const applyBulkEdit = createServerFn({ method: "POST" })
 
     let applied = 0;
     for (const c of data.changes) {
-      const update: Record<string, unknown> = {};
+      const update: { price?: number; description?: string; name?: string } = {};
       if (c.new_price != null) update.price = c.new_price;
       if (c.new_description != null) update.description = c.new_description;
       if (c.new_name != null) update.name = c.new_name;
