@@ -199,15 +199,15 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
   });
 
 export const applyBulkEdit = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: { changes: PreviewChange[] }) => {
+  .inputValidator((input: { changes: PreviewChange[]; accessToken: string }) => {
     if (!Array.isArray(input?.changes)) throw new Error("changes inválido");
     if (input.changes.length === 0) throw new Error("Nenhuma alteração para aplicar");
     if (input.changes.length > 500) throw new Error("Muitas alterações de uma vez (máx 500)");
+    if (!input?.accessToken) throw new Error("Não autenticado");
     return input;
   })
-  .handler(async ({ data, context }) => {
-    await ensureAdmin(context.supabase, context.userId);
+  .handler(async ({ data }) => {
+    await ensureAdminFromToken(data.accessToken);
 
     let applied = 0;
     for (const c of data.changes) {
