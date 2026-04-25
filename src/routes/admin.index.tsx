@@ -240,6 +240,18 @@ function AdminStores() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const toggleHidden = useMutation({
+    mutationFn: async ({ id, is_hidden }: { id: string; is_hidden: boolean }) => {
+      const { error } = await supabase.from("stores").update({ is_hidden }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      toast.success(vars.is_hidden ? "Loja oculta do app" : "Loja visível no app");
+      qc.invalidateQueries({ queryKey: ["admin-stores"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const handleFile = async (file: File) => {
     setUploading(true);
     try {
