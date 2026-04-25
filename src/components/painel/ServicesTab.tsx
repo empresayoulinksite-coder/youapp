@@ -73,6 +73,40 @@ function brl(n: number) {
 export function ServicesTab({ storeId }: { storeId: string }) {
   const qc = useQueryClient();
   const [editing, setEditing] = useState<Draft | null>(null);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+
+  const handleCoverUpload = async (file: File) => {
+    setEditing((prev) => prev);
+    setUploadingCover(true);
+    try {
+      const url = await uploadImage("menu-images", file);
+      setEditing((prev) => (prev ? { ...prev, image_url: url } : prev));
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
+  const handleGalleryUpload = async (files: FileList) => {
+    setUploadingGallery(true);
+    try {
+      const urls: string[] = [];
+      for (const f of Array.from(files)) {
+        const url = await uploadImage("menu-images", f);
+        urls.push(url);
+      }
+      setEditing((prev) =>
+        prev ? { ...prev, gallery_urls: [...prev.gallery_urls, ...urls] } : prev,
+      );
+      toast.success(`${urls.length} foto(s) adicionada(s)`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setUploadingGallery(false);
+    }
+  };
 
   const { data: services = [], isLoading } = useQuery({
     queryKey: ["painel", "services", storeId],
