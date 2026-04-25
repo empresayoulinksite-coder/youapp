@@ -97,7 +97,7 @@ export const Route = createFileRoute("/loja/$slug")({
 
     const [categoriesRes, itemsRes, couponsRes, reviewsRes, hoursRes, servicesRes] = await Promise.all([
       supabase.from("menu_categories").select("*").eq("store_id", store.id).order("position"),
-      supabase.from("menu_items").select("*").eq("store_id", store.id).order("position"),
+      supabase.from("menu_items").select("*").eq("store_id", store.id).eq("is_available", true).order("position"),
       supabase.from("store_coupons").select("*").eq("store_id", store.id),
       supabase.from("store_reviews").select("*").eq("store_id", store.id).order("created_at", { ascending: false }),
       supabase.from("store_hours").select("*").eq("store_id", store.id),
