@@ -431,6 +431,7 @@ function AdminProducts() {
       toast.success("Produto salvo");
       qc.invalidateQueries({ queryKey: ["admin-items", storeId] });
       qc.invalidateQueries({ queryKey: ["admin-variations"] });
+      qc.invalidateQueries({ queryKey: ["admin-size-prices"] });
       qc.invalidateQueries({ queryKey: ["pizza-size-prices"] });
       setOpen(false);
       setEditing(null);
@@ -557,6 +558,7 @@ function AdminProducts() {
       qc.invalidateQueries({ queryKey: ["admin-cats", storeId] });
       qc.invalidateQueries({ queryKey: ["admin-items", storeId] });
       qc.invalidateQueries({ queryKey: ["admin-variations"] });
+      qc.invalidateQueries({ queryKey: ["admin-size-prices"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -618,6 +620,7 @@ function AdminProducts() {
       toast.success("Produto duplicado");
       qc.invalidateQueries({ queryKey: ["admin-items", storeId] });
       qc.invalidateQueries({ queryKey: ["admin-variations"] });
+      qc.invalidateQueries({ queryKey: ["admin-size-prices"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
