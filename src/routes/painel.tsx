@@ -46,7 +46,7 @@ function PainelPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("store_owners")
-        .select("stores(id, name, slot_minutes, whatsapp, is_paused, pickup_enabled, store_type, feed_enabled)")
+        .select("stores(id, name, slot_minutes, whatsapp, is_paused, pickup_enabled, store_type, feed_enabled, booking_mode)")
         .eq("user_id", user!.id);
       if (error) throw error;
       return ((data ?? [])
