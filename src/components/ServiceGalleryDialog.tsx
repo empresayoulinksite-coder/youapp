@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, X, CalendarClock, Clock } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, X, CalendarClock, Clock, MessageCircle } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { optimizedImageUrl } from "@/lib/image-url";
 
 type ServiceLike = {
   id: string;
@@ -22,12 +23,14 @@ export function ServiceGalleryDialog({
   service,
   isAuthenticated,
   onBook,
+  bookingMode = "booking",
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   service: ServiceLike | null;
   isAuthenticated: boolean;
   onBook: (serviceId: string) => void;
+  bookingMode?: "booking" | "quote";
 }) {
   const [lightbox, setLightbox] = useState<number | null>(null);
 
@@ -93,9 +96,11 @@ export function ServiceGalleryDialog({
                   className="block w-full overflow-hidden rounded-xl bg-muted"
                 >
                   <img
-                    src={url}
+                    src={optimizedImageUrl(url, { width: 800, quality: 75 })}
                     alt={`${service.name} ${i + 1}`}
-                    loading="lazy"
+                    loading={i === 0 ? "eager" : "lazy"}
+                    decoding="async"
+                    fetchPriority={i === 0 ? "high" : "auto"}
                     className="w-full h-auto object-cover"
                   />
                 </button>
@@ -107,8 +112,17 @@ export function ServiceGalleryDialog({
         {/* CTA */}
         <div className="p-3 border-t shrink-0 bg-background">
           <Button onClick={() => onBook(service.id)} className="w-full" size="lg">
-            <CalendarClock className="h-4 w-4 mr-2" />
-            {isAuthenticated ? "Agendar serviço" : "Entrar para agendar"}
+            {bookingMode === "quote" ? (
+              <>
+                <MessageCircle className="h-4 w-4 mr-2" />
+                {isAuthenticated ? "Fazer orçamento" : "Entrar para fazer orçamento"}
+              </>
+            ) : (
+              <>
+                <CalendarClock className="h-4 w-4 mr-2" />
+                {isAuthenticated ? "Agendar serviço" : "Entrar para agendar"}
+              </>
+            )}
           </Button>
         </div>
 
@@ -165,7 +179,7 @@ function Lightbox({
       </span>
 
       <img
-        src={images[index]}
+        src={optimizedImageUrl(images[index], { width: 1600, quality: 85 })}
         alt=""
         className="max-h-full max-w-full object-contain select-none"
         draggable={false}

@@ -13,6 +13,7 @@ import { PizzaBuilderDialog, type PizzaConfigPayload } from "@/components/PizzaB
 import { StoreReelsSection } from "@/components/StoreReelsSection";
 import { StoreFeedSection } from "@/components/StoreFeedSection";
 import { StoreFeedServicesDialog } from "@/components/StoreFeedServicesDialog";
+import { QuoteReviewDialog } from "@/components/QuoteReviewDialog";
 
 interface Store {
   id: string;
@@ -43,6 +44,7 @@ interface Store {
   show_route: boolean;
   route_url: string | null;
   feed_enabled?: boolean;
+  booking_mode?: "booking" | "quote";
 }
 
 interface MenuCategory {
@@ -116,6 +118,8 @@ export const Route = createFileRoute("/loja/$slug")({
         price: Number(s.price),
         duration_minutes: Number(s.duration_minutes),
         image_url: s.image_url as string | null,
+        show_price: s.show_price ?? true,
+        show_duration: s.show_duration ?? true,
       })),
     };
   },
@@ -171,6 +175,7 @@ function StorePage() {
   const [pizzaBuilderItem, setPizzaBuilderItem] = useState<MenuItem | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingInitialId, setBookingInitialId] = useState<string | null>(null);
+  const [quoteService, setQuoteService] = useState<typeof services[number] | null>(null);
   const [albumsOpen, setAlbumsOpen] = useState(false);
   const [albumsInitialCategory, setAlbumsInitialCategory] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
@@ -415,10 +420,17 @@ function StorePage() {
           storeId={store.id}
           categoryId={albumsInitialCategory}
           isAuthenticated={!!user}
+          bookingMode={store.booking_mode === "quote" ? "quote" : "booking"}
           onPickService={(serviceId) => {
             setAlbumsOpen(false);
             if (!user) {
               navigate({ to: "/auth" });
+              return;
+            }
+            const svc = services.find((x) => x.id === serviceId);
+            if (store.booking_mode === "quote") {
+              if (!svc) return;
+              setQuoteService(svc);
               return;
             }
             if (!open) {
@@ -446,6 +458,10 @@ function StorePage() {
                 const handleBook = () => {
                   if (!user) {
                     navigate({ to: "/auth" });
+                    return;
+                  }
+                  if (store.booking_mode === "quote") {
+                    setQuoteService(s);
                     return;
                   }
                   if (!open) {
@@ -507,7 +523,15 @@ function StorePage() {
                           className="text-xs font-bold bg-brand text-brand-foreground rounded-full px-3 py-1.5 inline-flex items-center gap-1"
                           aria-hidden
                         >
-                          {user ? (
+                          {store.booking_mode === "quote" ? (
+                            user ? (
+                              <>
+                                <MessageSquare className="h-3.5 w-3.5" /> Fazer orçamento
+                              </>
+                            ) : (
+                              "Entrar para orçar"
+                            )
+                          ) : user ? (
                             <>
                               <CalendarClock className="h-3.5 w-3.5" /> Agendar
                             </>
@@ -1019,6 +1043,15 @@ function StorePage() {
         services={services}
         initialServiceId={bookingInitialId}
         onCreated={() => router.invalidate()}
+      />
+
+      <QuoteReviewDialog
+        open={!!quoteService}
+        onOpenChange={(o) => !o && setQuoteService(null)}
+        service={quoteService}
+        storeName={store.name}
+        storeWhatsapp={store.whatsapp}
+        customerName={(user?.user_metadata?.display_name as string) || null}
       />
     </div>
   );

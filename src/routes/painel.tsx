@@ -46,7 +46,7 @@ function PainelPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("store_owners")
-        .select("stores(id, name, slot_minutes, whatsapp, is_paused, pickup_enabled, store_type, feed_enabled)")
+        .select("stores(id, name, slot_minutes, whatsapp, is_paused, pickup_enabled, store_type, feed_enabled, booking_mode)")
         .eq("user_id", user!.id);
       if (error) throw error;
       return ((data ?? [])
@@ -119,6 +119,26 @@ function PainelPage() {
     },
     onSuccess: (_d, enabled) => {
       toast.success(enabled ? "Retirada no local ativada" : "Retirada no local desativada");
+      qc.invalidateQueries({ queryKey: ["painel", "stores"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const updateBookingMode = useMutation({
+    mutationFn: async (mode: "booking" | "quote") => {
+      if (!storeId) return;
+      const { error } = await supabase
+        .from("stores")
+        .update({ booking_mode: mode })
+        .eq("id", storeId);
+      if (error) throw error;
+    },
+    onSuccess: (_d, mode) => {
+      toast.success(
+        mode === "quote"
+          ? "Modo orçamento ativado — clientes vão direto ao WhatsApp"
+          : "Modo agendamento ativado — clientes escolhem data e hora",
+      );
       qc.invalidateQueries({ queryKey: ["painel", "stores"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -241,6 +261,54 @@ function PainelPage() {
             >
               {currentStore.pickup_enabled ? "Desativar" : "Ativar"}
             </Button>
+          </div>
+        )}
+
+        {currentStore?.store_type === "service" && (
+          <div className="rounded-lg border bg-card p-4 space-y-3">
+            <div>
+              <p className="text-sm font-semibold">Como o cliente solicita um serviço?</p>
+              <p className="text-xs text-muted-foreground">
+                Escolha entre agendamento direto no app ou pedido de orçamento via WhatsApp.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => updateBookingMode.mutate("booking")}
+                disabled={updateBookingMode.isPending}
+                className={`text-left rounded-lg border p-3 transition-colors ${
+                  (currentStore.booking_mode ?? "booking") === "booking"
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : "hover:bg-muted/50"
+                }`}
+              >
+                <p className="text-sm font-semibold">📅 Agendamento direto</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Cliente escolhe data e hora no app. A reserva fica na sua agenda.
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => updateBookingMode.mutate("quote")}
+                disabled={updateBookingMode.isPending || !currentStore.whatsapp}
+                className={`text-left rounded-lg border p-3 transition-colors ${
+                  currentStore.booking_mode === "quote"
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : "hover:bg-muted/50"
+                } ${!currentStore.whatsapp ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                <p className="text-sm font-semibold">💬 Orçamento por WhatsApp</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Cliente revisa o pedido e envia direto para seu WhatsApp.
+                </p>
+                {!currentStore.whatsapp && (
+                  <p className="text-[11px] text-destructive mt-1">
+                    Cadastre um WhatsApp abaixo para ativar.
+                  </p>
+                )}
+              </button>
+            </div>
           </div>
         )}
 

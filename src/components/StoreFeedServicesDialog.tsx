@@ -4,6 +4,7 @@ import { ArrowLeft, Clock, Images } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ServiceGalleryDialog } from "@/components/ServiceGalleryDialog";
+import { optimizedImageUrl } from "@/lib/image-url";
 
 type Service = {
   id: string;
@@ -27,6 +28,7 @@ export function StoreFeedServicesDialog({
   categoryId,
   isAuthenticated,
   onPickService,
+  bookingMode = "booking",
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -34,6 +36,7 @@ export function StoreFeedServicesDialog({
   categoryId: string | null;
   isAuthenticated: boolean;
   onPickService: (serviceId: string) => void;
+  bookingMode?: "booking" | "quote";
 }) {
   const [activeService, setActiveService] = useState<Service | null>(null);
 
@@ -114,9 +117,10 @@ export function StoreFeedServicesDialog({
                   <div className="relative h-20 w-20 rounded-xl overflow-hidden bg-brand-soft flex items-center justify-center text-3xl shrink-0">
                     {s.image_url ? (
                       <img
-                        src={s.image_url}
+                        src={optimizedImageUrl(s.image_url, { width: 200, quality: 70 })}
                         alt={s.name}
                         loading="lazy"
+                        decoding="async"
                         className="h-full w-full object-cover"
                       />
                     ) : (
@@ -167,6 +171,7 @@ export function StoreFeedServicesDialog({
         onOpenChange={(o) => !o && setActiveService(null)}
         service={activeService}
         isAuthenticated={isAuthenticated}
+        bookingMode={bookingMode}
         onBook={(serviceId) => {
           setActiveService(null);
           onPickService(serviceId);
