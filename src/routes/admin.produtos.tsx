@@ -341,7 +341,7 @@ function AdminProducts() {
         price: isPizza ? pizzaAutoPrice : Number(m.price) || 0,
         original_price: m.original_price ? Number(m.original_price) : null,
         promo: m.promo || null,
-        emoji: m.emoji || "🍽️",
+        emoji: m.emoji || (isPizzeria ? "🍕" : "🍽️"),
         image_url: m.image_url || null,
         position: Number(m.position) || 0,
         is_available: m.is_available ?? true,
