@@ -523,7 +523,15 @@ function StorePage() {
                           className="text-xs font-bold bg-brand text-brand-foreground rounded-full px-3 py-1.5 inline-flex items-center gap-1"
                           aria-hidden
                         >
-                          {user ? (
+                          {store.booking_mode === "quote" ? (
+                            user ? (
+                              <>
+                                <MessageSquare className="h-3.5 w-3.5" /> Fazer orçamento
+                              </>
+                            ) : (
+                              "Entrar para orçar"
+                            )
+                          ) : user ? (
                             <>
                               <CalendarClock className="h-3.5 w-3.5" /> Agendar
                             </>
