@@ -794,6 +794,7 @@ export type Database = {
           description: string | null
           duration_minutes: number
           feed_category_id: string | null
+          gallery_urls: string[]
           id: string
           image_url: string | null
           is_active: boolean
@@ -808,6 +809,7 @@ export type Database = {
           description?: string | null
           duration_minutes?: number
           feed_category_id?: string | null
+          gallery_urls?: string[]
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -822,6 +824,7 @@ export type Database = {
           description?: string | null
           duration_minutes?: number
           feed_category_id?: string | null
+          gallery_urls?: string[]
           id?: string
           image_url?: string | null
           is_active?: boolean
