@@ -14,6 +14,8 @@ type Service = {
   image_url: string | null;
   feed_category_id: string | null;
   gallery_urls: string[];
+  show_price: boolean;
+  show_duration: boolean;
 };
 
 type FeedCategory = { id: string; name: string };
@@ -42,7 +44,7 @@ export function StoreFeedServicesDialog({
       let q = supabase
         .from("services")
         .select(
-          "id, name, description, price, duration_minutes, image_url, feed_category_id, gallery_urls",
+          "id, name, description, price, duration_minutes, image_url, feed_category_id, gallery_urls, show_price, show_duration",
         )
         .eq("store_id", storeId)
         .eq("is_active", true)
@@ -133,14 +135,20 @@ export function StoreFeedServicesDialog({
                         {s.description}
                       </p>
                     )}
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="font-bold text-sm">
-                        R$ {s.price.toFixed(2).replace(".", ",")}
-                      </span>
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="h-3 w-3" /> {s.duration_minutes} min
-                      </span>
-                    </div>
+                    {(s.show_price || s.show_duration) && (
+                      <div className="flex items-center gap-2 mt-2">
+                        {s.show_price && (
+                          <span className="font-bold text-sm">
+                            R$ {s.price.toFixed(2).replace(".", ",")}
+                          </span>
+                        )}
+                        {s.show_duration && (
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Clock className="h-3 w-3" /> {s.duration_minutes} min
+                          </span>
+                        )}
+                      </div>
+                    )}
                     <div className="mt-2">
                       <span className="text-xs font-bold bg-brand text-brand-foreground rounded-full px-3 py-1.5 inline-flex items-center gap-1">
                         <Images className="h-3.5 w-3.5" /> Ver fotos

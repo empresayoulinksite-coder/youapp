@@ -801,6 +801,8 @@ export type Database = {
           name: string
           position: number
           price: number
+          show_duration: boolean
+          show_price: boolean
           store_id: string
           updated_at: string
         }
@@ -816,6 +818,8 @@ export type Database = {
           name: string
           position?: number
           price?: number
+          show_duration?: boolean
+          show_price?: boolean
           store_id: string
           updated_at?: string
         }
@@ -831,6 +835,8 @@ export type Database = {
           name?: string
           position?: number
           price?: number
+          show_duration?: boolean
+          show_price?: boolean
           store_id?: string
           updated_at?: string
         }

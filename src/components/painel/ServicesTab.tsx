@@ -37,6 +37,8 @@ type Service = {
   image_url: string | null;
   feed_category_id: string | null;
   gallery_urls: string[];
+  show_price: boolean;
+  show_duration: boolean;
 };
 
 type FeedCategory = { id: string; name: string };
@@ -52,6 +54,8 @@ type Draft = {
   feed_category_id: string | null;
   image_url: string | null;
   gallery_urls: string[];
+  show_price: boolean;
+  show_duration: boolean;
 };
 
 const emptyDraft: Draft = {
@@ -64,6 +68,8 @@ const emptyDraft: Draft = {
   feed_category_id: null,
   image_url: null,
   gallery_urls: [],
+  show_price: true,
+  show_duration: true,
 };
 
 function brl(n: number) {
@@ -150,6 +156,8 @@ export function ServicesTab({ storeId }: { storeId: string }) {
         feed_category_id: d.feed_category_id || null,
         image_url: d.image_url || null,
         gallery_urls: d.gallery_urls,
+        show_price: d.show_price,
+        show_duration: d.show_duration,
       };
       if (!payload.name) throw new Error("Nome obrigatório");
 
@@ -226,10 +234,19 @@ export function ServicesTab({ storeId }: { storeId: string }) {
                 {s.description && (
                   <p className="text-xs text-muted-foreground">{s.description}</p>
                 )}
-                <p className="mt-1 text-sm">
-                  <span className="font-semibold">{brl(Number(s.price))}</span>
-                  <span className="text-muted-foreground"> · {s.duration_minutes} min</span>
-                </p>
+                {(s.show_price || s.show_duration) && (
+                  <p className="mt-1 text-sm">
+                    {s.show_price && (
+                      <span className="font-semibold">{brl(Number(s.price))}</span>
+                    )}
+                    {s.show_price && s.show_duration && (
+                      <span className="text-muted-foreground"> · </span>
+                    )}
+                    {s.show_duration && (
+                      <span className="text-muted-foreground">{s.duration_minutes} min</span>
+                    )}
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1.5">
@@ -254,6 +271,8 @@ export function ServicesTab({ storeId }: { storeId: string }) {
                       feed_category_id: s.feed_category_id,
                       image_url: s.image_url,
                       gallery_urls: s.gallery_urls ?? [],
+                      show_price: s.show_price ?? true,
+                      show_duration: s.show_duration ?? true,
                     })
                   }
                 >
@@ -342,6 +361,7 @@ export function ServicesTab({ storeId }: { storeId: string }) {
                     value={editing.price}
                     onChange={(e) => setEditing({ ...editing, price: e.target.value })}
                     placeholder="0,00"
+                    disabled={!editing.show_price}
                   />
                 </div>
                 <div>
@@ -354,6 +374,33 @@ export function ServicesTab({ storeId }: { storeId: string }) {
                     onChange={(e) =>
                       setEditing({ ...editing, duration_minutes: e.target.value })
                     }
+                    disabled={!editing.show_duration}
+                  />
+                </div>
+              </div>
+              <div className="rounded-md border p-3 space-y-2 bg-muted/30">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">Mostrar preço</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Desligue para ocultar o valor para os clientes.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={editing.show_price}
+                    onCheckedChange={(v) => setEditing({ ...editing, show_price: v })}
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">Mostrar duração</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Desligue para ocultar o tempo do serviço.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={editing.show_duration}
+                    onCheckedChange={(v) => setEditing({ ...editing, show_duration: v })}
                   />
                 </div>
               </div>
