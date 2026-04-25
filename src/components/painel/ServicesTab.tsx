@@ -36,6 +36,7 @@ type Service = {
   position: number;
   image_url: string | null;
   feed_category_id: string | null;
+  gallery_urls: string[];
 };
 
 type FeedCategory = { id: string; name: string };
@@ -49,6 +50,8 @@ type Draft = {
   duration_minutes: string;
   is_active: boolean;
   feed_category_id: string | null;
+  image_url: string | null;
+  gallery_urls: string[];
 };
 
 const emptyDraft: Draft = {
@@ -59,6 +62,8 @@ const emptyDraft: Draft = {
   duration_minutes: "30",
   is_active: true,
   feed_category_id: null,
+  image_url: null,
+  gallery_urls: [],
 };
 
 function brl(n: number) {
