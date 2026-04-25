@@ -180,7 +180,7 @@ function ImportMenuPage() {
             description: i.description || null,
             price: i.price,
             original_price: i.original_price,
-            emoji: "🍽️",
+            emoji: defaultEmoji,
             position: pos++,
             is_available: true,
           }));
