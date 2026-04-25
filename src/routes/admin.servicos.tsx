@@ -125,6 +125,7 @@ function AdminServices() {
         is_active: s.is_active ?? true,
         position: Number(s.position) || services.length,
         feed_category_id: s.feed_category_id || null,
+        gallery_urls: s.gallery_urls ?? [],
       };
       if (s.id) {
         const { error } = await supabase.from("services").update(payload).eq("id", s.id);
