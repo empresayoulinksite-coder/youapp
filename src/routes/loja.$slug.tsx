@@ -192,42 +192,27 @@ function StorePage() {
   // Categorias visíveis (com itens) para o filtro sticky estilo iFood
   const visibleCategories = categories.filter((c) => items.some((i) => i.category_id === c.id));
 
-  // Scrollspy: marca a categoria ativa conforme rolagem
+  // Seleciona a primeira categoria por padrão (ou mantém a atual se ainda existir)
   useEffect(() => {
     if (tab !== "menu" || isService || visibleCategories.length === 0) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        if (visible[0]) {
-          const id = (visible[0].target as HTMLElement).dataset.categoryId;
-          if (id) setActiveCategoryId(id);
-        }
-      },
-      { rootMargin: "-160px 0px -60% 0px", threshold: 0 },
-    );
-    visibleCategories.forEach((c) => {
-      const el = document.querySelector(`[data-category-id="${c.id}"]`);
-      if (el) observer.observe(el);
+    setActiveCategoryId((prev) => {
+      if (prev && visibleCategories.some((c) => c.id === prev)) return prev;
+      return visibleCategories[0].id;
     });
-    return () => observer.disconnect();
   }, [tab, isService, visibleCategories.map((c) => c.id).join(",")]);
 
-  // Mantém o item ativo visível na barra horizontal
+  // Mantém a pílula ativa visível na barra horizontal
   useEffect(() => {
     if (!activeCategoryId) return;
     const btn = document.querySelector(`[data-cat-pill="${activeCategoryId}"]`) as HTMLElement | null;
     btn?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
   }, [activeCategoryId]);
 
-  const scrollToCategory = (id: string) => {
+  const selectCategory = (id: string) => {
     setActiveCategoryId(id);
     setMenuSheetOpen(false);
-    const el = document.querySelector(`[data-category-id="${id}"]`) as HTMLElement | null;
-    if (el) {
-      const top = el.getBoundingClientRect().top + window.scrollY - 150;
-      window.scrollTo({ top, behavior: "smooth" });
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -470,7 +455,7 @@ function StorePage() {
                     return (
                       <li key={c.id}>
                         <button
-                          onClick={() => scrollToCategory(c.id)}
+                          onClick={() => selectCategory(c.id)}
                           className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors ${
                             active ? "bg-brand-soft text-brand font-semibold" : "hover:bg-accent"
                           }`}
@@ -492,7 +477,7 @@ function StorePage() {
                     <button
                       key={c.id}
                       data-cat-pill={c.id}
-                      onClick={() => scrollToCategory(c.id)}
+                      onClick={() => selectCategory(c.id)}
                       className={`text-sm pb-1 -mb-1 border-b-2 transition-colors ${
                         active ? "border-brand text-brand font-bold" : "border-transparent text-muted-foreground"
                       }`}
@@ -683,6 +668,7 @@ function StorePage() {
             {categories.map((cat) => {
               const catItems = items.filter((i) => i.category_id === cat.id);
               if (!catItems.length) return null;
+              if (activeCategoryId && cat.id !== activeCategoryId) return null;
               return (
                 <section key={cat.id} data-category-id={cat.id} className="scroll-mt-[150px]">
                   <h3 className="font-bold text-base mb-3">{cat.name}</h3>
