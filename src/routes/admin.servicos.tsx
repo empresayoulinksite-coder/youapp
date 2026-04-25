@@ -41,6 +41,8 @@ type Service = {
   position: number;
   feed_category_id: string | null;
   gallery_urls: string[];
+  show_price: boolean;
+  show_duration: boolean;
 };
 
 type ServiceStore = {
@@ -61,6 +63,8 @@ const empty: Partial<Service> = {
   position: 0,
   feed_category_id: null,
   gallery_urls: [],
+  show_price: true,
+  show_duration: true,
 };
 
 function AdminServices() {
@@ -126,6 +130,8 @@ function AdminServices() {
         position: Number(s.position) || services.length,
         feed_category_id: s.feed_category_id || null,
         gallery_urls: s.gallery_urls ?? [],
+        show_price: s.show_price ?? true,
+        show_duration: s.show_duration ?? true,
       };
       if (s.id) {
         const { error } = await supabase.from("services").update(payload).eq("id", s.id);
@@ -437,6 +443,7 @@ function AdminServices() {
                     onChange={(e) =>
                       setEditing({ ...editing, price: Number(e.target.value) })
                     }
+                    disabled={editing.show_price === false}
                   />
                 </div>
                 <div>
@@ -452,6 +459,33 @@ function AdminServices() {
                         duration_minutes: Number(e.target.value),
                       })
                     }
+                    disabled={editing.show_duration === false}
+                  />
+                </div>
+              </div>
+              <div className="rounded-md border p-3 space-y-2 bg-muted/30">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">Mostrar preço</p>
+                    <p className="text-xs text-muted-foreground">
+                      Desligue para ocultar o valor para os clientes.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={editing.show_price ?? true}
+                    onCheckedChange={(v) => setEditing({ ...editing, show_price: v })}
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">Mostrar duração</p>
+                    <p className="text-xs text-muted-foreground">
+                      Desligue para ocultar o tempo do serviço.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={editing.show_duration ?? true}
+                    onCheckedChange={(v) => setEditing({ ...editing, show_duration: v })}
                   />
                 </div>
               </div>
