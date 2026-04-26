@@ -131,6 +131,18 @@ function GeneralCoupons() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const toggleActive = useMutation({
+    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
+      const { error } = await supabase.from("coupons").update({ is_active }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      toast.success(vars.is_active ? "Cupom visível" : "Cupom ocultado");
+      qc.invalidateQueries({ queryKey: ["admin-coupons"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
     <div className="mt-4">
       <div className="mb-3 flex justify-end">
@@ -140,12 +152,13 @@ function GeneralCoupons() {
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {coupons.map((c) => (
-          <div key={c.id} className="rounded-lg border bg-background p-3">
+          <div key={c.id} className={`rounded-lg border bg-background p-3 ${!c.is_active ? "opacity-60" : ""}`}>
             <div className="mb-2 flex items-center justify-between">
               <span className="rounded bg-primary/10 px-2 py-0.5 font-mono text-xs font-bold text-primary">{c.code}</span>
-              <span className={`text-xs ${c.is_active ? "text-green-600" : "text-muted-foreground"}`}>
-                {c.is_active ? "Ativo" : "Inativo"}
-              </span>
+              <div className="flex items-center gap-1.5" title={c.is_active ? "Visível" : "Oculto"}>
+                {c.is_active ? <Eye className="h-3.5 w-3.5 text-muted-foreground" /> : <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />}
+                <Switch checked={c.is_active} onCheckedChange={(v) => toggleActive.mutate({ id: c.id, is_active: v })} />
+              </div>
             </div>
             <h3 className="font-semibold">{c.title}</h3>
             <p className="text-xs text-muted-foreground">
