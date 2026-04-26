@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound, useRouter, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Star, Clock, Bike, MapPin, CreditCard, Tag, Plus, Minus, ShoppingBag, MessageSquare, X, CalendarClock, Navigation, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -11,11 +11,20 @@ import { isStoreOpen, nextOpeningLabel, groupByWeekday, formatTime, WEEKDAYS, ty
 import { BookingDialog, type ServiceLite } from "@/components/BookingDialog";
 import { StoreDistance } from "@/components/StoreDistance";
 import { normalizePaymentList, paymentLabelsFromList } from "@/lib/payment-methods";
-import { PizzaBuilderDialog, type PizzaConfigPayload } from "@/components/PizzaBuilderDialog";
+import type { PizzaConfigPayload } from "@/components/PizzaBuilderDialog";
 import { StoreReelsSection } from "@/components/StoreReelsSection";
 import { StoreFeedSection } from "@/components/StoreFeedSection";
-import { StoreFeedServicesDialog } from "@/components/StoreFeedServicesDialog";
-import { QuoteReviewDialog } from "@/components/QuoteReviewDialog";
+
+// Dialogs pesados — carregados sob demanda quando o usuário abre
+const PizzaBuilderDialog = lazy(() =>
+  import("@/components/PizzaBuilderDialog").then((m) => ({ default: m.PizzaBuilderDialog })),
+);
+const StoreFeedServicesDialog = lazy(() =>
+  import("@/components/StoreFeedServicesDialog").then((m) => ({ default: m.StoreFeedServicesDialog })),
+);
+const QuoteReviewDialog = lazy(() =>
+  import("@/components/QuoteReviewDialog").then((m) => ({ default: m.QuoteReviewDialog })),
+);
 
 interface Store {
   id: string;
