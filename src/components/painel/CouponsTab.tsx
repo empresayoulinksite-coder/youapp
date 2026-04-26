@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, Pencil, Ticket } from "lucide-react";
+import { Plus, Trash2, Pencil, Ticket, Eye, EyeOff } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ type Coupon = {
   description: string | null;
   discount_label: string;
   min_order: number;
+  is_active: boolean;
 };
 
 type Draft = {
@@ -105,6 +107,21 @@ export function CouponsTab({ storeId }: { storeId: string }) {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const toggleActive = useMutation({
+    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
+      const { error } = await supabase
+        .from("store_coupons")
+        .update({ is_active })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      toast.success(vars.is_active ? "Cupom visível para clientes" : "Cupom ocultado");
+      qc.invalidateQueries({ queryKey: ["painel", "coupons"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -126,10 +143,20 @@ export function CouponsTab({ storeId }: { storeId: string }) {
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2">
           {coupons.map((c) => (
-            <li key={c.id} className="rounded-lg border bg-card p-4">
+            <li
+              key={c.id}
+              className={`rounded-lg border bg-card p-4 ${!c.is_active ? "opacity-60" : ""}`}
+            >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="font-bold">{c.title}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-bold">{c.title}</p>
+                    {!c.is_active && (
+                      <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                        <EyeOff className="h-3 w-3" /> Oculto
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     Código:{" "}
                     <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] font-semibold">
@@ -152,32 +179,47 @@ export function CouponsTab({ storeId }: { storeId: string }) {
                     </p>
                   )}
                 </div>
-                <div className="flex gap-1">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() =>
-                      setEditing({
-                        id: c.id,
-                        code: c.code,
-                        title: c.title,
-                        description: c.description ?? "",
-                        discount_label: c.discount_label,
-                        min_order: String(c.min_order),
-                      })
-                    }
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      if (confirm(`Remover cupom "${c.code}"?`)) remove.mutate(c.id);
-                    }}
-                  >
-                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                  </Button>
+                <div className="flex flex-col items-end gap-2">
+                  <div className="flex items-center gap-1.5" title={c.is_active ? "Visível" : "Oculto"}>
+                    {c.is_active ? (
+                      <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+                    ) : (
+                      <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />
+                    )}
+                    <Switch
+                      checked={c.is_active}
+                      onCheckedChange={(v) =>
+                        toggleActive.mutate({ id: c.id, is_active: v })
+                      }
+                    />
+                  </div>
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() =>
+                        setEditing({
+                          id: c.id,
+                          code: c.code,
+                          title: c.title,
+                          description: c.description ?? "",
+                          discount_label: c.discount_label,
+                          min_order: String(c.min_order),
+                        })
+                      }
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        if (confirm(`Remover cupom "${c.code}"?`)) remove.mutate(c.id);
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </li>
