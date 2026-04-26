@@ -166,6 +166,28 @@ function Index() {
     [homeCategories],
   );
 
+  // IDs das lojas e-commerce — usado para buscar produtos da vitrine sob demanda
+  const ecomStoreIds = useMemo(
+    () => stores.filter((s) => ecomMatchSet.has(norm(s.category))).map((s) => s.id),
+    [stores, ecomMatchSet, norm],
+  );
+
+  // Vitrine: produtos das lojas e-commerce (lazy — só busca se houver alguma)
+  const { data: items = [] } = useQuery({
+    queryKey: ["home-vitrine-items", ecomStoreIds],
+    enabled: ecomStoreIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("menu_items")
+        .select("id, store_id, name, price, original_price, emoji, promo, image_url")
+        .in("store_id", ecomStoreIds)
+        .order("position", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as MenuItemRow[];
+    },
+    staleTime: 60_000,
+  });
+
   // Score de interesse por loja (favoritos + cart + bookings).
   const interestScores = useInterestScores(stores);
 
