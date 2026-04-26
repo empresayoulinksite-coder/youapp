@@ -83,20 +83,11 @@ export const Route = createFileRoute("/")({
       .order("name");
     if (error) throw error;
     const stores = (data ?? []) as StoreRow[];
-
-    let items: MenuItemRow[] = [];
-    if (stores.length > 0) {
-      const { data: itemsData, error: itemsErr } = await supabase
-        .from("menu_items")
-        .select("id, store_id, name, price, original_price, emoji, promo, image_url")
-        .in("store_id", stores.map((s) => s.id))
-        .order("position", { ascending: true });
-      if (itemsErr) throw itemsErr;
-      items = (itemsData ?? []) as MenuItemRow[];
-    }
-
-    return { stores, items };
+    return { stores };
   },
+  // Mantém o resultado do loader "fresco" por 60s ao navegar entre páginas
+  staleTime: 60_000,
+  gcTime: 5 * 60_000,
   errorComponent: ({ error }) => (
     <div className="min-h-screen flex items-center justify-center p-6 text-center text-sm text-muted-foreground">
       {error.message}
