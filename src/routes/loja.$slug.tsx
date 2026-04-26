@@ -543,39 +543,43 @@ function StorePage() {
             />
           )}
         </div>
-        <StoreFeedServicesDialog
-          open={albumsOpen}
-          onOpenChange={setAlbumsOpen}
-          storeId={store.id}
-          categoryId={albumsInitialCategory}
-          isAuthenticated={!!user}
-          bookingMode={store.booking_mode === "quote" ? "quote" : "booking"}
-          onPickService={(serviceId) => {
-            setAlbumsOpen(false);
-            if (!user) {
-              navigate({ to: "/auth" });
-              return;
-            }
-            const svc = services.find((x) => x.id === serviceId);
-            if (store.booking_mode === "quote") {
-              if (!svc) return;
-              setQuoteService(svc);
-              return;
-            }
-            if (!open) {
-              toast.error(
-                store.is_paused
-                  ? "Loja fechada pelo lojista."
-                  : nextOpen
-                    ? `Fechada agora. ${nextOpen}.`
-                    : "Loja fechada agora.",
-              );
-              return;
-            }
-            setBookingInitialId(serviceId);
-            setBookingOpen(true);
-          }}
-        />
+        {albumsOpen && (
+          <Suspense fallback={null}>
+            <StoreFeedServicesDialog
+              open={albumsOpen}
+              onOpenChange={setAlbumsOpen}
+              storeId={store.id}
+              categoryId={albumsInitialCategory}
+              isAuthenticated={!!user}
+              bookingMode={store.booking_mode === "quote" ? "quote" : "booking"}
+              onPickService={(serviceId) => {
+                setAlbumsOpen(false);
+                if (!user) {
+                  navigate({ to: "/auth" });
+                  return;
+                }
+                const svc = services.find((x) => x.id === serviceId);
+                if (store.booking_mode === "quote") {
+                  if (!svc) return;
+                  setQuoteService(svc);
+                  return;
+                }
+                if (!open) {
+                  toast.error(
+                    store.is_paused
+                      ? "Loja fechada pelo lojista."
+                      : nextOpen
+                        ? `Fechada agora. ${nextOpen}.`
+                        : "Loja fechada agora.",
+                  );
+                  return;
+                }
+                setBookingInitialId(serviceId);
+                setBookingOpen(true);
+              }}
+            />
+          </Suspense>
+        )}
         {tab === "menu" && isService && (
           <div id="services-list" className="space-y-3">
             {services.length === 0 ? (
