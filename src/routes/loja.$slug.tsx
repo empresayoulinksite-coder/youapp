@@ -155,12 +155,10 @@ export const Route = createFileRoute("/loja/$slug")({
 function StorePage() {
   const router = useRouter();
   const navigate = useNavigate();
-  const { store, categories, items, coupons, reviews, hours, services } = Route.useLoaderData() as {
+  const { store, categories, items, hours, services } = Route.useLoaderData() as {
     store: Store;
     categories: MenuCategory[];
     items: MenuItem[];
-    coupons: Coupon[];
-    reviews: Review[];
     hours: StoreHour[];
     services: ServiceLite[];
   };
