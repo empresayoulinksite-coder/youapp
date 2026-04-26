@@ -1144,32 +1144,34 @@ function StorePage() {
       )}
 
       {pizzaBuilderItem && (
-        <PizzaBuilderDialog
-          open={!!pizzaBuilderItem}
-          onClose={() => setPizzaBuilderItem(null)}
-          storeId={store.id}
-          baseItem={{
-            id: pizzaBuilderItem.id,
-            name: pizzaBuilderItem.name,
-            emoji: pizzaBuilderItem.emoji,
-            image_url: pizzaBuilderItem.image_url,
-            description: pizzaBuilderItem.description,
-          }}
-          flavorItems={items
-            .filter((i) => i.category_id === pizzaBuilderItem.category_id)
-            .map((i) => ({
-              id: i.id,
-              name: i.name,
-              emoji: i.emoji,
-              description: i.description,
-              basePrice: Number(i.price),
-            }))}
-          disabled={!open}
-          onConfirm={async (payloads) => {
-            await tryAddPizzas(store.id, payloads);
-            setPizzaBuilderItem(null);
-          }}
-        />
+        <Suspense fallback={null}>
+          <PizzaBuilderDialog
+            open={!!pizzaBuilderItem}
+            onClose={() => setPizzaBuilderItem(null)}
+            storeId={store.id}
+            baseItem={{
+              id: pizzaBuilderItem.id,
+              name: pizzaBuilderItem.name,
+              emoji: pizzaBuilderItem.emoji,
+              image_url: pizzaBuilderItem.image_url,
+              description: pizzaBuilderItem.description,
+            }}
+            flavorItems={items
+              .filter((i) => i.category_id === pizzaBuilderItem.category_id)
+              .map((i) => ({
+                id: i.id,
+                name: i.name,
+                emoji: i.emoji,
+                description: i.description,
+                basePrice: Number(i.price),
+              }))}
+            disabled={!open}
+            onConfirm={async (payloads) => {
+              await tryAddPizzas(store.id, payloads);
+              setPizzaBuilderItem(null);
+            }}
+          />
+        </Suspense>
       )}
 
       <BookingDialog
@@ -1185,14 +1187,18 @@ function StorePage() {
         onCreated={() => router.invalidate()}
       />
 
-      <QuoteReviewDialog
-        open={!!quoteService}
-        onOpenChange={(o) => !o && setQuoteService(null)}
-        service={quoteService}
-        storeName={store.name}
-        storeWhatsapp={store.whatsapp}
-        customerName={(user?.user_metadata?.display_name as string) || null}
-      />
+      {quoteService && (
+        <Suspense fallback={null}>
+          <QuoteReviewDialog
+            open={!!quoteService}
+            onOpenChange={(o) => !o && setQuoteService(null)}
+            service={quoteService}
+            storeName={store.name}
+            storeWhatsapp={store.whatsapp}
+            customerName={(user?.user_metadata?.display_name as string) || null}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }
