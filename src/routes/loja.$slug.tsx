@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound, useRouter, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Star, Clock, Bike, MapPin, CreditCard, Tag, Plus, Minus, ShoppingBag, MessageSquare, X, CalendarClock, Navigation, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { toast } from "sonner";
@@ -10,11 +11,20 @@ import { isStoreOpen, nextOpeningLabel, groupByWeekday, formatTime, WEEKDAYS, ty
 import { BookingDialog, type ServiceLite } from "@/components/BookingDialog";
 import { StoreDistance } from "@/components/StoreDistance";
 import { normalizePaymentList, paymentLabelsFromList } from "@/lib/payment-methods";
-import { PizzaBuilderDialog, type PizzaConfigPayload } from "@/components/PizzaBuilderDialog";
+import type { PizzaConfigPayload } from "@/components/PizzaBuilderDialog";
 import { StoreReelsSection } from "@/components/StoreReelsSection";
 import { StoreFeedSection } from "@/components/StoreFeedSection";
-import { StoreFeedServicesDialog } from "@/components/StoreFeedServicesDialog";
-import { QuoteReviewDialog } from "@/components/QuoteReviewDialog";
+
+// Dialogs pesados — carregados sob demanda quando o usuário abre
+const PizzaBuilderDialog = lazy(() =>
+  import("@/components/PizzaBuilderDialog").then((m) => ({ default: m.PizzaBuilderDialog })),
+);
+const StoreFeedServicesDialog = lazy(() =>
+  import("@/components/StoreFeedServicesDialog").then((m) => ({ default: m.StoreFeedServicesDialog })),
+);
+const QuoteReviewDialog = lazy(() =>
+  import("@/components/QuoteReviewDialog").then((m) => ({ default: m.QuoteReviewDialog })),
+);
 
 interface Store {
   id: string;
@@ -96,11 +106,10 @@ export const Route = createFileRoute("/loja/$slug")({
     if (error) throw error;
     if (!store) throw notFound();
 
-    const [categoriesRes, itemsRes, couponsRes, reviewsRes, hoursRes, servicesRes] = await Promise.all([
+    // Carrega só o essencial para o primeiro render (cardápio + horários + serviços)
+    const [categoriesRes, itemsRes, hoursRes, servicesRes] = await Promise.all([
       supabase.from("menu_categories").select("*").eq("store_id", store.id).order("position"),
       supabase.from("menu_items").select("*").eq("store_id", store.id).eq("is_available", true).order("position"),
-      supabase.from("store_coupons").select("*").eq("store_id", store.id),
-      supabase.from("store_reviews").select("*").eq("store_id", store.id).order("created_at", { ascending: false }),
       supabase.from("store_hours").select("*").eq("store_id", store.id),
       supabase.from("services").select("*").eq("store_id", store.id).eq("is_active", true).order("position"),
     ]);
@@ -109,8 +118,6 @@ export const Route = createFileRoute("/loja/$slug")({
       store: store as Store,
       categories: (categoriesRes.data ?? []) as MenuCategory[],
       items: (itemsRes.data ?? []).map((i) => ({ ...i, price: Number(i.price), original_price: i.original_price ? Number(i.original_price) : null, sizes: Array.isArray(i.sizes) ? i.sizes : [], colors: Array.isArray((i as { colors?: string[] }).colors) ? (i as { colors: string[] }).colors : [] })) as MenuItem[],
-      coupons: (couponsRes.data ?? []).map((c) => ({ ...c, min_order: Number(c.min_order) })) as Coupon[],
-      reviews: (reviewsRes.data ?? []) as Review[],
       hours: (hoursRes.data ?? []) as StoreHour[],
       services: (servicesRes.data ?? []).map((s) => ({
         id: s.id as string,
@@ -124,6 +131,9 @@ export const Route = createFileRoute("/loja/$slug")({
       })),
     };
   },
+  // Cache do loader: voltar para a loja é instantâneo
+  staleTime: 60_000,
+  gcTime: 5 * 60_000,
   errorComponent: ({ error }) => {
     const router = useRouter();
     return (
@@ -155,12 +165,10 @@ export const Route = createFileRoute("/loja/$slug")({
 function StorePage() {
   const router = useRouter();
   const navigate = useNavigate();
-  const { store, categories, items, coupons, reviews, hours, services } = Route.useLoaderData() as {
+  const { store, categories, items, hours, services } = Route.useLoaderData() as {
     store: Store;
     categories: MenuCategory[];
     items: MenuItem[];
-    coupons: Coupon[];
-    reviews: Review[];
     hours: StoreHour[];
     services: ServiceLite[];
   };
@@ -182,6 +190,34 @@ function StorePage() {
   const [now, setNow] = useState(() => new Date());
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [menuSheetOpen, setMenuSheetOpen] = useState(false);
+
+  // Reviews e cupons são carregados sob demanda (só quando o usuário abre as abas / vê)
+  const { data: reviews = [] } = useQuery({
+    queryKey: ["store-reviews", store.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("store_reviews")
+        .select("*")
+        .eq("store_id", store.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as Review[];
+    },
+    staleTime: 5 * 60_000,
+  });
+
+  const { data: coupons = [] } = useQuery({
+    queryKey: ["store-coupons", store.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("store_coupons")
+        .select("*")
+        .eq("store_id", store.id);
+      if (error) throw error;
+      return (data ?? []).map((c) => ({ ...c, min_order: Number(c.min_order) })) as Coupon[];
+    },
+    staleTime: 5 * 60_000,
+  });
 
   // refresh "now" every minute so the open/closed badge updates without a refresh
   useEffect(() => {
@@ -507,39 +543,43 @@ function StorePage() {
             />
           )}
         </div>
-        <StoreFeedServicesDialog
-          open={albumsOpen}
-          onOpenChange={setAlbumsOpen}
-          storeId={store.id}
-          categoryId={albumsInitialCategory}
-          isAuthenticated={!!user}
-          bookingMode={store.booking_mode === "quote" ? "quote" : "booking"}
-          onPickService={(serviceId) => {
-            setAlbumsOpen(false);
-            if (!user) {
-              navigate({ to: "/auth" });
-              return;
-            }
-            const svc = services.find((x) => x.id === serviceId);
-            if (store.booking_mode === "quote") {
-              if (!svc) return;
-              setQuoteService(svc);
-              return;
-            }
-            if (!open) {
-              toast.error(
-                store.is_paused
-                  ? "Loja fechada pelo lojista."
-                  : nextOpen
-                    ? `Fechada agora. ${nextOpen}.`
-                    : "Loja fechada agora.",
-              );
-              return;
-            }
-            setBookingInitialId(serviceId);
-            setBookingOpen(true);
-          }}
-        />
+        {albumsOpen && (
+          <Suspense fallback={null}>
+            <StoreFeedServicesDialog
+              open={albumsOpen}
+              onOpenChange={setAlbumsOpen}
+              storeId={store.id}
+              categoryId={albumsInitialCategory}
+              isAuthenticated={!!user}
+              bookingMode={store.booking_mode === "quote" ? "quote" : "booking"}
+              onPickService={(serviceId) => {
+                setAlbumsOpen(false);
+                if (!user) {
+                  navigate({ to: "/auth" });
+                  return;
+                }
+                const svc = services.find((x) => x.id === serviceId);
+                if (store.booking_mode === "quote") {
+                  if (!svc) return;
+                  setQuoteService(svc);
+                  return;
+                }
+                if (!open) {
+                  toast.error(
+                    store.is_paused
+                      ? "Loja fechada pelo lojista."
+                      : nextOpen
+                        ? `Fechada agora. ${nextOpen}.`
+                        : "Loja fechada agora.",
+                  );
+                  return;
+                }
+                setBookingInitialId(serviceId);
+                setBookingOpen(true);
+              }}
+            />
+          </Suspense>
+        )}
         {tab === "menu" && isService && (
           <div id="services-list" className="space-y-3">
             {services.length === 0 ? (
@@ -1104,32 +1144,34 @@ function StorePage() {
       )}
 
       {pizzaBuilderItem && (
-        <PizzaBuilderDialog
-          open={!!pizzaBuilderItem}
-          onClose={() => setPizzaBuilderItem(null)}
-          storeId={store.id}
-          baseItem={{
-            id: pizzaBuilderItem.id,
-            name: pizzaBuilderItem.name,
-            emoji: pizzaBuilderItem.emoji,
-            image_url: pizzaBuilderItem.image_url,
-            description: pizzaBuilderItem.description,
-          }}
-          flavorItems={items
-            .filter((i) => i.category_id === pizzaBuilderItem.category_id)
-            .map((i) => ({
-              id: i.id,
-              name: i.name,
-              emoji: i.emoji,
-              description: i.description,
-              basePrice: Number(i.price),
-            }))}
-          disabled={!open}
-          onConfirm={async (payloads) => {
-            await tryAddPizzas(store.id, payloads);
-            setPizzaBuilderItem(null);
-          }}
-        />
+        <Suspense fallback={null}>
+          <PizzaBuilderDialog
+            open={!!pizzaBuilderItem}
+            onClose={() => setPizzaBuilderItem(null)}
+            storeId={store.id}
+            baseItem={{
+              id: pizzaBuilderItem.id,
+              name: pizzaBuilderItem.name,
+              emoji: pizzaBuilderItem.emoji,
+              image_url: pizzaBuilderItem.image_url,
+              description: pizzaBuilderItem.description,
+            }}
+            flavorItems={items
+              .filter((i) => i.category_id === pizzaBuilderItem.category_id)
+              .map((i) => ({
+                id: i.id,
+                name: i.name,
+                emoji: i.emoji,
+                description: i.description,
+                basePrice: Number(i.price),
+              }))}
+            disabled={!open}
+            onConfirm={async (payloads) => {
+              await tryAddPizzas(store.id, payloads);
+              setPizzaBuilderItem(null);
+            }}
+          />
+        </Suspense>
       )}
 
       <BookingDialog
@@ -1145,14 +1187,18 @@ function StorePage() {
         onCreated={() => router.invalidate()}
       />
 
-      <QuoteReviewDialog
-        open={!!quoteService}
-        onOpenChange={(o) => !o && setQuoteService(null)}
-        service={quoteService}
-        storeName={store.name}
-        storeWhatsapp={store.whatsapp}
-        customerName={(user?.user_metadata?.display_name as string) || null}
-      />
+      {quoteService && (
+        <Suspense fallback={null}>
+          <QuoteReviewDialog
+            open={!!quoteService}
+            onOpenChange={(o) => !o && setQuoteService(null)}
+            service={quoteService}
+            storeName={store.name}
+            storeWhatsapp={store.whatsapp}
+            customerName={(user?.user_metadata?.display_name as string) || null}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

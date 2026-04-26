@@ -83,20 +83,11 @@ export const Route = createFileRoute("/")({
       .order("name");
     if (error) throw error;
     const stores = (data ?? []) as StoreRow[];
-
-    let items: MenuItemRow[] = [];
-    if (stores.length > 0) {
-      const { data: itemsData, error: itemsErr } = await supabase
-        .from("menu_items")
-        .select("id, store_id, name, price, original_price, emoji, promo, image_url")
-        .in("store_id", stores.map((s) => s.id))
-        .order("position", { ascending: true });
-      if (itemsErr) throw itemsErr;
-      items = (itemsData ?? []) as MenuItemRow[];
-    }
-
-    return { stores, items };
+    return { stores };
   },
+  // Mantém o resultado do loader "fresco" por 60s ao navegar entre páginas
+  staleTime: 60_000,
+  gcTime: 5 * 60_000,
   errorComponent: ({ error }) => (
     <div className="min-h-screen flex items-center justify-center p-6 text-center text-sm text-muted-foreground">
       {error.message}
@@ -120,7 +111,7 @@ function Index() {
   const { user } = useAuth();
   const { count: cartCount } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { stores, items } = Route.useLoaderData() as { stores: StoreRow[]; items: MenuItemRow[] };
+  const { stores } = Route.useLoaderData() as { stores: StoreRow[] };
   const { active } = useAddress();
   const userCoords = useUserCoords();
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -174,6 +165,28 @@ function Index() {
     () => homeCategories.filter((c) => c.is_ecommerce),
     [homeCategories],
   );
+
+  // IDs das lojas e-commerce — usado para buscar produtos da vitrine sob demanda
+  const ecomStoreIds = useMemo(
+    () => stores.filter((s) => ecomMatchSet.has(norm(s.category))).map((s) => s.id),
+    [stores, ecomMatchSet, norm],
+  );
+
+  // Vitrine: produtos das lojas e-commerce (lazy — só busca se houver alguma)
+  const { data: items = [] } = useQuery({
+    queryKey: ["home-vitrine-items", ecomStoreIds],
+    enabled: ecomStoreIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("menu_items")
+        .select("id, store_id, name, price, original_price, emoji, promo, image_url")
+        .in("store_id", ecomStoreIds)
+        .order("position", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as MenuItemRow[];
+    },
+    staleTime: 60_000,
+  });
 
   // Score de interesse por loja (favoritos + cart + bookings).
   const interestScores = useInterestScores(stores);
