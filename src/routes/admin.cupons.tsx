@@ -56,6 +56,7 @@ type StoreCoupon = {
   description: string | null;
   discount_label: string;
   min_order: number;
+  is_active: boolean;
 };
 
 function AdminCoupons() {
