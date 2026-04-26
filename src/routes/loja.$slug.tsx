@@ -96,11 +96,10 @@ export const Route = createFileRoute("/loja/$slug")({
     if (error) throw error;
     if (!store) throw notFound();
 
-    const [categoriesRes, itemsRes, couponsRes, reviewsRes, hoursRes, servicesRes] = await Promise.all([
+    // Carrega só o essencial para o primeiro render (cardápio + horários + serviços)
+    const [categoriesRes, itemsRes, hoursRes, servicesRes] = await Promise.all([
       supabase.from("menu_categories").select("*").eq("store_id", store.id).order("position"),
       supabase.from("menu_items").select("*").eq("store_id", store.id).eq("is_available", true).order("position"),
-      supabase.from("store_coupons").select("*").eq("store_id", store.id),
-      supabase.from("store_reviews").select("*").eq("store_id", store.id).order("created_at", { ascending: false }),
       supabase.from("store_hours").select("*").eq("store_id", store.id),
       supabase.from("services").select("*").eq("store_id", store.id).eq("is_active", true).order("position"),
     ]);
@@ -109,8 +108,6 @@ export const Route = createFileRoute("/loja/$slug")({
       store: store as Store,
       categories: (categoriesRes.data ?? []) as MenuCategory[],
       items: (itemsRes.data ?? []).map((i) => ({ ...i, price: Number(i.price), original_price: i.original_price ? Number(i.original_price) : null, sizes: Array.isArray(i.sizes) ? i.sizes : [], colors: Array.isArray((i as { colors?: string[] }).colors) ? (i as { colors: string[] }).colors : [] })) as MenuItem[],
-      coupons: (couponsRes.data ?? []).map((c) => ({ ...c, min_order: Number(c.min_order) })) as Coupon[],
-      reviews: (reviewsRes.data ?? []) as Review[],
       hours: (hoursRes.data ?? []) as StoreHour[],
       services: (servicesRes.data ?? []).map((s) => ({
         id: s.id as string,
@@ -124,6 +121,9 @@ export const Route = createFileRoute("/loja/$slug")({
       })),
     };
   },
+  // Cache do loader: voltar para a loja é instantâneo
+  staleTime: 60_000,
+  gcTime: 5 * 60_000,
   errorComponent: ({ error }) => {
     const router = useRouter();
     return (
