@@ -182,6 +182,34 @@ function StorePage() {
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [menuSheetOpen, setMenuSheetOpen] = useState(false);
 
+  // Reviews e cupons são carregados sob demanda (só quando o usuário abre as abas / vê)
+  const { data: reviews = [] } = useQuery({
+    queryKey: ["store-reviews", store.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("store_reviews")
+        .select("*")
+        .eq("store_id", store.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as Review[];
+    },
+    staleTime: 5 * 60_000,
+  });
+
+  const { data: coupons = [] } = useQuery({
+    queryKey: ["store-coupons", store.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("store_coupons")
+        .select("*")
+        .eq("store_id", store.id);
+      if (error) throw error;
+      return (data ?? []).map((c) => ({ ...c, min_order: Number(c.min_order) })) as Coupon[];
+    },
+    staleTime: 5 * 60_000,
+  });
+
   // refresh "now" every minute so the open/closed badge updates without a refresh
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 60_000);
