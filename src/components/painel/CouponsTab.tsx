@@ -107,6 +107,21 @@ export function CouponsTab({ storeId }: { storeId: string }) {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const toggleActive = useMutation({
+    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
+      const { error } = await supabase
+        .from("store_coupons")
+        .update({ is_active })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      toast.success(vars.is_active ? "Cupom visível para clientes" : "Cupom ocultado");
+      qc.invalidateQueries({ queryKey: ["painel", "coupons"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
