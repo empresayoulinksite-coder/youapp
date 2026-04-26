@@ -864,6 +864,7 @@ export type Database = {
           description: string | null
           discount_label: string
           id: string
+          is_active: boolean
           min_order: number
           store_id: string
           title: string
@@ -874,6 +875,7 @@ export type Database = {
           description?: string | null
           discount_label: string
           id?: string
+          is_active?: boolean
           min_order?: number
           store_id: string
           title: string
@@ -884,6 +886,7 @@ export type Database = {
           description?: string | null
           discount_label?: string
           id?: string
+          is_active?: boolean
           min_order?: number
           store_id?: string
           title?: string
