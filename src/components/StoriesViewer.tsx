@@ -77,6 +77,17 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
     setProgress(0);
     accumRef.current = 0;
     startRef.current = Date.now();
+    // Garante som ativo ao trocar de story
+    setMuted(false);
+    const v = videoRef.current;
+    if (v) {
+      v.muted = false;
+      v.play().catch(() => {
+        v.muted = true;
+        setMuted(true);
+        v.play().catch(() => {});
+      });
+    }
   }, [index]);
 
   // Progress loop (image stories use timer; video uses native time)
