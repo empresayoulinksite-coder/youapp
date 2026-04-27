@@ -135,6 +135,7 @@ function CartPage() {
       .from("coupons")
       .select("id, code, title, description, discount_type, discount_value, min_order, max_discount, store_ids, expires_at")
       .eq("code", c)
+      .eq("is_active", true)
       .maybeSingle();
     setValidating(false);
     if (error || !data) {
