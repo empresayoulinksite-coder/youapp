@@ -196,9 +196,13 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
           if (!dragLockRef.current) {
             if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
               dragLockRef.current = Math.abs(dx) > Math.abs(dy) ? "h" : "v";
-              if (dragLockRef.current === "h" && longPressTimerRef.current) {
-                window.clearTimeout(longPressTimerRef.current);
-                longPressTimerRef.current = null;
+          if (dragLockRef.current === "h") {
+                if (longPressTimerRef.current) {
+                  window.clearTimeout(longPressTimerRef.current);
+                  longPressTimerRef.current = null;
+                }
+                // Se já estava pausado pelo long-press, retoma ao começar a arrastar
+                setPaused(false);
               }
             }
           }
