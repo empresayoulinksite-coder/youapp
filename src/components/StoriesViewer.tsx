@@ -211,10 +211,11 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
           dragLockRef.current = null;
           setDragX(0);
           setDragging(true);
+          resumeCurrentVideo();
           // Long press pausa (igual Instagram)
           if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current);
           longPressTimerRef.current = window.setTimeout(() => {
-            if (dragLockRef.current !== "h") setPaused(true);
+            if (dragLockRef.current !== "h") setStoryPaused(true);
           }, 200);
         }}
         onPointerMove={(e) => {
@@ -231,7 +232,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
                   longPressTimerRef.current = null;
                 }
                 // Se já estava pausado pelo long-press, retoma ao começar a arrastar
-                setPaused(false);
+                setStoryPaused(false);
                 resumeCurrentVideo();
               }
             }
@@ -242,6 +243,8 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
             if ((index === 0 && dx > 0) || (index === stories.length - 1 && dx < 0)) {
               nx = dx / 3;
             }
+            if (pausedRef.current) setStoryPaused(false);
+            resumeCurrentVideo();
             setDragX(nx);
           }
         }}
@@ -250,7 +253,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
             window.clearTimeout(longPressTimerRef.current);
             longPressTimerRef.current = null;
           }
-          setPaused(false);
+          setStoryPaused(false);
           resumeCurrentVideo();
           const s = dragStartRef.current;
           dragStartRef.current = null;
@@ -285,7 +288,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
             window.clearTimeout(longPressTimerRef.current);
             longPressTimerRef.current = null;
           }
-          setPaused(false);
+          setStoryPaused(false);
           resumeCurrentVideo();
           setDragging(false);
           setDragX(0);
