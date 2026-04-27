@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { Store, UtensilsCrossed, Ticket, Image as ImageIcon, LogOut, Home, Tags, LayoutGrid, Briefcase, CalendarDays, Users, Upload } from "lucide-react";
+import { Store, UtensilsCrossed, Ticket, Image as ImageIcon, LogOut, Home, Tags, LayoutGrid, Briefcase, CalendarDays, Users, Upload, Sparkles } from "lucide-react";
 import { useIsAdmin } from "@/hooks/use-admin";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,7 @@ const NAV = [
   { to: "/admin/categorias-ecommerce", label: "Categorias E-com", icon: Tags },
   { to: "/admin/cupons", label: "Cupons", icon: Ticket },
   { to: "/admin/stories", label: "Stories", icon: ImageIcon },
+  { to: "/admin/modal-boas-vindas", label: "Modal boas-vindas", icon: Sparkles },
 ];
 
 function AdminLayout() {
