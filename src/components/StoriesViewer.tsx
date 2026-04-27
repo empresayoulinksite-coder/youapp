@@ -299,34 +299,50 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
         }}
       >
         <div
-          className="absolute inset-0 flex items-center justify-center"
+          className="absolute inset-0 flex"
           style={{
-            transform: `translateX(${dragX}px)`,
-            transition: dragging ? "none" : "transform 200ms ease-out",
+            width: "300%",
+            transform: `translate3d(calc(-33.3333% + ${dragX}px), 0, 0)`,
+            transition: dragging ? "none" : "transform 280ms cubic-bezier(0.22, 0.61, 0.36, 1)",
           }}
         >
-          {current.media_type === "video" ? (
-            <video
-              ref={videoRef}
-              key={current.id}
-              src={current.media_url}
-              autoPlay
-              playsInline
-              onEnded={next}
-              onTimeUpdate={(e) => {
-                const v = e.currentTarget;
-                if (v.duration) setProgress(v.currentTime / v.duration);
-              }}
-              className="max-h-full max-w-full object-contain"
-            />
-          ) : (
-            <img
-              src={current.media_url}
-              alt={current.title}
-              className="max-h-full max-w-full object-contain"
-              draggable={false}
-            />
-          )}
+          {[stories[index - 1], stories[index], stories[index + 1]].map((s, i) => (
+            <div key={i} className="w-1/3 h-full flex items-center justify-center shrink-0">
+              {s ? (
+                s.media_type === "video" ? (
+                  i === 1 ? (
+                    <video
+                      ref={videoRef}
+                      key={s.id}
+                      src={s.media_url}
+                      autoPlay
+                      playsInline
+                      onEnded={next}
+                      onTimeUpdate={(e) => {
+                        const v = e.currentTarget;
+                        if (v.duration) setProgress(v.currentTime / v.duration);
+                      }}
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  ) : (
+                    <img
+                      src={s.media_thumbnail_url ?? s.media_url}
+                      alt=""
+                      className="max-h-full max-w-full object-contain opacity-80"
+                      draggable={false}
+                    />
+                  )
+                ) : (
+                  <img
+                    src={s.media_url}
+                    alt={s.title}
+                    className="max-h-full max-w-full object-contain"
+                    draggable={false}
+                  />
+                )
+              ) : null}
+            </div>
+          ))}
         </div>
 
         {/* Tap zones (não interferem com pointer events do pai) */}
