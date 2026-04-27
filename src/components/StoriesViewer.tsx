@@ -27,14 +27,24 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
   const activePointerIdRef = useRef<number | null>(null);
   const suppressTapUntilRef = useRef(0);
   const indexRef = useRef(startIndex);
+  const pausedRef = useRef(false);
+  const resumeRafRef = useRef<number | null>(null);
 
   const current = stories[index];
+
+  const setStoryPaused = useCallback((value: boolean) => {
+    pausedRef.current = value;
+    setPaused(value);
+  }, []);
 
   const resumeCurrentVideo = useCallback(() => {
     const video = videoRef.current;
     if (!video || current?.media_type !== "video") return;
 
-    requestAnimationFrame(() => {
+    video.play().catch(() => {});
+    if (resumeRafRef.current) cancelAnimationFrame(resumeRafRef.current);
+    resumeRafRef.current = requestAnimationFrame(() => {
+      resumeRafRef.current = null;
       video.play().catch(() => {});
     });
   }, [current?.media_type]);
@@ -93,11 +103,21 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
     }
   }, [paused]);
 
+  useEffect(() => {
+    pausedRef.current = paused;
+  }, [paused]);
+
+  useEffect(() => {
+    return () => {
+      if (resumeRafRef.current) cancelAnimationFrame(resumeRafRef.current);
+    };
+  }, []);
+
   // Video handlers
   useEffect(() => {
     const v = videoRef.current;
     if (!v || current?.media_type !== "video") return;
-    if (paused) v.pause();
+    if (pausedRef.current) v.pause();
     else resumeCurrentVideo();
   }, [paused, index, current?.media_type, resumeCurrentVideo]);
 
@@ -191,10 +211,11 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
           dragLockRef.current = null;
           setDragX(0);
           setDragging(true);
+          resumeCurrentVideo();
           // Long press pausa (igual Instagram)
           if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current);
           longPressTimerRef.current = window.setTimeout(() => {
-            if (dragLockRef.current !== "h") setPaused(true);
+            if (dragLockRef.current !== "h") setStoryPaused(true);
           }, 200);
         }}
         onPointerMove={(e) => {
@@ -211,7 +232,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
                   longPressTimerRef.current = null;
                 }
                 // Se já estava pausado pelo long-press, retoma ao começar a arrastar
-                setPaused(false);
+                setStoryPaused(false);
                 resumeCurrentVideo();
               }
             }
@@ -222,6 +243,8 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
             if ((index === 0 && dx > 0) || (index === stories.length - 1 && dx < 0)) {
               nx = dx / 3;
             }
+            if (pausedRef.current) setStoryPaused(false);
+            resumeCurrentVideo();
             setDragX(nx);
           }
         }}
@@ -230,7 +253,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
             window.clearTimeout(longPressTimerRef.current);
             longPressTimerRef.current = null;
           }
-          setPaused(false);
+          setStoryPaused(false);
           resumeCurrentVideo();
           const s = dragStartRef.current;
           dragStartRef.current = null;
@@ -265,7 +288,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
             window.clearTimeout(longPressTimerRef.current);
             longPressTimerRef.current = null;
           }
-          setPaused(false);
+          setStoryPaused(false);
           resumeCurrentVideo();
           setDragging(false);
           setDragX(0);
