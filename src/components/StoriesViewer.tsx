@@ -30,6 +30,15 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
 
   const current = stories[index];
 
+  const resumeCurrentVideo = useCallback(() => {
+    const video = videoRef.current;
+    if (!video || current?.media_type !== "video") return;
+
+    requestAnimationFrame(() => {
+      video.play().catch(() => {});
+    });
+  }, [current?.media_type]);
+
   useEffect(() => {
     indexRef.current = index;
   }, [index]);
@@ -89,8 +98,8 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
     const v = videoRef.current;
     if (!v || current?.media_type !== "video") return;
     if (paused) v.pause();
-    else v.play().catch(() => {});
-  }, [paused, index, current?.media_type]);
+    else resumeCurrentVideo();
+  }, [paused, index, current?.media_type, resumeCurrentVideo]);
 
   const next = useCallback(() => {
     const currentIndex = indexRef.current;
@@ -203,6 +212,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
                 }
                 // Se já estava pausado pelo long-press, retoma ao começar a arrastar
                 setPaused(false);
+                resumeCurrentVideo();
               }
             }
           }
@@ -221,6 +231,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
             longPressTimerRef.current = null;
           }
           setPaused(false);
+          resumeCurrentVideo();
           const s = dragStartRef.current;
           dragStartRef.current = null;
           setDragging(false);
@@ -255,6 +266,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
             longPressTimerRef.current = null;
           }
           setPaused(false);
+          resumeCurrentVideo();
           setDragging(false);
           setDragX(0);
           dragStartRef.current = null;
