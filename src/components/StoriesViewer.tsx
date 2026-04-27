@@ -262,13 +262,13 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
                 const v = e.currentTarget;
                 if (v.duration) setProgress(v.currentTime / v.duration);
               }}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-contain"
             />
           ) : (
             <img
               src={current.media_url}
               alt={current.title}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-contain"
               draggable={false}
             />
           )}
