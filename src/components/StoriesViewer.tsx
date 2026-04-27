@@ -15,10 +15,15 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
   const [index, setIndex] = useState(startIndex);
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [dragX, setDragX] = useState(0);
+  const [dragging, setDragging] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const startRef = useRef<number>(Date.now());
   const accumRef = useRef<number>(0);
   const rafRef = useRef<number | null>(null);
+  const dragStartRef = useRef<{ x: number; y: number; t: number } | null>(null);
+  const dragLockRef = useRef<"h" | "v" | null>(null);
+  const longPressTimerRef = useRef<number | null>(null);
 
   const current = stories[index];
 
