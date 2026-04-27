@@ -212,7 +212,8 @@ function StorePage() {
       const { data, error } = await supabase
         .from("store_coupons")
         .select("*")
-        .eq("store_id", store.id);
+        .eq("store_id", store.id)
+        .eq("is_active", true);
       if (error) throw error;
       return (data ?? []).map((c) => ({ ...c, min_order: Number(c.min_order) })) as Coupon[];
     },
