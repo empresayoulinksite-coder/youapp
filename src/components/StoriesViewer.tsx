@@ -237,7 +237,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
       {/* Media */}
       <div
         ref={containerRef}
-        className="relative h-full w-full max-w-md mx-auto overflow-hidden"
+        className="relative h-full w-full overflow-hidden"
       >
         <div
           className="absolute inset-0 flex items-center justify-center bg-black"
@@ -262,13 +262,13 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
                 const v = e.currentTarget;
                 if (v.duration) setProgress(v.currentTime / v.duration);
               }}
-              className="max-h-full max-w-full object-contain"
+              className="h-full w-full object-cover"
             />
           ) : (
             <img
               src={current.media_url}
               alt={current.title}
-              className="max-h-full max-w-full object-contain"
+              className="h-full w-full object-cover"
               draggable={false}
             />
           )}
