@@ -18,6 +18,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const startRef = useRef<number>(Date.now());
   const accumRef = useRef<number>(0);
   const rafRef = useRef<number | null>(null);
