@@ -327,7 +327,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
                     />
                   ) : (
                     <img
-                      src={s.media_thumbnail_url ?? s.media_url}
+                      src={s.thumbnail_url ?? s.media_url}
                       alt=""
                       className="max-h-full max-w-full object-contain opacity-80"
                       draggable={false}
