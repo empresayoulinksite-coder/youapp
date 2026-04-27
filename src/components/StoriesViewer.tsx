@@ -167,7 +167,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
   if (!current) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center select-none">
+    <div className="fixed inset-0 z-[2147483647] bg-black flex items-center justify-center select-none">
       {/* Progress bars */}
       <div className="absolute top-0 inset-x-0 z-20 flex gap-1 px-2 pt-2">
         {stories.map((_, i) => (
@@ -262,13 +262,13 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
                 const v = e.currentTarget;
                 if (v.duration) setProgress(v.currentTime / v.duration);
               }}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-contain"
             />
           ) : (
             <img
               src={current.media_url}
               alt={current.title}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-contain"
               draggable={false}
             />
           )}
