@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Volume2, VolumeX } from "lucide-react";
 import type { StoryRow } from "./StoriesBar";
 
 interface Props {
@@ -17,6 +17,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
   const [paused, setPaused] = useState(false);
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
+  const [muted, setMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const startRef = useRef<number>(Date.now());
@@ -193,13 +194,33 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
             {current.store?.name ?? current.title}
           </span>
         </div>
-        <button
-          onClick={onClose}
-          aria-label="Fechar"
-          className="text-white p-1.5 rounded-full hover:bg-white/10"
-        >
-          <X className="h-5 w-5" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setMuted((m) => {
+                const next = !m;
+                const v = videoRef.current;
+                if (v) {
+                  v.muted = next;
+                  if (!next) v.play().catch(() => {});
+                }
+                return next;
+              });
+            }}
+            aria-label={muted ? "Ativar som" : "Silenciar"}
+            className="text-white p-1.5 rounded-full hover:bg-white/10"
+          >
+            {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+          </button>
+          <button
+            onClick={onClose}
+            aria-label="Fechar"
+            className="text-white p-1.5 rounded-full hover:bg-white/10"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
       </div>
 
       {/* Media */}
@@ -338,7 +359,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
                           key={s.id}
                           src={s.media_url}
                           autoPlay
-                          muted
+                          muted={muted}
                           playsInline
                           preload="auto"
                           onEnded={next}
