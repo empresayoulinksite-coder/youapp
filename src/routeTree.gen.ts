@@ -31,6 +31,7 @@ import { Route as AdminStoriesRouteImport } from './routes/admin.stories'
 import { Route as AdminServicosRouteImport } from './routes/admin.servicos'
 import { Route as AdminProdutosRouteImport } from './routes/admin.produtos'
 import { Route as AdminPizzasRouteImport } from './routes/admin.pizzas'
+import { Route as AdminModalBoasVindasRouteImport } from './routes/admin.modal-boas-vindas'
 import { Route as AdminImportarCardapioRouteImport } from './routes/admin.importar-cardapio'
 import { Route as AdminDonosRouteImport } from './routes/admin.donos'
 import { Route as AdminCuponsRouteImport } from './routes/admin.cupons'
@@ -148,6 +149,11 @@ const AdminPizzasRoute = AdminPizzasRouteImport.update({
   path: '/pizzas',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminModalBoasVindasRoute = AdminModalBoasVindasRouteImport.update({
+  id: '/modal-boas-vindas',
+  path: '/modal-boas-vindas',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminImportarCardapioRoute = AdminImportarCardapioRouteImport.update({
   id: '/importar-cardapio',
   path: '/importar-cardapio',
@@ -200,6 +206,7 @@ export interface FileRoutesByFullPath {
   '/admin/cupons': typeof AdminCuponsRoute
   '/admin/donos': typeof AdminDonosRoute
   '/admin/importar-cardapio': typeof AdminImportarCardapioRoute
+  '/admin/modal-boas-vindas': typeof AdminModalBoasVindasRoute
   '/admin/pizzas': typeof AdminPizzasRoute
   '/admin/produtos': typeof AdminProdutosRoute
   '/admin/servicos': typeof AdminServicosRoute
@@ -229,6 +236,7 @@ export interface FileRoutesByTo {
   '/admin/cupons': typeof AdminCuponsRoute
   '/admin/donos': typeof AdminDonosRoute
   '/admin/importar-cardapio': typeof AdminImportarCardapioRoute
+  '/admin/modal-boas-vindas': typeof AdminModalBoasVindasRoute
   '/admin/pizzas': typeof AdminPizzasRoute
   '/admin/produtos': typeof AdminProdutosRoute
   '/admin/servicos': typeof AdminServicosRoute
@@ -260,6 +268,7 @@ export interface FileRoutesById {
   '/admin/cupons': typeof AdminCuponsRoute
   '/admin/donos': typeof AdminDonosRoute
   '/admin/importar-cardapio': typeof AdminImportarCardapioRoute
+  '/admin/modal-boas-vindas': typeof AdminModalBoasVindasRoute
   '/admin/pizzas': typeof AdminPizzasRoute
   '/admin/produtos': typeof AdminProdutosRoute
   '/admin/servicos': typeof AdminServicosRoute
@@ -292,6 +301,7 @@ export interface FileRouteTypes {
     | '/admin/cupons'
     | '/admin/donos'
     | '/admin/importar-cardapio'
+    | '/admin/modal-boas-vindas'
     | '/admin/pizzas'
     | '/admin/produtos'
     | '/admin/servicos'
@@ -321,6 +331,7 @@ export interface FileRouteTypes {
     | '/admin/cupons'
     | '/admin/donos'
     | '/admin/importar-cardapio'
+    | '/admin/modal-boas-vindas'
     | '/admin/pizzas'
     | '/admin/produtos'
     | '/admin/servicos'
@@ -351,6 +362,7 @@ export interface FileRouteTypes {
     | '/admin/cupons'
     | '/admin/donos'
     | '/admin/importar-cardapio'
+    | '/admin/modal-boas-vindas'
     | '/admin/pizzas'
     | '/admin/produtos'
     | '/admin/servicos'
@@ -538,6 +550,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPizzasRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/modal-boas-vindas': {
+      id: '/admin/modal-boas-vindas'
+      path: '/modal-boas-vindas'
+      fullPath: '/admin/modal-boas-vindas'
+      preLoaderRoute: typeof AdminModalBoasVindasRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/importar-cardapio': {
       id: '/admin/importar-cardapio'
       path: '/importar-cardapio'
@@ -590,6 +609,7 @@ interface AdminRouteChildren {
   AdminCuponsRoute: typeof AdminCuponsRoute
   AdminDonosRoute: typeof AdminDonosRoute
   AdminImportarCardapioRoute: typeof AdminImportarCardapioRoute
+  AdminModalBoasVindasRoute: typeof AdminModalBoasVindasRoute
   AdminPizzasRoute: typeof AdminPizzasRoute
   AdminProdutosRoute: typeof AdminProdutosRoute
   AdminServicosRoute: typeof AdminServicosRoute
@@ -604,6 +624,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCuponsRoute: AdminCuponsRoute,
   AdminDonosRoute: AdminDonosRoute,
   AdminImportarCardapioRoute: AdminImportarCardapioRoute,
+  AdminModalBoasVindasRoute: AdminModalBoasVindasRoute,
   AdminPizzasRoute: AdminPizzasRoute,
   AdminProdutosRoute: AdminProdutosRoute,
   AdminServicosRoute: AdminServicosRoute,
