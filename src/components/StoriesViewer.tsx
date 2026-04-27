@@ -206,6 +206,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
       <div
         ref={containerRef}
         className="relative h-full w-full max-w-md mx-auto overflow-hidden touch-none"
+        style={{ perspective: "1200px", perspectiveOrigin: "50% 50%" }}
         onPointerDown={(e) => {
           activePointerIdRef.current = e.pointerId;
           e.currentTarget.setPointerCapture(e.pointerId);
