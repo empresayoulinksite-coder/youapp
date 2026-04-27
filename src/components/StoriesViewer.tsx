@@ -17,7 +17,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
   const [paused, setPaused] = useState(false);
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const startRef = useRef<number>(Date.now());
@@ -43,11 +43,19 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
     const video = videoRef.current;
     if (!video || current?.media_type !== "video") return;
 
-    video.play().catch(() => {});
+    const tryPlay = () => {
+      video.play().catch(() => {
+        // Autoplay com som bloqueado: cai para mutado e tenta de novo
+        video.muted = true;
+        setMuted(true);
+        video.play().catch(() => {});
+      });
+    };
+    tryPlay();
     if (resumeRafRef.current) cancelAnimationFrame(resumeRafRef.current);
     resumeRafRef.current = requestAnimationFrame(() => {
       resumeRafRef.current = null;
-      video.play().catch(() => {});
+      tryPlay();
     });
   }, [current?.media_type]);
 
