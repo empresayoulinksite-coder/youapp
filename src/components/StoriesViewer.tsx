@@ -314,7 +314,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
               className="absolute inset-0"
               style={{
                 transformStyle: "preserve-3d",
-                transform: `rotateY(${-angle}deg)`,
+                transform: `rotateY(${angle}deg)`,
                 transition: dragging ? "none" : "transform 380ms cubic-bezier(0.22, 0.61, 0.36, 1)",
               }}
             >
