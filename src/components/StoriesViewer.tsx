@@ -27,14 +27,24 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
   const activePointerIdRef = useRef<number | null>(null);
   const suppressTapUntilRef = useRef(0);
   const indexRef = useRef(startIndex);
+  const pausedRef = useRef(false);
+  const resumeRafRef = useRef<number | null>(null);
 
   const current = stories[index];
+
+  const setStoryPaused = useCallback((value: boolean) => {
+    pausedRef.current = value;
+    setPaused(value);
+  }, []);
 
   const resumeCurrentVideo = useCallback(() => {
     const video = videoRef.current;
     if (!video || current?.media_type !== "video") return;
 
-    requestAnimationFrame(() => {
+    video.play().catch(() => {});
+    if (resumeRafRef.current) cancelAnimationFrame(resumeRafRef.current);
+    resumeRafRef.current = requestAnimationFrame(() => {
+      resumeRafRef.current = null;
       video.play().catch(() => {});
     });
   }, [current?.media_type]);
