@@ -44,11 +44,11 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
     if (!video || current?.media_type !== "video") return;
 
     const tryPlay = () => {
+      video.muted = false;
+      video.volume = 1;
+      setMuted(false);
       video.play().catch(() => {
-        // Autoplay com som bloqueado: cai para mutado e tenta de novo
-        video.muted = true;
-        setMuted(true);
-        video.play().catch(() => {});
+        // Mantém o som ativo; a próxima interação do usuário tenta o play novamente.
       });
     };
     tryPlay();
@@ -82,10 +82,9 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
     const v = videoRef.current;
     if (v) {
       v.muted = false;
+      v.volume = 1;
       v.play().catch(() => {
-        v.muted = true;
-        setMuted(true);
-        v.play().catch(() => {});
+        setMuted(false);
       });
     }
   }, [index]);
