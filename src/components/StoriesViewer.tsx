@@ -15,19 +15,12 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
   const [index, setIndex] = useState(startIndex);
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [dragX, setDragX] = useState(0);
-  const [dragging, setDragging] = useState(false);
   const [muted, setMuted] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const startRef = useRef<number>(Date.now());
   const accumRef = useRef<number>(0);
   const rafRef = useRef<number | null>(null);
-  const dragStartRef = useRef<{ x: number; y: number; t: number } | null>(null);
-  const dragLockRef = useRef<"h" | "v" | null>(null);
-  const longPressTimerRef = useRef<number | null>(null);
-  const activePointerIdRef = useRef<number | null>(null);
-  const suppressTapUntilRef = useRef(0);
   const indexRef = useRef(startIndex);
   const pausedRef = useRef(false);
   const resumeRafRef = useRef<number | null>(null);
@@ -244,206 +237,59 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
       {/* Media */}
       <div
         ref={containerRef}
-        className="relative h-full w-full max-w-md mx-auto overflow-hidden touch-none"
-        style={{ perspective: "1200px", perspectiveOrigin: "50% 50%" }}
-        onPointerDown={(e) => {
-          activePointerIdRef.current = e.pointerId;
-          e.currentTarget.setPointerCapture(e.pointerId);
-          dragStartRef.current = { x: e.clientX, y: e.clientY, t: Date.now() };
-          dragLockRef.current = null;
-          setDragX(0);
-          setDragging(true);
-          resumeCurrentVideo();
-          // Long press pausa (igual Instagram)
-          if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current);
-          longPressTimerRef.current = window.setTimeout(() => {
-            if (dragLockRef.current !== "h") setStoryPaused(true);
-          }, 200);
-        }}
-        onPointerMove={(e) => {
-          const s = dragStartRef.current;
-          if (!s) return;
-          const dx = e.clientX - s.x;
-          const dy = e.clientY - s.y;
-          if (!dragLockRef.current) {
-            if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
-              dragLockRef.current = Math.abs(dx) > Math.abs(dy) ? "h" : "v";
-          if (dragLockRef.current === "h") {
-                if (longPressTimerRef.current) {
-                  window.clearTimeout(longPressTimerRef.current);
-                  longPressTimerRef.current = null;
-                }
-                // Se já estava pausado pelo long-press, retoma ao começar a arrastar
-                setStoryPaused(false);
-                resumeCurrentVideo();
-              }
-            }
-          }
-          if (dragLockRef.current === "h") {
-            // Resistência nas pontas
-            let nx = dx;
-            if ((index === 0 && dx > 0) || (index === stories.length - 1 && dx < 0)) {
-              nx = dx / 3;
-            }
-            if (pausedRef.current) setStoryPaused(false);
-            resumeCurrentVideo();
-            setDragX(nx);
-          }
-        }}
-        onPointerUp={(e) => {
-          if (longPressTimerRef.current) {
-            window.clearTimeout(longPressTimerRef.current);
-            longPressTimerRef.current = null;
-          }
-          setStoryPaused(false);
-          resumeCurrentVideo();
-          const s = dragStartRef.current;
-          dragStartRef.current = null;
-          setDragging(false);
-          if (dragLockRef.current === "h" && s) {
-            const dx = e.clientX - s.x;
-            const dt = Date.now() - s.t;
-            const velocity = Math.abs(dx) / Math.max(1, dt); // px/ms
-            const width = (e.currentTarget as HTMLElement).clientWidth;
-            const threshold = Math.min(42, width * 0.08);
-            suppressTapUntilRef.current = Date.now() + 350;
-            if (dx <= -threshold || (dx < -12 && velocity > 0.15)) {
-              setDragX(0);
-              next();
-            } else if (dx >= threshold || (dx > 12 && velocity > 0.15)) {
-              setDragX(0);
-              prev();
-            } else {
-              setDragX(0);
-            }
-          } else {
-            setDragX(0);
-          }
-          if (activePointerIdRef.current !== null && e.currentTarget.hasPointerCapture(activePointerIdRef.current)) {
-            e.currentTarget.releasePointerCapture(activePointerIdRef.current);
-          }
-          activePointerIdRef.current = null;
-          dragLockRef.current = null;
-        }}
-        onPointerCancel={() => {
-          if (longPressTimerRef.current) {
-            window.clearTimeout(longPressTimerRef.current);
-            longPressTimerRef.current = null;
-          }
-          setStoryPaused(false);
-          resumeCurrentVideo();
-          setDragging(false);
-          setDragX(0);
-          dragStartRef.current = null;
-          dragLockRef.current = null;
-          activePointerIdRef.current = null;
-        }}
+        className="relative h-full w-full max-w-md mx-auto overflow-hidden"
       >
-        {(() => {
-          const width = containerRef.current?.clientWidth ?? 1;
-          const halfWidth = width / 2;
-          // Ângulo de rotação proporcional ao drag (-90° a +90°)
-          const angle = (dragX / width) * 90;
-          const slides = [
-            { story: stories[index - 1], rotateY: -90, side: "prev" as const },
-            { story: stories[index], rotateY: 0, side: "current" as const },
-            { story: stories[index + 1], rotateY: 90, side: "next" as const },
-          ];
-          return (
-            <div
-              className="absolute inset-0"
-              style={{
-                transformStyle: "preserve-3d",
-                transform: `translateZ(-${halfWidth}px) rotateY(${angle}deg)`,
-                transition: dragging ? "none" : "transform 380ms cubic-bezier(0.22, 0.61, 0.36, 1)",
+        <div
+          className="absolute inset-0 flex items-center justify-center bg-black"
+          onPointerDown={() => setStoryPaused(true)}
+          onPointerUp={() => setStoryPaused(false)}
+          onPointerLeave={() => setStoryPaused(false)}
+          onPointerCancel={() => setStoryPaused(false)}
+        >
+          {current.media_type === "video" ? (
+            <video
+              ref={videoRef}
+              key={current.id}
+              src={current.media_url}
+              autoPlay
+              muted={muted}
+              playsInline
+              preload="auto"
+              onEnded={next}
+              onLoadedData={resumeCurrentVideo}
+              onCanPlay={resumeCurrentVideo}
+              onTimeUpdate={(e) => {
+                const v = e.currentTarget;
+                if (v.duration) setProgress(v.currentTime / v.duration);
               }}
-            >
-              {slides.map(({ story: s, rotateY, side }) => {
-                if (!s) return null;
-                return (
-                  <div
-                    key={side}
-                    className="absolute inset-0 flex items-center justify-center bg-black"
-                    style={{
-                      transform: `rotateY(${rotateY}deg) translateZ(${halfWidth}px)`,
-                      backfaceVisibility: "hidden",
-                      WebkitBackfaceVisibility: "hidden",
-                    }}
-                  >
-                    {s.media_type === "video" ? (
-                      side === "current" ? (
-                        <video
-                          ref={videoRef}
-                          key={s.id}
-                          src={s.media_url}
-                          autoPlay
-                          muted={muted}
-                          playsInline
-                          preload="auto"
-                          onEnded={next}
-                          onLoadedData={resumeCurrentVideo}
-                          onCanPlay={resumeCurrentVideo}
-                          onTimeUpdate={(e) => {
-                            const v = e.currentTarget;
-                            if (v.duration) setProgress(v.currentTime / v.duration);
-                          }}
-                          className="max-h-full max-w-full object-contain"
-                        />
-                      ) : (
-                        <img
-                          src={s.thumbnail_url ?? s.media_url}
-                          alt=""
-                          className="max-h-full max-w-full object-contain"
-                          draggable={false}
-                        />
-                      )
-                    ) : (
-                      <img
-                        src={s.media_url}
-                        alt={s.title}
-                        className="max-h-full max-w-full object-contain"
-                        draggable={false}
-                      />
-                    )}
-                    {/* Sombra lateral durante rotação para dar profundidade */}
-                    {side !== "current" && (
-                      <div
-                        className="absolute inset-0 pointer-events-none"
-                        style={{
-                          background:
-                            side === "prev"
-                              ? "linear-gradient(to left, rgba(0,0,0,0) 0%, rgba(0,0,0,0.5) 100%)"
-                              : "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.5) 100%)",
-                        }}
-                      />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })()}
+              className="max-h-full max-w-full object-contain"
+            />
+          ) : (
+            <img
+              src={current.media_url}
+              alt={current.title}
+              className="max-h-full max-w-full object-contain"
+              draggable={false}
+            />
+          )}
+        </div>
 
-        {/* Tap zones (não interferem com pointer events do pai) */}
+        {/* Tap zones */}
         <button
           onClick={(e) => {
             e.stopPropagation();
-            if (Date.now() < suppressTapUntilRef.current) return;
             prev();
           }}
           aria-label="Anterior"
           className="absolute left-0 top-0 h-full w-1/3 z-10"
-          style={{ pointerEvents: dragging ? "none" : "auto" }}
         />
         <button
           onClick={(e) => {
             e.stopPropagation();
-            if (Date.now() < suppressTapUntilRef.current) return;
             next();
           }}
           aria-label="Próximo"
           className="absolute right-0 top-0 h-full w-1/3 z-10"
-          style={{ pointerEvents: dragging ? "none" : "auto" }}
         />
 
         {/* Desktop arrows */}
