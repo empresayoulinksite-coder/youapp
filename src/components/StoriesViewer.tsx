@@ -237,7 +237,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
       {/* Media */}
       <div
         ref={containerRef}
-        className="relative h-full w-full max-w-md mx-auto overflow-hidden"
+        className="relative h-full w-full overflow-hidden"
       >
         <div
           className="absolute inset-0 flex items-center justify-center bg-black"
