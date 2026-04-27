@@ -293,6 +293,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
         <button
           onClick={(e) => {
             e.stopPropagation();
+            if (Date.now() < suppressTapUntilRef.current) return;
             prev();
           }}
           aria-label="Anterior"
@@ -302,6 +303,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
         <button
           onClick={(e) => {
             e.stopPropagation();
+            if (Date.now() < suppressTapUntilRef.current) return;
             next();
           }}
           aria-label="Próximo"
