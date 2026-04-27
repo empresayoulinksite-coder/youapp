@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import type { StoryRow } from "./StoriesBar";
@@ -24,8 +24,15 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
   const dragStartRef = useRef<{ x: number; y: number; t: number } | null>(null);
   const dragLockRef = useRef<"h" | "v" | null>(null);
   const longPressTimerRef = useRef<number | null>(null);
+  const activePointerIdRef = useRef<number | null>(null);
+  const suppressTapUntilRef = useRef(0);
+  const indexRef = useRef(startIndex);
 
   const current = stories[index];
+
+  useEffect(() => {
+    indexRef.current = index;
+  }, [index]);
 
   // Lock body scroll
   useEffect(() => {
@@ -85,13 +92,23 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
     else v.play().catch(() => {});
   }, [paused, index, current?.media_type]);
 
-  const next = () => {
-    if (index < stories.length - 1) setIndex(index + 1);
+  const next = useCallback(() => {
+    const currentIndex = indexRef.current;
+    if (currentIndex < stories.length - 1) {
+      const nextIndex = currentIndex + 1;
+      indexRef.current = nextIndex;
+      setIndex(nextIndex);
+    }
     else onClose();
-  };
-  const prev = () => {
-    if (index > 0) setIndex(index - 1);
-  };
+  }, [onClose, stories.length]);
+  const prev = useCallback(() => {
+    const currentIndex = indexRef.current;
+    if (currentIndex > 0) {
+      const prevIndex = currentIndex - 1;
+      indexRef.current = prevIndex;
+      setIndex(prevIndex);
+    }
+  }, []);
 
   // Keyboard nav
   useEffect(() => {
