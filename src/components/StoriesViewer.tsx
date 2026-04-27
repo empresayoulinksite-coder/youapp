@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import type { StoryRow } from "./StoriesBar";
@@ -24,8 +24,15 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
   const dragStartRef = useRef<{ x: number; y: number; t: number } | null>(null);
   const dragLockRef = useRef<"h" | "v" | null>(null);
   const longPressTimerRef = useRef<number | null>(null);
+  const activePointerIdRef = useRef<number | null>(null);
+  const suppressTapUntilRef = useRef(0);
+  const indexRef = useRef(startIndex);
 
   const current = stories[index];
+
+  useEffect(() => {
+    indexRef.current = index;
+  }, [index]);
 
   // Lock body scroll
   useEffect(() => {
@@ -85,13 +92,23 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
     else v.play().catch(() => {});
   }, [paused, index, current?.media_type]);
 
-  const next = () => {
-    if (index < stories.length - 1) setIndex(index + 1);
+  const next = useCallback(() => {
+    const currentIndex = indexRef.current;
+    if (currentIndex < stories.length - 1) {
+      const nextIndex = currentIndex + 1;
+      indexRef.current = nextIndex;
+      setIndex(nextIndex);
+    }
     else onClose();
-  };
-  const prev = () => {
-    if (index > 0) setIndex(index - 1);
-  };
+  }, [onClose, stories.length]);
+  const prev = useCallback(() => {
+    const currentIndex = indexRef.current;
+    if (currentIndex > 0) {
+      const prevIndex = currentIndex - 1;
+      indexRef.current = prevIndex;
+      setIndex(prevIndex);
+    }
+  }, []);
 
   // Keyboard nav
   useEffect(() => {
@@ -157,8 +174,10 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
 
       {/* Media */}
       <div
-        className="relative h-full w-full max-w-md mx-auto flex items-center justify-center overflow-hidden touch-pan-y"
+        className="relative h-full w-full max-w-md mx-auto flex items-center justify-center overflow-hidden touch-none"
         onPointerDown={(e) => {
+          activePointerIdRef.current = e.pointerId;
+          e.currentTarget.setPointerCapture(e.pointerId);
           dragStartRef.current = { x: e.clientX, y: e.clientY, t: Date.now() };
           dragLockRef.current = null;
           setDragX(0);
@@ -206,11 +225,12 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
             const dt = Date.now() - s.t;
             const velocity = Math.abs(dx) / Math.max(1, dt); // px/ms
             const width = (e.currentTarget as HTMLElement).clientWidth;
-            const threshold = Math.min(60, width * 0.12);
-            if (dx <= -threshold || (dx < -20 && velocity > 0.25)) {
+            const threshold = Math.min(42, width * 0.08);
+            suppressTapUntilRef.current = Date.now() + 350;
+            if (dx <= -threshold || (dx < -12 && velocity > 0.15)) {
               setDragX(0);
               next();
-            } else if (dx >= threshold || (dx > 20 && velocity > 0.25)) {
+            } else if (dx >= threshold || (dx > 12 && velocity > 0.15)) {
               setDragX(0);
               prev();
             } else {
@@ -219,6 +239,10 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
           } else {
             setDragX(0);
           }
+          if (activePointerIdRef.current !== null && e.currentTarget.hasPointerCapture(activePointerIdRef.current)) {
+            e.currentTarget.releasePointerCapture(activePointerIdRef.current);
+          }
+          activePointerIdRef.current = null;
           dragLockRef.current = null;
         }}
         onPointerCancel={() => {
@@ -231,6 +255,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
           setDragX(0);
           dragStartRef.current = null;
           dragLockRef.current = null;
+          activePointerIdRef.current = null;
         }}
       >
         <div
@@ -268,6 +293,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
         <button
           onClick={(e) => {
             e.stopPropagation();
+            if (Date.now() < suppressTapUntilRef.current) return;
             prev();
           }}
           aria-label="Anterior"
@@ -277,6 +303,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
         <button
           onClick={(e) => {
             e.stopPropagation();
+            if (Date.now() < suppressTapUntilRef.current) return;
             next();
           }}
           aria-label="Próximo"
