@@ -15,10 +15,15 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
   const [index, setIndex] = useState(startIndex);
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [dragX, setDragX] = useState(0);
+  const [dragging, setDragging] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const startRef = useRef<number>(Date.now());
   const accumRef = useRef<number>(0);
   const rafRef = useRef<number | null>(null);
+  const dragStartRef = useRef<{ x: number; y: number; t: number } | null>(null);
+  const dragLockRef = useRef<"h" | "v" | null>(null);
+  const longPressTimerRef = useRef<number | null>(null);
 
   const current = stories[index];
 
@@ -152,43 +157,131 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
 
       {/* Media */}
       <div
-        className="relative h-full w-full max-w-md mx-auto flex items-center justify-center"
-        onPointerDown={() => setPaused(true)}
-        onPointerUp={() => setPaused(false)}
-        onPointerLeave={() => setPaused(false)}
+        className="relative h-full w-full max-w-md mx-auto flex items-center justify-center overflow-hidden touch-pan-y"
+        onPointerDown={(e) => {
+          dragStartRef.current = { x: e.clientX, y: e.clientY, t: Date.now() };
+          dragLockRef.current = null;
+          setDragX(0);
+          setDragging(true);
+          // Long press pausa (igual Instagram)
+          if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current);
+          longPressTimerRef.current = window.setTimeout(() => {
+            if (dragLockRef.current !== "h") setPaused(true);
+          }, 200);
+        }}
+        onPointerMove={(e) => {
+          const s = dragStartRef.current;
+          if (!s) return;
+          const dx = e.clientX - s.x;
+          const dy = e.clientY - s.y;
+          if (!dragLockRef.current) {
+            if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+              dragLockRef.current = Math.abs(dx) > Math.abs(dy) ? "h" : "v";
+              if (dragLockRef.current === "h" && longPressTimerRef.current) {
+                window.clearTimeout(longPressTimerRef.current);
+                longPressTimerRef.current = null;
+              }
+            }
+          }
+          if (dragLockRef.current === "h") {
+            // Resistência nas pontas
+            let nx = dx;
+            if ((index === 0 && dx > 0) || (index === stories.length - 1 && dx < 0)) {
+              nx = dx / 3;
+            }
+            setDragX(nx);
+          }
+        }}
+        onPointerUp={(e) => {
+          if (longPressTimerRef.current) {
+            window.clearTimeout(longPressTimerRef.current);
+            longPressTimerRef.current = null;
+          }
+          setPaused(false);
+          const s = dragStartRef.current;
+          dragStartRef.current = null;
+          setDragging(false);
+          if (dragLockRef.current === "h" && s) {
+            const dx = e.clientX - s.x;
+            const dt = Date.now() - s.t;
+            const velocity = Math.abs(dx) / Math.max(1, dt); // px/ms
+            const width = (e.currentTarget as HTMLElement).clientWidth;
+            const threshold = width * 0.2;
+            if (dx <= -threshold || (dx < 0 && velocity > 0.5)) {
+              setDragX(0);
+              next();
+            } else if (dx >= threshold || (dx > 0 && velocity > 0.5)) {
+              setDragX(0);
+              prev();
+            } else {
+              setDragX(0);
+            }
+          } else {
+            setDragX(0);
+          }
+          dragLockRef.current = null;
+        }}
+        onPointerCancel={() => {
+          if (longPressTimerRef.current) {
+            window.clearTimeout(longPressTimerRef.current);
+            longPressTimerRef.current = null;
+          }
+          setPaused(false);
+          setDragging(false);
+          setDragX(0);
+          dragStartRef.current = null;
+          dragLockRef.current = null;
+        }}
       >
-        {current.media_type === "video" ? (
-          <video
-            ref={videoRef}
-            key={current.id}
-            src={current.media_url}
-            autoPlay
-            playsInline
-            onEnded={next}
-            onTimeUpdate={(e) => {
-              const v = e.currentTarget;
-              if (v.duration) setProgress(v.currentTime / v.duration);
-            }}
-            className="max-h-full max-w-full object-contain"
-          />
-        ) : (
-          <img
-            src={current.media_url}
-            alt={current.title}
-            className="max-h-full max-w-full object-contain"
-          />
-        )}
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          style={{
+            transform: `translateX(${dragX}px)`,
+            transition: dragging ? "none" : "transform 200ms ease-out",
+          }}
+        >
+          {current.media_type === "video" ? (
+            <video
+              ref={videoRef}
+              key={current.id}
+              src={current.media_url}
+              autoPlay
+              playsInline
+              onEnded={next}
+              onTimeUpdate={(e) => {
+                const v = e.currentTarget;
+                if (v.duration) setProgress(v.currentTime / v.duration);
+              }}
+              className="max-h-full max-w-full object-contain"
+            />
+          ) : (
+            <img
+              src={current.media_url}
+              alt={current.title}
+              className="max-h-full max-w-full object-contain"
+              draggable={false}
+            />
+          )}
+        </div>
 
-        {/* Tap zones */}
+        {/* Tap zones (não interferem com pointer events do pai) */}
         <button
-          onClick={prev}
+          onClick={(e) => {
+            e.stopPropagation();
+            prev();
+          }}
           aria-label="Anterior"
           className="absolute left-0 top-0 h-full w-1/3 z-10"
+          style={{ pointerEvents: dragging ? "none" : "auto" }}
         />
         <button
-          onClick={next}
+          onClick={(e) => {
+            e.stopPropagation();
+            next();
+          }}
           aria-label="Próximo"
           className="absolute right-0 top-0 h-full w-1/3 z-10"
+          style={{ pointerEvents: dragging ? "none" : "auto" }}
         />
 
         {/* Desktop arrows */}
