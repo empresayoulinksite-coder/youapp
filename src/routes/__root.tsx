@@ -77,6 +77,7 @@ import { AddressProvider } from "@/contexts/AddressContext";
 import { CouponProvider } from "@/contexts/CouponContext";
 import { ProfileGate } from "@/components/ProfileGate";
 import { Toaster } from "@/components/ui/sonner";
+import { WelcomeModal } from "@/components/WelcomeModal";
 
 function RootComponent() {
   const [queryClient] = useState(
@@ -103,6 +104,7 @@ function RootComponent() {
               <CouponProvider>
                 <CartProvider>
                   <Outlet />
+                  <WelcomeModal />
                   <Toaster />
                 </CartProvider>
               </CouponProvider>
