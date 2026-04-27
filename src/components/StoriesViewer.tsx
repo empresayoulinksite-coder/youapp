@@ -206,11 +206,11 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
             const dt = Date.now() - s.t;
             const velocity = Math.abs(dx) / Math.max(1, dt); // px/ms
             const width = (e.currentTarget as HTMLElement).clientWidth;
-            const threshold = width * 0.2;
-            if (dx <= -threshold || (dx < 0 && velocity > 0.5)) {
+            const threshold = Math.min(60, width * 0.12);
+            if (dx <= -threshold || (dx < -20 && velocity > 0.25)) {
               setDragX(0);
               next();
-            } else if (dx >= threshold || (dx > 0 && velocity > 0.5)) {
+            } else if (dx >= threshold || (dx > 20 && velocity > 0.25)) {
               setDragX(0);
               prev();
             } else {
