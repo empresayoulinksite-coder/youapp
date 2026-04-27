@@ -42,7 +42,8 @@ function CouponsPage() {
         .order("expires_at", { ascending: true, nullsFirst: false }),
       supabase
         .from("store_coupons")
-        .select("id, store_id, code, title, description, discount_label, min_order, stores(name, slug, emoji, image_url)"),
+        .select("id, store_id, code, title, description, discount_label, min_order, stores(name, slug, emoji, image_url)")
+        .eq("is_active", true),
     ]).then(([g, s]) => {
       setGlobals((g.data ?? []) as CouponLike[]);
       setStoreCoupons((s.data ?? []) as unknown as StoreCoupon[]);
