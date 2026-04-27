@@ -302,6 +302,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
       >
         {(() => {
           const width = containerRef.current?.clientWidth ?? 1;
+          const halfWidth = width / 2;
           // Ângulo de rotação proporcional ao drag (-90° a +90°)
           const angle = (dragX / width) * 90;
           const slides = [
@@ -314,7 +315,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
               className="absolute inset-0"
               style={{
                 transformStyle: "preserve-3d",
-                transform: `rotateY(${angle}deg)`,
+                transform: `translateZ(-${halfWidth}px) rotateY(${angle}deg)`,
                 transition: dragging ? "none" : "transform 380ms cubic-bezier(0.22, 0.61, 0.36, 1)",
               }}
             >
@@ -325,7 +326,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
                     key={side}
                     className="absolute inset-0 flex items-center justify-center bg-black"
                     style={{
-                      transform: `rotateY(${rotateY}deg) translateZ(${(containerRef.current?.clientWidth ?? 0) / 2}px)`,
+                      transform: `rotateY(${rotateY}deg) translateZ(${halfWidth}px)`,
                       backfaceVisibility: "hidden",
                       WebkitBackfaceVisibility: "hidden",
                     }}
@@ -337,8 +338,12 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
                           key={s.id}
                           src={s.media_url}
                           autoPlay
+                          muted
                           playsInline
+                          preload="auto"
                           onEnded={next}
+                          onLoadedData={resumeCurrentVideo}
+                          onCanPlay={resumeCurrentVideo}
                           onTimeUpdate={(e) => {
                             const v = e.currentTarget;
                             if (v.duration) setProgress(v.currentTime / v.duration);
