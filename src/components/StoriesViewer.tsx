@@ -203,7 +203,8 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
 
       {/* Media */}
       <div
-        className="relative h-full w-full max-w-md mx-auto flex items-center justify-center overflow-hidden touch-none"
+        ref={containerRef}
+        className="relative h-full w-full max-w-md mx-auto overflow-hidden touch-none"
         onPointerDown={(e) => {
           activePointerIdRef.current = e.pointerId;
           e.currentTarget.setPointerCapture(e.pointerId);
