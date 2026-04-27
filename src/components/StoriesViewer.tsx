@@ -174,8 +174,10 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
 
       {/* Media */}
       <div
-        className="relative h-full w-full max-w-md mx-auto flex items-center justify-center overflow-hidden touch-pan-y"
+        className="relative h-full w-full max-w-md mx-auto flex items-center justify-center overflow-hidden touch-none"
         onPointerDown={(e) => {
+          activePointerIdRef.current = e.pointerId;
+          e.currentTarget.setPointerCapture(e.pointerId);
           dragStartRef.current = { x: e.clientX, y: e.clientY, t: Date.now() };
           dragLockRef.current = null;
           setDragX(0);
@@ -223,11 +225,12 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
             const dt = Date.now() - s.t;
             const velocity = Math.abs(dx) / Math.max(1, dt); // px/ms
             const width = (e.currentTarget as HTMLElement).clientWidth;
-            const threshold = Math.min(60, width * 0.12);
-            if (dx <= -threshold || (dx < -20 && velocity > 0.25)) {
+            const threshold = Math.min(42, width * 0.08);
+            suppressTapUntilRef.current = Date.now() + 350;
+            if (dx <= -threshold || (dx < -12 && velocity > 0.15)) {
               setDragX(0);
               next();
-            } else if (dx >= threshold || (dx > 20 && velocity > 0.25)) {
+            } else if (dx >= threshold || (dx > 12 && velocity > 0.15)) {
               setDragX(0);
               prev();
             } else {
@@ -236,6 +239,10 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
           } else {
             setDragX(0);
           }
+          if (activePointerIdRef.current !== null && e.currentTarget.hasPointerCapture(activePointerIdRef.current)) {
+            e.currentTarget.releasePointerCapture(activePointerIdRef.current);
+          }
+          activePointerIdRef.current = null;
           dragLockRef.current = null;
         }}
         onPointerCancel={() => {
@@ -248,6 +255,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
           setDragX(0);
           dragStartRef.current = null;
           dragLockRef.current = null;
+          activePointerIdRef.current = null;
         }}
       >
         <div
