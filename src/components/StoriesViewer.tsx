@@ -300,52 +300,85 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
           activePointerIdRef.current = null;
         }}
       >
-        <div
-          className="absolute inset-0 flex"
-          style={{
-            width: "300%",
-            transform: `translate3d(calc(-33.3333% + ${dragX}px), 0, 0)`,
-            transition: dragging ? "none" : "transform 280ms cubic-bezier(0.22, 0.61, 0.36, 1)",
-          }}
-        >
-          {[stories[index - 1], stories[index], stories[index + 1]].map((s, i) => (
-            <div key={i} className="w-1/3 h-full flex items-center justify-center shrink-0">
-              {s ? (
-                s.media_type === "video" ? (
-                  i === 1 ? (
-                    <video
-                      ref={videoRef}
-                      key={s.id}
-                      src={s.media_url}
-                      autoPlay
-                      playsInline
-                      onEnded={next}
-                      onTimeUpdate={(e) => {
-                        const v = e.currentTarget;
-                        if (v.duration) setProgress(v.currentTime / v.duration);
-                      }}
-                      className="max-h-full max-w-full object-contain"
-                    />
-                  ) : (
-                    <img
-                      src={s.thumbnail_url ?? s.media_url}
-                      alt=""
-                      className="max-h-full max-w-full object-contain opacity-80"
-                      draggable={false}
-                    />
-                  )
-                ) : (
-                  <img
-                    src={s.media_url}
-                    alt={s.title}
-                    className="max-h-full max-w-full object-contain"
-                    draggable={false}
-                  />
-                )
-              ) : null}
+        {(() => {
+          const width = containerRef.current?.clientWidth ?? 1;
+          // Ângulo de rotação proporcional ao drag (-90° a +90°)
+          const angle = (dragX / width) * 90;
+          const slides = [
+            { story: stories[index - 1], rotateY: -90, side: "prev" as const },
+            { story: stories[index], rotateY: 0, side: "current" as const },
+            { story: stories[index + 1], rotateY: 90, side: "next" as const },
+          ];
+          return (
+            <div
+              className="absolute inset-0"
+              style={{
+                transformStyle: "preserve-3d",
+                transform: `rotateY(${-angle}deg)`,
+                transition: dragging ? "none" : "transform 380ms cubic-bezier(0.22, 0.61, 0.36, 1)",
+              }}
+            >
+              {slides.map(({ story: s, rotateY, side }) => {
+                if (!s) return null;
+                return (
+                  <div
+                    key={side}
+                    className="absolute inset-0 flex items-center justify-center bg-black"
+                    style={{
+                      transform: `rotateY(${rotateY}deg) translateZ(${(containerRef.current?.clientWidth ?? 0) / 2}px)`,
+                      backfaceVisibility: "hidden",
+                      WebkitBackfaceVisibility: "hidden",
+                    }}
+                  >
+                    {s.media_type === "video" ? (
+                      side === "current" ? (
+                        <video
+                          ref={videoRef}
+                          key={s.id}
+                          src={s.media_url}
+                          autoPlay
+                          playsInline
+                          onEnded={next}
+                          onTimeUpdate={(e) => {
+                            const v = e.currentTarget;
+                            if (v.duration) setProgress(v.currentTime / v.duration);
+                          }}
+                          className="max-h-full max-w-full object-contain"
+                        />
+                      ) : (
+                        <img
+                          src={s.thumbnail_url ?? s.media_url}
+                          alt=""
+                          className="max-h-full max-w-full object-contain"
+                          draggable={false}
+                        />
+                      )
+                    ) : (
+                      <img
+                        src={s.media_url}
+                        alt={s.title}
+                        className="max-h-full max-w-full object-contain"
+                        draggable={false}
+                      />
+                    )}
+                    {/* Sombra lateral durante rotação para dar profundidade */}
+                    {side !== "current" && (
+                      <div
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                          background:
+                            side === "prev"
+                              ? "linear-gradient(to left, rgba(0,0,0,0) 0%, rgba(0,0,0,0.5) 100%)"
+                              : "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.5) 100%)",
+                        }}
+                      />
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          ))}
-        </div>
+          );
+        })()}
 
         {/* Tap zones (não interferem com pointer events do pai) */}
         <button
