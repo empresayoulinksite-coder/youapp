@@ -39,6 +39,7 @@ function CouponsPage() {
       supabase
         .from("coupons")
         .select("id, code, title, description, discount_type, discount_value, min_order, max_discount, store_ids, expires_at")
+        .eq("is_active", true)
         .order("expires_at", { ascending: true, nullsFirst: false }),
       supabase
         .from("store_coupons")
