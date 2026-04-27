@@ -103,11 +103,21 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
     }
   }, [paused]);
 
+  useEffect(() => {
+    pausedRef.current = paused;
+  }, [paused]);
+
+  useEffect(() => {
+    return () => {
+      if (resumeRafRef.current) cancelAnimationFrame(resumeRafRef.current);
+    };
+  }, []);
+
   // Video handlers
   useEffect(() => {
     const v = videoRef.current;
     if (!v || current?.media_type !== "video") return;
-    if (paused) v.pause();
+    if (pausedRef.current) v.pause();
     else resumeCurrentVideo();
   }, [paused, index, current?.media_type, resumeCurrentVideo]);
 
