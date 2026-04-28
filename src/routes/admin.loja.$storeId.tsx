@@ -30,6 +30,10 @@ import { StoreReelsEditor } from "@/components/StoreReelsEditor";
 import { StoreFeedEditor } from "@/components/StoreFeedEditor";
 import { GymTab } from "@/components/painel/GymTab";
 import { isGymStore } from "@/lib/gym";
+import { AdminProductsEmbedded } from "./admin.produtos";
+import { AdminPizzasEmbedded } from "./admin.pizzas";
+import { AdminServicesEmbedded } from "./admin.servicos";
+import { AdminBookingsEmbedded } from "./admin.agendamentos";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
