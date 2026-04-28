@@ -91,8 +91,7 @@ type SizePrice = {
   is_available: boolean;
 };
 
-function AdminPizzas() {
-  const { storeId: presetStoreId } = Route.useSearch();
+function AdminPizzas({ presetStoreId, embedded = false }: { presetStoreId?: string; embedded?: boolean }) {
   const [storeId, setStoreId] = useState<string>(presetStoreId ?? "");
   const qc = useQueryClient();
 
