@@ -13,6 +13,7 @@ import { Route as SacolaRouteImport } from './routes/sacola'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as PedidosRouteImport } from './routes/pedidos'
 import { Route as PainelRouteImport } from './routes/painel'
+import { Route as MeuTreinoRouteImport } from './routes/meu-treino'
 import { Route as FavoritosRouteImport } from './routes/favoritos'
 import { Route as CuponsRouteImport } from './routes/cupons'
 import { Route as CompletarCadastroRouteImport } from './routes/completar-cadastro'
@@ -57,6 +58,11 @@ const PedidosRoute = PedidosRouteImport.update({
 const PainelRoute = PainelRouteImport.update({
   id: '/painel',
   path: '/painel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MeuTreinoRoute = MeuTreinoRouteImport.update({
+  id: '/meu-treino',
+  path: '/meu-treino',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FavoritosRoute = FavoritosRouteImport.update({
@@ -196,6 +202,7 @@ export interface FileRoutesByFullPath {
   '/completar-cadastro': typeof CompletarCadastroRoute
   '/cupons': typeof CuponsRoute
   '/favoritos': typeof FavoritosRoute
+  '/meu-treino': typeof MeuTreinoRoute
   '/painel': typeof PainelRoute
   '/pedidos': typeof PedidosRoute
   '/perfil': typeof PerfilRoute
@@ -226,6 +233,7 @@ export interface FileRoutesByTo {
   '/completar-cadastro': typeof CompletarCadastroRoute
   '/cupons': typeof CuponsRoute
   '/favoritos': typeof FavoritosRoute
+  '/meu-treino': typeof MeuTreinoRoute
   '/painel': typeof PainelRoute
   '/pedidos': typeof PedidosRoute
   '/perfil': typeof PerfilRoute
@@ -258,6 +266,7 @@ export interface FileRoutesById {
   '/completar-cadastro': typeof CompletarCadastroRoute
   '/cupons': typeof CuponsRoute
   '/favoritos': typeof FavoritosRoute
+  '/meu-treino': typeof MeuTreinoRoute
   '/painel': typeof PainelRoute
   '/pedidos': typeof PedidosRoute
   '/perfil': typeof PerfilRoute
@@ -291,6 +300,7 @@ export interface FileRouteTypes {
     | '/completar-cadastro'
     | '/cupons'
     | '/favoritos'
+    | '/meu-treino'
     | '/painel'
     | '/pedidos'
     | '/perfil'
@@ -321,6 +331,7 @@ export interface FileRouteTypes {
     | '/completar-cadastro'
     | '/cupons'
     | '/favoritos'
+    | '/meu-treino'
     | '/painel'
     | '/pedidos'
     | '/perfil'
@@ -352,6 +363,7 @@ export interface FileRouteTypes {
     | '/completar-cadastro'
     | '/cupons'
     | '/favoritos'
+    | '/meu-treino'
     | '/painel'
     | '/pedidos'
     | '/perfil'
@@ -384,6 +396,7 @@ export interface RootRouteChildren {
   CompletarCadastroRoute: typeof CompletarCadastroRoute
   CuponsRoute: typeof CuponsRoute
   FavoritosRoute: typeof FavoritosRoute
+  MeuTreinoRoute: typeof MeuTreinoRoute
   PainelRoute: typeof PainelRoute
   PedidosRoute: typeof PedidosRoute
   PerfilRoute: typeof PerfilRoute
@@ -422,6 +435,13 @@ declare module '@tanstack/react-router' {
       path: '/painel'
       fullPath: '/painel'
       preLoaderRoute: typeof PainelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/meu-treino': {
+      id: '/meu-treino'
+      path: '/meu-treino'
+      fullPath: '/meu-treino'
+      preLoaderRoute: typeof MeuTreinoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/favoritos': {
@@ -644,6 +664,7 @@ const rootRouteChildren: RootRouteChildren = {
   CompletarCadastroRoute: CompletarCadastroRoute,
   CuponsRoute: CuponsRoute,
   FavoritosRoute: FavoritosRoute,
+  MeuTreinoRoute: MeuTreinoRoute,
   PainelRoute: PainelRoute,
   PedidosRoute: PedidosRoute,
   PerfilRoute: PerfilRoute,

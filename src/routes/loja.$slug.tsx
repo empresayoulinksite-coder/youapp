@@ -14,6 +14,8 @@ import { normalizePaymentList, paymentLabelsFromList } from "@/lib/payment-metho
 import type { PizzaConfigPayload } from "@/components/PizzaBuilderDialog";
 import { StoreReelsSection } from "@/components/StoreReelsSection";
 import { StoreFeedSection } from "@/components/StoreFeedSection";
+import { GymSections } from "@/components/GymSections";
+import { isGymStore } from "@/lib/gym";
 
 // Dialogs pesados — carregados sob demanda quando o usuário abre
 const PizzaBuilderDialog = lazy(() =>
@@ -583,6 +585,7 @@ function StorePage() {
         )}
         {tab === "menu" && isService && (
           <div id="services-list" className="space-y-3">
+            {isGymStore(store.category) && <GymSections storeId={store.id} />}
             {services.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-12">
                 Esta loja ainda não cadastrou serviços.
