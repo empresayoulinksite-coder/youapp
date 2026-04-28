@@ -22,6 +22,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { uploadImage } from "@/lib/upload";
+import { BackToStoreEditor } from "@/components/BackToStoreEditor";
 
 export const Route = createFileRoute("/admin/stories")({
   validateSearch: (search: Record<string, unknown>): { storeId?: string } => ({
@@ -44,6 +45,7 @@ type Story = {
 };
 
 function AdminStories() {
+  const { storeId: presetStoreId } = Route.useSearch();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<Story> | null>(null);
@@ -129,6 +131,7 @@ function AdminStories() {
 
   return (
     <div>
+      <BackToStoreEditor storeId={presetStoreId} />
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Stories</h1>
