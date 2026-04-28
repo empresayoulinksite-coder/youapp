@@ -68,9 +68,8 @@ const STATUS_VARIANT: Record<
   cancelled: "destructive",
 };
 
-function AdminBookings() {
+function AdminBookings({ presetStoreId, embedded = false }: { presetStoreId?: string; embedded?: boolean }) {
   const qc = useQueryClient();
-  const { storeId: presetStoreId } = Route.useSearch();
   const [storeFilter, setStoreFilter] = useState<string>(presetStoreId ?? "all");
   const [tab, setTab] = useState<string>("pending");
 
