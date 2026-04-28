@@ -790,59 +790,65 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
   // ---------- Render ----------
   return (
     <div>
-      <BackToStoreEditor storeId={presetStoreId} />
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold">Vitrine</h1>
-        <p className="text-sm text-muted-foreground">
-          Gerencie categorias, produtos e variações no estilo iFood
-        </p>
-      </div>
+      {!embedded && <BackToStoreEditor storeId={presetStoreId} />}
+      {!embedded && (
+        <div className="mb-4">
+          <h1 className="text-2xl font-bold">Vitrine</h1>
+          <p className="text-sm text-muted-foreground">
+            Gerencie categorias, produtos e variações no estilo iFood
+          </p>
+        </div>
+      )}
 
-      <div className="mb-4 flex gap-2 border-b">
-        {STORE_TYPE_TABS.map((t) => {
-          const active = t.value === storeType;
-          return (
-            <button
-              key={t.value}
-              onClick={() => {
-                setStoreType(t.value);
-                setStoreId("");
-              }}
-              className={
-                "relative px-4 py-2 text-sm font-medium transition-colors " +
-                (active
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground")
-              }
-            >
-              {t.label}
-              {active && (
-                <span className="absolute inset-x-0 -bottom-px h-0.5 bg-primary" />
-              )}
-            </button>
-          );
-        })}
-      </div>
+      {!embedded && (
+        <div className="mb-4 flex gap-2 border-b">
+          {STORE_TYPE_TABS.map((t) => {
+            const active = t.value === storeType;
+            return (
+              <button
+                key={t.value}
+                onClick={() => {
+                  setStoreType(t.value);
+                  setStoreId("");
+                }}
+                className={
+                  "relative px-4 py-2 text-sm font-medium transition-colors " +
+                  (active
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground")
+                }
+              >
+                {t.label}
+                {active && (
+                  <span className="absolute inset-x-0 -bottom-px h-0.5 bg-primary" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
-      <div className="mb-4 max-w-sm">
-        <Label>Loja</Label>
-        <Select value={storeId} onValueChange={setStoreId}>
-          <SelectTrigger>
-            <SelectValue placeholder={
-              stores.length === 0
-                ? `Nenhuma loja ${STORE_TYPE_TABS.find((t) => t.value === storeType)?.label}`
-                : "Escolha uma loja"
-            } />
-          </SelectTrigger>
-          <SelectContent>
-            {stores.map((s) => (
-              <SelectItem key={s.id} value={s.id}>
-                {s.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {!embedded && (
+        <div className="mb-4 max-w-sm">
+          <Label>Loja</Label>
+          <Select value={storeId} onValueChange={setStoreId}>
+            <SelectTrigger>
+              <SelectValue placeholder={
+                stores.length === 0
+                  ? `Nenhuma loja ${STORE_TYPE_TABS.find((t) => t.value === storeType)?.label}`
+                  : "Escolha uma loja"
+              } />
+            </SelectTrigger>
+            <SelectContent>
+              {stores.map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  {s.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {storeId && isPizzeria && (
         <div className="mb-4 flex items-center gap-3 rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-900/40 dark:bg-orange-950/20">
