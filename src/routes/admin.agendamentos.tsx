@@ -24,8 +24,17 @@ export const Route = createFileRoute("/admin/agendamentos")({
   validateSearch: (search: Record<string, unknown>): { storeId?: string } => ({
     storeId: typeof search.storeId === "string" ? search.storeId : undefined,
   }),
-  component: AdminBookings,
+  component: AdminBookingsRoute,
 });
+
+function AdminBookingsRoute() {
+  const { storeId: presetStoreId } = Route.useSearch();
+  return <AdminBookings presetStoreId={presetStoreId} />;
+}
+
+export function AdminBookingsEmbedded({ storeId }: { storeId: string }) {
+  return <AdminBookings presetStoreId={storeId} embedded />;
+}
 
 type BookingRow = {
   id: string;
@@ -59,9 +68,8 @@ const STATUS_VARIANT: Record<
   cancelled: "destructive",
 };
 
-function AdminBookings() {
+function AdminBookings({ presetStoreId, embedded = false }: { presetStoreId?: string; embedded?: boolean }) {
   const qc = useQueryClient();
-  const { storeId: presetStoreId } = Route.useSearch();
   const [storeFilter, setStoreFilter] = useState<string>(presetStoreId ?? "all");
   const [tab, setTab] = useState<string>("pending");
 
@@ -142,27 +150,29 @@ function AdminBookings() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Agendamentos</h1>
-          <p className="text-sm text-muted-foreground">
-            Gerencie os agendamentos das lojas de serviço.
-          </p>
+      {!embedded && (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Agendamentos</h1>
+            <p className="text-sm text-muted-foreground">
+              Gerencie os agendamentos das lojas de serviço.
+            </p>
+          </div>
+          <Select value={storeFilter} onValueChange={setStoreFilter}>
+            <SelectTrigger className="w-full sm:w-64">
+              <SelectValue placeholder="Filtrar por loja" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as lojas</SelectItem>
+              {stores.map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  {s.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <Select value={storeFilter} onValueChange={setStoreFilter}>
-          <SelectTrigger className="w-full sm:w-64">
-            <SelectValue placeholder="Filtrar por loja" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as lojas</SelectItem>
-            {stores.map((s) => (
-              <SelectItem key={s.id} value={s.id}>
-                {s.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      )}
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="grid w-full grid-cols-5">

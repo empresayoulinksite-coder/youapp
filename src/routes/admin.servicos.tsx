@@ -29,8 +29,17 @@ export const Route = createFileRoute("/admin/servicos")({
   validateSearch: (search: Record<string, unknown>): { storeId?: string } => ({
     storeId: typeof search.storeId === "string" ? search.storeId : undefined,
   }),
-  component: AdminServices,
+  component: AdminServicesRoute,
 });
+
+function AdminServicesRoute() {
+  const { storeId: presetStoreId } = Route.useSearch();
+  return <AdminServices presetStoreId={presetStoreId} />;
+}
+
+export function AdminServicesEmbedded({ storeId }: { storeId: string }) {
+  return <AdminServices presetStoreId={storeId} embedded />;
+}
 
 type Service = {
   id: string;
@@ -70,9 +79,8 @@ const empty: Partial<Service> = {
   show_duration: true,
 };
 
-function AdminServices() {
+function AdminServices({ presetStoreId, embedded = false }: { presetStoreId?: string; embedded?: boolean }) {
   const qc = useQueryClient();
-  const { storeId: presetStoreId } = Route.useSearch();
   const [storeId, setStoreId] = useState<string>(presetStoreId ?? "");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<Service> | null>(null);
@@ -259,33 +267,37 @@ function AdminServices() {
 
   return (
     <div>
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold">Serviços</h1>
-        <p className="text-sm text-muted-foreground">
-          Catálogo de serviços oferecidos pelas lojas de agendamento
-        </p>
-      </div>
+      {!embedded && (
+        <div className="mb-4">
+          <h1 className="text-2xl font-bold">Serviços</h1>
+          <p className="text-sm text-muted-foreground">
+            Catálogo de serviços oferecidos pelas lojas de agendamento
+          </p>
+        </div>
+      )}
 
       <div className="mb-4 grid gap-3 sm:grid-cols-2 max-w-2xl">
-        <div>
-          <Label>Loja</Label>
-          <Select value={storeId} onValueChange={setStoreId}>
-            <SelectTrigger>
-              <SelectValue
-                placeholder={
-                  stores.length === 0 ? "Nenhuma loja de serviço" : "Escolha uma loja"
-                }
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {stores.map((s) => (
-                <SelectItem key={s.id} value={s.id}>
-                  {s.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {!embedded && (
+          <div>
+            <Label>Loja</Label>
+            <Select value={storeId} onValueChange={setStoreId}>
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={
+                    stores.length === 0 ? "Nenhuma loja de serviço" : "Escolha uma loja"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {stores.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         {currentStore && (
           <div>
             <Label>Tamanho do slot (min)</Label>

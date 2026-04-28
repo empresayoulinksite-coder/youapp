@@ -33,8 +33,17 @@ export const Route = createFileRoute("/admin/pizzas")({
   validateSearch: (search: Record<string, unknown>): { storeId?: string } => ({
     storeId: typeof search.storeId === "string" ? search.storeId : undefined,
   }),
-  component: AdminPizzas,
+  component: AdminPizzasRoute,
 });
+
+function AdminPizzasRoute() {
+  const { storeId: presetStoreId } = Route.useSearch();
+  return <AdminPizzas presetStoreId={presetStoreId} />;
+}
+
+export function AdminPizzasEmbedded({ storeId }: { storeId: string }) {
+  return <AdminPizzas presetStoreId={storeId} embedded />;
+}
 
 type Store = { id: string; name: string; emoji: string; store_type: string };
 type PizzaSize = {
@@ -82,8 +91,7 @@ type SizePrice = {
   is_available: boolean;
 };
 
-function AdminPizzas() {
-  const { storeId: presetStoreId } = Route.useSearch();
+function AdminPizzas({ presetStoreId, embedded = false }: { presetStoreId?: string; embedded?: boolean }) {
   const [storeId, setStoreId] = useState<string>(presetStoreId ?? "");
   const qc = useQueryClient();
 
@@ -103,30 +111,34 @@ function AdminPizzas() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <PizzaIcon className="h-6 w-6" /> Pizzas
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Configure tamanhos, preços por sabor, bordas e adicionais — estilo iFood.
-        </p>
-      </div>
+      {!embedded && (
+        <div>
+          <h1 className="flex items-center gap-2 text-2xl font-bold">
+            <PizzaIcon className="h-6 w-6" /> Pizzas
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Configure tamanhos, preços por sabor, bordas e adicionais — estilo iFood.
+          </p>
+        </div>
+      )}
 
-      <div className="max-w-md">
-        <Label>Loja</Label>
-        <Select value={storeId} onValueChange={setStoreId}>
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione uma loja" />
-          </SelectTrigger>
-          <SelectContent>
-            {stores.map((s) => (
-              <SelectItem key={s.id} value={s.id}>
-                {s.emoji} {s.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {!embedded && (
+        <div className="max-w-md">
+          <Label>Loja</Label>
+          <Select value={storeId} onValueChange={setStoreId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione uma loja" />
+            </SelectTrigger>
+            <SelectContent>
+              {stores.map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  {s.emoji} {s.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {storeId && selectedStore && (
         <Tabs defaultValue="sizes" className="space-y-4">
