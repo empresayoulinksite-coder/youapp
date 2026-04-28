@@ -245,53 +245,39 @@ function AdminStoreManagePage() {
 
         {(isFood || isEcom) && (
           <TabsContent value="catalog" className="mt-4">
-            <RedirectCard
+            <Section
               title={isFood ? "Cardápio" : "Produtos"}
-              description={
-                isFood
-                  ? "Gerencie categorias, itens, variações e preços do cardápio desta loja."
-                  : "Gerencie categorias, produtos, variações, tamanhos e cores."
-              }
-              to="/admin/produtos"
-              search={{ storeId: store.id }}
-              icon={<UtensilsCrossed className="h-5 w-5" />}
-            />
+              icon={<UtensilsCrossed className="h-4 w-4" />}
+            >
+              <AdminProductsEmbedded storeId={store.id} />
+            </Section>
           </TabsContent>
         )}
 
         {isFood && (
           <TabsContent value="pizzas" className="mt-4">
-            <RedirectCard
-              title="Pizzas"
-              description="Cadastre tamanhos, bordas, adicionais e preços por sabor."
-              to="/admin/pizzas"
-              search={{ storeId: store.id }}
-              icon={<PizzaIcon className="h-5 w-5" />}
-            />
+            <Section title="Pizzas" icon={<PizzaIcon className="h-4 w-4" />}>
+              <AdminPizzasEmbedded storeId={store.id} />
+            </Section>
           </TabsContent>
         )}
 
         {isService && (
           <TabsContent value="services" className="mt-4">
-            <RedirectCard
-              title="Serviços"
-              description="Cadastre os serviços ofertados, com duração, preço e galeria."
-              to="/admin/servicos"
-              search={{ storeId: store.id }}
-              icon={<Briefcase className="h-5 w-5" />}
-            />
+            <Section title="Serviços" icon={<Briefcase className="h-4 w-4" />}>
+              <AdminServicesEmbedded storeId={store.id} />
+            </Section>
           </TabsContent>
         )}
 
         {isService && (
           <TabsContent value="bookings" className="mt-4">
-            <RedirectCard
+            <Section
               title="Agendamentos"
-              description="Aprove, recuse e acompanhe os agendamentos desta loja."
-              to="/admin/agendamentos"
-              search={{ storeId: store.id }}
-              icon={<CalendarDays className="h-5 w-5" />}
-            />
+              icon={<CalendarDays className="h-4 w-4" />}
+            >
+              <AdminBookingsEmbedded storeId={store.id} />
+            </Section>
           </TabsContent>
         )}
 
