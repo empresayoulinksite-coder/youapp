@@ -15,7 +15,7 @@ export const Route = createFileRoute("/meu-treino")({
   component: MyWorkoutPage,
 });
 
-type MemberWithStore = GymMember & { stores: { id: string; name: string; slug: string } | null };
+type MemberWithStore = GymMember & { store: { id: string; name: string; slug: string } | null };
 
 function MyWorkoutPage() {
   const { user, loading: authLoading } = useAuth();
@@ -35,10 +35,22 @@ function MyWorkoutPage() {
     (async () => {
       const { data: members } = await supabase
         .from("gym_members")
-        .select("*, stores(id, name, slug)")
+        .select("*")
         .eq("user_id", user.id)
         .eq("is_active", true);
-      const list = (members ?? []) as MemberWithStore[];
+      const baseList = (members ?? []) as GymMember[];
+
+      // Busca dados das lojas
+      const storeIds = Array.from(new Set(baseList.map((m) => m.store_id)));
+      let storeMap: Record<string, { id: string; name: string; slug: string }> = {};
+      if (storeIds.length) {
+        const { data: stores } = await supabase
+          .from("stores")
+          .select("id, name, slug")
+          .in("id", storeIds);
+        storeMap = Object.fromEntries((stores ?? []).map((s) => [s.id, s]));
+      }
+      const list: MemberWithStore[] = baseList.map((m) => ({ ...m, store: storeMap[m.store_id] ?? null }));
       setMemberships(list);
 
       // Carrega fichas para cada vínculo
