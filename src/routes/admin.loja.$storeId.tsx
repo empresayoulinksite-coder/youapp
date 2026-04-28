@@ -26,7 +26,6 @@ import { StoreHoursEditor } from "@/components/StoreHoursEditor";
 import { StoreWhatsappEditor } from "@/components/StoreWhatsappEditor";
 import { StoreDeliveryEditor } from "@/components/StoreDeliveryEditor";
 import { StoreBenefitsEditor } from "@/components/StoreBenefitsEditor";
-import { StoreLocationAdjuster } from "@/components/StoreLocationAdjuster";
 import { StoreReelsEditor } from "@/components/StoreReelsEditor";
 import { StoreFeedEditor } from "@/components/StoreFeedEditor";
 import { GymTab } from "@/components/painel/GymTab";
@@ -213,8 +212,16 @@ function AdminStoreManagePage() {
             <StoreWhatsappEditor storeId={store.id} initialWhatsapp={store.whatsapp} />
           </Section>
 
-          <Section title="Localização" icon={<MapPin className="h-4 w-4" />}>
-            <StoreLocationAdjuster storeId={store.id} />
+          <Section title="Endereço e localização" icon={<MapPin className="h-4 w-4" />}>
+            <p className="text-sm text-muted-foreground">
+              Edite o endereço, CEP e o pino no mapa pelo botão <strong>editar (lápis)</strong> no card da loja, na lista de Lojas.
+            </p>
+            <Button asChild variant="outline" size="sm" className="mt-3">
+              <Link to="/admin">
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Ir para a lista de lojas
+              </Link>
+            </Button>
           </Section>
 
           <Section title="Entrega" icon={<Truck className="h-4 w-4" />}>
@@ -399,8 +406,7 @@ function RedirectCard({
       <h2 className="text-base font-semibold">{title}</h2>
       <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">{description}</p>
       <Button asChild className="mt-4">
-        {/* @ts-expect-error route search params are dynamic per target */}
-        <Link to={to} search={search}>
+        <Link to={to} search={search as never}>
           Abrir editor
           <ExternalLink className="h-3.5 w-3.5" />
         </Link>

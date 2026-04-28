@@ -39,6 +39,7 @@ import { Route as AdminCuponsRouteImport } from './routes/admin.cupons'
 import { Route as AdminCategoriasHomeRouteImport } from './routes/admin.categorias-home'
 import { Route as AdminCategoriasEcommerceRouteImport } from './routes/admin.categorias-ecommerce'
 import { Route as AdminAgendamentosRouteImport } from './routes/admin.agendamentos'
+import { Route as AdminLojaStoreIdRouteImport } from './routes/admin.loja.$storeId'
 import { Route as AdminAcademiaStoreIdRouteImport } from './routes/admin.academia.$storeId'
 
 const SacolaRoute = SacolaRouteImport.update({
@@ -192,6 +193,11 @@ const AdminAgendamentosRoute = AdminAgendamentosRouteImport.update({
   path: '/agendamentos',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminLojaStoreIdRoute = AdminLojaStoreIdRouteImport.update({
+  id: '/loja/$storeId',
+  path: '/loja/$storeId',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminAcademiaStoreIdRoute = AdminAcademiaStoreIdRouteImport.update({
   id: '/academia/$storeId',
   path: '/academia/$storeId',
@@ -230,6 +236,7 @@ export interface FileRoutesByFullPath {
   '/vitrine/$slug': typeof VitrineSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/academia/$storeId': typeof AdminAcademiaStoreIdRoute
+  '/admin/loja/$storeId': typeof AdminLojaStoreIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -262,6 +269,7 @@ export interface FileRoutesByTo {
   '/vitrine/$slug': typeof VitrineSlugRoute
   '/admin': typeof AdminIndexRoute
   '/admin/academia/$storeId': typeof AdminAcademiaStoreIdRoute
+  '/admin/loja/$storeId': typeof AdminLojaStoreIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -296,6 +304,7 @@ export interface FileRoutesById {
   '/vitrine/$slug': typeof VitrineSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/academia/$storeId': typeof AdminAcademiaStoreIdRoute
+  '/admin/loja/$storeId': typeof AdminLojaStoreIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -331,6 +340,7 @@ export interface FileRouteTypes {
     | '/vitrine/$slug'
     | '/admin/'
     | '/admin/academia/$storeId'
+    | '/admin/loja/$storeId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -363,6 +373,7 @@ export interface FileRouteTypes {
     | '/vitrine/$slug'
     | '/admin'
     | '/admin/academia/$storeId'
+    | '/admin/loja/$storeId'
   id:
     | '__root__'
     | '/'
@@ -396,6 +407,7 @@ export interface FileRouteTypes {
     | '/vitrine/$slug'
     | '/admin/'
     | '/admin/academia/$storeId'
+    | '/admin/loja/$storeId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -631,6 +643,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAgendamentosRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/loja/$storeId': {
+      id: '/admin/loja/$storeId'
+      path: '/loja/$storeId'
+      fullPath: '/admin/loja/$storeId'
+      preLoaderRoute: typeof AdminLojaStoreIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/academia/$storeId': {
       id: '/admin/academia/$storeId'
       path: '/academia/$storeId'
@@ -655,6 +674,7 @@ interface AdminRouteChildren {
   AdminStoriesRoute: typeof AdminStoriesRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminAcademiaStoreIdRoute: typeof AdminAcademiaStoreIdRoute
+  AdminLojaStoreIdRoute: typeof AdminLojaStoreIdRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -671,6 +691,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminStoriesRoute: AdminStoriesRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminAcademiaStoreIdRoute: AdminAcademiaStoreIdRoute,
+  AdminLojaStoreIdRoute: AdminLojaStoreIdRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
