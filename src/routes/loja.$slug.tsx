@@ -592,7 +592,7 @@ function StorePage() {
               </p>
             ) : (
               services.map((s) => {
-                const handleBook = () => {
+                function handleBook() {
                   if (!user) {
                     navigate({ to: "/auth" });
                     return;
@@ -613,7 +613,7 @@ function StorePage() {
                   }
                   setBookingInitialId(s.id);
                   setBookingOpen(true);
-                };
+                }
                 return (
                   <article
                     key={s.id}
