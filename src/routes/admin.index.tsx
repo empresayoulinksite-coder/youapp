@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, UtensilsCrossed, ShoppingBag, Briefcase, Pause, Play, Eye, EyeOff, Dumbbell } from "lucide-react";
+import { Plus, Pencil, Trash2, UtensilsCrossed, ShoppingBag, Briefcase, Pause, Play, Eye, EyeOff, Dumbbell, Settings } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { isGymStore } from "@/lib/gym";
 import { toast } from "sonner";
@@ -358,64 +358,73 @@ function AdminStores() {
                   <p className="text-xs text-muted-foreground">⭐ {s.rating} · {s.delivery_time}</p>
                 </div>
               </div>
-              <div className="mt-3 flex gap-2">
-                <Button
-                  size="sm"
-                  variant={s.is_paused ? "default" : "secondary"}
-                  className="flex-1"
-                  onClick={() => togglePause.mutate({ id: s.id, is_paused: !s.is_paused })}
-                  disabled={togglePause.isPending}
-                >
-                  {s.is_paused ? (
-                    <>
-                      <Play className="h-3 w-3" /> Reabrir
-                    </>
-                  ) : (
-                    <>
-                      <Pause className="h-3 w-3" /> Fechar
-                    </>
-                  )}
+              <div className="mt-3 space-y-2">
+                <Button asChild size="sm" className="w-full">
+                  <Link to="/admin/loja/$storeId" params={{ storeId: s.id }}>
+                    <Settings className="h-3.5 w-3.5" />
+                    Gerenciar loja
+                  </Link>
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setEditing(s);
-                    setOpen(true);
-                  }}
-                >
-                  <Pencil className="h-3 w-3" />
-                </Button>
-                {isGymStore(s.category) && (
+                <div className="flex gap-2">
                   <Button
-                    asChild
+                    size="sm"
+                    variant={s.is_paused ? "default" : "secondary"}
+                    className="flex-1"
+                    onClick={() => togglePause.mutate({ id: s.id, is_paused: !s.is_paused })}
+                    disabled={togglePause.isPending}
+                  >
+                    {s.is_paused ? (
+                      <>
+                        <Play className="h-3 w-3" /> Reabrir
+                      </>
+                    ) : (
+                      <>
+                        <Pause className="h-3 w-3" /> Fechar
+                      </>
+                    )}
+                  </Button>
+                  <Button
                     size="sm"
                     variant="outline"
-                    title="Gerenciar academia (planos, aulas, alunos, treinos)"
+                    title="Editar dados básicos"
+                    onClick={() => {
+                      setEditing(s);
+                      setOpen(true);
+                    }}
                   >
-                    <Link to="/admin/academia/$storeId" params={{ storeId: s.id }}>
-                      <Dumbbell className="h-3 w-3" />
-                    </Link>
+                    <Pencil className="h-3 w-3" />
                   </Button>
-                )}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  title={s.is_hidden ? "Mostrar no app" : "Ocultar do app"}
-                  onClick={() => toggleHidden.mutate({ id: s.id, is_hidden: !s.is_hidden })}
-                  disabled={toggleHidden.isPending}
-                >
-                  {s.is_hidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => {
-                    if (confirm(`Excluir ${s.name}?`)) del.mutate(s.id);
-                  }}
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
+                  {isGymStore(s.category) && (
+                    <Button
+                      asChild
+                      size="sm"
+                      variant="outline"
+                      title="Gerenciar academia (planos, aulas, alunos, treinos)"
+                    >
+                      <Link to="/admin/academia/$storeId" params={{ storeId: s.id }}>
+                        <Dumbbell className="h-3 w-3" />
+                      </Link>
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    title={s.is_hidden ? "Mostrar no app" : "Ocultar do app"}
+                    onClick={() => toggleHidden.mutate({ id: s.id, is_hidden: !s.is_hidden })}
+                    disabled={toggleHidden.isPending}
+                  >
+                    {s.is_hidden ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => {
+                      if (confirm(`Excluir ${s.name}?`)) del.mutate(s.id);
+                    }}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
               </div>
             </div>
           ))}
