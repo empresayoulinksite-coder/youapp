@@ -62,6 +62,9 @@ import { PizzaCategoryWizard } from "@/components/PizzaCategoryWizard";
 import { BulkEditAIDialog } from "@/components/BulkEditAIDialog";
 
 export const Route = createFileRoute("/admin/produtos")({
+  validateSearch: (search: Record<string, unknown>): { storeId?: string } => ({
+    storeId: typeof search.storeId === "string" ? search.storeId : undefined,
+  }),
   component: AdminProducts,
 });
 
@@ -114,8 +117,9 @@ const STORE_TYPE_TABS: { value: StoreType; label: string }[] = [
 
 function AdminProducts() {
   const qc = useQueryClient();
+  const { storeId: presetStoreId } = Route.useSearch();
   const [storeType, setStoreType] = useState<StoreType>("food");
-  const [storeId, setStoreId] = useState<string>("");
+  const [storeId, setStoreId] = useState<string>(presetStoreId ?? "");
   const [search, setSearch] = useState("");
   const [filterCat, setFilterCat] = useState<string>("all");
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
