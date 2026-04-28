@@ -21,6 +21,9 @@ import {
 } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/admin/agendamentos")({
+  validateSearch: (search: Record<string, unknown>): { storeId?: string } => ({
+    storeId: typeof search.storeId === "string" ? search.storeId : undefined,
+  }),
   component: AdminBookings,
 });
 
@@ -58,7 +61,8 @@ const STATUS_VARIANT: Record<
 
 function AdminBookings() {
   const qc = useQueryClient();
-  const [storeFilter, setStoreFilter] = useState<string>("all");
+  const { storeId: presetStoreId } = Route.useSearch();
+  const [storeFilter, setStoreFilter] = useState<string>(presetStoreId ?? "all");
   const [tab, setTab] = useState<string>("pending");
 
   const { data: stores = [] } = useQuery({

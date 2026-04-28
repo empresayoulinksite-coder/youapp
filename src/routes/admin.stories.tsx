@@ -24,6 +24,9 @@ import {
 import { uploadImage } from "@/lib/upload";
 
 export const Route = createFileRoute("/admin/stories")({
+  validateSearch: (search: Record<string, unknown>): { storeId?: string } => ({
+    storeId: typeof search.storeId === "string" ? search.storeId : undefined,
+  }),
   component: AdminStories,
 });
 

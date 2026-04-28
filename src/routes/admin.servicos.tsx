@@ -26,6 +26,9 @@ import {
 import { uploadImage, runWithConcurrency } from "@/lib/upload";
 
 export const Route = createFileRoute("/admin/servicos")({
+  validateSearch: (search: Record<string, unknown>): { storeId?: string } => ({
+    storeId: typeof search.storeId === "string" ? search.storeId : undefined,
+  }),
   component: AdminServices,
 });
 
@@ -69,7 +72,8 @@ const empty: Partial<Service> = {
 
 function AdminServices() {
   const qc = useQueryClient();
-  const [storeId, setStoreId] = useState<string>("");
+  const { storeId: presetStoreId } = Route.useSearch();
+  const [storeId, setStoreId] = useState<string>(presetStoreId ?? "");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<Service> | null>(null);
   const [uploading, setUploading] = useState(false);
