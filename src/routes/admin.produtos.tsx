@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Plus,
@@ -152,6 +152,26 @@ function AdminProducts() {
       return data;
     },
   });
+
+  // Quando chegamos com ?storeId=..., descobrir o store_type da loja para alinhar o filtro
+  useEffect(() => {
+    if (!presetStoreId) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("stores")
+        .select("store_type")
+        .eq("id", presetStoreId)
+        .maybeSingle();
+      if (!cancelled && data?.store_type) {
+        setStoreType(data.store_type as StoreType);
+        setStoreId(presetStoreId);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [presetStoreId]);
 
   const currentStore = stores.find((s) => s.id === storeId);
   const isPizzeria = !!currentStore && (currentStore.is_pizzeria === true || currentStore.category === "Pizza");
