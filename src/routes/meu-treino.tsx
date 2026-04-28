@@ -152,7 +152,7 @@ function MyWorkoutPage() {
         ) : (
           memberships.map((m) => (
             <section key={m.id}>
-              <h2 className="font-bold mb-2">{m.stores?.name ?? "Academia"}</h2>
+              <h2 className="font-bold mb-2">{m.store?.name ?? "Academia"}</h2>
               {(workouts[m.id] ?? []).length === 0 ? (
                 <p className="text-sm text-muted-foreground rounded-xl border bg-card p-4 text-center">
                   Nenhuma ficha cadastrada ainda.
