@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, LogOut, User as UserIcon, Mail, Save, Shield, Store } from "lucide-react";
+import { ArrowLeft, LogOut, User as UserIcon, Mail, Save, Shield, Store, Dumbbell } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsAdmin } from "@/hooks/use-admin";
 import { useIsStoreOwner } from "@/hooks/use-store-owner";
