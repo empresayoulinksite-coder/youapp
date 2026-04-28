@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, UtensilsCrossed, ShoppingBag, Briefcase, Pause, Play, Eye, EyeOff } from "lucide-react";
+import { Plus, Pencil, Trash2, UtensilsCrossed, ShoppingBag, Briefcase, Pause, Play, Eye, EyeOff, Dumbbell } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { isGymStore } from "@/lib/gym";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -384,6 +386,18 @@ function AdminStores() {
                 >
                   <Pencil className="h-3 w-3" />
                 </Button>
+                {isGymStore(s.category) && (
+                  <Button
+                    asChild
+                    size="sm"
+                    variant="outline"
+                    title="Gerenciar academia (planos, aulas, alunos, treinos)"
+                  >
+                    <Link to="/admin/academia/$storeId" params={{ storeId: s.id }}>
+                      <Dumbbell className="h-3 w-3" />
+                    </Link>
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="outline"
