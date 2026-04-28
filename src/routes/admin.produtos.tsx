@@ -125,9 +125,8 @@ const STORE_TYPE_TABS: { value: StoreType; label: string }[] = [
   { value: "service", label: "Serviços" },
 ];
 
-function AdminProducts() {
+function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: string; embedded?: boolean }) {
   const qc = useQueryClient();
-  const { storeId: presetStoreId } = Route.useSearch();
   const [storeType, setStoreType] = useState<StoreType>("food");
   const [storeId, setStoreId] = useState<string>(presetStoreId ?? "");
   const [search, setSearch] = useState("");
