@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { LogOut, Power, LayoutDashboard, Calendar, Scissors, Ticket, Clock3, ArrowLeft, Users, Images } from "lucide-react";
+import { LogOut, Power, LayoutDashboard, Calendar, Scissors, Ticket, Clock3, ArrowLeft, Users, Images, Dumbbell } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,6 +24,8 @@ import { StoreWhatsappEditor } from "@/components/StoreWhatsappEditor";
 import { StoreDeliveryEditor } from "@/components/StoreDeliveryEditor";
 import { StoreBenefitsEditor } from "@/components/StoreBenefitsEditor";
 import { StoreFeedEditor } from "@/components/StoreFeedEditor";
+import { GymTab } from "@/components/painel/GymTab";
+import { isGymStore } from "@/lib/gym";
 
 export const Route = createFileRoute("/painel")({
   component: PainelPage,
@@ -46,7 +48,7 @@ function PainelPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("store_owners")
-        .select("stores(id, name, slot_minutes, whatsapp, is_paused, pickup_enabled, store_type, feed_enabled, booking_mode)")
+        .select("stores(id, name, slot_minutes, whatsapp, is_paused, pickup_enabled, store_type, feed_enabled, booking_mode, category)")
         .eq("user_id", user!.id);
       if (error) throw error;
       return ((data ?? [])
