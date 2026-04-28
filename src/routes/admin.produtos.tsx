@@ -66,8 +66,17 @@ export const Route = createFileRoute("/admin/produtos")({
   validateSearch: (search: Record<string, unknown>): { storeId?: string } => ({
     storeId: typeof search.storeId === "string" ? search.storeId : undefined,
   }),
-  component: AdminProducts,
+  component: AdminProductsRoute,
 });
+
+function AdminProductsRoute() {
+  const { storeId: presetStoreId } = Route.useSearch();
+  return <AdminProducts presetStoreId={presetStoreId} />;
+}
+
+export function AdminProductsEmbedded({ storeId }: { storeId: string }) {
+  return <AdminProducts presetStoreId={storeId} embedded />;
+}
 
 type Variation = {
   id?: string;
