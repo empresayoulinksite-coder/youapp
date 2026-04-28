@@ -79,9 +79,8 @@ const empty: Partial<Service> = {
   show_duration: true,
 };
 
-function AdminServices() {
+function AdminServices({ presetStoreId, embedded = false }: { presetStoreId?: string; embedded?: boolean }) {
   const qc = useQueryClient();
-  const { storeId: presetStoreId } = Route.useSearch();
   const [storeId, setStoreId] = useState<string>(presetStoreId ?? "");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<Service> | null>(null);
