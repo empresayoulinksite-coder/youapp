@@ -436,6 +436,12 @@ function PainelPage() {
               />
             </TabsContent>
           )}
+
+          {isGymStore(currentStore?.category) && storeId && (
+            <TabsContent value="gym" className="mt-4">
+              <GymTab storeId={storeId} />
+            </TabsContent>
+          )}
         </Tabs>
       </main>
     </div>
