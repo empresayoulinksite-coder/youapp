@@ -33,8 +33,17 @@ export const Route = createFileRoute("/admin/pizzas")({
   validateSearch: (search: Record<string, unknown>): { storeId?: string } => ({
     storeId: typeof search.storeId === "string" ? search.storeId : undefined,
   }),
-  component: AdminPizzas,
+  component: AdminPizzasRoute,
 });
+
+function AdminPizzasRoute() {
+  const { storeId: presetStoreId } = Route.useSearch();
+  return <AdminPizzas presetStoreId={presetStoreId} />;
+}
+
+export function AdminPizzasEmbedded({ storeId }: { storeId: string }) {
+  return <AdminPizzas presetStoreId={storeId} embedded />;
+}
 
 type Store = { id: string; name: string; emoji: string; store_type: string };
 type PizzaSize = {
