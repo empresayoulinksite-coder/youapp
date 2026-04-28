@@ -164,6 +164,14 @@ function ProfilePage() {
           </Link>
         )}
 
+        <Link
+          to="/meu-treino"
+          className="w-full bg-card border border-border text-foreground font-semibold py-3 rounded-full flex items-center justify-center gap-2 hover:bg-accent/40"
+        >
+          <Dumbbell className="h-4 w-4" />
+          Meu treino
+        </Link>
+
         <button
           onClick={handleLogout}
           className="w-full bg-card border border-border text-destructive font-semibold py-3 rounded-full flex items-center justify-center gap-2 hover:bg-destructive/5"
