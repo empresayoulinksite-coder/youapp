@@ -251,6 +251,219 @@ export type Database = {
         }
         Relationships: []
       }
+      gym_classes: {
+        Row: {
+          capacity: number | null
+          created_at: string
+          description: string | null
+          ends_at: string
+          id: string
+          instructor: string | null
+          is_active: boolean
+          name: string
+          position: number
+          starts_at: string
+          store_id: string
+          updated_at: string
+          weekday: number
+        }
+        Insert: {
+          capacity?: number | null
+          created_at?: string
+          description?: string | null
+          ends_at: string
+          id?: string
+          instructor?: string | null
+          is_active?: boolean
+          name: string
+          position?: number
+          starts_at: string
+          store_id: string
+          updated_at?: string
+          weekday: number
+        }
+        Update: {
+          capacity?: number | null
+          created_at?: string
+          description?: string | null
+          ends_at?: string
+          id?: string
+          instructor?: string | null
+          is_active?: boolean
+          name?: string
+          position?: number
+          starts_at?: string
+          store_id?: string
+          updated_at?: string
+          weekday?: number
+        }
+        Relationships: []
+      }
+      gym_members: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          is_active: boolean
+          joined_at: string
+          notes: string | null
+          phone: string | null
+          plan_id: string | null
+          store_id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          is_active?: boolean
+          joined_at?: string
+          notes?: string | null
+          phone?: string | null
+          plan_id?: string | null
+          store_id: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          joined_at?: string
+          notes?: string | null
+          phone?: string | null
+          plan_id?: string | null
+          store_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      gym_plans: {
+        Row: {
+          billing_period: string
+          created_at: string
+          description: string | null
+          features: string[]
+          highlight: string | null
+          id: string
+          is_active: boolean
+          name: string
+          position: number
+          price: number
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          billing_period?: string
+          created_at?: string
+          description?: string | null
+          features?: string[]
+          highlight?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          position?: number
+          price?: number
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          billing_period?: string
+          created_at?: string
+          description?: string | null
+          features?: string[]
+          highlight?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          position?: number
+          price?: number
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      gym_workout_exercises: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          position: number
+          reps: string
+          rest_seconds: number | null
+          sets: number
+          updated_at: string
+          workout_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          position?: number
+          reps?: string
+          rest_seconds?: number | null
+          sets?: number
+          updated_at?: string
+          workout_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          position?: number
+          reps?: string
+          rest_seconds?: number | null
+          sets?: number
+          updated_at?: string
+          workout_id?: string
+        }
+        Relationships: []
+      }
+      gym_workouts: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          member_id: string
+          position: number
+          store_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          member_id: string
+          position?: number
+          store_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          member_id?: string
+          position?: number
+          store_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       home_categories: {
         Row: {
           created_at: string
