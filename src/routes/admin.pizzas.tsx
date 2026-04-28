@@ -30,6 +30,9 @@ import {
 } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/admin/pizzas")({
+  validateSearch: (search: Record<string, unknown>): { storeId?: string } => ({
+    storeId: typeof search.storeId === "string" ? search.storeId : undefined,
+  }),
   component: AdminPizzas,
 });
 
@@ -80,7 +83,8 @@ type SizePrice = {
 };
 
 function AdminPizzas() {
-  const [storeId, setStoreId] = useState<string>("");
+  const { storeId: presetStoreId } = Route.useSearch();
+  const [storeId, setStoreId] = useState<string>(presetStoreId ?? "");
   const qc = useQueryClient();
 
   const { data: stores = [] } = useQuery({
