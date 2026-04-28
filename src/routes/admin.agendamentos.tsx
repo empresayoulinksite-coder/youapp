@@ -24,8 +24,17 @@ export const Route = createFileRoute("/admin/agendamentos")({
   validateSearch: (search: Record<string, unknown>): { storeId?: string } => ({
     storeId: typeof search.storeId === "string" ? search.storeId : undefined,
   }),
-  component: AdminBookings,
+  component: AdminBookingsRoute,
 });
+
+function AdminBookingsRoute() {
+  const { storeId: presetStoreId } = Route.useSearch();
+  return <AdminBookings presetStoreId={presetStoreId} />;
+}
+
+export function AdminBookingsEmbedded({ storeId }: { storeId: string }) {
+  return <AdminBookings presetStoreId={storeId} embedded />;
+}
 
 type BookingRow = {
   id: string;
