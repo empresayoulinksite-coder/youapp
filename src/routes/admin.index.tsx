@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, UtensilsCrossed, ShoppingBag, Briefcase, Pause, Play, Eye, EyeOff, Dumbbell, Settings } from "lucide-react";
+import { Plus, Pencil, Trash2, UtensilsCrossed, ShoppingBag, Briefcase, Pause, Play, Eye, EyeOff, Dumbbell, Settings, Search } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { isGymStore } from "@/lib/gym";
 import { toast } from "sonner";
