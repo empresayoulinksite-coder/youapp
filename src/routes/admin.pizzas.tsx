@@ -111,30 +111,34 @@ function AdminPizzas({ presetStoreId, embedded = false }: { presetStoreId?: stri
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <PizzaIcon className="h-6 w-6" /> Pizzas
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Configure tamanhos, preços por sabor, bordas e adicionais — estilo iFood.
-        </p>
-      </div>
+      {!embedded && (
+        <div>
+          <h1 className="flex items-center gap-2 text-2xl font-bold">
+            <PizzaIcon className="h-6 w-6" /> Pizzas
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Configure tamanhos, preços por sabor, bordas e adicionais — estilo iFood.
+          </p>
+        </div>
+      )}
 
-      <div className="max-w-md">
-        <Label>Loja</Label>
-        <Select value={storeId} onValueChange={setStoreId}>
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione uma loja" />
-          </SelectTrigger>
-          <SelectContent>
-            {stores.map((s) => (
-              <SelectItem key={s.id} value={s.id}>
-                {s.emoji} {s.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {!embedded && (
+        <div className="max-w-md">
+          <Label>Loja</Label>
+          <Select value={storeId} onValueChange={setStoreId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione uma loja" />
+            </SelectTrigger>
+            <SelectContent>
+              {stores.map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  {s.emoji} {s.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {storeId && selectedStore && (
         <Tabs defaultValue="sizes" className="space-y-4">
