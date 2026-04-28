@@ -585,7 +585,7 @@ function StorePage() {
         )}
         {tab === "menu" && isService && (
           <div id="services-list" className="space-y-3">
-            {services.length === 0 ? (
+            {isGymStore(store.category) && <GymSections storeId={store.id} />}
               <p className="text-sm text-muted-foreground text-center py-12">
                 Esta loja ainda não cadastrou serviços.
               </p>
