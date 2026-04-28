@@ -29,8 +29,17 @@ export const Route = createFileRoute("/admin/servicos")({
   validateSearch: (search: Record<string, unknown>): { storeId?: string } => ({
     storeId: typeof search.storeId === "string" ? search.storeId : undefined,
   }),
-  component: AdminServices,
+  component: AdminServicesRoute,
 });
+
+function AdminServicesRoute() {
+  const { storeId: presetStoreId } = Route.useSearch();
+  return <AdminServices presetStoreId={presetStoreId} />;
+}
+
+export function AdminServicesEmbedded({ storeId }: { storeId: string }) {
+  return <AdminServices presetStoreId={storeId} embedded />;
+}
 
 type Service = {
   id: string;
