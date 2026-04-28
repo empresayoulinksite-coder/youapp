@@ -330,38 +330,52 @@ function PainelPage() {
         )}
 
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className={`grid w-full ${currentStore?.store_type === "service" ? "grid-cols-7" : "grid-cols-6"}`}>
-            <TabsTrigger value="overview" className="gap-1.5">
-              <LayoutDashboard className="h-4 w-4" />
-              <span className="hidden sm:inline">Resumo</span>
-            </TabsTrigger>
-            <TabsTrigger value="bookings" className="gap-1.5">
-              <Calendar className="h-4 w-4" />
-              <span className="hidden sm:inline">Agenda</span>
-            </TabsTrigger>
-            <TabsTrigger value="customers" className="gap-1.5">
-              <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Clientes</span>
-            </TabsTrigger>
-            <TabsTrigger value="services" className="gap-1.5">
-              <Scissors className="h-4 w-4" />
-              <span className="hidden sm:inline">Serviços</span>
-            </TabsTrigger>
-            <TabsTrigger value="coupons" className="gap-1.5">
-              <Ticket className="h-4 w-4" />
-              <span className="hidden sm:inline">Cupons</span>
-            </TabsTrigger>
-            <TabsTrigger value="hours" className="gap-1.5">
-              <Clock3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Horários</span>
-            </TabsTrigger>
-            {currentStore?.store_type === "service" && (
-              <TabsTrigger value="feed" className="gap-1.5">
-                <Images className="h-4 w-4" />
-                <span className="hidden sm:inline">Feed</span>
-              </TabsTrigger>
-            )}
-          </TabsList>
+          {(() => {
+            const isService = currentStore?.store_type === "service";
+            const isGym = isGymStore(currentStore?.category);
+            const cols = 6 + (isService ? 1 : 0) + (isGym ? 1 : 0);
+            const colsClass: Record<number, string> = { 6: "grid-cols-6", 7: "grid-cols-7", 8: "grid-cols-8" };
+            return (
+              <TabsList className={`grid w-full ${colsClass[cols] ?? "grid-cols-6"}`}>
+                <TabsTrigger value="overview" className="gap-1.5">
+                  <LayoutDashboard className="h-4 w-4" />
+                  <span className="hidden sm:inline">Resumo</span>
+                </TabsTrigger>
+                <TabsTrigger value="bookings" className="gap-1.5">
+                  <Calendar className="h-4 w-4" />
+                  <span className="hidden sm:inline">Agenda</span>
+                </TabsTrigger>
+                <TabsTrigger value="customers" className="gap-1.5">
+                  <Users className="h-4 w-4" />
+                  <span className="hidden sm:inline">Clientes</span>
+                </TabsTrigger>
+                <TabsTrigger value="services" className="gap-1.5">
+                  <Scissors className="h-4 w-4" />
+                  <span className="hidden sm:inline">Serviços</span>
+                </TabsTrigger>
+                <TabsTrigger value="coupons" className="gap-1.5">
+                  <Ticket className="h-4 w-4" />
+                  <span className="hidden sm:inline">Cupons</span>
+                </TabsTrigger>
+                <TabsTrigger value="hours" className="gap-1.5">
+                  <Clock3 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Horários</span>
+                </TabsTrigger>
+                {isService && (
+                  <TabsTrigger value="feed" className="gap-1.5">
+                    <Images className="h-4 w-4" />
+                    <span className="hidden sm:inline">Feed</span>
+                  </TabsTrigger>
+                )}
+                {isGym && (
+                  <TabsTrigger value="gym" className="gap-1.5">
+                    <Dumbbell className="h-4 w-4" />
+                    <span className="hidden sm:inline">Academia</span>
+                  </TabsTrigger>
+                )}
+              </TabsList>
+            );
+          })()}
 
           <TabsContent value="overview" className="mt-4">
             {bookingsLoading ? (
