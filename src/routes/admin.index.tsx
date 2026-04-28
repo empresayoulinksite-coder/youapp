@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, UtensilsCrossed, ShoppingBag, Briefcase, Pause, Play, Eye, EyeOff, Dumbbell, Settings } from "lucide-react";
+import { Plus, Pencil, Trash2, UtensilsCrossed, ShoppingBag, Briefcase, Pause, Play, Eye, EyeOff, Dumbbell, Settings, Search } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { isGymStore } from "@/lib/gym";
 import { toast } from "sonner";
@@ -136,6 +136,7 @@ function AdminStores() {
   const [editing, setEditing] = useState<Partial<Store> | null>(null);
   const [uploading, setUploading] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
+  const [search, setSearch] = useState("");
 
   const { data: stores = [], isLoading } = useQuery({
     queryKey: ["admin-stores"],
@@ -300,12 +301,25 @@ function AdminStores() {
     }
   };
 
+  const normalize = (s: string) =>
+    s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const q = normalize(search.trim());
+  const filteredStores = q
+    ? stores.filter((s) =>
+        [s.name, s.category, s.slug, s.city, s.neighborhood]
+          .filter(Boolean)
+          .some((v) => normalize(String(v)).includes(q)),
+      )
+    : stores;
+
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Lojas</h1>
-          <p className="text-sm text-muted-foreground">{stores.length} cadastradas</p>
+          <p className="text-sm text-muted-foreground">
+            {q ? `${filteredStores.length} de ${stores.length}` : `${stores.length} cadastradas`}
+          </p>
         </div>
         <Button
           onClick={() => {
@@ -317,11 +331,23 @@ function AdminStores() {
         </Button>
       </div>
 
+      <div className="relative mb-4">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar loja por nome, categoria, bairro..."
+          className="pl-9"
+        />
+      </div>
+
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando...</p>
+      ) : filteredStores.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Nenhuma loja encontrada.</p>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {stores.map((s) => (
+          {filteredStores.map((s) => (
             <div key={s.id} className="rounded-lg border bg-background p-3">
               <div className="flex items-start gap-3">
                 {s.image_url ? (
