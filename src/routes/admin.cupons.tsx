@@ -29,6 +29,7 @@ import {
   TabsTrigger,
   TabsContent,
 } from "@/components/ui/tabs";
+import { BackToStoreEditor } from "@/components/BackToStoreEditor";
 
 export const Route = createFileRoute("/admin/cupons")({
   validateSearch: (search: Record<string, unknown>): { storeId?: string } => ({
@@ -63,8 +64,10 @@ type StoreCoupon = {
 };
 
 function AdminCoupons() {
+  const { storeId: presetStoreId } = Route.useSearch();
   return (
     <div>
+      <BackToStoreEditor storeId={presetStoreId} />
       <h1 className="mb-4 text-2xl font-bold">Cupons</h1>
       <Tabs defaultValue="general">
         <TabsList>

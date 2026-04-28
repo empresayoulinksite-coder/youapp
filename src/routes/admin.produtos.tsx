@@ -37,6 +37,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { supabase } from "@/integrations/supabase/client";
+import { BackToStoreEditor } from "@/components/BackToStoreEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -781,6 +782,7 @@ function AdminProducts() {
   // ---------- Render ----------
   return (
     <div>
+      <BackToStoreEditor storeId={presetStoreId} />
       <div className="mb-4">
         <h1 className="text-2xl font-bold">Vitrine</h1>
         <p className="text-sm text-muted-foreground">
