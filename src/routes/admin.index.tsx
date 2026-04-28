@@ -136,6 +136,7 @@ function AdminStores() {
   const [editing, setEditing] = useState<Partial<Store> | null>(null);
   const [uploading, setUploading] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
+  const [search, setSearch] = useState("");
 
   const { data: stores = [], isLoading } = useQuery({
     queryKey: ["admin-stores"],
