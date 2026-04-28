@@ -386,6 +386,18 @@ function AdminStores() {
                 >
                   <Pencil className="h-3 w-3" />
                 </Button>
+                {isGymStore(s.category) && (
+                  <Button
+                    asChild
+                    size="sm"
+                    variant="outline"
+                    title="Gerenciar academia (planos, aulas, alunos, treinos)"
+                  >
+                    <Link to="/admin/academia/$storeId" params={{ storeId: s.id }}>
+                      <Dumbbell className="h-3 w-3" />
+                    </Link>
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="outline"
