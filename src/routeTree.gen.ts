@@ -26,6 +26,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as VitrineSlugRouteImport } from './routes/vitrine.$slug'
 import { Route as ProdutoIdRouteImport } from './routes/produto.$id'
+import { Route as PedidosLojaStoreIdRouteImport } from './routes/pedidos-loja.$storeId'
 import { Route as LojaSlugRouteImport } from './routes/loja.$slug'
 import { Route as CategoriaSlugRouteImport } from './routes/categoria.$slug'
 import { Route as AdminStoriesRouteImport } from './routes/admin.stories'
@@ -125,6 +126,11 @@ const VitrineSlugRoute = VitrineSlugRouteImport.update({
 const ProdutoIdRoute = ProdutoIdRouteImport.update({
   id: '/produto/$id',
   path: '/produto/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PedidosLojaStoreIdRoute = PedidosLojaStoreIdRouteImport.update({
+  id: '/pedidos-loja/$storeId',
+  path: '/pedidos-loja/$storeId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LojaSlugRoute = LojaSlugRouteImport.update({
@@ -232,6 +238,7 @@ export interface FileRoutesByFullPath {
   '/admin/stories': typeof AdminStoriesRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/loja/$slug': typeof LojaSlugRoute
+  '/pedidos-loja/$storeId': typeof PedidosLojaStoreIdRoute
   '/produto/$id': typeof ProdutoIdRoute
   '/vitrine/$slug': typeof VitrineSlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -265,6 +272,7 @@ export interface FileRoutesByTo {
   '/admin/stories': typeof AdminStoriesRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/loja/$slug': typeof LojaSlugRoute
+  '/pedidos-loja/$storeId': typeof PedidosLojaStoreIdRoute
   '/produto/$id': typeof ProdutoIdRoute
   '/vitrine/$slug': typeof VitrineSlugRoute
   '/admin': typeof AdminIndexRoute
@@ -300,6 +308,7 @@ export interface FileRoutesById {
   '/admin/stories': typeof AdminStoriesRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/loja/$slug': typeof LojaSlugRoute
+  '/pedidos-loja/$storeId': typeof PedidosLojaStoreIdRoute
   '/produto/$id': typeof ProdutoIdRoute
   '/vitrine/$slug': typeof VitrineSlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -336,6 +345,7 @@ export interface FileRouteTypes {
     | '/admin/stories'
     | '/categoria/$slug'
     | '/loja/$slug'
+    | '/pedidos-loja/$storeId'
     | '/produto/$id'
     | '/vitrine/$slug'
     | '/admin/'
@@ -369,6 +379,7 @@ export interface FileRouteTypes {
     | '/admin/stories'
     | '/categoria/$slug'
     | '/loja/$slug'
+    | '/pedidos-loja/$storeId'
     | '/produto/$id'
     | '/vitrine/$slug'
     | '/admin'
@@ -403,6 +414,7 @@ export interface FileRouteTypes {
     | '/admin/stories'
     | '/categoria/$slug'
     | '/loja/$slug'
+    | '/pedidos-loja/$storeId'
     | '/produto/$id'
     | '/vitrine/$slug'
     | '/admin/'
@@ -427,6 +439,7 @@ export interface RootRouteChildren {
   SacolaRoute: typeof SacolaRoute
   CategoriaSlugRoute: typeof CategoriaSlugRoute
   LojaSlugRoute: typeof LojaSlugRoute
+  PedidosLojaStoreIdRoute: typeof PedidosLojaStoreIdRoute
   ProdutoIdRoute: typeof ProdutoIdRoute
   VitrineSlugRoute: typeof VitrineSlugRoute
 }
@@ -550,6 +563,13 @@ declare module '@tanstack/react-router' {
       path: '/produto/$id'
       fullPath: '/produto/$id'
       preLoaderRoute: typeof ProdutoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pedidos-loja/$storeId': {
+      id: '/pedidos-loja/$storeId'
+      path: '/pedidos-loja/$storeId'
+      fullPath: '/pedidos-loja/$storeId'
+      preLoaderRoute: typeof PedidosLojaStoreIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/loja/$slug': {
@@ -713,6 +733,7 @@ const rootRouteChildren: RootRouteChildren = {
   SacolaRoute: SacolaRoute,
   CategoriaSlugRoute: CategoriaSlugRoute,
   LojaSlugRoute: LojaSlugRoute,
+  PedidosLojaStoreIdRoute: PedidosLojaStoreIdRoute,
   ProdutoIdRoute: ProdutoIdRoute,
   VitrineSlugRoute: VitrineSlugRoute,
 }

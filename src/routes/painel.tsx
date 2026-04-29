@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { LogOut, Power, LayoutDashboard, Calendar, Scissors, Ticket, Clock3, ArrowLeft, Users, Images, Dumbbell } from "lucide-react";
+import { LogOut, Power, LayoutDashboard, Calendar, Scissors, Ticket, Clock3, ArrowLeft, Users, Images, Dumbbell, ListOrdered, Maximize2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,6 +26,7 @@ import { StoreBenefitsEditor } from "@/components/StoreBenefitsEditor";
 import { StoreFeedEditor } from "@/components/StoreFeedEditor";
 import { GymTab } from "@/components/painel/GymTab";
 import { isGymStore } from "@/lib/gym";
+import { OrdersManager } from "@/components/painel/OrdersManager";
 
 export const Route = createFileRoute("/painel")({
   component: PainelPage,
@@ -333,10 +334,17 @@ function PainelPage() {
           {(() => {
             const isService = currentStore?.store_type === "service";
             const isGym = isGymStore(currentStore?.category);
-            const cols = 6 + (isService ? 1 : 0) + (isGym ? 1 : 0);
-            const colsClass: Record<number, string> = { 6: "grid-cols-6", 7: "grid-cols-7", 8: "grid-cols-8" };
+            const isFoodOrEcom = currentStore?.store_type === "food" || currentStore?.store_type === "ecommerce";
+            const cols = 6 + (isService ? 1 : 0) + (isGym ? 1 : 0) + (isFoodOrEcom ? 1 : 0);
+            const colsClass: Record<number, string> = { 6: "grid-cols-6", 7: "grid-cols-7", 8: "grid-cols-8", 9: "grid-cols-9" };
             return (
               <TabsList className={`grid w-full ${colsClass[cols] ?? "grid-cols-6"}`}>
+                {isFoodOrEcom && (
+                  <TabsTrigger value="orders" className="gap-1.5">
+                    <ListOrdered className="h-4 w-4" />
+                    <span className="hidden sm:inline">Pedidos</span>
+                  </TabsTrigger>
+                )}
                 <TabsTrigger value="overview" className="gap-1.5">
                   <LayoutDashboard className="h-4 w-4" />
                   <span className="hidden sm:inline">Resumo</span>
@@ -376,6 +384,20 @@ function PainelPage() {
               </TabsList>
             );
           })()}
+
+          {storeId && (currentStore?.store_type === "food" || currentStore?.store_type === "ecommerce") && (
+            <TabsContent value="orders" className="mt-4">
+              <div className="mb-3 flex justify-end">
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/pedidos-loja/$storeId" params={{ storeId }}>
+                    <Maximize2 className="h-3.5 w-3.5" />
+                    Abrir em tela cheia
+                  </Link>
+                </Button>
+              </div>
+              <OrdersManager storeId={storeId} />
+            </TabsContent>
+          )}
 
           <TabsContent value="overview" className="mt-4">
             {bookingsLoading ? (

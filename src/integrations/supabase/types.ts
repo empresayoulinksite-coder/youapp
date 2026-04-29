@@ -826,13 +826,19 @@ export type Database = {
       }
       orders: {
         Row: {
+          accepted_at: string | null
+          cancelled_at: string | null
           created_at: string
           customer_notes: string | null
+          delivered_at: string | null
           delivery_address: string | null
           delivery_fee: number
+          delivery_type: string
           discount: number
           id: string
+          order_number: number | null
           payment_method: string | null
+          ready_at: string | null
           status: string
           store_emoji: string | null
           store_id: string
@@ -846,13 +852,19 @@ export type Database = {
           whatsapp_message: string
         }
         Insert: {
+          accepted_at?: string | null
+          cancelled_at?: string | null
           created_at?: string
           customer_notes?: string | null
+          delivered_at?: string | null
           delivery_address?: string | null
           delivery_fee?: number
+          delivery_type?: string
           discount?: number
           id?: string
+          order_number?: number | null
           payment_method?: string | null
+          ready_at?: string | null
           status?: string
           store_emoji?: string | null
           store_id: string
@@ -866,13 +878,19 @@ export type Database = {
           whatsapp_message: string
         }
         Update: {
+          accepted_at?: string | null
+          cancelled_at?: string | null
           created_at?: string
           customer_notes?: string | null
+          delivered_at?: string | null
           delivery_address?: string | null
           delivery_fee?: number
+          delivery_type?: string
           discount?: number
           id?: string
+          order_number?: number | null
           payment_method?: string | null
+          ready_at?: string | null
           status?: string
           store_emoji?: string | null
           store_id?: string

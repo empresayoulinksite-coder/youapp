@@ -18,8 +18,11 @@ import {
   CalendarDays,
   Ticket,
   Dumbbell,
+  ListOrdered,
+  Maximize2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { OrdersManager } from "@/components/painel/OrdersManager";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { StoreHoursEditor } from "@/components/StoreHoursEditor";
@@ -162,6 +165,12 @@ function AdminStoreManagePage() {
               Horários
             </TabsTrigger>
             {(isFood || isEcom) && (
+              <TabsTrigger value="orders" className="gap-1.5">
+                <ListOrdered className="h-4 w-4" />
+                Pedidos
+              </TabsTrigger>
+            )}
+            {(isFood || isEcom) && (
               <TabsTrigger value="catalog" className="gap-1.5">
                 <UtensilsCrossed className="h-4 w-4" />
                 {isFood ? "Cardápio" : "Produtos"}
@@ -242,6 +251,25 @@ function AdminStoreManagePage() {
             <StoreHoursEditor storeId={store.id} />
           </Section>
         </TabsContent>
+
+        {(isFood || isEcom) && (
+          <TabsContent value="orders" className="mt-4">
+            <Section
+              title="Gestor de pedidos"
+              icon={<ListOrdered className="h-4 w-4" />}
+            >
+              <div className="mb-3 flex justify-end">
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/pedidos-loja/$storeId" params={{ storeId: store.id }}>
+                    <Maximize2 className="h-3.5 w-3.5" />
+                    Abrir em tela cheia
+                  </Link>
+                </Button>
+              </div>
+              <OrdersManager storeId={store.id} />
+            </Section>
+          </TabsContent>
+        )}
 
         {(isFood || isEcom) && (
           <TabsContent value="catalog" className="mt-4">
