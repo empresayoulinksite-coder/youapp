@@ -83,7 +83,7 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
             <img
               src={youlinkLogo}
               alt="YouLink"
-              className="relative h-24 w-24 object-contain animate-pulse"
+              className="relative h-40 w-40 object-contain animate-pulse"
               style={{ animationDuration: "1.8s" }}
             />
           </div>
