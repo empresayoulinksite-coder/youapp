@@ -699,6 +699,54 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          emoji: string | null
+          id: string
+          image_url: string | null
+          is_read: boolean
+          link: string | null
+          order_id: string | null
+          post_id: string | null
+          store_id: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          image_url?: string | null
+          is_read?: boolean
+          link?: string | null
+          order_id?: string | null
+          post_id?: string | null
+          store_id?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          image_url?: string | null
+          is_read?: boolean
+          link?: string | null
+          order_id?: string | null
+          post_id?: string | null
+          store_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
