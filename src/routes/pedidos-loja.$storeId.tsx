@@ -36,6 +36,12 @@ import { openWhatsapp } from "@/lib/whatsapp";
 import { StoreStaffEditor } from "@/components/StoreStaffEditor";
 
 export const Route = createFileRoute("/pedidos-loja/$storeId")({
+  head: () => ({
+    meta: [
+      { title: "Gestor de pedidos — Youapp" },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
   component: AdminOrdersPage,
 });
 
