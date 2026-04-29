@@ -38,6 +38,7 @@ function PainelPage() {
   const qc = useQueryClient();
   const [storeId, setStoreId] = useState<string | null>(null);
   const [tab, setTab] = useState("overview");
+  const [showOrdersManager, setShowOrdersManager] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/auth" });
