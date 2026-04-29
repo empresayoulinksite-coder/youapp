@@ -512,7 +512,7 @@ function StorePage() {
             </Sheet>
             <div className="flex-1 overflow-x-auto no-scrollbar">
               <div className="flex gap-5 px-4 py-3 whitespace-nowrap">
-                {visibleCategories.map((c) => {
+                {[{ id: ALL_CATEGORIES_ID, name: "Todos" }, ...visibleCategories].map((c) => {
                   const active = activeCategoryId === c.id;
                   return (
                     <button
