@@ -106,6 +106,7 @@ function RootComponent() {
                 <CartProvider>
                   <Outlet />
                   <WelcomeModal />
+                  <GlobalNotificationsListener />
                   <Toaster />
                 </CartProvider>
               </CouponProvider>
