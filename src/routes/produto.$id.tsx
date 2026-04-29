@@ -119,11 +119,14 @@ export const Route = createFileRoute("/produto/$id")({
       })),
     };
   },
-  errorComponent: ({ error }) => (
-    <div className="min-h-screen flex items-center justify-center p-6 text-sm text-muted-foreground">
-      {error.message}
-    </div>
-  ),
+  errorComponent: ({ error }) => {
+    if (typeof window !== "undefined") console.error(error);
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 text-sm text-muted-foreground">
+        Algo deu errado. Tente novamente.
+      </div>
+    );
+  },
   notFoundComponent: () => (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 gap-3">
       <p className="font-semibold">Produto não encontrado</p>

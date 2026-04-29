@@ -138,10 +138,11 @@ export const Route = createFileRoute("/loja/$slug")({
   gcTime: 5 * 60_000,
   errorComponent: ({ error }) => {
     const router = useRouter();
+    if (typeof window !== "undefined") console.error(error);
     return (
       <div className="min-h-screen flex items-center justify-center p-6 text-center">
         <div>
-          <p className="text-sm text-muted-foreground mb-3">{error.message}</p>
+          <p className="text-sm text-muted-foreground mb-3">Algo deu errado. Tente novamente.</p>
           <button onClick={() => router.invalidate()} className="text-brand font-semibold">Tentar novamente</button>
         </div>
       </div>
@@ -1234,10 +1235,12 @@ function ReviewsTab({ storeId, reviews: initial }: { storeId: string; reviews: R
   const submit = async () => {
     if (!user) return;
     setSubmitting(true);
-    const authorName = (user.user_metadata?.display_name as string) || user.email?.split("@")[0] || "Cliente";
+    const rawAuthor = (user.user_metadata?.display_name as string) || user.email?.split("@")[0] || "Cliente";
+    const authorName = rawAuthor.trim().slice(0, 100);
+    const trimmedComment = comment.trim().slice(0, 1000);
     const { data, error } = await supabase
       .from("store_reviews")
-      .insert({ store_id: storeId, user_id: user.id, author_name: authorName, rating, comment: comment || null })
+      .insert({ store_id: storeId, user_id: user.id, author_name: authorName, rating, comment: trimmedComment || null })
       .select()
       .single();
     if (!error && data) {
@@ -1264,7 +1267,8 @@ function ReviewsTab({ storeId, reviews: initial }: { storeId: string; reviews: R
             </div>
             <textarea
               value={comment}
-              onChange={(e) => setComment(e.target.value)}
+              onChange={(e) => setComment(e.target.value.slice(0, 1000))}
+              maxLength={1000}
               placeholder="Conte como foi sua experiência..."
               className="w-full rounded-lg border border-border bg-surface text-sm p-3 min-h-[80px]"
             />
