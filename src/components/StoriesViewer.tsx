@@ -256,7 +256,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
       >
         <div
           className="absolute inset-0 flex items-center justify-center bg-black"
-          onPointerDown={() => setStoryPaused(true)}
+          onPointerDown={() => { setStoryPaused(true); unmuteAfterInteraction(); }}
           onPointerUp={() => setStoryPaused(false)}
           onPointerLeave={() => setStoryPaused(false)}
           onPointerCancel={() => setStoryPaused(false)}
