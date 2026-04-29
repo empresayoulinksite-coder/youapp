@@ -36,6 +36,7 @@ import {
 } from "@/lib/order-status";
 import { openWhatsapp } from "@/lib/whatsapp";
 import { StoreStaffEditor } from "@/components/StoreStaffEditor";
+import { KanbanColumnTimes, type ColumnTimes } from "@/components/KanbanColumnTimes";
 
 export const Route = createFileRoute("/pedidos-loja/$storeId")({
   head: () => ({
@@ -183,7 +184,9 @@ function AdminOrdersPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("stores")
-        .select("id, name, slug, whatsapp, image_url, emoji, store_type")
+        .select(
+          "id, name, slug, whatsapp, image_url, emoji, store_type, auto_accept_orders, time_analise_balcao_min, time_analise_balcao_max, time_analise_delivery_min, time_analise_delivery_max, time_producao_balcao_min, time_producao_balcao_max, time_producao_delivery_min, time_producao_delivery_max, time_pronto_balcao_min, time_pronto_balcao_max, time_pronto_delivery_min, time_pronto_delivery_max",
+        )
         .eq("id", storeId)
         .maybeSingle();
       if (error) throw error;
@@ -378,6 +381,33 @@ function AdminOrdersPage() {
   }
 
   const canManageStaff = !!access.isOwner || !!access.isAdmin;
+  const canEditStore = !!access.isOwner || !!access.isAdmin;
+
+  function timesFor(status: "em_analise" | "em_producao" | "pronto"): ColumnTimes {
+    const s = store as any;
+    if (status === "em_analise") {
+      return {
+        balcao_min: s.time_analise_balcao_min ?? 0,
+        balcao_max: s.time_analise_balcao_max ?? 0,
+        delivery_min: s.time_analise_delivery_min ?? 0,
+        delivery_max: s.time_analise_delivery_max ?? 0,
+      };
+    }
+    if (status === "em_producao") {
+      return {
+        balcao_min: s.time_producao_balcao_min ?? 0,
+        balcao_max: s.time_producao_balcao_max ?? 0,
+        delivery_min: s.time_producao_delivery_min ?? 0,
+        delivery_max: s.time_producao_delivery_max ?? 0,
+      };
+    }
+    return {
+      balcao_min: s.time_pronto_balcao_min ?? 0,
+      balcao_max: s.time_pronto_balcao_max ?? 0,
+      delivery_min: s.time_pronto_delivery_min ?? 0,
+      delivery_max: s.time_pronto_delivery_max ?? 0,
+    };
+  }
 
   return (
     <div>
@@ -466,6 +496,18 @@ function AdminOrdersPage() {
                   headerBg={col.headerBg}
                   columnBg={col.columnBg}
                   count={grouped[col.id]?.length ?? 0}
+                  headerExtra={
+                    col.id !== "entregue" ? (
+                      <KanbanColumnTimes
+                        storeId={storeId}
+                        status={col.id}
+                        times={timesFor(col.id)}
+                        autoAccept={(store as any).auto_accept_orders}
+                        showAutoAccept={col.id === "em_analise"}
+                        canEdit={canEditStore}
+                      />
+                    ) : null
+                  }
                 >
                   {(grouped[col.id] ?? []).length === 0 ? (
                     <p className="text-center text-xs text-white/80 py-8 px-2">
@@ -506,12 +548,14 @@ function KanbanColumn({
   headerBg,
   columnBg,
   count,
+  headerExtra,
   children,
 }: {
   title: string;
   headerBg: string;
   columnBg: string;
   count: number;
+  headerExtra?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -520,6 +564,7 @@ function KanbanColumn({
         <span className="text-sm font-bold">{title}</span>
         <span className="text-sm font-bold">{count}</span>
       </div>
+      {headerExtra}
       <div className="flex-1 space-y-2 p-2 overflow-y-auto">{children}</div>
     </div>
   );

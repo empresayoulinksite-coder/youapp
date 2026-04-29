@@ -1510,6 +1510,7 @@ export type Database = {
         Row: {
           about: string | null
           address: string | null
+          auto_accept_orders: boolean
           benefit_delivery_enabled: boolean
           benefit_delivery_subtitle: string
           benefit_delivery_title: string
@@ -1553,12 +1554,25 @@ export type Database = {
           slot_minutes: number
           slug: string
           store_type: string
+          time_analise_balcao_max: number
+          time_analise_balcao_min: number
+          time_analise_delivery_max: number
+          time_analise_delivery_min: number
+          time_producao_balcao_max: number
+          time_producao_balcao_min: number
+          time_producao_delivery_max: number
+          time_producao_delivery_min: number
+          time_pronto_balcao_max: number
+          time_pronto_balcao_min: number
+          time_pronto_delivery_max: number
+          time_pronto_delivery_min: number
           updated_at: string
           whatsapp: string | null
         }
         Insert: {
           about?: string | null
           address?: string | null
+          auto_accept_orders?: boolean
           benefit_delivery_enabled?: boolean
           benefit_delivery_subtitle?: string
           benefit_delivery_title?: string
@@ -1602,12 +1616,25 @@ export type Database = {
           slot_minutes?: number
           slug: string
           store_type?: string
+          time_analise_balcao_max?: number
+          time_analise_balcao_min?: number
+          time_analise_delivery_max?: number
+          time_analise_delivery_min?: number
+          time_producao_balcao_max?: number
+          time_producao_balcao_min?: number
+          time_producao_delivery_max?: number
+          time_producao_delivery_min?: number
+          time_pronto_balcao_max?: number
+          time_pronto_balcao_min?: number
+          time_pronto_delivery_max?: number
+          time_pronto_delivery_min?: number
           updated_at?: string
           whatsapp?: string | null
         }
         Update: {
           about?: string | null
           address?: string | null
+          auto_accept_orders?: boolean
           benefit_delivery_enabled?: boolean
           benefit_delivery_subtitle?: string
           benefit_delivery_title?: string
@@ -1651,6 +1678,18 @@ export type Database = {
           slot_minutes?: number
           slug?: string
           store_type?: string
+          time_analise_balcao_max?: number
+          time_analise_balcao_min?: number
+          time_analise_delivery_max?: number
+          time_analise_delivery_min?: number
+          time_producao_balcao_max?: number
+          time_producao_balcao_min?: number
+          time_producao_delivery_max?: number
+          time_producao_delivery_min?: number
+          time_pronto_balcao_max?: number
+          time_pronto_balcao_min?: number
+          time_pronto_delivery_max?: number
+          time_pronto_delivery_min?: number
           updated_at?: string
           whatsapp?: string | null
         }
