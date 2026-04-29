@@ -548,12 +548,14 @@ function KanbanColumn({
   headerBg,
   columnBg,
   count,
+  headerExtra,
   children,
 }: {
   title: string;
   headerBg: string;
   columnBg: string;
   count: number;
+  headerExtra?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -562,6 +564,7 @@ function KanbanColumn({
         <span className="text-sm font-bold">{title}</span>
         <span className="text-sm font-bold">{count}</span>
       </div>
+      {headerExtra}
       <div className="flex-1 space-y-2 p-2 overflow-y-auto">{children}</div>
     </div>
   );
