@@ -77,24 +77,6 @@ interface MenuItemRow {
 }
 
 export const Route = createFileRoute("/")({
-  loader: async () => {
-    const { data, error } = await supabase
-      .from("stores")
-      .select("id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, delivery_enabled, promo, neighborhood, city, address, cep, lat, lng")
-      .eq("is_hidden", false)
-      .order("name");
-    if (error) throw error;
-    const stores = (data ?? []) as StoreRow[];
-    return { stores };
-  },
-  // Mantém o resultado do loader "fresco" por 60s ao navegar entre páginas
-  staleTime: 60_000,
-  gcTime: 5 * 60_000,
-  errorComponent: ({ error }) => (
-    <div className="min-h-screen flex items-center justify-center p-6 text-center text-sm text-muted-foreground">
-      {error.message}
-    </div>
-  ),
   head: () => ({
     meta: [
       { title: "Youapp" },
