@@ -15,8 +15,8 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
   const [index, setIndex] = useState(startIndex);
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [muted, setMuted] = useState(true);
-  const [hasInteracted, setHasInteracted] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(true);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const startRef = useRef<number>(Date.now());
@@ -31,6 +31,17 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
   const setStoryPaused = useCallback((value: boolean) => {
     pausedRef.current = value;
     setPaused(value);
+  }, []);
+
+  const unmuteAfterInteraction = useCallback(() => {
+    setHasInteracted(true);
+    const v = videoRef.current;
+    if (v) {
+      v.muted = false;
+      v.volume = 1;
+      v.play().catch(() => {});
+    }
+    setMuted(false);
   }, []);
 
   const resumeCurrentVideo = useCallback(() => {
@@ -245,7 +256,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
       >
         <div
           className="absolute inset-0 flex items-center justify-center bg-black"
-          onPointerDown={() => setStoryPaused(true)}
+          onPointerDown={() => { setStoryPaused(true); unmuteAfterInteraction(); }}
           onPointerUp={() => setStoryPaused(false)}
           onPointerLeave={() => setStoryPaused(false)}
           onPointerCancel={() => setStoryPaused(false)}
