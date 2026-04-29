@@ -48,19 +48,32 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
     const video = videoRef.current;
     if (!video || current?.media_type !== "video") return;
 
-    // iOS/Safari só permite autoplay quando muted. Só tentamos com som
-    // depois que o usuário interagiu (clicou no botão de áudio).
-    const shouldMute = !hasInteracted;
-    video.muted = shouldMute;
-    if (!shouldMute) video.volume = 1;
-    setMuted(shouldMute);
-    video.play().catch(() => {
-      // Fallback: força mudo para garantir reprodução
-      video.muted = true;
-      setMuted(true);
-      video.play().catch(() => {});
-    });
-  }, [current?.media_type, hasInteracted]);
+    // Sempre garante reprodução: começa muted (autoplay sempre permitido)
+    // e tenta desmutar logo em seguida.
+    video.muted = true;
+    const playPromise = video.play();
+    Promise.resolve(playPromise)
+      .then(() => {
+        // Tenta ativar som
+        video.muted = false;
+        video.volume = 1;
+        const p2 = video.play();
+        Promise.resolve(p2)
+          .then(() => setMuted(false))
+          .catch(() => {
+            // Som bloqueado; mantém vídeo rodando mudo
+            video.muted = true;
+            setMuted(true);
+            video.play().catch(() => {});
+          });
+      })
+      .catch(() => {
+        // Mesmo o play mudo falhou; tenta de novo
+        video.muted = true;
+        setMuted(true);
+        video.play().catch(() => {});
+      });
+  }, [current?.media_type]);
 
   useEffect(() => {
     indexRef.current = index;
@@ -80,18 +93,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
     setProgress(0);
     accumRef.current = 0;
     startRef.current = Date.now();
-    const v = videoRef.current;
-    if (v) {
-      const shouldMute = !hasInteracted;
-      v.muted = shouldMute;
-      if (!shouldMute) v.volume = 1;
-      v.play().catch(() => {
-        v.muted = true;
-        setMuted(true);
-        v.play().catch(() => {});
-      });
-    }
-  }, [index, hasInteracted]);
+  }, [index]);
 
   // Progress loop (image stories use timer; video uses native time)
   useEffect(() => {
@@ -267,7 +269,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
               key={current.id}
               src={current.media_url}
               autoPlay
-              muted={muted}
+              muted
               playsInline
               preload="auto"
               onEnded={next}
