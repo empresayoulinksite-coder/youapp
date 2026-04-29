@@ -81,7 +81,7 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
           </div>
 
           <p className="text-sm font-medium text-muted-foreground tracking-wide">
-            Carregando sua experiência...
+            Tudo o que você precisa, em um só lugar...
           </p>
         </div>
       </div>
