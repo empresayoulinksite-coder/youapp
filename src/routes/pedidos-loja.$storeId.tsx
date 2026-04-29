@@ -589,19 +589,46 @@ const PREV_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
 
 function OrderCard({
   order,
+  columnTimes,
   onAdvance,
   onCancel,
 }: {
   order: OrderRow;
+  columnTimes: ColumnTimes | null;
   onAdvance: (next: OrderStatus, sendWhats: boolean) => void;
   onCancel: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+
   const itemsCount = order.order_items.reduce((s, i) => s + i.quantity, 0);
   const customerName = order.customer?.display_name ?? "Cliente";
   const next = NEXT_STATUS[order.status as keyof typeof NEXT_STATUS];
   const prev = PREV_STATUS[order.status];
   const phone = order.customer?.phone;
+
+  const isDelivery = !!order.delivery_address;
+  const elapsedMin = Math.max(
+    0,
+    Math.floor((now - new Date(order.created_at).getTime()) / 60000),
+  );
+  const maxMin = columnTimes
+    ? isDelivery
+      ? columnTimes.delivery_max
+      : columnTimes.balcao_max
+    : 0;
+  const isLate = maxMin > 0 && elapsedMin > maxMin;
+
+  function fmtElapsed(min: number) {
+    if (min < 60) return `${min} min`;
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return m === 0 ? `${h}h` : `${h}h${m}`;
+  }
 
   return (
     <div className="rounded-lg bg-white shadow-sm overflow-hidden text-foreground">
@@ -623,6 +650,32 @@ function OrderCard({
           {itemsCount} {itemsCount === 1 ? "item" : "itens"} ·{" "}
           <span className="font-semibold text-foreground">{fmtBRL(order.total)}</span>
         </p>
+        <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+          <span
+            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+              isLate
+                ? "bg-destructive text-destructive-foreground"
+                : "bg-muted text-muted-foreground"
+            }`}
+            title={
+              maxMin > 0
+                ? `Limite ${isDelivery ? "delivery" : "balcão"}: ${maxMin} min`
+                : "Tempo decorrido"
+            }
+          >
+            {isLate ? (
+              <AlertTriangle className="h-3 w-3" />
+            ) : (
+              <Clock className="h-3 w-3" />
+            )}
+            há {fmtElapsed(elapsedMin)}
+          </span>
+          {isLate && (
+            <span className="inline-flex items-center rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-bold text-destructive">
+              ATRASADO
+            </span>
+          )}
+        </div>
       </button>
 
       {open && (
