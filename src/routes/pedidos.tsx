@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
 import {
@@ -27,7 +27,10 @@ import { openWhatsapp } from "@/lib/whatsapp";
 
 const ordersSearchSchema = z.object({
   store: fallback(z.string(), "all").default("all"),
-  status: fallback(z.enum(["all", "sent", "preparing", "delivered", "cancelled"]), "all").default("all"),
+  status: fallback(
+    z.enum(["all", "em_analise", "em_producao", "pronto", "entregue", "cancelado"]),
+    "all",
+  ).default("all"),
   sort: fallback(z.enum(["recent", "oldest", "highest", "lowest"]), "recent").default("recent"),
 });
 
@@ -73,12 +76,13 @@ type Order = {
 
 const fmtBRL = (n: number) => `R$ ${n.toFixed(2).replace(".", ",")}`;
 
-const STATUS_OPTIONS: { value: "all" | "sent" | "preparing" | "delivered" | "cancelled"; label: string }[] = [
+const STATUS_OPTIONS: { value: "all" | "em_analise" | "em_producao" | "pronto" | "entregue" | "cancelado"; label: string }[] = [
   { value: "all", label: "Todos" },
-  { value: "sent", label: "Enviado" },
-  { value: "preparing", label: "Em preparo" },
-  { value: "delivered", label: "Entregue" },
-  { value: "cancelled", label: "Cancelado" },
+  { value: "em_analise", label: "Em análise" },
+  { value: "em_producao", label: "Em produção" },
+  { value: "pronto", label: "Pronto" },
+  { value: "entregue", label: "Entregue" },
+  { value: "cancelado", label: "Cancelado" },
 ];
 
 const SORT_OPTIONS: { value: "recent" | "oldest" | "highest" | "lowest"; label: string }[] = [
@@ -89,8 +93,14 @@ const SORT_OPTIONS: { value: "recent" | "oldest" | "highest" | "lowest"; label: 
 ];
 
 const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
-  sent: { label: "Enviado", cls: "bg-brand-soft text-brand" },
-  preparing: { label: "Em preparo", cls: "bg-warning/15 text-warning" },
+  em_analise: { label: "Em análise", cls: "bg-orange-100 text-orange-700" },
+  em_producao: { label: "Em produção", cls: "bg-amber-100 text-amber-700" },
+  pronto: { label: "Pronto 🛵", cls: "bg-emerald-100 text-emerald-700" },
+  entregue: { label: "Entregue", cls: "bg-success/15 text-success" },
+  cancelado: { label: "Cancelado", cls: "bg-destructive/15 text-destructive" },
+  // Compat com pedidos antigos
+  sent: { label: "Em análise", cls: "bg-orange-100 text-orange-700" },
+  preparing: { label: "Em produção", cls: "bg-amber-100 text-amber-700" },
   delivered: { label: "Entregue", cls: "bg-success/15 text-success" },
   cancelled: { label: "Cancelado", cls: "bg-destructive/15 text-destructive" },
 };
@@ -101,10 +111,34 @@ function OrdersPage() {
   const { store, status, sort } = Route.useSearch();
   const { reorder } = useCart();
   const [expanded, setExpanded] = useState<string | null>(null);
+  const qc = useQueryClient();
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
   }, [user, loading, navigate]);
+
+  // Realtime: cliente vê o status do pedido mudar ao vivo
+  useEffect(() => {
+    if (!user?.id) return;
+    const channel = supabase
+      .channel(`my-orders-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "orders",
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          qc.invalidateQueries({ queryKey: ["my-orders", user.id] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, qc]);
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["my-orders", user?.id],
@@ -334,7 +368,7 @@ function OrdersPage() {
             {filtered.map((o) => {
               const isOpen = expanded === o.id;
               const itemCount = o.order_items.reduce((s, i) => s + i.quantity, 0);
-              const statusInfo = STATUS_LABEL[o.status] ?? STATUS_LABEL.sent;
+              const statusInfo = STATUS_LABEL[o.status] ?? STATUS_LABEL.em_analise;
               return (
                 <article
                   key={o.id}
