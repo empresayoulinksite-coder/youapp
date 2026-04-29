@@ -1084,7 +1084,30 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <Label>Imagem</Label>
-                <div className="mt-1 flex items-center gap-3">
+                <div
+                  tabIndex={0}
+                  onPaste={(e) => {
+                    const item = Array.from(e.clipboardData.items).find((i) =>
+                      i.type.startsWith("image/"),
+                    );
+                    const file = item?.getAsFile();
+                    if (file) {
+                      e.preventDefault();
+                      handleFile(file);
+                    }
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const file = Array.from(e.dataTransfer.files).find((f) =>
+                      f.type.startsWith("image/"),
+                    );
+                    if (file) handleFile(file);
+                  }}
+                  className="mt-1 flex items-center gap-3 rounded-md border border-dashed p-3 transition-colors hover:border-primary/50 focus:border-primary focus:outline-none"
+                >
                   {editing.image_url && (
                     <img
                       src={editing.image_url}
@@ -1102,6 +1125,9 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
                     }}
                   />
                 </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Você pode arrastar uma imagem ou colar um print (Ctrl+V) aqui.
+                </p>
               </div>
               <div className="sm:col-span-2">
                 <Label>Categoria</Label>
