@@ -114,6 +114,8 @@ function OrdersPage() {
   const { reorder } = useCart();
   const [expanded, setExpanded] = useState<string | null>(null);
   const qc = useQueryClient();
+  const { soundOn, setSoundOn, playDing } = useNotificationSound("client-orders-sound");
+  const prevStatusRef = useRef<Map<string, string> | null>(null);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
