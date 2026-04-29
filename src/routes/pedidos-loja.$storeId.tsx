@@ -319,10 +319,12 @@ function AdminOrdersPage() {
             <Receipt className="h-4 w-4" />
             Pedidos
           </TabsTrigger>
-          <TabsTrigger value="staff" className="gap-1.5">
-            <Users className="h-4 w-4" />
-            Funcionários
-          </TabsTrigger>
+          {canManageStaff && (
+            <TabsTrigger value="staff" className="gap-1.5">
+              <Users className="h-4 w-4" />
+              Funcionários
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="orders" className="mt-4">
