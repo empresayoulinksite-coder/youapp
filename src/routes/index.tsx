@@ -77,24 +77,6 @@ interface MenuItemRow {
 }
 
 export const Route = createFileRoute("/")({
-  loader: async () => {
-    const { data, error } = await supabase
-      .from("stores")
-      .select("id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, delivery_enabled, promo, neighborhood, city, address, cep, lat, lng")
-      .eq("is_hidden", false)
-      .order("name");
-    if (error) throw error;
-    const stores = (data ?? []) as StoreRow[];
-    return { stores };
-  },
-  // Mantém o resultado do loader "fresco" por 60s ao navegar entre páginas
-  staleTime: 60_000,
-  gcTime: 5 * 60_000,
-  errorComponent: ({ error }) => (
-    <div className="min-h-screen flex items-center justify-center p-6 text-center text-sm text-muted-foreground">
-      {error.message}
-    </div>
-  ),
   head: () => ({
     meta: [
       { title: "Youapp" },
@@ -109,7 +91,20 @@ function Index() {
   const { user } = useAuth();
   const { count: cartCount } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { stores } = Route.useLoaderData() as { stores: StoreRow[] };
+  const { data: stores = [], isLoading: storesLoading } = useQuery({
+    queryKey: ["home-stores"],
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("stores")
+        .select("id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, delivery_enabled, promo, neighborhood, city, address, cep, lat, lng")
+        .eq("is_hidden", false)
+        .order("name");
+      if (error) throw error;
+      return (data ?? []) as StoreRow[];
+    },
+  });
   const { active } = useAddress();
   const userCoords = useUserCoords();
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -396,6 +391,40 @@ function Index() {
         </section>
 
         {/* Featured stores */}
+        {storesLoading && (
+          <>
+            <section>
+              <div className="h-5 w-40 bg-muted rounded animate-pulse mb-3" />
+              <div className="flex gap-3 overflow-hidden -mx-4 px-4">
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} className="shrink-0 w-44">
+                    <div className="bg-card rounded-2xl overflow-hidden shadow-[var(--shadow-card)]">
+                      <div className="h-24 bg-muted animate-pulse" />
+                      <div className="p-3 space-y-2">
+                        <div className="h-3.5 w-3/4 bg-muted rounded animate-pulse" />
+                        <div className="h-3 w-1/2 bg-muted rounded animate-pulse" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+            <section className="space-y-3">
+              <div className="h-5 w-48 bg-muted rounded animate-pulse" />
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="bg-card rounded-2xl p-3 flex gap-3 shadow-[var(--shadow-card)]">
+                  <div className="h-20 w-20 rounded-xl bg-muted animate-pulse shrink-0" />
+                  <div className="flex-1 space-y-2 py-1">
+                    <div className="h-4 w-2/3 bg-muted rounded animate-pulse" />
+                    <div className="h-3 w-1/2 bg-muted rounded animate-pulse" />
+                    <div className="h-3 w-3/4 bg-muted rounded animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </section>
+          </>
+        )}
+
         {featured.length > 0 && (
           <section>
             <div className="flex items-end justify-between mb-3">
