@@ -247,6 +247,25 @@ function AdminOrdersPage() {
     }
   }
 
+  if (authLoading || accessLoading) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <p className="text-sm text-muted-foreground">Carregando...</p>
+      </div>
+    );
+  }
+
+  if (!access?.allowed) {
+    return (
+      <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 px-4 text-center">
+        <h1 className="text-xl font-bold">Acesso restrito</h1>
+        <p className="text-sm text-muted-foreground max-w-sm">
+          Você não tem permissão para gerenciar os pedidos desta loja. Peça ao dono para te adicionar como funcionário.
+        </p>
+      </div>
+    );
+  }
+
   if (!store) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
@@ -254,6 +273,8 @@ function AdminOrdersPage() {
       </div>
     );
   }
+
+  const canManageStaff = !!access.isOwner || !!access.isAdmin;
 
   return (
     <div>
