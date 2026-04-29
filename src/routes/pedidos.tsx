@@ -76,12 +76,13 @@ type Order = {
 
 const fmtBRL = (n: number) => `R$ ${n.toFixed(2).replace(".", ",")}`;
 
-const STATUS_OPTIONS: { value: "all" | "sent" | "preparing" | "delivered" | "cancelled"; label: string }[] = [
+const STATUS_OPTIONS: { value: "all" | "em_analise" | "em_producao" | "pronto" | "entregue" | "cancelado"; label: string }[] = [
   { value: "all", label: "Todos" },
-  { value: "sent", label: "Enviado" },
-  { value: "preparing", label: "Em preparo" },
-  { value: "delivered", label: "Entregue" },
-  { value: "cancelled", label: "Cancelado" },
+  { value: "em_analise", label: "Em análise" },
+  { value: "em_producao", label: "Em produção" },
+  { value: "pronto", label: "Pronto" },
+  { value: "entregue", label: "Entregue" },
+  { value: "cancelado", label: "Cancelado" },
 ];
 
 const SORT_OPTIONS: { value: "recent" | "oldest" | "highest" | "lowest"; label: string }[] = [
@@ -92,8 +93,14 @@ const SORT_OPTIONS: { value: "recent" | "oldest" | "highest" | "lowest"; label: 
 ];
 
 const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
-  sent: { label: "Enviado", cls: "bg-brand-soft text-brand" },
-  preparing: { label: "Em preparo", cls: "bg-warning/15 text-warning" },
+  em_analise: { label: "Em análise", cls: "bg-orange-100 text-orange-700" },
+  em_producao: { label: "Em produção", cls: "bg-amber-100 text-amber-700" },
+  pronto: { label: "Pronto 🛵", cls: "bg-emerald-100 text-emerald-700" },
+  entregue: { label: "Entregue", cls: "bg-success/15 text-success" },
+  cancelado: { label: "Cancelado", cls: "bg-destructive/15 text-destructive" },
+  // Compat com pedidos antigos
+  sent: { label: "Em análise", cls: "bg-orange-100 text-orange-700" },
+  preparing: { label: "Em produção", cls: "bg-amber-100 text-amber-700" },
   delivered: { label: "Entregue", cls: "bg-success/15 text-success" },
   cancelled: { label: "Cancelado", cls: "bg-destructive/15 text-destructive" },
 };
