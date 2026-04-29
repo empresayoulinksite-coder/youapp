@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { StoriesViewer } from "./StoriesViewer";
+import { useAuth } from "@/contexts/AuthContext";
+import { getRotationSeed, sortWithRotation } from "@/lib/rotation";
 
 export interface StoryRow {
   id: string;
