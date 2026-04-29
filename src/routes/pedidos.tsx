@@ -27,7 +27,10 @@ import { openWhatsapp } from "@/lib/whatsapp";
 
 const ordersSearchSchema = z.object({
   store: fallback(z.string(), "all").default("all"),
-  status: fallback(z.enum(["all", "sent", "preparing", "delivered", "cancelled"]), "all").default("all"),
+  status: fallback(
+    z.enum(["all", "em_analise", "em_producao", "pronto", "entregue", "cancelado"]),
+    "all",
+  ).default("all"),
   sort: fallback(z.enum(["recent", "oldest", "highest", "lowest"]), "recent").default("recent"),
 });
 
