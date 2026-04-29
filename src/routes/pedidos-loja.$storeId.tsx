@@ -496,6 +496,18 @@ function AdminOrdersPage() {
                   headerBg={col.headerBg}
                   columnBg={col.columnBg}
                   count={grouped[col.id]?.length ?? 0}
+                  headerExtra={
+                    col.id !== "entregue" ? (
+                      <KanbanColumnTimes
+                        storeId={storeId}
+                        status={col.id}
+                        times={timesFor(col.id)}
+                        autoAccept={(store as any).auto_accept_orders}
+                        showAutoAccept={col.id === "em_analise"}
+                        canEdit={canEditStore}
+                      />
+                    ) : null
+                  }
                 >
                   {(grouped[col.id] ?? []).length === 0 ? (
                     <p className="text-center text-xs text-white/80 py-8 px-2">
