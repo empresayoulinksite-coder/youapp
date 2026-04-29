@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -14,6 +14,8 @@ import {
   MapPin,
   Receipt,
   Users,
+  Bell,
+  BellOff,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -80,6 +82,66 @@ function AdminOrdersPage() {
   const { user, loading: authLoading } = useAuth();
   const qc = useQueryClient();
   const [tab, setTab] = useState<"orders" | "staff">("orders");
+  const [newCount, setNewCount] = useState(0);
+  const [soundOn, setSoundOn] = useState(true);
+  const soundOnRef = useRef(true);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const initializedRef = useRef(false);
+
+  useEffect(() => {
+    soundOnRef.current = soundOn;
+    try {
+      localStorage.setItem("kanban-sound", soundOn ? "1" : "0");
+    } catch {}
+  }, [soundOn]);
+
+  useEffect(() => {
+    try {
+      const v = localStorage.getItem("kanban-sound");
+      if (v === "0") setSoundOn(false);
+    } catch {}
+  }, []);
+
+  function playDing() {
+    if (!soundOnRef.current) return;
+    try {
+      const Ctx =
+        (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!Ctx) return;
+      if (!audioCtxRef.current) audioCtxRef.current = new Ctx();
+      const ctx = audioCtxRef.current!;
+      if (ctx.state === "suspended") ctx.resume().catch(() => {});
+      const now = ctx.currentTime;
+      [0, 0.18].forEach((offset, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = i === 0 ? 880 : 1320;
+        gain.gain.setValueAtTime(0.0001, now + offset);
+        gain.gain.exponentialRampToValueAtTime(0.25, now + offset + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.35);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now + offset);
+        osc.stop(now + offset + 0.4);
+      });
+    } catch {}
+  }
+
+  // Desbloqueia áudio no primeiro clique (políticas de autoplay)
+  useEffect(() => {
+    const unlock = () => {
+      try {
+        const Ctx =
+          (window as any).AudioContext || (window as any).webkitAudioContext;
+        if (!Ctx) return;
+        if (!audioCtxRef.current) audioCtxRef.current = new Ctx();
+        audioCtxRef.current?.resume().catch(() => {});
+      } catch {}
+      window.removeEventListener("pointerdown", unlock);
+    };
+    window.addEventListener("pointerdown", unlock, { once: true });
+    return () => window.removeEventListener("pointerdown", unlock);
+  }, []);
 
   // Checagem de acesso: dono, staff ativo ou admin
   const { data: access, isLoading: accessLoading } = useQuery({
@@ -185,7 +247,24 @@ function AdminOrdersPage() {
       .on(
         "postgres_changes",
         {
-          event: "*",
+          event: "INSERT",
+          schema: "public",
+          table: "orders",
+          filter: `store_id=eq.${storeId}`,
+        },
+        () => {
+          if (initializedRef.current) {
+            playDing();
+            setNewCount((c) => c + 1);
+            toast.success("Novo pedido recebido! 🛎️");
+          }
+          qc.invalidateQueries({ queryKey: ["admin-orders", storeId] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
           schema: "public",
           table: "orders",
           filter: `store_id=eq.${storeId}`,
@@ -194,11 +273,35 @@ function AdminOrdersPage() {
           qc.invalidateQueries({ queryKey: ["admin-orders", storeId] });
         },
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          // ignora o primeiro snapshot para não tocar som ao abrir
+          setTimeout(() => {
+            initializedRef.current = true;
+          }, 1500);
+        }
+      });
     return () => {
+      initializedRef.current = false;
       supabase.removeChannel(channel);
     };
   }, [storeId, qc]);
+
+  // Atualiza title da aba com badge
+  useEffect(() => {
+    const base = "Gestor de pedidos — Youapp";
+    document.title = newCount > 0 ? `(${newCount}) ${base}` : base;
+    return () => {
+      document.title = base;
+    };
+  }, [newCount]);
+
+  // Limpa badge ao focar a janela
+  useEffect(() => {
+    const onFocus = () => setNewCount(0);
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !user) router.navigate({ to: "/auth" });
@@ -303,6 +406,30 @@ function AdminOrdersPage() {
             {orders.filter((o) => o.status !== "entregue" && o.status !== "cancelado").length} ativos · atualiza ao vivo
           </p>
         </div>
+        {newCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setNewCount(0)}
+            className="relative inline-flex items-center gap-1 rounded-full bg-destructive px-2.5 py-1 text-xs font-bold text-destructive-foreground animate-pulse"
+            title="Novos pedidos — clique para limpar"
+          >
+            <Bell className="h-3.5 w-3.5" />
+            {newCount} novo{newCount > 1 ? "s" : ""}
+          </button>
+        )}
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setSoundOn((v) => !v)}
+          title={soundOn ? "Desativar som" : "Ativar som"}
+          aria-label={soundOn ? "Desativar som" : "Ativar som"}
+        >
+          {soundOn ? (
+            <Bell className="h-3.5 w-3.5" />
+          ) : (
+            <BellOff className="h-3.5 w-3.5" />
+          )}
+        </Button>
         <Button
           variant="outline"
           size="sm"
