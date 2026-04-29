@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNotificationSound } from "@/hooks/useNotificationSound";
+import { Bell, BellOff } from "lucide-react";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
 import {
@@ -112,6 +114,8 @@ function OrdersPage() {
   const { reorder } = useCart();
   const [expanded, setExpanded] = useState<string | null>(null);
   const qc = useQueryClient();
+  const { soundOn, setSoundOn, playDing } = useNotificationSound("client-orders-sound");
+  const prevStatusRef = useRef<Map<string, string> | null>(null);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
@@ -163,6 +167,28 @@ function OrdersPage() {
       })) as Order[];
     },
   });
+
+  // Detecta mudanças de status e notifica o cliente (som + toast)
+  useEffect(() => {
+    if (!orders || orders.length === 0) return;
+    const current = new Map(orders.map((o) => [o.id, o.status]));
+    const prev = prevStatusRef.current;
+    if (prev) {
+      orders.forEach((o) => {
+        const prevStatus = prev.get(o.id);
+        if (prevStatus && prevStatus !== o.status) {
+          const info = STATUS_LABEL[o.status];
+          const label = info?.label ?? o.status;
+          playDing();
+          toast.success(`${o.store_emoji ?? "🛍️"} ${o.store_name}`, {
+            description: `Seu pedido agora está: ${label}`,
+            duration: 6000,
+          });
+        }
+      });
+    }
+    prevStatusRef.current = current;
+  }, [orders, playDing]);
 
   // Lojas únicas presentes nos pedidos
   const uniqueStores = useMemo(() => {
@@ -230,6 +256,18 @@ function OrdersPage() {
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="font-semibold flex-1">Meus pedidos</h1>
+        <button
+          onClick={() => setSoundOn(!soundOn)}
+          className="p-1.5 -mr-1 rounded-full hover:bg-muted transition"
+          aria-label={soundOn ? "Desativar som de notificação" : "Ativar som de notificação"}
+          title={soundOn ? "Som ligado" : "Som desligado"}
+        >
+          {soundOn ? (
+            <Bell className="h-5 w-5 text-brand" />
+          ) : (
+            <BellOff className="h-5 w-5 text-muted-foreground" />
+          )}
+        </button>
       </header>
 
       <main className="px-4 py-5 max-w-md mx-auto">
