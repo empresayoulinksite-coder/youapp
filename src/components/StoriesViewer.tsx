@@ -209,12 +209,16 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
           <button
             onClick={(e) => {
               e.stopPropagation();
+              setHasInteracted(true);
               setMuted((m) => {
                 const next = !m;
                 const v = videoRef.current;
                 if (v) {
                   v.muted = next;
-                  if (!next) v.play().catch(() => {});
+                  if (!next) {
+                    v.volume = 1;
+                    v.play().catch(() => {});
+                  }
                 }
                 return next;
               });
