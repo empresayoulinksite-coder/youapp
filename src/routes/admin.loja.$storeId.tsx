@@ -18,8 +18,11 @@ import {
   CalendarDays,
   Ticket,
   Dumbbell,
+  ListOrdered,
+  Maximize2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { OrdersManager } from "@/components/painel/OrdersManager";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { StoreHoursEditor } from "@/components/StoreHoursEditor";
