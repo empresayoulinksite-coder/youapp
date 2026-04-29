@@ -39,6 +39,7 @@ import { Route as AdminCuponsRouteImport } from './routes/admin.cupons'
 import { Route as AdminCategoriasHomeRouteImport } from './routes/admin.categorias-home'
 import { Route as AdminCategoriasEcommerceRouteImport } from './routes/admin.categorias-ecommerce'
 import { Route as AdminAgendamentosRouteImport } from './routes/admin.agendamentos'
+import { Route as AdminPedidosStoreIdRouteImport } from './routes/admin.pedidos.$storeId'
 import { Route as AdminLojaStoreIdRouteImport } from './routes/admin.loja.$storeId'
 import { Route as AdminAcademiaStoreIdRouteImport } from './routes/admin.academia.$storeId'
 
@@ -193,6 +194,11 @@ const AdminAgendamentosRoute = AdminAgendamentosRouteImport.update({
   path: '/agendamentos',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminPedidosStoreIdRoute = AdminPedidosStoreIdRouteImport.update({
+  id: '/pedidos/$storeId',
+  path: '/pedidos/$storeId',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminLojaStoreIdRoute = AdminLojaStoreIdRouteImport.update({
   id: '/loja/$storeId',
   path: '/loja/$storeId',
@@ -237,6 +243,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/admin/academia/$storeId': typeof AdminAcademiaStoreIdRoute
   '/admin/loja/$storeId': typeof AdminLojaStoreIdRoute
+  '/admin/pedidos/$storeId': typeof AdminPedidosStoreIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -270,6 +277,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/admin/academia/$storeId': typeof AdminAcademiaStoreIdRoute
   '/admin/loja/$storeId': typeof AdminLojaStoreIdRoute
+  '/admin/pedidos/$storeId': typeof AdminPedidosStoreIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -305,6 +313,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/admin/academia/$storeId': typeof AdminAcademiaStoreIdRoute
   '/admin/loja/$storeId': typeof AdminLojaStoreIdRoute
+  '/admin/pedidos/$storeId': typeof AdminPedidosStoreIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -341,6 +350,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/admin/academia/$storeId'
     | '/admin/loja/$storeId'
+    | '/admin/pedidos/$storeId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -374,6 +384,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin/academia/$storeId'
     | '/admin/loja/$storeId'
+    | '/admin/pedidos/$storeId'
   id:
     | '__root__'
     | '/'
@@ -408,6 +419,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/admin/academia/$storeId'
     | '/admin/loja/$storeId'
+    | '/admin/pedidos/$storeId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -643,6 +655,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAgendamentosRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/pedidos/$storeId': {
+      id: '/admin/pedidos/$storeId'
+      path: '/pedidos/$storeId'
+      fullPath: '/admin/pedidos/$storeId'
+      preLoaderRoute: typeof AdminPedidosStoreIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/loja/$storeId': {
       id: '/admin/loja/$storeId'
       path: '/loja/$storeId'
@@ -675,6 +694,7 @@ interface AdminRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
   AdminAcademiaStoreIdRoute: typeof AdminAcademiaStoreIdRoute
   AdminLojaStoreIdRoute: typeof AdminLojaStoreIdRoute
+  AdminPedidosStoreIdRoute: typeof AdminPedidosStoreIdRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -692,6 +712,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
   AdminAcademiaStoreIdRoute: AdminAcademiaStoreIdRoute,
   AdminLojaStoreIdRoute: AdminLojaStoreIdRoute,
+  AdminPedidosStoreIdRoute: AdminPedidosStoreIdRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
