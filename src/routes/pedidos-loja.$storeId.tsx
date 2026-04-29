@@ -81,9 +81,43 @@ function AdminOrdersPage() {
   const qc = useQueryClient();
   const [tab, setTab] = useState<"orders" | "staff">("orders");
 
+  // Checagem de acesso: dono, staff ativo ou admin
+  const { data: access, isLoading: accessLoading } = useQuery({
+    queryKey: ["pedidos-loja-access", storeId, user?.id],
+    enabled: !!user?.id && !!storeId,
+    queryFn: async () => {
+      const [{ data: owner }, { data: staff }, { data: roles }] = await Promise.all([
+        supabase
+          .from("store_owners")
+          .select("id")
+          .eq("user_id", user!.id)
+          .eq("store_id", storeId)
+          .maybeSingle(),
+        supabase
+          .from("store_staff")
+          .select("id")
+          .eq("user_id", user!.id)
+          .eq("store_id", storeId)
+          .eq("is_active", true)
+          .maybeSingle(),
+        supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user!.id)
+          .eq("role", "admin")
+          .maybeSingle(),
+      ]);
+      const isOwner = !!owner;
+      const isStaff = !!staff;
+      const isAdmin = !!roles;
+      return { allowed: isOwner || isStaff || isAdmin, isOwner, isStaff, isAdmin };
+    },
+  });
+
   // Loja
   const { data: store } = useQuery({
     queryKey: ["admin-orders-store", storeId],
+    enabled: !!access?.allowed,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("stores")
