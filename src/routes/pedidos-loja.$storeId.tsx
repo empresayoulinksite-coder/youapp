@@ -35,7 +35,7 @@ import {
 import { openWhatsapp } from "@/lib/whatsapp";
 import { StoreStaffEditor } from "@/components/StoreStaffEditor";
 
-export const Route = createFileRoute("/admin/pedidos/$storeId")({
+export const Route = createFileRoute("/pedidos-loja/$storeId")({
   component: AdminOrdersPage,
 });
 
