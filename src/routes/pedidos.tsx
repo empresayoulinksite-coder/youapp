@@ -508,7 +508,7 @@ function OrdersPage() {
         )}
       </main>
 
-      <nav className="bg-card border-t border-border">
+      <nav className="bg-card border-t border-border shadow-[0_-2px_10px_rgba(0,0,0,0.04)]">
         <div className="mx-auto max-w-5xl grid grid-cols-5 px-2 py-2">
           {[
             { Icon: Home, label: "Início", to: "/" as const, active: false },
