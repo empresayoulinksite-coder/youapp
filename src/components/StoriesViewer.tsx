@@ -269,7 +269,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
               key={current.id}
               src={current.media_url}
               autoPlay
-              muted={muted}
+              muted
               playsInline
               preload="auto"
               onEnded={next}
