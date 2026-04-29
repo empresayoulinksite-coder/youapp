@@ -299,6 +299,7 @@ function Index() {
             </div>
           </button>
           <div className="flex items-center gap-4 shrink-0">
+            <NotificationsBell />
             <Link to={user ? "/favoritos" : "/auth"} aria-label="Favoritos"><Heart className="h-5 w-5 text-foreground" /></Link>
             <Link to="/sacola" className="relative">
               <ShoppingBag className="h-5 w-5 text-foreground" />
