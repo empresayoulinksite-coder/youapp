@@ -1,18 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import L from "leaflet";
+import type L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { ChevronLeft, Crosshair, Loader2, Search } from "lucide-react";
-
-const DefaultIcon = L.icon({
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
-L.Marker.prototype.options.icon = DefaultIcon;
 
 export type StoreLocation = { lat: number; lng: number };
 
@@ -32,6 +21,7 @@ export function StoreLocationAdjuster({
 }) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
+  const leafletRef = useRef<typeof L | null>(null);
   const [center, setCenter] = useState<StoreLocation | null>(
     initialLat != null && initialLng != null
       ? { lat: initialLat, lng: initialLng }
@@ -41,56 +31,76 @@ export function StoreLocationAdjuster({
 
   useEffect(() => {
     if (!mapRef.current || mapInstance.current) return;
+    let cancelled = false;
+    let map: L.Map | null = null;
 
-    const start: [number, number] =
-      initialLat != null && initialLng != null
-        ? [initialLat, initialLng]
-        : [-23.55, -46.633]; // SP fallback
+    void import("leaflet").then(({ default: Leaflet }) => {
+      if (cancelled || !mapRef.current || mapInstance.current) return;
 
-    const map = L.map(mapRef.current, {
-      zoomControl: false,
-      attributionControl: false,
-    }).setView(start, 18);
+      const DefaultIcon = Leaflet.icon({
+        iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+        iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+        shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41],
+      });
+      Leaflet.Marker.prototype.options.icon = DefaultIcon;
+      leafletRef.current = Leaflet;
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-    }).addTo(map);
-    L.control.zoom({ position: "bottomright" }).addTo(map);
+      const start: [number, number] =
+        initialLat != null && initialLng != null
+          ? [initialLat, initialLng]
+          : [-23.55, -46.633]; // SP fallback
 
-    mapInstance.current = map;
+      const mapCreated = Leaflet.map(mapRef.current, {
+        zoomControl: false,
+        attributionControl: false,
+      }).setView(start, 18);
+      map = mapCreated;
 
-    const updateCenter = () => {
-      const c = map.getCenter();
-      setCenter({ lat: c.lat, lng: c.lng });
-    };
-    updateCenter();
-    map.on("moveend", updateCenter);
+      Leaflet.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+      }).addTo(mapCreated);
+      Leaflet.control.zoom({ position: "bottomright" }).addTo(mapCreated);
 
-    // Se não tem coordenadas iniciais, tenta geocodificar o endereço
-    if ((initialLat == null || initialLng == null) && fallbackQuery) {
-      setSearching(true);
-      fetch(
-        `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&accept-language=pt-BR&q=${encodeURIComponent(
-          fallbackQuery,
-        )}`,
-        { headers: { Accept: "application/json" } },
-      )
-        .then((r) => r.json())
-        .then((data: Array<{ lat: string; lon: string }>) => {
-          if (data?.[0]) {
-            const lat = Number(data[0].lat);
-            const lng = Number(data[0].lon);
-            map.setView([lat, lng], 18);
-          }
-        })
-        .catch(() => {})
-        .finally(() => setSearching(false));
-    }
+      mapInstance.current = mapCreated;
+
+      const updateCenter = () => {
+        const c = mapCreated.getCenter();
+        setCenter({ lat: c.lat, lng: c.lng });
+      };
+      updateCenter();
+      mapCreated.on("moveend", updateCenter);
+
+      // Se não tem coordenadas iniciais, tenta geocodificar o endereço
+      if ((initialLat == null || initialLng == null) && fallbackQuery) {
+        setSearching(true);
+        fetch(
+          `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&accept-language=pt-BR&q=${encodeURIComponent(
+            fallbackQuery,
+          )}`,
+          { headers: { Accept: "application/json" } },
+        )
+          .then((r) => r.json())
+          .then((data: Array<{ lat: string; lon: string }>) => {
+            if (data?.[0]) {
+              const lat = Number(data[0].lat);
+              const lng = Number(data[0].lon);
+              mapCreated.setView([lat, lng], 18);
+            }
+          })
+          .catch(() => {})
+          .finally(() => setSearching(false));
+      }
+    });
 
     return () => {
-      map.off("moveend", updateCenter);
-      map.remove();
+      cancelled = true;
+      map?.remove();
       mapInstance.current = null;
+      leafletRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
