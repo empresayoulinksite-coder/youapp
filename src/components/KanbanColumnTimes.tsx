@@ -67,7 +67,7 @@ export function KanbanColumnTimes({
     (Object.keys(map) as (keyof ColumnTimes)[]).forEach((k) => {
       payload[map[k]] = Math.max(0, Math.round(Number(draft[k]) || 0));
     });
-    const { error } = await supabase.from("stores").update(payload).eq("id", storeId);
+    const { error } = await supabase.from("stores").update(payload as never).eq("id", storeId);
     setSaving(false);
     if (error) {
       toast.error(error.message);
