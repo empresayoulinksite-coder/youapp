@@ -359,7 +359,9 @@ function UrlImporter({ onParsed }: { onParsed: (c: ParsedCategory[]) => void }) 
     if (!url.trim()) return;
     setLoading(true);
     try {
-      const res = await fn({ data: { url: url.trim() } });
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token ?? "";
+      const res = await fn({ data: { url: url.trim(), accessToken } });
       onParsed(res.categories);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Falha ao importar");
@@ -438,7 +440,9 @@ function ImageImporter({ onParsed }: { onParsed: (c: ParsedCategory[]) => void }
     if (!preview) return;
     setLoading(true);
     try {
-      const res = await fn({ data: { imageDataUrl: preview } });
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token ?? "";
+      const res = await fn({ data: { imageDataUrl: preview, accessToken } });
       onParsed(res.categories);
       setPreview(null);
     } catch (e) {
@@ -630,7 +634,9 @@ function AddMoreImageDialog({ onParsed }: { onParsed: (items: ParsedItem[]) => v
     if (!preview) return;
     setLoading(true);
     try {
-      const res = await fn({ data: { imageDataUrl: preview } });
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token ?? "";
+      const res = await fn({ data: { imageDataUrl: preview, accessToken } });
       const allItems = res.categories.flatMap((c) => c.items);
       if (allItems.length === 0) {
         toast.error("Nenhum item encontrado na imagem");
