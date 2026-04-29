@@ -491,8 +491,7 @@ function StorePage() {
                   <SheetTitle>Categorias</SheetTitle>
                 </SheetHeader>
                 <ul className="mt-4 space-y-1">
-                  {visibleCategories.map((c) => {
-                    const count = items.filter((i) => i.category_id === c.id).length;
+                  {[{ id: ALL_CATEGORIES_ID, name: "Todos", count: items.length }, ...visibleCategories.map((c) => ({ id: c.id, name: c.name, count: items.filter((i) => i.category_id === c.id).length }))].map((c) => {
                     const active = activeCategoryId === c.id;
                     return (
                       <li key={c.id}>
@@ -503,7 +502,7 @@ function StorePage() {
                           }`}
                         >
                           <span className="truncate">{c.name}</span>
-                          <span className="text-xs text-muted-foreground ml-2">{count}</span>
+                          <span className="text-xs text-muted-foreground ml-2">{c.count}</span>
                         </button>
                       </li>
                     );
