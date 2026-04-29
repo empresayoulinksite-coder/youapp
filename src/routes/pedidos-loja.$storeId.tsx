@@ -184,7 +184,9 @@ function AdminOrdersPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("stores")
-        .select("id, name, slug, whatsapp, image_url, emoji, store_type")
+        .select(
+          "id, name, slug, whatsapp, image_url, emoji, store_type, auto_accept_orders, time_analise_balcao_min, time_analise_balcao_max, time_analise_delivery_min, time_analise_delivery_max, time_producao_balcao_min, time_producao_balcao_max, time_producao_delivery_min, time_producao_delivery_max, time_pronto_balcao_min, time_pronto_balcao_max, time_pronto_delivery_min, time_pronto_delivery_max",
+        )
         .eq("id", storeId)
         .maybeSingle();
       if (error) throw error;
