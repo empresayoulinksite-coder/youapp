@@ -95,12 +95,8 @@ export const Route = createFileRoute("/")({
   ),
   head: () => ({
     meta: [
-      { title: "Youapp — Comida em casa, rápido" },
-      {
-        name: "description",
-        content:
-          "Peça comida com entrega rápida. Os melhores restaurantes da sua região no Youapp.",
-      },
+      { title: "Youapp" },
+      { name: "description", content: "Youapp" },
     ],
   }),
   component: Index,
