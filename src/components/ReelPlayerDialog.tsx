@@ -72,19 +72,25 @@ export function ReelPlayerDialog({
     return () => io.disconnect();
   }, [list.length]);
 
-  // Play active video, pause others
+  // Play active video, pause others. Always start muted to bypass autoplay restrictions,
+  // then try to unmute right after — keeps video visible even when audio is blocked.
   useEffect(() => {
     setProgress(0);
     videoRefs.current.forEach((v, i) => {
       if (!v) return;
       if (i === activeIndex) {
-        v.muted = muted;
-        v.play().catch(() => {
-          // Autoplay com som pode ser bloqueado; faz fallback para mutado
-          v.muted = true;
-          setMuted(true);
-          v.play().catch(() => {});
-        });
+        v.muted = true;
+        Promise.resolve(v.play())
+          .then(() => {
+            if (!muted) {
+              v.muted = false;
+              v.play().catch(() => {
+                v.muted = true;
+                setMuted(true);
+              });
+            }
+          })
+          .catch(() => {});
       } else {
         v.pause();
         v.currentTime = 0;
