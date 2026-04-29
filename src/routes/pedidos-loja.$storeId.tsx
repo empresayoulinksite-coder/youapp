@@ -132,7 +132,7 @@ function AdminOrdersPage() {
   // Pedidos
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["admin-orders", storeId],
-    enabled: !!user?.id,
+    enabled: !!user?.id && !!access?.allowed,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
