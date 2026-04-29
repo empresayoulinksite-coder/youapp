@@ -224,6 +224,7 @@ export function ReelPlayerDialog({
           );
         })}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
