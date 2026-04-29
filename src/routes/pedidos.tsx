@@ -368,7 +368,7 @@ function OrdersPage() {
             {filtered.map((o) => {
               const isOpen = expanded === o.id;
               const itemCount = o.order_items.reduce((s, i) => s + i.quantity, 0);
-              const statusInfo = STATUS_LABEL[o.status] ?? STATUS_LABEL.sent;
+              const statusInfo = STATUS_LABEL[o.status] ?? STATUS_LABEL.em_analise;
               return (
                 <article
                   key={o.id}
