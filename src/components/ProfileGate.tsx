@@ -17,6 +17,7 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
   const [checked, setChecked] = useState(false);
   const [exiting, setExiting] = useState(false);
   const [showLoader, setShowLoader] = useState(true);
+  const [progress, setProgress] = useState(8);
 
   useEffect(() => {
     if (loading) return;
@@ -61,13 +62,31 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
 
   const isLoading = loading || (!checked && user && !ALLOWED_INCOMPLETE.includes(location.pathname));
 
-  // Dispara animação de saída quando o loading termina
+  // Enquanto está carregando: aproxima de 90% de forma suave (ease-out).
+  // Quando termina: vai para 100% e dispara a saída.
   useEffect(() => {
-    if (!isLoading && showLoader) {
-      setExiting(true);
-      const t = setTimeout(() => setShowLoader(false), 400);
-      return () => clearTimeout(t);
+    if (!showLoader) return;
+
+    if (isLoading) {
+      const id = setInterval(() => {
+        setProgress((p) => {
+          if (p >= 90) return p;
+          // Ganho diminui conforme avança (efeito ease-out)
+          const step = Math.max(0.8, (90 - p) * 0.08);
+          return Math.min(90, p + step);
+        });
+      }, 120);
+      return () => clearInterval(id);
     }
+
+    // Terminou: completa a barra e fecha
+    setProgress(100);
+    const t = setTimeout(() => {
+      setExiting(true);
+      const t2 = setTimeout(() => setShowLoader(false), 500);
+      return () => clearTimeout(t2);
+    }, 280);
+    return () => clearTimeout(t);
   }, [isLoading, showLoader]);
 
   return (
@@ -89,8 +108,8 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
           </div>
           <div className="relative h-1.5 w-40 overflow-hidden rounded-full bg-primary/20">
             <div
-              className="absolute top-0 left-0 h-full w-2/5 rounded-full bg-primary"
-              style={{ animation: "loader-bar 1.4s ease-in-out infinite" }}
+              className="h-full rounded-full bg-primary transition-[width] duration-300 ease-out"
+              style={{ width: `${progress}%` }}
             />
           </div>
         </div>
