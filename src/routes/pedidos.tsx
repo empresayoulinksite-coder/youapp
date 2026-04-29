@@ -168,6 +168,28 @@ function OrdersPage() {
     },
   });
 
+  // Detecta mudanças de status e notifica o cliente (som + toast)
+  useEffect(() => {
+    if (!orders || orders.length === 0) return;
+    const current = new Map(orders.map((o) => [o.id, o.status]));
+    const prev = prevStatusRef.current;
+    if (prev) {
+      orders.forEach((o) => {
+        const prevStatus = prev.get(o.id);
+        if (prevStatus && prevStatus !== o.status) {
+          const info = STATUS_LABEL[o.status];
+          const label = info?.label ?? o.status;
+          playDing();
+          toast.success(`${o.store_emoji ?? "🛍️"} ${o.store_name}`, {
+            description: `Seu pedido agora está: ${label}`,
+            duration: 6000,
+          });
+        }
+      });
+    }
+    prevStatusRef.current = current;
+  }, [orders, playDing]);
+
   // Lojas únicas presentes nos pedidos
   const uniqueStores = useMemo(() => {
     const map = new Map<string, { id: string; name: string; emoji: string | null; image_url: string | null }>();
