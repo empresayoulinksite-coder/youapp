@@ -15,8 +15,8 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
   const [index, setIndex] = useState(startIndex);
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [muted, setMuted] = useState(true);
-  const [hasInteracted, setHasInteracted] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(true);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const startRef = useRef<number>(Date.now());
