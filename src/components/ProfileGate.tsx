@@ -87,7 +87,12 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
               style={{ animationDuration: "1.8s" }}
             />
           </div>
-          <p className="text-sm text-muted-foreground animate-pulse">Carregando...</p>
+          <div className="relative h-1.5 w-40 overflow-hidden rounded-full bg-primary/20">
+            <div
+              className="absolute top-0 left-0 h-full w-2/5 rounded-full bg-primary"
+              style={{ animation: "loader-bar 1.4s ease-in-out infinite" }}
+            />
+          </div>
         </div>
       )}
 
