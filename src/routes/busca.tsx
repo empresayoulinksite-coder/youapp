@@ -33,11 +33,14 @@ export const Route = createFileRoute("/busca")({
     if (error) throw error;
     return { stores: (data ?? []) as StoreRow[] };
   },
-  errorComponent: ({ error }) => (
-    <div className="min-h-screen flex items-center justify-center p-6 text-center text-sm text-muted-foreground">
-      {error.message}
-    </div>
-  ),
+  errorComponent: ({ error }) => {
+    if (typeof window !== "undefined") console.error(error);
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 text-center text-sm text-muted-foreground">
+        Algo deu errado. Tente novamente.
+      </div>
+    );
+  },
   head: () => ({
     meta: [
       { title: "Buscar — Youapp" },

@@ -50,9 +50,10 @@ interface CategoryRow {
 }
 
 function VitrineError({ error }: { error: Error }) {
+  if (typeof window !== "undefined") console.error(error);
   return (
     <div className="min-h-screen flex items-center justify-center p-6 text-sm text-muted-foreground">
-      {error.message}
+      Algo deu errado. Tente novamente.
     </div>
   );
 }

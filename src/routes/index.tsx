@@ -88,11 +88,14 @@ export const Route = createFileRoute("/")({
   // Mantém o resultado do loader "fresco" por 60s ao navegar entre páginas
   staleTime: 60_000,
   gcTime: 5 * 60_000,
-  errorComponent: ({ error }) => (
-    <div className="min-h-screen flex items-center justify-center p-6 text-center text-sm text-muted-foreground">
-      {error.message}
-    </div>
-  ),
+  errorComponent: ({ error }) => {
+    if (typeof window !== "undefined") console.error(error);
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 text-center text-sm text-muted-foreground">
+        Algo deu errado. Tente novamente.
+      </div>
+    );
+  },
   head: () => ({
     meta: [
       { title: "Youapp — Comida em casa, rápido" },
