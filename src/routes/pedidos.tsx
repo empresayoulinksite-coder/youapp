@@ -256,6 +256,18 @@ function OrdersPage() {
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="font-semibold flex-1">Meus pedidos</h1>
+        <button
+          onClick={() => setSoundOn(!soundOn)}
+          className="p-1.5 -mr-1 rounded-full hover:bg-muted transition"
+          aria-label={soundOn ? "Desativar som de notificação" : "Ativar som de notificação"}
+          title={soundOn ? "Som ligado" : "Som desligado"}
+        >
+          {soundOn ? (
+            <Bell className="h-5 w-5 text-brand" />
+          ) : (
+            <BellOff className="h-5 w-5 text-muted-foreground" />
+          )}
+        </button>
       </header>
 
       <main className="px-4 py-5 max-w-md mx-auto">
