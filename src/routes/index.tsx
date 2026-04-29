@@ -98,7 +98,7 @@ export const Route = createFileRoute("/")({
   },
   head: () => ({
     meta: [
-      { title: "Youapp — Comida em casa, rápido" },
+      { title: "Youapp" },
       {
         name: "description",
         content:
