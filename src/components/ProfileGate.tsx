@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import youlinkLogo from "@/assets/youlink-logo.png";
 
 // Rotas onde NÃO devemos forçar o redirect
 const ALLOWED_INCOMPLETE = ["/completar-cadastro", "/auth"];
@@ -58,8 +59,18 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
 
   if (loading || (!checked && user && !ALLOWED_INCOMPLETE.includes(location.pathname))) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-sm text-muted-foreground">
-        Carregando...
+      <div className="min-h-screen flex flex-col items-center justify-center gap-5 bg-background">
+        <div className="relative">
+          <div className="absolute inset-0 rounded-full bg-primary/20 blur-2xl animate-pulse" />
+          <img
+            src={youlinkLogo}
+            alt="YouLink"
+            className="relative h-24 w-24 object-contain animate-pulse"
+            style={{ animationDuration: "1.8s" }}
+          />
+        </div>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">YouLink</h1>
+        <p className="text-sm text-muted-foreground animate-pulse">Carregando...</p>
       </div>
     );
   }
