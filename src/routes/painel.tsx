@@ -26,6 +26,7 @@ import { StoreBenefitsEditor } from "@/components/StoreBenefitsEditor";
 import { StoreFeedEditor } from "@/components/StoreFeedEditor";
 import { GymTab } from "@/components/painel/GymTab";
 import { isGymStore } from "@/lib/gym";
+import { OrdersManager } from "@/components/painel/OrdersManager";
 
 export const Route = createFileRoute("/painel")({
   component: PainelPage,
