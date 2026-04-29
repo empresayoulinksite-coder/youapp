@@ -642,7 +642,7 @@ function OrderCard({
             #{shortOrderId(order.id)}
           </span>
           <span className="text-[10px] text-muted-foreground">
-            {format(new Date(order.created_at), "HH:mm", { locale: ptBR })}
+            {format(new Date(order.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
           </span>
         </div>
         <p className="mt-0.5 text-sm font-semibold truncate">{customerName}</p>
