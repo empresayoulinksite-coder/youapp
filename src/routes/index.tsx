@@ -188,10 +188,12 @@ function Index() {
   // Score de interesse por loja (favoritos + cart + bookings).
   const interestScores = useInterestScores(stores);
 
+  // Semente diária da rotação justa: garante que todas as lojas tenham
+  // chance de aparecer no topo, mas mantém a ordem estável durante o dia.
+  const rotationSeed = useMemo(() => getRotationSeed(user?.id), [user?.id]);
+
   // Lojas próximas: raio de 10 km do endereço do usuário.
-  // Ordenação por relevância combina distância (km) com score de interesse:
-  //   rank = distancia_km - (score * 1.5)   → menor é melhor
-  // Sem coordenadas → mostra todas, mas ainda prioriza por interesse.
+  // Ordenação combina rodízio diário + interesse do usuário + proximidade.
   const nearbyStores = useMemo(() => {
     const RADIUS_KM = 10;
     const enriched = stores.map((s) => {
@@ -199,19 +201,18 @@ function Index() {
         userCoords && s.lat != null && s.lng != null
           ? haversineKm(userCoords, { lat: s.lat, lng: s.lng })
           : null;
-      return { store: s, km, score: interestScores.get(s.id) ?? 0 };
+      return { store: s, km };
     });
     const inRange = userCoords
       ? enriched.filter((x) => x.km != null && x.km <= RADIUS_KM)
       : enriched;
     const list = inRange.length > 0 ? inRange : enriched;
-    list.sort((a, b) => {
-      const ra = (a.km ?? 0) - a.score * 1.5;
-      const rb = (b.km ?? 0) - b.score * 1.5;
-      return ra - rb;
-    });
-    return list.map((x) => x.store);
-  }, [stores, userCoords, interestScores]);
+    return sortWithRotation(list, (x) => x.store.id, {
+      seed: rotationSeed,
+      interest: (x) => interestScores.get(x.store.id) ?? 0,
+      distanceKm: (x) => x.km,
+    }).map((x) => x.store);
+  }, [stores, userCoords, interestScores, rotationSeed]);
 
   const filteredStores = useMemo(() => {
     const q = norm(query.trim());
@@ -232,10 +233,17 @@ function Index() {
     return list;
   }, [nearbyStores, query, activeCategory, freeOnly, sortBy, homeCategories, norm]);
 
-  const featured = useMemo(
-    () => [...filteredStores].sort((a, b) => Number(b.rating) - Number(a.rating)).slice(0, 6),
-    [filteredStores],
-  );
+  // Lojas em destaque: rodízio diário garante que todas as lojas
+  // (não só as melhor avaliadas) apareçam ao longo dos dias.
+  // Mistura: rotação + interesse + um leve peso de rating como qualidade base.
+  const featured = useMemo(() => {
+    const pool = filteredStores.slice(0, 30); // candidatas
+    return sortWithRotation(pool, (s) => s.id, {
+      seed: rotationSeed,
+      interest: (s) => (interestScores.get(s.id) ?? 0) + Number(s.rating ?? 0) * 0.2,
+      rotationWeight: 1.4, // dá mais peso ao rodízio para variar mais a vitrine
+    }).slice(0, 6);
+  }, [filteredStores, interestScores, rotationSeed]);
 
   // Vitrine: produtos das lojas e-commerce
   const ecomStoreMap = useMemo(() => {
