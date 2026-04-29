@@ -37,21 +37,19 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
     const video = videoRef.current;
     if (!video || current?.media_type !== "video") return;
 
-    const tryPlay = () => {
-      video.muted = false;
-      video.volume = 1;
-      setMuted(false);
-      video.play().catch(() => {
-        // Mantém o som ativo; a próxima interação do usuário tenta o play novamente.
-      });
-    };
-    tryPlay();
-    if (resumeRafRef.current) cancelAnimationFrame(resumeRafRef.current);
-    resumeRafRef.current = requestAnimationFrame(() => {
-      resumeRafRef.current = null;
-      tryPlay();
+    // iOS/Safari só permite autoplay quando muted. Só tentamos com som
+    // depois que o usuário interagiu (clicou no botão de áudio).
+    const shouldMute = !hasInteracted;
+    video.muted = shouldMute;
+    if (!shouldMute) video.volume = 1;
+    setMuted(shouldMute);
+    video.play().catch(() => {
+      // Fallback: força mudo para garantir reprodução
+      video.muted = true;
+      setMuted(true);
+      video.play().catch(() => {});
     });
-  }, [current?.media_type]);
+  }, [current?.media_type, hasInteracted]);
 
   useEffect(() => {
     indexRef.current = index;
