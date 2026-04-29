@@ -101,6 +101,11 @@ export function StoreReelsEditor({
     try {
       const url = await uploadImage("store-reels", file);
       await update.mutateAsync({ id: reel.id, video_url: url });
+      // Garante que o YouFlow fique visível na vitrine assim que o primeiro vídeo é enviado.
+      if (!reelsEnabled) {
+        await supabase.from("stores").update({ reels_enabled: true }).eq("id", storeId);
+        onToggleEnabled(true);
+      }
       toast.success("Vídeo enviado");
     } catch (e: any) {
       toast.error(e.message ?? "Falha no upload");

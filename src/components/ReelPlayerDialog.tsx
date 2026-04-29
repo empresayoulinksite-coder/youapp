@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { X, Volume2, VolumeX } from "lucide-react";
 
 export interface Reel {
@@ -26,7 +27,7 @@ export function ReelPlayerDialog({
     list.findIndex((r) => r.id === reel.id),
   );
   const [activeIndex, setActiveIndex] = useState(startIndex);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(true);
   const [progress, setProgress] = useState(0);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
@@ -71,19 +72,25 @@ export function ReelPlayerDialog({
     return () => io.disconnect();
   }, [list.length]);
 
-  // Play active video, pause others
+  // Play active video, pause others. Always start muted to bypass autoplay restrictions,
+  // then try to unmute right after — keeps video visible even when audio is blocked.
   useEffect(() => {
     setProgress(0);
     videoRefs.current.forEach((v, i) => {
       if (!v) return;
       if (i === activeIndex) {
-        v.muted = muted;
-        v.play().catch(() => {
-          // Autoplay com som pode ser bloqueado; faz fallback para mutado
-          v.muted = true;
-          setMuted(true);
-          v.play().catch(() => {});
-        });
+        v.muted = true;
+        Promise.resolve(v.play())
+          .then(() => {
+            if (!muted) {
+              v.muted = false;
+              v.play().catch(() => {
+                v.muted = true;
+                setMuted(true);
+              });
+            }
+          })
+          .catch(() => {});
       } else {
         v.pause();
         v.currentTime = 0;
@@ -123,7 +130,9 @@ export function ReelPlayerDialog({
     };
   }, [activeIndex, list.length]);
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-[60] bg-black flex items-center justify-center">
       {/* Progress bars (Instagram-style) */}
       <div className="absolute top-2 inset-x-0 z-20 px-3 flex gap-1 max-w-md mx-auto">
@@ -215,6 +224,7 @@ export function ReelPlayerDialog({
           );
         })}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
