@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { X } from "lucide-react";
 import { normalizeText } from "@/hooks/use-location";
 import { StoriesBar } from "@/components/StoriesBar";
+import { NotificationsBell } from "@/components/NotificationsBell";
 import { StoreDistance } from "@/components/StoreDistance";
 import { useUserCoords, haversineKm } from "@/lib/distance";
 import { useInterestScores } from "@/hooks/use-interest-scores";
