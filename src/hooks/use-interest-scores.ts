@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -13,10 +13,6 @@ import { useAuth } from "@/contexts/AuthContext";
 export function useInterestScores(stores: { id: string; category: string }[]) {
   const { user } = useAuth();
   const [scores, setScores] = useState<Map<string, number>>(new Map());
-  const storesKey = useMemo(
-    () => stores.map((s) => `${s.id}:${s.category}`).join("|"),
-    [stores],
-  );
 
   useEffect(() => {
     if (!user || stores.length === 0) {
@@ -59,7 +55,7 @@ export function useInterestScores(stores: { id: string; category: string }[]) {
     return () => {
       cancelled = true;
     };
-  }, [user, storesKey]);
+  }, [user, stores]);
 
   return scores;
 }

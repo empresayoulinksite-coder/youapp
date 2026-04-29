@@ -1,8 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNotificationSound } from "@/hooks/useNotificationSound";
-import { Bell, BellOff } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
 import {
@@ -29,10 +27,7 @@ import { openWhatsapp } from "@/lib/whatsapp";
 
 const ordersSearchSchema = z.object({
   store: fallback(z.string(), "all").default("all"),
-  status: fallback(
-    z.enum(["all", "em_analise", "em_producao", "pronto", "entregue", "cancelado"]),
-    "all",
-  ).default("all"),
+  status: fallback(z.enum(["all", "sent", "preparing", "delivered", "cancelled"]), "all").default("all"),
   sort: fallback(z.enum(["recent", "oldest", "highest", "lowest"]), "recent").default("recent"),
 });
 
@@ -78,13 +73,12 @@ type Order = {
 
 const fmtBRL = (n: number) => `R$ ${n.toFixed(2).replace(".", ",")}`;
 
-const STATUS_OPTIONS: { value: "all" | "em_analise" | "em_producao" | "pronto" | "entregue" | "cancelado"; label: string }[] = [
+const STATUS_OPTIONS: { value: "all" | "sent" | "preparing" | "delivered" | "cancelled"; label: string }[] = [
   { value: "all", label: "Todos" },
-  { value: "em_analise", label: "Em análise" },
-  { value: "em_producao", label: "Em produção" },
-  { value: "pronto", label: "Pronto" },
-  { value: "entregue", label: "Entregue" },
-  { value: "cancelado", label: "Cancelado" },
+  { value: "sent", label: "Enviado" },
+  { value: "preparing", label: "Em preparo" },
+  { value: "delivered", label: "Entregue" },
+  { value: "cancelled", label: "Cancelado" },
 ];
 
 const SORT_OPTIONS: { value: "recent" | "oldest" | "highest" | "lowest"; label: string }[] = [
@@ -95,14 +89,8 @@ const SORT_OPTIONS: { value: "recent" | "oldest" | "highest" | "lowest"; label: 
 ];
 
 const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
-  em_analise: { label: "Em análise", cls: "bg-orange-100 text-orange-700" },
-  em_producao: { label: "Em produção", cls: "bg-amber-100 text-amber-700" },
-  pronto: { label: "Pronto 🛵", cls: "bg-emerald-100 text-emerald-700" },
-  entregue: { label: "Entregue", cls: "bg-success/15 text-success" },
-  cancelado: { label: "Cancelado", cls: "bg-destructive/15 text-destructive" },
-  // Compat com pedidos antigos
-  sent: { label: "Em análise", cls: "bg-orange-100 text-orange-700" },
-  preparing: { label: "Em produção", cls: "bg-amber-100 text-amber-700" },
+  sent: { label: "Enviado", cls: "bg-brand-soft text-brand" },
+  preparing: { label: "Em preparo", cls: "bg-warning/15 text-warning" },
   delivered: { label: "Entregue", cls: "bg-success/15 text-success" },
   cancelled: { label: "Cancelado", cls: "bg-destructive/15 text-destructive" },
 };
@@ -113,36 +101,10 @@ function OrdersPage() {
   const { store, status, sort } = Route.useSearch();
   const { reorder } = useCart();
   const [expanded, setExpanded] = useState<string | null>(null);
-  const qc = useQueryClient();
-  const { soundOn, setSoundOn, playDing } = useNotificationSound("client-orders-sound");
-  const prevStatusRef = useRef<Map<string, string> | null>(null);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
   }, [user, loading, navigate]);
-
-  // Realtime: cliente vê o status do pedido mudar ao vivo
-  useEffect(() => {
-    if (!user?.id) return;
-    const channel = supabase
-      .channel(`my-orders-${user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "orders",
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => {
-          qc.invalidateQueries({ queryKey: ["my-orders", user.id] });
-        },
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user?.id, qc]);
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["my-orders", user?.id],
@@ -167,28 +129,6 @@ function OrdersPage() {
       })) as Order[];
     },
   });
-
-  // Detecta mudanças de status e notifica o cliente (som + toast)
-  useEffect(() => {
-    if (!orders || orders.length === 0) return;
-    const current = new Map(orders.map((o) => [o.id, o.status]));
-    const prev = prevStatusRef.current;
-    if (prev) {
-      orders.forEach((o) => {
-        const prevStatus = prev.get(o.id);
-        if (prevStatus && prevStatus !== o.status) {
-          const info = STATUS_LABEL[o.status];
-          const label = info?.label ?? o.status;
-          playDing();
-          toast.success(`${o.store_emoji ?? "🛍️"} ${o.store_name}`, {
-            description: `Seu pedido agora está: ${label}`,
-            duration: 6000,
-          });
-        }
-      });
-    }
-    prevStatusRef.current = current;
-  }, [orders, playDing]);
 
   // Lojas únicas presentes nos pedidos
   const uniqueStores = useMemo(() => {
@@ -256,18 +196,6 @@ function OrdersPage() {
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="font-semibold flex-1">Meus pedidos</h1>
-        <button
-          onClick={() => setSoundOn(!soundOn)}
-          className="p-1.5 -mr-1 rounded-full hover:bg-muted transition"
-          aria-label={soundOn ? "Desativar som de notificação" : "Ativar som de notificação"}
-          title={soundOn ? "Som ligado" : "Som desligado"}
-        >
-          {soundOn ? (
-            <Bell className="h-5 w-5 text-brand" />
-          ) : (
-            <BellOff className="h-5 w-5 text-muted-foreground" />
-          )}
-        </button>
       </header>
 
       <main className="px-4 py-5 max-w-md mx-auto">
@@ -406,7 +334,7 @@ function OrdersPage() {
             {filtered.map((o) => {
               const isOpen = expanded === o.id;
               const itemCount = o.order_items.reduce((s, i) => s + i.quantity, 0);
-              const statusInfo = STATUS_LABEL[o.status] ?? STATUS_LABEL.em_analise;
+              const statusInfo = STATUS_LABEL[o.status] ?? STATUS_LABEL.sent;
               return (
                 <article
                   key={o.id}
@@ -508,10 +436,7 @@ function OrdersPage() {
         )}
       </main>
 
-      <nav
-        className="bg-card border-t border-border shadow-[0_-2px_10px_rgba(0,0,0,0.04)]"
-        style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 30 }}
-      >
+      <nav className="fixed bottom-0 inset-x-0 bg-card border-t border-border z-30">
         <div className="mx-auto max-w-5xl grid grid-cols-5 px-2 py-2">
           {[
             { Icon: Home, label: "Início", to: "/" as const, active: false },

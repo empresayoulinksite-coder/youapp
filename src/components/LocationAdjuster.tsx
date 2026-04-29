@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type L from "leaflet";
+import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { ChevronLeft, Loader2, Crosshair } from "lucide-react";
 
@@ -13,6 +13,21 @@ export type AdjustedLocation = {
   cep: string | null;
   label: string;
 };
+
+// Fix do ícone padrão do Leaflet em bundlers
+const DefaultIcon = L.icon({
+  iconUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  shadowUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+L.Marker.prototype.options.icon = DefaultIcon;
 
 async function reverseGeocode(lat: number, lng: number): Promise<AdjustedLocation> {
   const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&accept-language=pt-BR`;
@@ -47,22 +62,20 @@ export function LocationAdjuster({
   const userMarkerRef = useRef<L.Marker | null>(null);
   const userAccuracyRef = useRef<L.Circle | null>(null);
   const watchIdRef = useRef<number | null>(null);
-  const leafletRef = useRef<typeof L | null>(null);
   const [current, setCurrent] = useState<AdjustedLocation | null>(null);
   const [resolving, setResolving] = useState(false);
 
   const renderUserPosition = (lat: number, lng: number, accuracy?: number) => {
     const map = mapInstance.current;
-    const Leaflet = leafletRef.current;
-    if (!map || !Leaflet) return;
-    const userIcon = Leaflet.divIcon({
+    if (!map) return;
+    const userIcon = L.divIcon({
       className: "user-location-dot",
       html: `<div class="ulb-pulse"></div><div class="ulb-dot"></div>`,
       iconSize: [22, 22],
       iconAnchor: [11, 11],
     });
     if (!userMarkerRef.current) {
-      userMarkerRef.current = Leaflet.marker([lat, lng], {
+      userMarkerRef.current = L.marker([lat, lng], {
         icon: userIcon,
         interactive: false,
         keyboard: false,
@@ -73,7 +86,7 @@ export function LocationAdjuster({
     }
     if (accuracy && accuracy > 0) {
       if (!userAccuracyRef.current) {
-        userAccuracyRef.current = Leaflet.circle([lat, lng], {
+        userAccuracyRef.current = L.circle([lat, lng], {
           radius: accuracy,
           color: "#1a73e8",
           fillColor: "#1a73e8",
@@ -91,90 +104,66 @@ export function LocationAdjuster({
 
   useEffect(() => {
     if (!mapRef.current || mapInstance.current) return;
-    let cancelled = false;
-    let map: L.Map | null = null;
+    const map = L.map(mapRef.current, {
+      zoomControl: false,
+      attributionControl: false,
+    }).setView([initialLat, initialLng], 17);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+    }).addTo(map);
+    L.control.zoom({ position: "bottomright" }).addTo(map);
 
-    void import("leaflet").then(({ default: Leaflet }) => {
-      if (cancelled || !mapRef.current || mapInstance.current) return;
+    mapInstance.current = map;
 
-      const DefaultIcon = Leaflet.icon({
-        iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-        iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-        shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41],
-      });
-      Leaflet.Marker.prototype.options.icon = DefaultIcon;
-      leafletRef.current = Leaflet;
+    const handleMove = () => {
+      const c = map.getCenter();
+      setResolving(true);
+      reverseGeocode(c.lat, c.lng)
+        .then((loc) => setCurrent(loc))
+        .catch(() => {
+          setCurrent({
+            lat: c.lat,
+            lng: c.lng,
+            street: null,
+            neighborhood: null,
+            city: null,
+            state: null,
+            cep: null,
+            label: "Localização ajustada",
+          });
+        })
+        .finally(() => setResolving(false));
+    };
 
-      const mapCreated = Leaflet.map(mapRef.current, {
-        zoomControl: false,
-        attributionControl: false,
-      }).setView([initialLat, initialLng], 17);
-      map = mapCreated;
-      Leaflet.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-      }).addTo(mapCreated);
-      Leaflet.control.zoom({ position: "bottomright" }).addTo(mapCreated);
+    handleMove();
+    map.on("moveend", handleMove);
 
-      mapInstance.current = mapCreated;
-
-      const handleMove = () => {
-        const c = mapCreated.getCenter();
-        setResolving(true);
-        reverseGeocode(c.lat, c.lng)
-          .then((loc) => setCurrent(loc))
-          .catch(() => {
-            setCurrent({
-              lat: c.lat,
-              lng: c.lng,
-              street: null,
-              neighborhood: null,
-              city: null,
-              state: null,
-              cep: null,
-              label: "Localização ajustada",
-            });
-          })
-          .finally(() => setResolving(false));
-      };
-
-      handleMove();
-      mapCreated.on("moveend", handleMove);
-
-      // Bolinha azul de posição real (estilo Google Maps)
-      renderUserPosition(initialLat, initialLng);
-      if ("geolocation" in navigator) {
-        watchIdRef.current = navigator.geolocation.watchPosition(
-          (pos) => {
-            renderUserPosition(
-              pos.coords.latitude,
-              pos.coords.longitude,
-              pos.coords.accuracy,
-            );
-          },
-          undefined,
-          { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 },
-        );
-      }
-      return () => {
-        mapCreated.off("moveend", handleMove);
-      };
-    });
+    // Bolinha azul de posição real (estilo Google Maps)
+    renderUserPosition(initialLat, initialLng);
+    if ("geolocation" in navigator) {
+      watchIdRef.current = navigator.geolocation.watchPosition(
+        (pos) => {
+          renderUserPosition(
+            pos.coords.latitude,
+            pos.coords.longitude,
+            pos.coords.accuracy,
+          );
+        },
+        undefined,
+        { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 },
+      );
+    }
 
     return () => {
-      cancelled = true;
+      map.off("moveend", handleMove);
       if (watchIdRef.current !== null && "geolocation" in navigator) {
         navigator.geolocation.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
       }
       userMarkerRef.current = null;
       userAccuracyRef.current = null;
-      map?.remove();
+      map.remove();
       mapInstance.current = null;
-      leafletRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

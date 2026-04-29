@@ -231,15 +231,12 @@ function StorePage() {
   // Categorias visíveis (com itens) para o filtro sticky estilo iFood
   const visibleCategories = categories.filter((c) => items.some((i) => i.category_id === c.id));
 
-  const ALL_CATEGORIES_ID = "__all__";
-
-  // Seleciona "Todos" por padrão (ou mantém a atual se ainda existir)
+  // Seleciona a primeira categoria por padrão (ou mantém a atual se ainda existir)
   useEffect(() => {
     if (tab !== "menu" || isService || visibleCategories.length === 0) return;
     setActiveCategoryId((prev) => {
-      if (prev === ALL_CATEGORIES_ID) return prev;
       if (prev && visibleCategories.some((c) => c.id === prev)) return prev;
-      return ALL_CATEGORIES_ID;
+      return visibleCategories[0].id;
     });
   }, [tab, isService, visibleCategories.map((c) => c.id).join(",")]);
 
@@ -491,7 +488,8 @@ function StorePage() {
                   <SheetTitle>Categorias</SheetTitle>
                 </SheetHeader>
                 <ul className="mt-4 space-y-1">
-                  {[{ id: ALL_CATEGORIES_ID, name: "Todos", count: items.length }, ...visibleCategories.map((c) => ({ id: c.id, name: c.name, count: items.filter((i) => i.category_id === c.id).length }))].map((c) => {
+                  {visibleCategories.map((c) => {
+                    const count = items.filter((i) => i.category_id === c.id).length;
                     const active = activeCategoryId === c.id;
                     return (
                       <li key={c.id}>
@@ -502,7 +500,7 @@ function StorePage() {
                           }`}
                         >
                           <span className="truncate">{c.name}</span>
-                          <span className="text-xs text-muted-foreground ml-2">{c.count}</span>
+                          <span className="text-xs text-muted-foreground ml-2">{count}</span>
                         </button>
                       </li>
                     );
@@ -512,7 +510,7 @@ function StorePage() {
             </Sheet>
             <div className="flex-1 overflow-x-auto no-scrollbar">
               <div className="flex gap-5 px-4 py-3 whitespace-nowrap">
-                {[{ id: ALL_CATEGORIES_ID, name: "Todos" }, ...visibleCategories].map((c) => {
+                {visibleCategories.map((c) => {
                   const active = activeCategoryId === c.id;
                   return (
                     <button
@@ -714,7 +712,7 @@ function StorePage() {
             {categories.map((cat) => {
               const catItems = items.filter((i) => i.category_id === cat.id);
               if (!catItems.length) return null;
-              if (activeCategoryId && activeCategoryId !== ALL_CATEGORIES_ID && cat.id !== activeCategoryId) return null;
+              if (activeCategoryId && cat.id !== activeCategoryId) return null;
               return (
                 <section key={cat.id} data-category-id={cat.id} className="scroll-mt-[150px]">
                   <h3 className="font-bold text-base mb-3">{cat.name}</h3>

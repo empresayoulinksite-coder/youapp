@@ -699,54 +699,6 @@ export type Database = {
           },
         ]
       }
-      notifications: {
-        Row: {
-          body: string | null
-          created_at: string
-          emoji: string | null
-          id: string
-          image_url: string | null
-          is_read: boolean
-          link: string | null
-          order_id: string | null
-          post_id: string | null
-          store_id: string | null
-          title: string
-          type: string
-          user_id: string
-        }
-        Insert: {
-          body?: string | null
-          created_at?: string
-          emoji?: string | null
-          id?: string
-          image_url?: string | null
-          is_read?: boolean
-          link?: string | null
-          order_id?: string | null
-          post_id?: string | null
-          store_id?: string | null
-          title: string
-          type: string
-          user_id: string
-        }
-        Update: {
-          body?: string | null
-          created_at?: string
-          emoji?: string | null
-          id?: string
-          image_url?: string | null
-          is_read?: boolean
-          link?: string | null
-          order_id?: string | null
-          post_id?: string | null
-          store_id?: string | null
-          title?: string
-          type?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       order_items: {
         Row: {
           created_at: string
@@ -1473,44 +1425,10 @@ export type Database = {
           },
         ]
       }
-      store_staff: {
-        Row: {
-          created_at: string
-          display_name: string | null
-          id: string
-          is_active: boolean
-          role: string
-          store_id: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          display_name?: string | null
-          id?: string
-          is_active?: boolean
-          role?: string
-          store_id: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          display_name?: string | null
-          id?: string
-          is_active?: boolean
-          role?: string
-          store_id?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       stores: {
         Row: {
           about: string | null
           address: string | null
-          auto_accept_orders: boolean
           benefit_delivery_enabled: boolean
           benefit_delivery_subtitle: string
           benefit_delivery_title: string
@@ -1554,25 +1472,12 @@ export type Database = {
           slot_minutes: number
           slug: string
           store_type: string
-          time_analise_balcao_max: number
-          time_analise_balcao_min: number
-          time_analise_delivery_max: number
-          time_analise_delivery_min: number
-          time_producao_balcao_max: number
-          time_producao_balcao_min: number
-          time_producao_delivery_max: number
-          time_producao_delivery_min: number
-          time_pronto_balcao_max: number
-          time_pronto_balcao_min: number
-          time_pronto_delivery_max: number
-          time_pronto_delivery_min: number
           updated_at: string
           whatsapp: string | null
         }
         Insert: {
           about?: string | null
           address?: string | null
-          auto_accept_orders?: boolean
           benefit_delivery_enabled?: boolean
           benefit_delivery_subtitle?: string
           benefit_delivery_title?: string
@@ -1616,25 +1521,12 @@ export type Database = {
           slot_minutes?: number
           slug: string
           store_type?: string
-          time_analise_balcao_max?: number
-          time_analise_balcao_min?: number
-          time_analise_delivery_max?: number
-          time_analise_delivery_min?: number
-          time_producao_balcao_max?: number
-          time_producao_balcao_min?: number
-          time_producao_delivery_max?: number
-          time_producao_delivery_min?: number
-          time_pronto_balcao_max?: number
-          time_pronto_balcao_min?: number
-          time_pronto_delivery_max?: number
-          time_pronto_delivery_min?: number
           updated_at?: string
           whatsapp?: string | null
         }
         Update: {
           about?: string | null
           address?: string | null
-          auto_accept_orders?: boolean
           benefit_delivery_enabled?: boolean
           benefit_delivery_subtitle?: string
           benefit_delivery_title?: string
@@ -1678,18 +1570,6 @@ export type Database = {
           slot_minutes?: number
           slug?: string
           store_type?: string
-          time_analise_balcao_max?: number
-          time_analise_balcao_min?: number
-          time_analise_delivery_max?: number
-          time_analise_delivery_min?: number
-          time_producao_balcao_max?: number
-          time_producao_balcao_min?: number
-          time_producao_delivery_max?: number
-          time_producao_delivery_min?: number
-          time_pronto_balcao_max?: number
-          time_pronto_balcao_min?: number
-          time_pronto_delivery_max?: number
-          time_pronto_delivery_min?: number
           updated_at?: string
           whatsapp?: string | null
         }
@@ -1902,10 +1782,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      can_manage_store_orders: {
-        Args: { _store_id: string; _user_id: string }
-        Returns: boolean
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1914,10 +1790,6 @@ export type Database = {
         Returns: boolean
       }
       is_store_owner: {
-        Args: { _store_id: string; _user_id: string }
-        Returns: boolean
-      }
-      is_store_staff: {
         Args: { _store_id: string; _user_id: string }
         Returns: boolean
       }

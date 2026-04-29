@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { LogOut, Power, LayoutDashboard, Calendar, Scissors, Ticket, Clock3, ArrowLeft, Users, Images, Dumbbell, Receipt } from "lucide-react";
+import { LogOut, Power, LayoutDashboard, Calendar, Scissors, Ticket, Clock3, ArrowLeft, Users, Images, Dumbbell } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -223,25 +223,6 @@ function PainelPage() {
       </header>
 
       <main className="mx-auto max-w-5xl space-y-4 px-4 py-6">
-        {currentStore?.store_type === "food" && (
-          <Link
-            to="/pedidos-loja/$storeId"
-            params={{ storeId: currentStore.id }}
-            className="flex items-center justify-between rounded-lg border bg-gradient-to-r from-primary to-primary/80 p-4 text-primary-foreground shadow-sm hover:opacity-95"
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
-                <Receipt className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="font-semibold">Gestor de pedidos</p>
-                <p className="text-xs opacity-90">Acompanhe os pedidos em tempo real (Kanban)</p>
-              </div>
-            </div>
-            <span className="text-sm font-semibold">Abrir →</span>
-          </Link>
-        )}
-
         {currentStore && (
           <div className="flex items-center justify-between rounded-lg border bg-card p-4">
             <div>

@@ -1,10 +1,7 @@
-import { useMemo, useState } from "react";
-import { createPortal } from "react-dom";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { StoriesViewer } from "./StoriesViewer";
-import { useAuth } from "@/contexts/AuthContext";
-import { getRotationSeed, sortWithRotation } from "@/lib/rotation";
 
 export interface StoryRow {
   id: string;
@@ -20,9 +17,8 @@ export interface StoryRow {
 
 export function StoriesBar() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
-  const { user } = useAuth();
 
-  const { data: storiesRaw = [], isLoading: loading } = useQuery({
+  const { data: stories = [], isLoading: loading } = useQuery({
     queryKey: ["stories"],
     staleTime: 60_000,
     queryFn: async () => {
@@ -35,14 +31,6 @@ export function StoriesBar() {
         .map((r: any) => ({ ...r, store: r.stores ?? null })) as StoryRow[];
     },
   });
-
-  // Rotação justa: a ordem dos stories muda a cada dia para que todas as
-  // empresas tenham a mesma chance de aparecer no topo da home.
-  const stories = useMemo(() => {
-    if (storiesRaw.length === 0) return storiesRaw;
-    const seed = getRotationSeed(user?.id);
-    return sortWithRotation(storiesRaw, (s) => s.store_id ?? s.id, { seed });
-  }, [storiesRaw, user?.id]);
 
   if (loading) {
     return (
@@ -101,15 +89,13 @@ export function StoriesBar() {
         })}
       </div>
 
-      {openIndex !== null && typeof document !== "undefined" &&
-        createPortal(
-          <StoriesViewer
-            stories={stories}
-            startIndex={openIndex}
-            onClose={() => setOpenIndex(null)}
-          />,
-          document.body,
-        )}
+      {openIndex !== null && (
+        <StoriesViewer
+          stories={stories}
+          startIndex={openIndex}
+          onClose={() => setOpenIndex(null)}
+        />
+      )}
     </>
   );
 }

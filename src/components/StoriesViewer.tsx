@@ -16,7 +16,6 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState(false);
-  const [hasInteracted, setHasInteracted] = useState(true);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const startRef = useRef<number>(Date.now());
@@ -33,46 +32,24 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
     setPaused(value);
   }, []);
 
-  const unmuteAfterInteraction = useCallback(() => {
-    setHasInteracted(true);
-    const v = videoRef.current;
-    if (v) {
-      v.muted = false;
-      v.volume = 1;
-      v.play().catch(() => {});
-    }
-    setMuted(false);
-  }, []);
-
   const resumeCurrentVideo = useCallback(() => {
     const video = videoRef.current;
     if (!video || current?.media_type !== "video") return;
 
-    // Sempre garante reprodução: começa muted (autoplay sempre permitido)
-    // e tenta desmutar logo em seguida.
-    video.muted = true;
-    const playPromise = video.play();
-    Promise.resolve(playPromise)
-      .then(() => {
-        // Tenta ativar som
-        video.muted = false;
-        video.volume = 1;
-        const p2 = video.play();
-        Promise.resolve(p2)
-          .then(() => setMuted(false))
-          .catch(() => {
-            // Som bloqueado; mantém vídeo rodando mudo
-            video.muted = true;
-            setMuted(true);
-            video.play().catch(() => {});
-          });
-      })
-      .catch(() => {
-        // Mesmo o play mudo falhou; tenta de novo
-        video.muted = true;
-        setMuted(true);
-        video.play().catch(() => {});
+    const tryPlay = () => {
+      video.muted = false;
+      video.volume = 1;
+      setMuted(false);
+      video.play().catch(() => {
+        // Mantém o som ativo; a próxima interação do usuário tenta o play novamente.
       });
+    };
+    tryPlay();
+    if (resumeRafRef.current) cancelAnimationFrame(resumeRafRef.current);
+    resumeRafRef.current = requestAnimationFrame(() => {
+      resumeRafRef.current = null;
+      tryPlay();
+    });
   }, [current?.media_type]);
 
   useEffect(() => {
@@ -93,6 +70,16 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
     setProgress(0);
     accumRef.current = 0;
     startRef.current = Date.now();
+    // Garante som ativo ao trocar de story
+    setMuted(false);
+    const v = videoRef.current;
+    if (v) {
+      v.muted = false;
+      v.volume = 1;
+      v.play().catch(() => {
+        setMuted(false);
+      });
+    }
   }, [index]);
 
   // Progress loop (image stories use timer; video uses native time)
@@ -222,16 +209,12 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              setHasInteracted(true);
               setMuted((m) => {
                 const next = !m;
                 const v = videoRef.current;
                 if (v) {
                   v.muted = next;
-                  if (!next) {
-                    v.volume = 1;
-                    v.play().catch(() => {});
-                  }
+                  if (!next) v.play().catch(() => {});
                 }
                 return next;
               });
@@ -258,7 +241,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
       >
         <div
           className="absolute inset-0 flex items-center justify-center bg-black"
-          onPointerDown={() => { setStoryPaused(true); unmuteAfterInteraction(); }}
+          onPointerDown={() => setStoryPaused(true)}
           onPointerUp={() => setStoryPaused(false)}
           onPointerLeave={() => setStoryPaused(false)}
           onPointerCancel={() => setStoryPaused(false)}
@@ -269,7 +252,7 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
               key={current.id}
               src={current.media_url}
               autoPlay
-              muted
+              muted={muted}
               playsInline
               preload="auto"
               onEnded={next}

@@ -148,13 +148,6 @@ function AdminStoreManagePage() {
             Ver loja
           </Link>
         </Button>
-        {isFood && (
-          <Button asChild size="sm">
-            <Link to="/pedidos-loja/$storeId" params={{ storeId: store.id }}>
-              Pedidos
-            </Link>
-          </Button>
-        )}
       </header>
 
       <Tabs defaultValue="info">

@@ -10,11 +10,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { X } from "lucide-react";
 import { normalizeText } from "@/hooks/use-location";
 import { StoriesBar } from "@/components/StoriesBar";
-import { NotificationsBell } from "@/components/NotificationsBell";
 import { StoreDistance } from "@/components/StoreDistance";
 import { useUserCoords, haversineKm } from "@/lib/distance";
 import { useInterestScores } from "@/hooks/use-interest-scores";
-import { getRotationSeed, sortWithRotation } from "@/lib/rotation";
 
 import {
   MapPin,
@@ -77,10 +75,32 @@ interface MenuItemRow {
 }
 
 export const Route = createFileRoute("/")({
+  loader: async () => {
+    const { data, error } = await supabase
+      .from("stores")
+      .select("id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, delivery_enabled, promo, neighborhood, city, address, cep, lat, lng")
+      .eq("is_hidden", false)
+      .order("name");
+    if (error) throw error;
+    const stores = (data ?? []) as StoreRow[];
+    return { stores };
+  },
+  // Mantém o resultado do loader "fresco" por 60s ao navegar entre páginas
+  staleTime: 60_000,
+  gcTime: 5 * 60_000,
+  errorComponent: ({ error }) => (
+    <div className="min-h-screen flex items-center justify-center p-6 text-center text-sm text-muted-foreground">
+      {error.message}
+    </div>
+  ),
   head: () => ({
     meta: [
-      { title: "Youapp" },
-      { name: "description", content: "Youapp" },
+      { title: "Youapp — Comida em casa, rápido" },
+      {
+        name: "description",
+        content:
+          "Peça comida com entrega rápida. Os melhores restaurantes da sua região no Youapp.",
+      },
     ],
   }),
   component: Index,
@@ -91,20 +111,7 @@ function Index() {
   const { user } = useAuth();
   const { count: cartCount } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { data: stores = [], isLoading: storesLoading } = useQuery({
-    queryKey: ["home-stores"],
-    staleTime: 60_000,
-    gcTime: 5 * 60_000,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("stores")
-        .select("id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, delivery_enabled, promo, neighborhood, city, address, cep, lat, lng")
-        .eq("is_hidden", false)
-        .order("name");
-      if (error) throw error;
-      return (data ?? []) as StoreRow[];
-    },
-  });
+  const { stores } = Route.useLoaderData() as { stores: StoreRow[] };
   const { active } = useAddress();
   const userCoords = useUserCoords();
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -184,12 +191,10 @@ function Index() {
   // Score de interesse por loja (favoritos + cart + bookings).
   const interestScores = useInterestScores(stores);
 
-  // Semente diária da rotação justa: garante que todas as lojas tenham
-  // chance de aparecer no topo, mas mantém a ordem estável durante o dia.
-  const rotationSeed = useMemo(() => getRotationSeed(user?.id), [user?.id]);
-
   // Lojas próximas: raio de 10 km do endereço do usuário.
-  // Ordenação combina rodízio diário + interesse do usuário + proximidade.
+  // Ordenação por relevância combina distância (km) com score de interesse:
+  //   rank = distancia_km - (score * 1.5)   → menor é melhor
+  // Sem coordenadas → mostra todas, mas ainda prioriza por interesse.
   const nearbyStores = useMemo(() => {
     const RADIUS_KM = 10;
     const enriched = stores.map((s) => {
@@ -197,18 +202,19 @@ function Index() {
         userCoords && s.lat != null && s.lng != null
           ? haversineKm(userCoords, { lat: s.lat, lng: s.lng })
           : null;
-      return { store: s, km };
+      return { store: s, km, score: interestScores.get(s.id) ?? 0 };
     });
     const inRange = userCoords
       ? enriched.filter((x) => x.km != null && x.km <= RADIUS_KM)
       : enriched;
     const list = inRange.length > 0 ? inRange : enriched;
-    return sortWithRotation(list, (x) => x.store.id, {
-      seed: rotationSeed,
-      interest: (x) => interestScores.get(x.store.id) ?? 0,
-      distanceKm: (x) => x.km,
-    }).map((x) => x.store);
-  }, [stores, userCoords, interestScores, rotationSeed]);
+    list.sort((a, b) => {
+      const ra = (a.km ?? 0) - a.score * 1.5;
+      const rb = (b.km ?? 0) - b.score * 1.5;
+      return ra - rb;
+    });
+    return list.map((x) => x.store);
+  }, [stores, userCoords, interestScores]);
 
   const filteredStores = useMemo(() => {
     const q = norm(query.trim());
@@ -229,17 +235,10 @@ function Index() {
     return list;
   }, [nearbyStores, query, activeCategory, freeOnly, sortBy, homeCategories, norm]);
 
-  // Lojas em destaque: rodízio diário garante que todas as lojas
-  // (não só as melhor avaliadas) apareçam ao longo dos dias.
-  // Mistura: rotação + interesse + um leve peso de rating como qualidade base.
-  const featured = useMemo(() => {
-    const pool = filteredStores.slice(0, 30); // candidatas
-    return sortWithRotation(pool, (s) => s.id, {
-      seed: rotationSeed,
-      interest: (s) => (interestScores.get(s.id) ?? 0) + Number(s.rating ?? 0) * 0.2,
-      rotationWeight: 1.4, // dá mais peso ao rodízio para variar mais a vitrine
-    }).slice(0, 6);
-  }, [filteredStores, interestScores, rotationSeed]);
+  const featured = useMemo(
+    () => [...filteredStores].sort((a, b) => Number(b.rating) - Number(a.rating)).slice(0, 6),
+    [filteredStores],
+  );
 
   // Vitrine: produtos das lojas e-commerce
   const ecomStoreMap = useMemo(() => {
@@ -295,7 +294,6 @@ function Index() {
             </div>
           </button>
           <div className="flex items-center gap-4 shrink-0">
-            <NotificationsBell />
             <Link to={user ? "/favoritos" : "/auth"} aria-label="Favoritos"><Heart className="h-5 w-5 text-foreground" /></Link>
             <Link to="/sacola" className="relative">
               <ShoppingBag className="h-5 w-5 text-foreground" />
@@ -391,40 +389,6 @@ function Index() {
         </section>
 
         {/* Featured stores */}
-        {storesLoading && (
-          <>
-            <section>
-              <div className="h-5 w-40 bg-muted rounded animate-pulse mb-3" />
-              <div className="flex gap-3 overflow-hidden -mx-4 px-4">
-                {[0, 1, 2, 3].map((i) => (
-                  <div key={i} className="shrink-0 w-44">
-                    <div className="bg-card rounded-2xl overflow-hidden shadow-[var(--shadow-card)]">
-                      <div className="h-24 bg-muted animate-pulse" />
-                      <div className="p-3 space-y-2">
-                        <div className="h-3.5 w-3/4 bg-muted rounded animate-pulse" />
-                        <div className="h-3 w-1/2 bg-muted rounded animate-pulse" />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-            <section className="space-y-3">
-              <div className="h-5 w-48 bg-muted rounded animate-pulse" />
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="bg-card rounded-2xl p-3 flex gap-3 shadow-[var(--shadow-card)]">
-                  <div className="h-20 w-20 rounded-xl bg-muted animate-pulse shrink-0" />
-                  <div className="flex-1 space-y-2 py-1">
-                    <div className="h-4 w-2/3 bg-muted rounded animate-pulse" />
-                    <div className="h-3 w-1/2 bg-muted rounded animate-pulse" />
-                    <div className="h-3 w-3/4 bg-muted rounded animate-pulse" />
-                  </div>
-                </div>
-              ))}
-            </section>
-          </>
-        )}
-
         {featured.length > 0 && (
           <section>
             <div className="flex items-end justify-between mb-3">
@@ -695,10 +659,7 @@ function Index() {
       </main>
 
       {/* Bottom nav */}
-      <nav
-        className="bg-card border-t border-border shadow-[0_-2px_10px_rgba(0,0,0,0.04)]"
-        style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 30 }}
-      >
+      <nav className="fixed bottom-0 inset-x-0 bg-card border-t border-border z-30">
         <div className="mx-auto max-w-5xl grid grid-cols-5 px-2 py-2">
           {[
             { Icon: Home, label: "Início", active: true, to: "/" as const, onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }) },

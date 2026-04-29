@@ -511,57 +511,19 @@ function AdminStores() {
               </div>
               <div className="sm:col-span-2">
                 <Label>Imagem</Label>
-                <div
-                  className="mt-1 rounded-lg border-2 border-dashed border-border bg-muted/40 p-3 focus-within:border-primary focus-within:bg-muted/60 transition-colors"
-                  tabIndex={0}
-                  onPaste={(e) => {
-                    const item = Array.from(e.clipboardData.items).find((i) =>
-                      i.type.startsWith("image/"),
-                    );
-                    const file = item?.getAsFile();
-                    if (file) {
-                      e.preventDefault();
-                      handleFile(file);
-                    }
-                  }}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    const file = Array.from(e.dataTransfer.files).find((f) =>
-                      f.type.startsWith("image/"),
-                    );
-                    if (file) handleFile(file);
-                  }}
-                >
-                  <div className="flex items-center gap-3">
-                    {editing.image_url ? (
-                      <img
-                        src={editing.image_url}
-                        alt=""
-                        className="h-16 w-16 rounded object-cover shrink-0"
-                      />
-                    ) : (
-                      <div className="h-16 w-16 rounded bg-muted flex items-center justify-center text-xs text-muted-foreground shrink-0">
-                        Sem foto
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        disabled={uploading}
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (f) handleFile(f);
-                        }}
-                      />
-                      <p className="mt-1.5 text-[11px] text-muted-foreground">
-                        Clique para escolher, <strong>arraste</strong> uma imagem aqui ou clique nesta área e pressione <kbd className="px-1 py-0.5 rounded bg-muted border text-[10px]">Ctrl+V</kbd> para colar um print.
-                      </p>
-                    </div>
-                  </div>
+                <div className="mt-1 flex items-center gap-3">
+                  {editing.image_url && (
+                    <img src={editing.image_url} alt="" className="h-16 w-16 rounded object-cover" />
+                  )}
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    disabled={uploading}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleFile(f);
+                    }}
+                  />
                 </div>
               </div>
               <div>
