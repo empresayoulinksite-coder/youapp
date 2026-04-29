@@ -695,7 +695,10 @@ function Index() {
       </main>
 
       {/* Bottom nav */}
-      <nav className="bg-card border-t border-border shadow-[0_-2px_10px_rgba(0,0,0,0.04)]">
+      <nav
+        className="bg-card border-t border-border shadow-[0_-2px_10px_rgba(0,0,0,0.04)]"
+        style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 30 }}
+      >
         <div className="mx-auto max-w-5xl grid grid-cols-5 px-2 py-2">
           {[
             { Icon: Home, label: "Início", active: true, to: "/" as const, onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }) },
