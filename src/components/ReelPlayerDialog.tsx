@@ -27,7 +27,9 @@ export function ReelPlayerDialog({
     list.findIndex((r) => r.id === reel.id),
   );
   const [activeIndex, setActiveIndex] = useState(startIndex);
-  const [muted, setMuted] = useState(true);
+  // Inicia com som ativo. Como o player só abre após um clique do usuário,
+  // o navegador permite o autoplay com áudio na maioria dos casos.
+  const [muted, setMuted] = useState(false);
   const [progress, setProgress] = useState(0);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
