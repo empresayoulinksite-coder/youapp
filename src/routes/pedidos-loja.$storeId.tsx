@@ -362,11 +362,13 @@ function AdminOrdersPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="staff" className="mt-4">
-          <div className="rounded-lg border bg-card p-4">
-            <StoreStaffEditor storeId={storeId} />
-          </div>
-        </TabsContent>
+        {canManageStaff && (
+          <TabsContent value="staff" className="mt-4">
+            <div className="rounded-lg border bg-card p-4">
+              <StoreStaffEditor storeId={storeId} />
+            </div>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
