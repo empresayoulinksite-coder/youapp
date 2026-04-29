@@ -91,7 +91,20 @@ function Index() {
   const { user } = useAuth();
   const { count: cartCount } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { stores } = Route.useLoaderData() as { stores: StoreRow[] };
+  const { data: stores = [], isLoading: storesLoading } = useQuery({
+    queryKey: ["home-stores"],
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("stores")
+        .select("id, slug, name, emoji, image_url, category, rating, distance, delivery_time, delivery_fee, free_delivery, delivery_enabled, promo, neighborhood, city, address, cep, lat, lng")
+        .eq("is_hidden", false)
+        .order("name");
+      if (error) throw error;
+      return (data ?? []) as StoreRow[];
+    },
+  });
   const { active } = useAddress();
   const userCoords = useUserCoords();
   const [pickerOpen, setPickerOpen] = useState(false);
