@@ -78,6 +78,7 @@ import { CouponProvider } from "@/contexts/CouponContext";
 import { ProfileGate } from "@/components/ProfileGate";
 import { Toaster } from "@/components/ui/sonner";
 import { WelcomeModal } from "@/components/WelcomeModal";
+import { GlobalNotificationsListener } from "@/components/GlobalNotificationsListener";
 
 function RootComponent() {
   const [queryClient] = useState(
@@ -105,6 +106,7 @@ function RootComponent() {
                 <CartProvider>
                   <Outlet />
                   <WelcomeModal />
+                  <GlobalNotificationsListener />
                   <Toaster />
                 </CartProvider>
               </CouponProvider>

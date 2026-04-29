@@ -26,8 +26,7 @@ export function NotificationsBell() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
-  const { soundOn, setSoundOn, playDing } = useNotificationSound("client-notif-sound");
-  const initRef = useRef(false);
+  const { soundOn, setSoundOn } = useNotificationSound("client-notif-sound");
   const ref = useRef<HTMLDivElement | null>(null);
 
   const { data: notifications = [] } = useQuery({
@@ -47,61 +46,8 @@ export function NotificationsBell() {
 
   const unreadCount = useMemo(() => notifications.filter((n) => !n.is_read).length, [notifications]);
 
-  // Realtime: novas notificações disparam som + toast + atualização da lista
-  useEffect(() => {
-    if (!user?.id) return;
-    initRef.current = false;
-    const t = setTimeout(() => {
-      initRef.current = true;
-    }, 1500);
-
-    const channel = supabase
-      .channel(`notifications-${user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notifications",
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          const n = payload.new as Notif;
-          if (initRef.current) {
-            playDing();
-            toast.success(`${n.emoji ?? "🔔"} ${n.title}`, {
-              description: n.body ?? undefined,
-              duration: 6000,
-              action: n.link
-                ? {
-                    label: "Ver",
-                    onClick: () => navigate({ to: n.link! }),
-                  }
-                : undefined,
-            });
-          }
-          qc.invalidateQueries({ queryKey: ["notifications", user.id] });
-        },
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "notifications",
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => {
-          qc.invalidateQueries({ queryKey: ["notifications", user.id] });
-        },
-      )
-      .subscribe();
-
-    return () => {
-      clearTimeout(t);
-      supabase.removeChannel(channel);
-    };
-  }, [user?.id, qc, playDing, navigate]);
+  // O listener global (GlobalNotificationsListener) já cuida de som, toast
+  // e invalidação da query. Aqui não precisamos de outro canal Realtime.
 
   // Fecha ao clicar fora
   useEffect(() => {
