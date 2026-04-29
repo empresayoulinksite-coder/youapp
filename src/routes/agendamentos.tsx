@@ -156,7 +156,7 @@ function BookingsPage() {
         )}
       </main>
 
-      <nav className="fixed bottom-0 inset-x-0 bg-card border-t border-border z-30">
+      <nav className="bg-card border-t border-border">
         <div className="mx-auto max-w-5xl grid grid-cols-5 px-2 py-2">
           {[
             { Icon: Home, label: "Início", to: "/" as const, active: false },
