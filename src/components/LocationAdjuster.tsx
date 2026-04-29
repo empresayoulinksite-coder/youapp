@@ -109,41 +109,42 @@ export function LocationAdjuster({
       Leaflet.Marker.prototype.options.icon = DefaultIcon;
       leafletRef.current = Leaflet;
 
-      map = Leaflet.map(mapRef.current, {
-      zoomControl: false,
-      attributionControl: false,
-    }).setView([initialLat, initialLng], 17);
+      const mapCreated = Leaflet.map(mapRef.current, {
+        zoomControl: false,
+        attributionControl: false,
+      }).setView([initialLat, initialLng], 17);
+      map = mapCreated;
       Leaflet.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-    }).addTo(map);
-      Leaflet.control.zoom({ position: "bottomright" }).addTo(map);
+        maxZoom: 19,
+      }).addTo(mapCreated);
+      Leaflet.control.zoom({ position: "bottomright" }).addTo(mapCreated);
 
-      mapInstance.current = map;
+      mapInstance.current = mapCreated;
 
-    const handleMove = () => {
-      const c = map.getCenter();
-      setResolving(true);
-      reverseGeocode(c.lat, c.lng)
-        .then((loc) => setCurrent(loc))
-        .catch(() => {
-          setCurrent({
-            lat: c.lat,
-            lng: c.lng,
-            street: null,
-            neighborhood: null,
-            city: null,
-            state: null,
-            cep: null,
-            label: "Localização ajustada",
-          });
-        })
-        .finally(() => setResolving(false));
-    };
+      const handleMove = () => {
+        const c = mapCreated.getCenter();
+        setResolving(true);
+        reverseGeocode(c.lat, c.lng)
+          .then((loc) => setCurrent(loc))
+          .catch(() => {
+            setCurrent({
+              lat: c.lat,
+              lng: c.lng,
+              street: null,
+              neighborhood: null,
+              city: null,
+              state: null,
+              cep: null,
+              label: "Localização ajustada",
+            });
+          })
+          .finally(() => setResolving(false));
+      };
 
       handleMove();
-      map.on("moveend", handleMove);
+      mapCreated.on("moveend", handleMove);
 
-    // Bolinha azul de posição real (estilo Google Maps)
+      // Bolinha azul de posição real (estilo Google Maps)
       renderUserPosition(initialLat, initialLng);
       if ("geolocation" in navigator) {
         watchIdRef.current = navigator.geolocation.watchPosition(
@@ -158,6 +159,9 @@ export function LocationAdjuster({
           { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 },
         );
       }
+      return () => {
+        mapCreated.off("moveend", handleMove);
+      };
     });
 
     return () => {
