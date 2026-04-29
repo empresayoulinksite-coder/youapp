@@ -334,10 +334,17 @@ function PainelPage() {
           {(() => {
             const isService = currentStore?.store_type === "service";
             const isGym = isGymStore(currentStore?.category);
-            const cols = 6 + (isService ? 1 : 0) + (isGym ? 1 : 0);
-            const colsClass: Record<number, string> = { 6: "grid-cols-6", 7: "grid-cols-7", 8: "grid-cols-8" };
+            const isFoodOrEcom = currentStore?.store_type === "food" || currentStore?.store_type === "ecommerce";
+            const cols = 6 + (isService ? 1 : 0) + (isGym ? 1 : 0) + (isFoodOrEcom ? 1 : 0);
+            const colsClass: Record<number, string> = { 6: "grid-cols-6", 7: "grid-cols-7", 8: "grid-cols-8", 9: "grid-cols-9" };
             return (
               <TabsList className={`grid w-full ${colsClass[cols] ?? "grid-cols-6"}`}>
+                {isFoodOrEcom && (
+                  <TabsTrigger value="orders" className="gap-1.5">
+                    <ListOrdered className="h-4 w-4" />
+                    <span className="hidden sm:inline">Pedidos</span>
+                  </TabsTrigger>
+                )}
                 <TabsTrigger value="overview" className="gap-1.5">
                   <LayoutDashboard className="h-4 w-4" />
                   <span className="hidden sm:inline">Resumo</span>
