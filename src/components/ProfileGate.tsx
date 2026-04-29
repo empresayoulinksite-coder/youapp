@@ -69,7 +69,7 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
             style={{ animationDuration: "1.8s" }}
           />
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">YouLink</h1>
+        
         <p className="text-sm text-muted-foreground animate-pulse">Carregando...</p>
       </div>
     );
