@@ -519,6 +519,7 @@ function AdminOrdersPage() {
                       <OrderCard
                         key={o.id}
                         order={o}
+                        columnTimes={col.id !== "entregue" ? timesFor(col.id as "em_analise" | "em_producao" | "pronto") : null}
                         onAdvance={(next, sendWhats) =>
                           updateStatus(o, next, sendWhats)
                         }
