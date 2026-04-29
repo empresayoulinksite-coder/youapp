@@ -381,6 +381,33 @@ function AdminOrdersPage() {
   }
 
   const canManageStaff = !!access.isOwner || !!access.isAdmin;
+  const canEditStore = !!access.isOwner || !!access.isAdmin;
+
+  function timesFor(status: "em_analise" | "em_producao" | "pronto"): ColumnTimes {
+    const s = store as any;
+    if (status === "em_analise") {
+      return {
+        balcao_min: s.time_analise_balcao_min ?? 0,
+        balcao_max: s.time_analise_balcao_max ?? 0,
+        delivery_min: s.time_analise_delivery_min ?? 0,
+        delivery_max: s.time_analise_delivery_max ?? 0,
+      };
+    }
+    if (status === "em_producao") {
+      return {
+        balcao_min: s.time_producao_balcao_min ?? 0,
+        balcao_max: s.time_producao_balcao_max ?? 0,
+        delivery_min: s.time_producao_delivery_min ?? 0,
+        delivery_max: s.time_producao_delivery_max ?? 0,
+      };
+    }
+    return {
+      balcao_min: s.time_pronto_balcao_min ?? 0,
+      balcao_max: s.time_pronto_balcao_max ?? 0,
+      delivery_min: s.time_pronto_delivery_min ?? 0,
+      delivery_max: s.time_pronto_delivery_max ?? 0,
+    };
+  }
 
   return (
     <div>
