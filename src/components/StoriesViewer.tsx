@@ -33,6 +33,17 @@ export function StoriesViewer({ stories, startIndex, onClose }: Props) {
     setPaused(value);
   }, []);
 
+  const unmuteAfterInteraction = useCallback(() => {
+    setHasInteracted(true);
+    const v = videoRef.current;
+    if (v) {
+      v.muted = false;
+      v.volume = 1;
+      v.play().catch(() => {});
+    }
+    setMuted(false);
+  }, []);
+
   const resumeCurrentVideo = useCallback(() => {
     const video = videoRef.current;
     if (!video || current?.media_type !== "video") return;
