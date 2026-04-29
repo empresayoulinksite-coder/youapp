@@ -19,8 +19,9 @@ export interface StoryRow {
 
 export function StoriesBar() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const { user } = useAuth();
 
-  const { data: stories = [], isLoading: loading } = useQuery({
+  const { data: storiesRaw = [], isLoading: loading } = useQuery({
     queryKey: ["stories"],
     staleTime: 60_000,
     queryFn: async () => {
@@ -33,6 +34,14 @@ export function StoriesBar() {
         .map((r: any) => ({ ...r, store: r.stores ?? null })) as StoryRow[];
     },
   });
+
+  // Rotação justa: a ordem dos stories muda a cada dia para que todas as
+  // empresas tenham a mesma chance de aparecer no topo da home.
+  const stories = useMemo(() => {
+    if (storiesRaw.length === 0) return storiesRaw;
+    const seed = getRotationSeed(user?.id);
+    return sortWithRotation(storiesRaw, (s) => s.store_id ?? s.id, { seed });
+  }, [storiesRaw, user?.id]);
 
   if (loading) {
     return (
