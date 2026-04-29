@@ -111,10 +111,34 @@ function OrdersPage() {
   const { store, status, sort } = Route.useSearch();
   const { reorder } = useCart();
   const [expanded, setExpanded] = useState<string | null>(null);
+  const qc = useQueryClient();
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
   }, [user, loading, navigate]);
+
+  // Realtime: cliente vê o status do pedido mudar ao vivo
+  useEffect(() => {
+    if (!user?.id) return;
+    const channel = supabase
+      .channel(`my-orders-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "orders",
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          qc.invalidateQueries({ queryKey: ["my-orders", user.id] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, qc]);
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["my-orders", user?.id],
