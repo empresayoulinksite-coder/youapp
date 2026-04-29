@@ -27,7 +27,7 @@ export function ReelPlayerDialog({
     list.findIndex((r) => r.id === reel.id),
   );
   const [activeIndex, setActiveIndex] = useState(startIndex);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(true);
   const [progress, setProgress] = useState(0);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
