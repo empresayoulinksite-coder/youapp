@@ -385,6 +385,20 @@ function PainelPage() {
             );
           })()}
 
+          {storeId && (currentStore?.store_type === "food" || currentStore?.store_type === "ecommerce") && (
+            <TabsContent value="orders" className="mt-4">
+              <div className="mb-3 flex justify-end">
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/pedidos-loja/$storeId" params={{ storeId }}>
+                    <Maximize2 className="h-3.5 w-3.5" />
+                    Abrir em tela cheia
+                  </Link>
+                </Button>
+              </div>
+              <OrdersManager storeId={storeId} />
+            </TabsContent>
+          )}
+
           <TabsContent value="overview" className="mt-4">
             {bookingsLoading ? (
               <p className="py-8 text-center text-sm text-muted-foreground">
