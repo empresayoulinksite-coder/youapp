@@ -26,8 +26,7 @@ export function NotificationsBell() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
-  const { soundOn, setSoundOn, playDing } = useNotificationSound("client-notif-sound");
-  const initRef = useRef(false);
+  const { soundOn, setSoundOn } = useNotificationSound("client-notif-sound");
   const ref = useRef<HTMLDivElement | null>(null);
 
   const { data: notifications = [] } = useQuery({
