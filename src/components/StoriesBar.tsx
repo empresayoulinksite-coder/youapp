@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { StoriesViewer } from "./StoriesViewer";
@@ -100,13 +101,15 @@ export function StoriesBar() {
         })}
       </div>
 
-      {openIndex !== null && (
-        <StoriesViewer
-          stories={stories}
-          startIndex={openIndex}
-          onClose={() => setOpenIndex(null)}
-        />
-      )}
+      {openIndex !== null && typeof document !== "undefined" &&
+        createPortal(
+          <StoriesViewer
+            stories={stories}
+            startIndex={openIndex}
+            onClose={() => setOpenIndex(null)}
+          />,
+          document.body,
+        )}
     </>
   );
 }
