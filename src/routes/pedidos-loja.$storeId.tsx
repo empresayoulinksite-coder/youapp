@@ -36,6 +36,7 @@ import {
 } from "@/lib/order-status";
 import { openWhatsapp } from "@/lib/whatsapp";
 import { StoreStaffEditor } from "@/components/StoreStaffEditor";
+import { KanbanColumnTimes, type ColumnTimes } from "@/components/KanbanColumnTimes";
 
 export const Route = createFileRoute("/pedidos-loja/$storeId")({
   head: () => ({
