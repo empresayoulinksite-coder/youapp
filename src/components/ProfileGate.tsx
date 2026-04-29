@@ -15,6 +15,8 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [checked, setChecked] = useState(false);
+  const [exiting, setExiting] = useState(false);
+  const [showLoader, setShowLoader] = useState(true);
 
   useEffect(() => {
     if (loading) return;
@@ -57,23 +59,45 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
     };
   }, [user, loading, location.pathname, navigate]);
 
-  if (loading || (!checked && user && !ALLOWED_INCOMPLETE.includes(location.pathname))) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-5 bg-background">
-        <div className="relative">
-          <div className="absolute inset-0 rounded-full bg-primary/20 blur-2xl animate-pulse" />
-          <img
-            src={youlinkLogo}
-            alt="YouLink"
-            className="relative h-24 w-24 object-contain animate-pulse"
-            style={{ animationDuration: "1.8s" }}
-          />
-        </div>
-        
-        <p className="text-sm text-muted-foreground animate-pulse">Carregando...</p>
-      </div>
-    );
-  }
+  const isLoading = loading || (!checked && user && !ALLOWED_INCOMPLETE.includes(location.pathname));
 
-  return <>{children}</>;
+  // Dispara animação de saída quando o loading termina
+  useEffect(() => {
+    if (!isLoading && showLoader) {
+      setExiting(true);
+      const t = setTimeout(() => setShowLoader(false), 400);
+      return () => clearTimeout(t);
+    }
+  }, [isLoading, showLoader]);
+
+  return (
+    <>
+      {showLoader && (
+        <div
+          className={`fixed inset-0 z-[100] flex flex-col items-center justify-center gap-5 bg-background transition-all duration-500 ease-out ${
+            exiting ? "opacity-0 scale-105 pointer-events-none" : "opacity-100 scale-100"
+          }`}
+        >
+          <div className="relative">
+            <div className="absolute inset-0 rounded-full bg-primary/20 blur-2xl animate-pulse" />
+            <img
+              src={youlinkLogo}
+              alt="YouLink"
+              className="relative h-24 w-24 object-contain animate-pulse"
+              style={{ animationDuration: "1.8s" }}
+            />
+          </div>
+          <p className="text-sm text-muted-foreground animate-pulse">Carregando...</p>
+        </div>
+      )}
+
+      <div
+        className={`transition-all duration-500 ease-out ${
+          isLoading ? "opacity-0 scale-[0.98]" : "opacity-100 scale-100 animate-fade-in"
+        }`}
+      >
+        {children}
+      </div>
+    </>
+  );
 }
