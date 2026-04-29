@@ -130,7 +130,9 @@ export function ReelPlayerDialog({
     };
   }, [activeIndex, list.length]);
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-[60] bg-black flex items-center justify-center">
       {/* Progress bars (Instagram-style) */}
       <div className="absolute top-2 inset-x-0 z-20 px-3 flex gap-1 max-w-md mx-auto">
