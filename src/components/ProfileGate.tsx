@@ -58,8 +58,27 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
 
   if (loading || (!checked && user && !ALLOWED_INCOMPLETE.includes(location.pathname))) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-sm text-muted-foreground">
-        Carregando...
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30">
+        <div className="flex flex-col items-center gap-6 animate-in fade-in duration-500">
+          {/* Logo / ícone animado */}
+          <div className="relative">
+            <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl animate-pulse" />
+            <div className="relative h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/30">
+              <span className="text-2xl font-bold text-primary-foreground">Y</span>
+            </div>
+          </div>
+
+          {/* Spinner */}
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
+            <div className="h-2 w-2 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
+            <div className="h-2 w-2 rounded-full bg-primary animate-bounce" />
+          </div>
+
+          <p className="text-sm font-medium text-muted-foreground tracking-wide">
+            Carregando sua experiência...
+          </p>
+        </div>
       </div>
     );
   }
