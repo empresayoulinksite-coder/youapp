@@ -165,6 +165,12 @@ function AdminStoreManagePage() {
               Horários
             </TabsTrigger>
             {(isFood || isEcom) && (
+              <TabsTrigger value="orders" className="gap-1.5">
+                <ListOrdered className="h-4 w-4" />
+                Pedidos
+              </TabsTrigger>
+            )}
+            {(isFood || isEcom) && (
               <TabsTrigger value="catalog" className="gap-1.5">
                 <UtensilsCrossed className="h-4 w-4" />
                 {isFood ? "Cardápio" : "Produtos"}
