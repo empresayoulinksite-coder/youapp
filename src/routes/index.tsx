@@ -13,6 +13,7 @@ import { StoriesBar } from "@/components/StoriesBar";
 import { StoreDistance } from "@/components/StoreDistance";
 import { useUserCoords, haversineKm } from "@/lib/distance";
 import { useInterestScores } from "@/hooks/use-interest-scores";
+import { getRotationSeed, sortWithRotation } from "@/lib/rotation";
 
 import {
   MapPin,
