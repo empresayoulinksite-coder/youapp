@@ -232,12 +232,13 @@ function StorePage() {
   // Categorias visíveis (com itens) para o filtro sticky estilo iFood
   const visibleCategories = categories.filter((c) => items.some((i) => i.category_id === c.id));
 
-  // Seleciona a primeira categoria por padrão (ou mantém a atual se ainda existir)
+  // Seleciona "Todos" por padrão (ou mantém a atual se ainda existir)
   useEffect(() => {
     if (tab !== "menu" || isService || visibleCategories.length === 0) return;
     setActiveCategoryId((prev) => {
+      if (prev === "all") return prev;
       if (prev && visibleCategories.some((c) => c.id === prev)) return prev;
-      return visibleCategories[0].id;
+      return "all";
     });
   }, [tab, isService, visibleCategories.map((c) => c.id).join(",")]);
 
