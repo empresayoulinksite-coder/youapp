@@ -511,19 +511,45 @@ function AdminStores() {
               </div>
               <div className="sm:col-span-2">
                 <Label>Imagem</Label>
-                <div className="mt-1 flex items-center gap-3">
+                <div
+                  className="mt-1 flex items-center gap-3 rounded-md border border-dashed p-3 focus-within:ring-2 focus-within:ring-ring"
+                  tabIndex={0}
+                  onPaste={(e) => {
+                    const item = Array.from(e.clipboardData.items).find((i) =>
+                      i.type.startsWith("image/"),
+                    );
+                    const file = item?.getAsFile();
+                    if (file) {
+                      e.preventDefault();
+                      handleFile(file);
+                    }
+                  }}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const f = Array.from(e.dataTransfer.files).find((x) =>
+                      x.type.startsWith("image/"),
+                    );
+                    if (f) handleFile(f);
+                  }}
+                >
                   {editing.image_url && (
                     <img src={editing.image_url} alt="" className="h-16 w-16 rounded object-cover" />
                   )}
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    disabled={uploading}
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) handleFile(f);
-                    }}
-                  />
+                  <div className="flex-1 space-y-1">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      disabled={uploading}
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleFile(f);
+                      }}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Dica: clique aqui e cole (Ctrl+V) ou arraste uma imagem.
+                    </p>
+                  </div>
                 </div>
               </div>
               <div>
