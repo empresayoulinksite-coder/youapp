@@ -232,12 +232,13 @@ function StorePage() {
   // Categorias visíveis (com itens) para o filtro sticky estilo iFood
   const visibleCategories = categories.filter((c) => items.some((i) => i.category_id === c.id));
 
-  // Seleciona a primeira categoria por padrão (ou mantém a atual se ainda existir)
+  // Seleciona "Todos" por padrão (ou mantém a atual se ainda existir)
   useEffect(() => {
     if (tab !== "menu" || isService || visibleCategories.length === 0) return;
     setActiveCategoryId((prev) => {
+      if (prev === "all") return prev;
       if (prev && visibleCategories.some((c) => c.id === prev)) return prev;
-      return visibleCategories[0].id;
+      return "all";
     });
   }, [tab, isService, visibleCategories.map((c) => c.id).join(",")]);
 
@@ -489,6 +490,17 @@ function StorePage() {
                   <SheetTitle>Categorias</SheetTitle>
                 </SheetHeader>
                 <ul className="mt-4 space-y-1">
+                  <li>
+                    <button
+                      onClick={() => selectCategory("all")}
+                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                        activeCategoryId === "all" ? "bg-brand-soft text-brand font-semibold" : "hover:bg-accent"
+                      }`}
+                    >
+                      <span className="truncate">Todos</span>
+                      <span className="text-xs text-muted-foreground ml-2">{items.length}</span>
+                    </button>
+                  </li>
                   {visibleCategories.map((c) => {
                     const count = items.filter((i) => i.category_id === c.id).length;
                     const active = activeCategoryId === c.id;
@@ -511,6 +523,15 @@ function StorePage() {
             </Sheet>
             <div className="flex-1 overflow-x-auto no-scrollbar">
               <div className="flex gap-5 px-4 py-3 whitespace-nowrap">
+                <button
+                  data-cat-pill="all"
+                  onClick={() => selectCategory("all")}
+                  className={`text-sm pb-1 -mb-1 border-b-2 transition-colors ${
+                    activeCategoryId === "all" ? "border-brand text-brand font-bold" : "border-transparent text-muted-foreground"
+                  }`}
+                >
+                  Todos
+                </button>
                 {visibleCategories.map((c) => {
                   const active = activeCategoryId === c.id;
                   return (
@@ -713,7 +734,7 @@ function StorePage() {
             {categories.map((cat) => {
               const catItems = items.filter((i) => i.category_id === cat.id);
               if (!catItems.length) return null;
-              if (activeCategoryId && cat.id !== activeCategoryId) return null;
+              if (activeCategoryId && activeCategoryId !== "all" && cat.id !== activeCategoryId) return null;
               return (
                 <section key={cat.id} data-category-id={cat.id} className="scroll-mt-[150px]">
                   <h3 className="font-bold text-base mb-3">{cat.name}</h3>
