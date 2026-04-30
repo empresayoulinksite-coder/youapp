@@ -388,46 +388,27 @@ function PainelPage() {
 
           {storeId && (currentStore?.store_type === "food" || currentStore?.store_type === "ecommerce") && (
             <TabsContent value="orders" className="mt-4">
-              {showOrdersManager ? (
-                <>
-                  <div className="mb-3 flex flex-wrap justify-end gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => setShowOrdersManager(false)}>
-                      Fechar gestor
-                    </Button>
-                    <Button asChild variant="outline" size="sm">
-                      <Link to="/pedidos-loja/$storeId" params={{ storeId }}>
-                        <Maximize2 className="h-3.5 w-3.5" />
-                        Abrir em tela cheia
-                      </Link>
-                    </Button>
-                  </div>
-                  <OrdersManager storeId={storeId} />
-                </>
-              ) : (
-                <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed bg-card p-10 text-center">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-                    <ClipboardList className="h-7 w-7 text-primary" />
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="text-lg font-semibold">Gestor de Pedidos</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Acompanhe e gerencie os pedidos da sua loja em tempo real.
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap justify-center gap-2">
-                    <Button onClick={() => setShowOrdersManager(true)}>
-                      <ClipboardList className="h-4 w-4" />
-                      Abrir Gestor de Pedidos
-                    </Button>
-                    <Button asChild variant="outline">
-                      <Link to="/pedidos-loja/$storeId" params={{ storeId }}>
-                        <Maximize2 className="h-4 w-4" />
-                        Abrir em tela cheia
-                      </Link>
-                    </Button>
-                  </div>
+              <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed bg-card p-10 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                  <ClipboardList className="h-7 w-7 text-primary" />
                 </div>
-              )}
+                <div className="space-y-1">
+                  <h3 className="text-lg font-semibold">Gestor de Pedidos</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Acompanhe e gerencie os pedidos da sua loja em tempo real.
+                  </p>
+                </div>
+                <Button asChild>
+                  <a
+                    href={`/pedidos-loja/${storeId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <ClipboardList className="h-4 w-4" />
+                    Abrir Gestor de Pedidos
+                  </a>
+                </Button>
+              </div>
             </TabsContent>
           )}
 
