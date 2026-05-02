@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { StoriesViewer } from "./StoriesViewer";
 
 export interface StoryRow {
@@ -15,8 +16,29 @@ export interface StoryRow {
   store?: { slug: string; name: string; image_url: string | null; emoji: string } | null;
 }
 
+/**
+ * Seeded pseudo-random shuffle – deterministic per seed so stories stay
+ * stable during the same "rotation window" but change across windows.
+ */
+function seededShuffle<T>(arr: T[], seed: number): T[] {
+  const copy = [...arr];
+  let s = seed;
+  for (let i = copy.length - 1; i > 0; i--) {
+    s = (s * 16807 + 0) % 2147483647;
+    const j = s % (i + 1);
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+/** Rotation seed changes every 30 minutes so all brands get exposure. */
+function getRotationSeed() {
+  return Math.floor(Date.now() / (30 * 60 * 1000));
+}
+
 export function StoriesBar() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const { user } = useAuth();
 
   const { data: stories = [], isLoading: loading } = useQuery({
     queryKey: ["stories"],
@@ -32,6 +54,48 @@ export function StoriesBar() {
     },
   });
 
+  // Fetch interest signals for the logged-in user
+  const { data: interestMap } = useQuery({
+    queryKey: ["story-interest", user?.id],
+    enabled: !!user,
+    staleTime: 120_000,
+    queryFn: async () => {
+      const uid = user!.id;
+      const [favRes, cartRes, bookRes] = await Promise.all([
+        supabase.from("favorites").select("store_id").eq("user_id", uid),
+        supabase.from("cart_items").select("store_id").eq("user_id", uid),
+        supabase.from("bookings").select("store_id").eq("user_id", uid),
+      ]);
+
+      const scores = new Map<string, number>();
+      const add = (sid: string, w: number) => scores.set(sid, (scores.get(sid) ?? 0) + w);
+
+      for (const r of favRes.data ?? []) add(r.store_id, 3);
+      for (const r of cartRes.data ?? []) add(r.store_id, 2);
+      for (const r of bookRes.data ?? []) add(r.store_id, 2);
+
+      return scores;
+    },
+  });
+
+  // Sort: personalised scores first, then time-based rotation for fairness
+  const sorted = useMemo(() => {
+    if (stories.length === 0) return stories;
+
+    const seed = getRotationSeed();
+    // First shuffle all stories so every brand gets fair rotation
+    const shuffled = seededShuffle(stories, seed);
+
+    if (!interestMap || interestMap.size === 0) return shuffled;
+
+    // Stable sort by interest score (higher first), preserving shuffle order for ties
+    return [...shuffled].sort((a, b) => {
+      const sa = (a.store_id ? interestMap.get(a.store_id) : 0) ?? 0;
+      const sb = (b.store_id ? interestMap.get(b.store_id) : 0) ?? 0;
+      return sb - sa;
+    });
+  }, [stories, interestMap]);
+
   if (loading) {
     return (
       <div className="mx-auto max-w-5xl px-4 pb-3 flex gap-3 overflow-x-auto no-scrollbar">
@@ -45,12 +109,12 @@ export function StoriesBar() {
     );
   }
 
-  if (stories.length === 0) return null;
+  if (sorted.length === 0) return null;
 
   return (
     <>
       <div className="mx-auto max-w-5xl px-4 pb-3 flex gap-3 overflow-x-auto no-scrollbar">
-        {stories.map((s, idx) => {
+        {sorted.map((s, idx) => {
           const thumb = s.thumbnail_url || (s.media_type === "image" ? s.media_url : s.store?.image_url) || s.store?.image_url;
           const label = s.store?.name || s.title;
           return (
@@ -91,7 +155,7 @@ export function StoriesBar() {
 
       {openIndex !== null && (
         <StoriesViewer
-          stories={stories}
+          stories={sorted}
           startIndex={openIndex}
           onClose={() => setOpenIndex(null)}
         />
