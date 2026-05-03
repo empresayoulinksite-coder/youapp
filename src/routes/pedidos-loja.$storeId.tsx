@@ -1,9 +1,27 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { 
+  ArrowLeft, 
+  ExternalLink, 
+  Search, 
+  MonitorSmartphone, 
+  KanbanSquare, 
+  PenSquare, 
+  Armchair, 
+  CalendarDays, 
+  MenuSquare, 
+  Globe, 
+  Bike,
+  Menu,
+  X
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { OrdersManager } from "@/components/painel/OrdersManager";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/pedidos-loja/$storeId")({
   component: PedidosLojaPage,
@@ -33,6 +51,8 @@ export const Route = createFileRoute("/pedidos-loja/$storeId")({
 
 function PedidosLojaPage() {
   const { storeId } = Route.useParams();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("Meus pedidos");
 
   const { data: store } = useQuery({
     queryKey: ["pedidos-loja-store", storeId],
@@ -47,36 +67,179 @@ function PedidosLojaPage() {
     },
   });
 
+  const handleNavClick = (label: string) => {
+    if (label === "Meus pedidos") {
+      setActiveTab(label);
+    } else {
+      toast.info(`Módulo "${label}" em desenvolvimento.`);
+    }
+  };
+
+  const NAV_ITEMS = [
+    { label: "Meus pedidos", icon: KanbanSquare, badge: 0 },
+    { label: "Pedidos balcão (PDV)", icon: PenSquare },
+    { label: "Pedidos salão", icon: Armchair, badge: "+" },
+    { label: "Pedidos agendados", icon: CalendarDays, badge: 0 },
+    { label: "Gestor de cardápio", icon: MenuSquare, isLink: true, to: `/admin/loja/${storeId}` },
+    { label: "Gestão Avançada", icon: Globe, isLink: true, to: `/admin/loja/${storeId}`, isPremium: true },
+    { label: "Entregas", icon: Bike, isLink: true, to: `/admin/loja/${storeId}` },
+  ];
+
   return (
-    <div className="flex h-screen flex-col bg-background">
-      <header className="flex shrink-0 items-center gap-3 border-b bg-card px-4 py-2.5">
-        <Button asChild variant="ghost" size="icon">
-          <Link to="/painel">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        {store?.image_url ? (
-          <img src={store.image_url} alt={store.name} className="h-9 w-9 rounded-full object-cover" />
-        ) : (
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted">
-            {store?.emoji ?? "🏪"}
+    <div className="flex h-screen w-full bg-background overflow-hidden">
+      {/* Sidebar Mobile Toggle */}
+      <button 
+        className="md:hidden fixed bottom-4 right-4 z-50 rounded-full bg-[#4c1554] p-3 text-white shadow-lg"
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+      >
+        {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+      </button>
+
+      {/* Sidebar - Youlink Style */}
+      <aside className={cn(
+        "fixed inset-y-0 left-0 z-40 w-[260px] flex-col bg-[#4c1554] text-white transition-transform duration-300 ease-in-out md:relative md:flex md:translate-x-0",
+        mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        {/* Logo Area */}
+        <div className="flex h-16 items-center border-b border-white/10 px-4 bg-[#4c1554]">
+          <div className="flex items-center gap-2 font-bold text-lg">
+            {store?.image_url ? (
+              <img src={store.image_url} alt="Logo" className="h-8 w-8 rounded object-cover" />
+            ) : (
+              <div className="h-8 w-8 rounded flex items-center justify-center bg-white/10 text-xl">
+                {store?.emoji ?? "🚀"}
+              </div>
+            )}
+            <span className="truncate">{store?.name ?? "Carregando..."}</span>
           </div>
-        )}
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-base font-bold">Gestor de Pedidos</h1>
-          <p className="truncate text-xs text-muted-foreground">{store?.name}</p>
         </div>
-        {store?.slug && (
-          <Button asChild variant="outline" size="sm">
-            <Link to="/loja/$slug" params={{ slug: store.slug }}>
-              <ExternalLink className="h-3.5 w-3.5" />
-              Ver loja
+
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">
+          {/* Caixa Status */}
+          <div className="p-4 border-b border-white/10">
+            <div className="flex items-center gap-3 rounded-lg bg-[#360e3c] p-3 hover:bg-[#280a2c] cursor-pointer transition-colors" onClick={() => toast.success("Caixa já está aberto!")}>
+              <MonitorSmartphone className="h-5 w-5 opacity-90" />
+              <div className="flex flex-1 items-center justify-between">
+                <span className="font-semibold text-sm">Caixa</span>
+                <span className="rounded bg-[#10b981] px-2 py-0.5 text-xs font-bold shadow-sm">Aberto</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Search */}
+          <div className="px-4 py-3 border-b border-white/10">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
+              <input 
+                placeholder="Procurando por algo?"
+                className="w-full rounded bg-transparent pl-9 pr-3 py-2 text-sm text-white placeholder:text-white/50 focus:outline-none focus:ring-1 focus:ring-white/30"
+              />
+            </div>
+          </div>
+
+          {/* Nav Area */}
+          <div className="p-3">
+            <div className="px-3 pb-2 pt-1 text-xs text-white/50">Seu dia a dia</div>
+            <nav className="space-y-1">
+              {NAV_ITEMS.map((item, idx) => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.label;
+                
+                const content = (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <Icon className={cn("h-4 w-4", isActive ? "opacity-100" : "opacity-80")} />
+                      <span className="text-sm font-medium">{item.label}</span>
+                      {item.isPremium && (
+                        <span className="ml-1 flex h-4 w-4 items-center justify-center rounded-full bg-orange-400 text-[10px]">👑</span>
+                      )}
+                    </div>
+                    {item.badge !== undefined && (
+                      <span className="rounded bg-black/30 px-1.5 py-0.5 text-xs font-bold">
+                        {item.badge}
+                      </span>
+                    )}
+                    {item.isLink && (
+                      <span className="text-white/50 text-xs">{">"}</span>
+                    )}
+                  </>
+                );
+
+                const baseClass = cn(
+                  "flex items-center justify-between rounded-lg px-3 py-2.5 transition-colors group cursor-pointer",
+                  isActive ? "bg-white/20 text-white shadow-sm" : "hover:bg-white/10 text-white/90"
+                );
+
+                if (item.isLink && item.to) {
+                  return (
+                    <Link key={idx} to={item.to} className={baseClass}>
+                      {content}
+                    </Link>
+                  );
+                }
+
+                return (
+                  <div key={idx} className={baseClass} onClick={() => handleNavClick(item.label)}>
+                    {content}
+                  </div>
+                );
+              })}
+            </nav>
+            
+            <div className="mt-4 px-2">
+               <div 
+                 className="rounded-lg bg-gradient-to-r from-[#d946ef] to-[#e845f0] p-3 text-center shadow-sm cursor-pointer hover:brightness-110 transition-all"
+                 onClick={() => toast.info("Integração de notas fiscais em breve!")}
+               >
+                 <div className="text-xs font-bold leading-tight text-white">Nota fiscal descomplicada</div>
+                 <div className="text-[10px] opacity-90 mt-0.5 text-white">com agilidade e sem erros</div>
+               </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <div className="flex min-w-0 flex-1 flex-col bg-[#f5f6f8]">
+        <header className="flex shrink-0 items-center gap-3 border-b bg-white px-4 py-3 shadow-sm z-10">
+          <Button asChild variant="ghost" size="icon" className="h-8 w-8">
+            <Link to="/painel">
+              <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
-        )}
-      </header>
-      <div className="min-h-0 flex-1 overflow-hidden p-3">
-        <OrdersManager storeId={storeId} fullScreen />
+          {store?.image_url ? (
+            <img src={store.image_url} alt={store.name} className="h-8 w-8 rounded-full object-cover" />
+          ) : (
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
+              {store?.emoji ?? "🏪"}
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-base font-bold text-slate-800">Gestor de Pedidos</h1>
+            <p className="truncate text-xs text-muted-foreground">{store?.name}</p>
+          </div>
+          {store?.slug && (
+            <Button asChild variant="outline" size="sm" className="hidden sm:flex">
+              <Link to="/loja/$slug" params={{ slug: store.slug }}>
+                <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                Ver loja
+              </Link>
+            </Button>
+          )}
+        </header>
+        
+        <div className="min-h-0 flex-1 overflow-hidden p-3 md:p-4">
+          {activeTab === "Meus pedidos" ? (
+            <OrdersManager storeId={storeId} fullScreen />
+          ) : (
+            <div className="flex h-full items-center justify-center rounded-lg border bg-white p-8 text-center shadow-sm">
+              <div>
+                <h2 className="text-lg font-bold text-slate-800">Módulo {activeTab}</h2>
+                <p className="mt-2 text-sm text-muted-foreground">Esta área está sendo desenvolvida e chegará em breve!</p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

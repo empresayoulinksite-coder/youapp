@@ -284,9 +284,9 @@ export function OrdersManager({ storeId, fullScreen = false }: { storeId: string
   }, [orders, filter, search, profilesMap]);
 
   const cols: { key: OrderStatus; label: string; tone: string }[] = [
-    { key: "em_analise", label: "Em análise", tone: "bg-orange-500" },
-    { key: "em_producao", label: "Em produção", tone: "bg-amber-500" },
-    { key: "pronto", label: "Prontos para entrega", tone: "bg-emerald-600" },
+    { key: "em_analise", label: "Em análise", tone: "bg-[#f46a00]" },
+    { key: "em_producao", label: "Em produção", tone: "bg-[#f59e0b]" },
+    { key: "pronto", label: "Prontos para entrega", tone: "bg-[#008e56]" },
   ];
 
   const grouped: Record<OrderStatus, Order[]> = {
@@ -309,7 +309,7 @@ export function OrdersManager({ storeId, fullScreen = false }: { storeId: string
     <div className={cn("flex flex-col gap-3", fullScreen && "h-full")}>
       <div className="flex flex-wrap items-center gap-2">
         <div className="inline-flex rounded-md border bg-card p-0.5">
-          <FilterBtn active={filter === "todos"} onClick={() => setFilter("todos")}>
+          <FilterBtn active={filter === "todos"} onClick={() => setFilter("todos")} activeClass="bg-[#661f71] text-white">
             Todos
           </FilterBtn>
           <FilterBtn active={filter === "delivery"} onClick={() => setFilter("delivery")}>
@@ -472,17 +472,19 @@ function FilterBtn({
   active,
   onClick,
   children,
+  activeClass = "bg-primary text-primary-foreground"
 }: {
   active: boolean;
   onClick: () => void;
   children: React.ReactNode;
+  activeClass?: string;
 }) {
   return (
     <button
       onClick={onClick}
       className={cn(
         "inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition-colors",
-        active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
+        active ? activeClass : "text-muted-foreground hover:bg-muted",
       )}
     >
       {children}
