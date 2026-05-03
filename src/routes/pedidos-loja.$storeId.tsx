@@ -74,6 +74,7 @@ function PedidosLojaPage() {
   const [transactionDialogOpen, setTransactionDialogOpen] = useState(false);
   const [transactionType, setTransactionType] = useState<"deposit" | "withdrawal">("deposit");
   const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
+  const [entregasOpen, setEntregasOpen] = useState(false);
 
   const { data: store } = useQuery({
     queryKey: ["pedidos-loja-store", storeId],
