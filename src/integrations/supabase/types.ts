@@ -197,6 +197,44 @@ export type Database = {
         }
         Relationships: []
       }
+      cash_transactions: {
+        Row: {
+          amount: number
+          cash_register_id: string
+          created_at: string
+          id: string
+          reason: string | null
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          cash_register_id: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          cash_register_id?: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_transactions_cash_register_id_fkey"
+            columns: ["cash_register_id"]
+            isOneToOne: false
+            referencedRelation: "cash_registers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       club_waitlist: {
         Row: {
           created_at: string
