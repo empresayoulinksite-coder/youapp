@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PizzaBuilderDialog } from "@/components/PizzaBuilderDialog";
 import { cn } from "@/lib/utils";
+import { PAYMENT_METHODS, normalizePaymentList } from "@/lib/payment-methods";
 
 type PDVItem = {
   cartItemId: string;
@@ -22,7 +23,7 @@ type PDVItem = {
   pizza_size_name?: string | null;
 };
 
-export function PDVManager({ storeId }: { storeId: string }) {
+export function PDVManager({ storeId, editingOrder, onClearEdit }: { storeId: string; editingOrder?: any; onClearEdit?: () => void }) {
   const { user } = useAuth();
   const qc = useQueryClient();
 
@@ -34,13 +35,71 @@ export function PDVManager({ storeId }: { storeId: string }) {
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerDoc, setCustomerDoc] = useState("");
+  const [customerAddress, setCustomerAddress] = useState("");
   const [orderType, setOrderType] = useState<"delivery" | "pickup">("pickup");
-  const [paymentMethod, setPaymentMethod] = useState("Dinheiro / Balcão");
+  const [paymentMethod, setPaymentMethod] = useState("");
   const [notes, setNotes] = useState("");
+  const [showNotes, setShowNotes] = useState(false);
   const [discount, setDiscount] = useState(0);
   
   // Pizza State
   const [pizzaBuilderItem, setPizzaBuilderItem] = useState<any>(null);
+
+  useEffect(() => {
+    if (editingOrder) {
+      setOrderType(editingOrder.delivery_type === "delivery" ? "delivery" : "pickup");
+      setPaymentMethod(editingOrder.payment_method || "");
+      setDiscount(editingOrder.discount || 0);
+
+      let name = "";
+      let phone = "";
+      let doc = "";
+      let obs = editingOrder.customer_notes || "";
+      
+      const match = obs.match(/Cliente: (.*?) \| Fone: (.*?) \| Doc: (.*?)(?:\n|$)/);
+      if (match) {
+        name = match[1].trim();
+        phone = match[2].trim();
+        doc = match[3].trim();
+        obs = obs.replace(match[0], "").trim();
+      } else if (editingOrder.customer_profile) {
+        name = editingOrder.customer_profile.display_name || "";
+        phone = editingOrder.customer_profile.phone || "";
+      }
+      
+      obs = obs.replace(/\[EDITADO\]\s*/g, "").trim();
+
+      setCustomerName(name);
+      setCustomerPhone(phone);
+      setCustomerDoc(doc);
+      setCustomerAddress(editingOrder.delivery_address || "");
+      setNotes(obs);
+
+      if (editingOrder.order_items) {
+        setCartItems(editingOrder.order_items.map((it: any) => ({
+          cartItemId: Math.random().toString(36).substr(2, 9),
+          menu_item_id: it.menu_item_id || it.id,
+          name: it.name,
+          price: Number(it.unit_price) || 0,
+          quantity: it.quantity,
+          pizza_flavors: it.pizza_flavors || undefined,
+          pizza_crust_name: it.pizza_crust_name || undefined,
+          pizza_addons: it.pizza_addons || undefined,
+          pizza_size_name: it.pizza_size_name || undefined,
+        })));
+      }
+    } else {
+      setCartItems([]);
+      setCustomerName("");
+      setCustomerPhone("");
+      setCustomerDoc("");
+      setCustomerAddress("");
+      setNotes("");
+      setDiscount(0);
+      setOrderType("pickup");
+      setPaymentMethod("");
+    }
+  }, [editingOrder]);
 
   // Queries
   const { data: store } = useQuery({
@@ -51,9 +110,10 @@ export function PDVManager({ storeId }: { storeId: string }) {
     }
   });
 
-  const storePaymentMethods = Array.isArray(store?.payment_methods_list) 
-    ? store!.payment_methods_list 
-    : ["Dinheiro / Balcão", "Cartão de Crédito", "Cartão de Débito", "Pix"];
+  const acceptedKeys = normalizePaymentList(store?.payment_methods_list);
+  const finalMethods = acceptedKeys.length > 0
+    ? acceptedKeys.map(k => PAYMENT_METHODS.find(m => m.key === k)!)
+    : PAYMENT_METHODS;
 
   const { data: pastCustomers = [] } = useQuery({
     queryKey: ["pdv-customers", storeId],
@@ -179,34 +239,63 @@ export function PDVManager({ storeId }: { storeId: string }) {
     mutationFn: async () => {
       if (!user) throw new Error("Usuário não autenticado");
       if (cartItems.length === 0) throw new Error("O pedido está vazio");
+      if (!customerPhone.trim() || !customerName.trim()) throw new Error("Preencha o nome e o telefone do cliente");
+      if (!paymentMethod) throw new Error("Selecione a forma de pagamento");
 
-      // Insert Order
-      const { data: order, error: orderError } = await supabase
-        .from("orders")
-        .insert({
-          user_id: user.id, // Lojista
-          store_id: storeId,
-          store_name: store?.name ?? "Loja",
-          store_slug: store?.slug ?? "",
-          store_emoji: store?.emoji ?? null,
-          total: total,
-          discount: discount,
-          delivery_address: orderType === "pickup" ? "Retirada Balcão" : "Endereço não informado",
-          delivery_type: orderType === "pickup" ? "pickup" : "delivery",
-          payment_method: paymentMethod,
-          customer_notes: `Cliente: ${customerName} | Fone: ${customerPhone} | Doc: ${customerDoc}\nObs: ${notes}`,
-          whatsapp_message: "Pedido manual via PDV",
-          status: "em_analise", // Cria como em_analise para evitar possíveis restrições de RLS no Insert
-        })
-        .select("id")
-        .single();
-      
-      if (orderError) throw orderError;
+      const finalNotesClean = notes ? `Obs: ${notes}` : "";
+      const customerHeader = `Cliente: ${customerName} | Fone: ${customerPhone} | Doc: ${customerDoc}`;
+      let finalNotesField = `${customerHeader}\n${finalNotesClean}`.trim();
 
-      // Insert Items
+      if (editingOrder) {
+        finalNotesField = `[EDITADO]\n${finalNotesField}`;
+      }
+
+      let orderId = editingOrder?.id;
+
+      if (editingOrder) {
+        const { error: updateError } = await supabase
+          .from("orders")
+          .update({
+            total,
+            discount,
+            delivery_address: orderType === "pickup" ? "Retirada Balcão" : (customerAddress || "Endereço não informado"),
+            delivery_type: orderType,
+            payment_method: paymentMethod,
+            customer_notes: finalNotesField,
+            status: "em_analise",
+          })
+          .eq("id", orderId);
+        if (updateError) throw updateError;
+
+        const { error: delError } = await supabase.from("order_items").delete().eq("order_id", orderId);
+        if (delError) throw delError;
+      } else {
+        const { data: newOrder, error: orderError } = await supabase
+          .from("orders")
+          .insert({
+            user_id: user.id,
+            store_id: storeId,
+            store_name: store?.name ?? "Loja",
+            store_slug: store?.slug ?? "",
+            store_emoji: store?.emoji ?? null,
+            total,
+            discount,
+            delivery_address: orderType === "pickup" ? "Retirada Balcão" : (customerAddress || "Endereço não informado"),
+            delivery_type: orderType,
+            payment_method: paymentMethod,
+            customer_notes: finalNotesField,
+            whatsapp_message: "Pedido manual via PDV",
+            status: "em_analise",
+          })
+          .select("id")
+          .single();
+        if (orderError) throw orderError;
+        orderId = newOrder.id;
+      }
+
       const orderItemsRows = cartItems.map(i => ({
-        order_id: order.id,
-        menu_item_id: i.menu_item_id,
+        order_id: orderId,
+        menu_item_id: i.menu_item_id || null,
         name: i.name,
         quantity: i.quantity,
         unit_price: i.price,
@@ -219,23 +308,27 @@ export function PDVManager({ storeId }: { storeId: string }) {
       const { error: itemsError } = await supabase.from("order_items").insert(orderItemsRows);
       if (itemsError) throw itemsError;
 
-      // Avança o pedido para produção diretamente
-      const { error: updateError } = await supabase
-        .from("orders")
-        .update({ status: "em_producao" })
-        .eq("id", order.id);
-      
-      if (updateError) throw updateError;
+      if (!editingOrder) {
+        const { error: advanceError } = await supabase
+          .from("orders")
+          .update({ status: "em_producao" })
+          .eq("id", orderId);
+        if (advanceError) throw advanceError;
+      }
 
-      return order;
+      return orderId;
     },
     onSuccess: () => {
-      toast.success("Pedido criado com sucesso!");
+      toast.success(editingOrder ? "Pedido atualizado!" : "Pedido criado com sucesso!");
       setCartItems([]);
       setCustomerName("");
       setCustomerPhone("");
       setCustomerDoc("");
+      setCustomerAddress("");
       setNotes("");
+      setDiscount(0);
+      setPaymentMethod("");
+      if (onClearEdit) onClearEdit();
       qc.invalidateQueries({ queryKey: ["admin-orders"] });
       qc.invalidateQueries({ queryKey: ["orders-manager", storeId] });
     },
@@ -351,8 +444,8 @@ export function PDVManager({ storeId }: { storeId: string }) {
           <Button variant="ghost" size="sm" className="h-8 text-xs px-2 text-muted-foreground">
             Q Editar
           </Button>
-          <Button variant="ghost" size="sm" className="h-8 text-xs px-2 text-muted-foreground" onClick={() => setCartItems([])}>
-            W Excluir
+          <Button variant="ghost" size="sm" className="h-8 text-xs px-2 text-muted-foreground" onClick={() => { setCartItems([]); if(onClearEdit) onClearEdit(); }}>
+            W Excluir {editingOrder && "(Cancelar edição)"}
           </Button>
         </div>
 
@@ -413,10 +506,22 @@ export function PDVManager({ storeId }: { storeId: string }) {
             )}
           </div>
 
-          <div className="px-4 py-2 border-t">
-            <button className="text-xs font-medium text-[#661f71] flex items-center gap-1 hover:underline">
-               ⚑ [0] Observação do pedido
+          <div className="px-4 py-2 border-t flex flex-col gap-2">
+            <button 
+              className="text-xs font-medium text-[#661f71] flex items-center gap-1 hover:underline"
+              onClick={() => setShowNotes(!showNotes)}
+            >
+               ⚑ [0] Observação do pedido {notes ? "(1)" : ""}
             </button>
+            {(showNotes || notes) && (
+              <textarea 
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                className="w-full text-xs p-2 border rounded resize-none focus:outline-none focus:ring-1 focus:ring-[#661f71]"
+                rows={3}
+                placeholder="Ex: sem cebola, troco para R$ 50..."
+              />
+            )}
           </div>
         </div>
 
@@ -450,6 +555,16 @@ export function PDVManager({ storeId }: { storeId: string }) {
               onChange={e => setCustomerName(e.target.value)}
             />
           </div>
+          {orderType === "delivery" && (
+            <div className="mb-2">
+              <Input 
+                className="h-9 text-xs w-full" 
+                placeholder="Endereço de entrega" 
+                value={customerAddress}
+                onChange={e => setCustomerAddress(e.target.value)}
+              />
+            </div>
+          )}
 
           {/* Buttons */}
           <div className="grid grid-cols-2 gap-2 mb-2">
@@ -461,8 +576,8 @@ export function PDVManager({ storeId }: { storeId: string }) {
                 <SelectValue placeholder="Pagamento" />
               </SelectTrigger>
               <SelectContent>
-                {storePaymentMethods.map(pm => (
-                  <SelectItem key={pm} value={pm}>{pm}</SelectItem>
+                {finalMethods.map(pm => (
+                  <SelectItem key={pm.label} value={pm.label}>{pm.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -480,7 +595,7 @@ export function PDVManager({ storeId }: { storeId: string }) {
               disabled={cartItems.length === 0 || createOrder.isPending}
               onClick={() => createOrder.mutate()}
             >
-              {createOrder.isPending ? "Gerando..." : "[ ENTER ] Gerar pedido"}
+              {createOrder.isPending ? "Gerando..." : editingOrder ? "[ ENTER ] Salvar alterações" : "[ ENTER ] Gerar pedido"}
             </Button>
             <Button variant="outline" className="h-12 w-12 shrink-0 bg-slate-400 hover:bg-slate-500 border-0 text-white">
               <Save className="h-5 w-5" />

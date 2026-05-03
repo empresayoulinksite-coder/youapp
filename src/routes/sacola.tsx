@@ -485,7 +485,7 @@ function CartPage() {
                 payment_method: paymentMethod,
                 customer_notes: notes || null,
                 whatsapp_message: message,
-                status: "sent",
+                status: "em_analise",
               })
               .select("id")
               .single();

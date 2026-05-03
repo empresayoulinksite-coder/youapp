@@ -11,6 +11,7 @@ import {
   MapPin,
   CreditCard,
   ChevronRight,
+  ChevronLeft,
   X,
   Printer,
   MessageCircle,
@@ -141,7 +142,7 @@ function formatHM(iso: string) {
   return new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 }
 
-export function OrdersManager({ storeId, fullScreen = false }: { storeId: string; fullScreen?: boolean }) {
+export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { storeId: string; fullScreen?: boolean; onEditOrder?: (o: Order, c?: any) => void }) {
   const qc = useQueryClient();
   const [filter, setFilter] = useState<Filter>("todos");
   const [search, setSearch] = useState("");
@@ -439,6 +440,17 @@ export function OrdersManager({ storeId, fullScreen = false }: { storeId: string
                     }}
                     onCancel={() => setCancelOrder(o)}
                     onOpen={() => setDetailOrder(o)}
+                    onRevert={() => {
+                      const prev: Record<OrderStatus, OrderStatus | null> = {
+                        em_analise: null,
+                        em_producao: "em_analise",
+                        pronto: "em_producao",
+                        entregue: "pronto",
+                        cancelado: null,
+                      };
+                      const ps = prev[o.status];
+                      if (ps) updateStatus.mutate({ id: o.id, status: ps });
+                    }}
                   />
                 ))
               )}
@@ -459,6 +471,7 @@ export function OrdersManager({ storeId, fullScreen = false }: { storeId: string
         customer={detailOrder ? getCustomerInfo(detailOrder, profilesMap[detailOrder.user_id]) : undefined}
         store={store ?? undefined}
         onClose={() => setDetailOrder(null)}
+        onEditOrder={onEditOrder}
       />
 
       <AlertDialog open={!!cancelOrder} onOpenChange={(v) => !v && setCancelOrder(null)}>
@@ -519,6 +532,7 @@ function OrderCard({
   onAdvance,
   onCancel,
   onOpen,
+  onRevert,
 }: {
   order: Order;
   store?: StoreSettings;
@@ -526,6 +540,7 @@ function OrderCard({
   onAdvance: () => void;
   onCancel: () => void;
   onOpen: () => void;
+  onRevert: () => void;
 }) {
   const pickup = isPickup(order);
   const elapsed = elapsedMinutes(order.created_at);
@@ -602,6 +617,11 @@ function OrderCard({
             <X className="h-3.5 w-3.5" />
             Cancelar
           </Button>
+          {order.status !== "em_analise" && (
+            <Button variant="outline" size="sm" className="px-2 text-muted-foreground" onClick={onRevert} title="Voltar etapa">
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+          )}
           <Button size="sm" className="flex-1" onClick={onAdvance}>
             {advanceLabel[order.status]}
             <ChevronRight className="h-3.5 w-3.5" />
@@ -617,11 +637,13 @@ function OrderDetailDialog({
   customer,
   store,
   onClose,
+  onEditOrder,
 }: {
   order: Order | null;
   customer?: { display_name: string | null; phone: string | null };
   store?: StoreSettings;
   onClose: () => void;
+  onEditOrder?: (o: Order, c?: any) => void;
 }) {
   if (!order) return null;
   const pickup = isPickup(order);
@@ -714,10 +736,20 @@ function OrderDetailDialog({
                     <div>
                       <span className="font-semibold">{it.quantity}x</span> {it.name}
                     </div>
+                    {it.pizza_flavors && Array.isArray(it.pizza_flavors) && it.pizza_flavors.length > 0 && (
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        Sabores: {it.pizza_flavors.map((f: any) => f.name).join(" e ")}
+                      </div>
+                    )}
                     {it.pizza_size_name && (
                       <div className="text-xs text-muted-foreground">
                         Tam: {it.pizza_size_name}
                         {it.pizza_crust_name ? ` · Borda: ${it.pizza_crust_name}` : ""}
+                      </div>
+                    )}
+                    {it.pizza_addons && Array.isArray(it.pizza_addons) && it.pizza_addons.length > 0 && (
+                      <div className="text-xs text-muted-foreground">
+                        Adicionais: {it.pizza_addons.map((a: any) => a.name).join(", ")}
                       </div>
                     )}
                     {it.half_two_name && (
@@ -750,11 +782,14 @@ function OrderDetailDialog({
         </div>
 
         <DialogFooter className="gap-2 sm:gap-2">
+          <Button variant="outline" className="mr-auto" onClick={() => { if(onEditOrder && order) onEditOrder(order, customer); }}>
+            <Pencil className="h-4 w-4 mr-1.5" /> Editar pedido
+          </Button>
           <Button variant="outline" onClick={handleWhatsapp}>
-            <MessageCircle className="h-4 w-4" /> WhatsApp
+            <MessageCircle className="h-4 w-4 mr-1.5" /> WhatsApp
           </Button>
           <Button variant="outline" onClick={handlePrint}>
-            <Printer className="h-4 w-4" /> Imprimir
+            <Printer className="h-4 w-4 mr-1.5" /> Imprimir
           </Button>
         </DialogFooter>
       </DialogContent>

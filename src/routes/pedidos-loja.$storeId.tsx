@@ -14,13 +14,14 @@ import {
   Menu,
   X
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { OrdersManager } from "@/components/painel/OrdersManager";
 import { PDVManager } from "@/components/painel/PDVManager";
+import { CashRegisterDialog } from "@/components/painel/CashRegisterDialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -52,8 +53,14 @@ export const Route = createFileRoute("/pedidos-loja/$storeId")({
 
 function PedidosLojaPage() {
   const { storeId } = Route.useParams();
+  const qc = useQueryClient();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("Meus pedidos");
+  const [editingOrder, setEditingOrder] = useState<any>(null);
+  
+  // Cash Register States
+  const [cashDialogOpen, setCashDialogOpen] = useState(false);
+  const [cashDialogAction, setCashDialogAction] = useState<"open" | "close">("open");
 
   const { data: store } = useQuery({
     queryKey: ["pedidos-loja-store", storeId],
@@ -68,9 +75,63 @@ function PedidosLojaPage() {
     },
   });
 
+  const { data: cashRegister, refetch: refetchCashRegister } = useQuery({
+    queryKey: ["cash-register", storeId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cash_registers")
+        .select("*")
+        .eq("store_id", storeId)
+        .order("opened_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) {
+        if (error.code === '42P01') return null; // Table does not exist yet
+        throw error;
+      }
+      return data;
+    }
+  });
+
+  const isCashOpen = cashRegister?.status === "open";
+
+  const handleCashAction = async (amount: number) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      if (cashDialogAction === "open") {
+        const { error } = await supabase.from("cash_registers").insert({
+          store_id: storeId,
+          opened_by: user.id,
+          opening_balance: amount,
+          status: "open"
+        });
+        if (error) throw error;
+        toast.success("Caixa aberto com sucesso!");
+      } else {
+        const { error } = await supabase.from("cash_registers").update({
+          closed_by: user.id,
+          closing_balance: amount,
+          closed_at: new Date().toISOString(),
+          status: "closed"
+        }).eq("id", cashRegister.id);
+        if (error) throw error;
+        toast.success("Caixa fechado com sucesso!");
+      }
+      setCashDialogOpen(false);
+      qc.invalidateQueries({ queryKey: ["cash-register", storeId] });
+    } catch (err: any) {
+      toast.error("Erro ao realizar operação: " + err.message);
+    }
+  };
+
   const handleNavClick = (label: string) => {
     if (label === "Meus pedidos" || label === "Pedidos balcão (PDV)") {
       setActiveTab(label);
+      if (label === "Meus pedidos" && editingOrder) {
+        setEditingOrder(null);
+      }
     } else {
       toast.info(`Módulo "${label}" em desenvolvimento.`);
     }
@@ -118,13 +179,36 @@ function PedidosLojaPage() {
         <div className="flex-1 overflow-y-auto overflow-x-hidden">
           {/* Caixa Status */}
           <div className="p-4 border-b border-white/10">
-            <div className="flex items-center gap-3 rounded-lg bg-[#360e3c] p-3 hover:bg-[#280a2c] cursor-pointer transition-colors" onClick={() => toast.success("Caixa já está aberto!")}>
-              <MonitorSmartphone className="h-5 w-5 opacity-90" />
-              <div className="flex flex-1 items-center justify-between">
-                <span className="font-semibold text-sm">Caixa</span>
-                <span className="rounded bg-[#10b981] px-2 py-0.5 text-xs font-bold shadow-sm">Aberto</span>
+            {isCashOpen ? (
+              <div 
+                className="flex items-center gap-3 rounded-lg bg-[#360e3c] p-3 hover:bg-[#280a2c] cursor-pointer transition-colors" 
+                onClick={() => { setCashDialogAction("close"); setCashDialogOpen(true); }}
+              >
+                <MonitorSmartphone className="h-5 w-5 opacity-90 text-white" />
+                <div className="flex flex-1 items-center justify-between">
+                  <span className="font-semibold text-sm text-white">Caixa</span>
+                  <span className="rounded bg-[#10b981] px-2 py-0.5 text-xs font-bold text-white shadow-sm">Aberto</span>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="flex items-center gap-3 rounded-lg bg-[#360e3c] p-2 hover:bg-[#280a2c] transition-colors text-white">
+                <div className="bg-white/10 p-2 rounded-full">
+                  <MonitorSmartphone className="h-4 w-4 text-white" />
+                </div>
+                <div className="flex flex-1 items-center justify-between">
+                  <span className="font-bold text-sm">Caixa</span>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded bg-white/80 text-slate-800 px-2 py-0.5 text-xs font-medium">Fechado</span>
+                    <button 
+                      className="text-sm font-bold hover:underline"
+                      onClick={() => { setCashDialogAction("open"); setCashDialogOpen(true); }}
+                    >
+                      Abrir
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Search */}
@@ -231,9 +315,23 @@ function PedidosLojaPage() {
         
         <div className="min-h-0 flex-1 overflow-hidden p-3 md:p-4">
           {activeTab === "Meus pedidos" ? (
-            <OrdersManager storeId={storeId} fullScreen />
+            <OrdersManager 
+              storeId={storeId} 
+              fullScreen 
+              onEditOrder={(order, customer) => {
+                setEditingOrder({ ...order, customer_profile: customer });
+                setActiveTab("Pedidos balcão (PDV)");
+              }}
+            />
           ) : activeTab === "Pedidos balcão (PDV)" ? (
-            <PDVManager storeId={storeId} />
+            <PDVManager 
+              storeId={storeId} 
+              editingOrder={editingOrder} 
+              onClearEdit={() => {
+                setEditingOrder(null);
+                setActiveTab("Meus pedidos");
+              }} 
+            />
           ) : (
             <div className="flex h-full items-center justify-center rounded-lg border bg-white p-8 text-center shadow-sm">
               <div>
@@ -244,6 +342,13 @@ function PedidosLojaPage() {
           )}
         </div>
       </div>
+
+      <CashRegisterDialog
+        open={cashDialogOpen}
+        isOpening={cashDialogAction === "open"}
+        onClose={() => setCashDialogOpen(false)}
+        onConfirm={handleCashAction}
+      />
     </div>
   );
 }
