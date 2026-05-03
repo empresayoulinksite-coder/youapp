@@ -10,7 +10,6 @@ import {
   CalendarDays, 
   MenuSquare, 
   Globe, 
-  Bike,
   Truck,
   UserPlus,
   FileText,
