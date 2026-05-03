@@ -736,7 +736,7 @@ function OrderDetailDialog({
                     <div>
                       <span className="font-semibold">{it.quantity}x</span> {it.name}
                     </div>
-                    {it.pizza_flavors && Array.isArray(it.pizza_flavors) && it.pizza_flavors.length > 0 && (
+                    {it.pizza_flavors && Array.isArray(it.pizza_flavors) && (it.pizza_flavors as any[]).length > 0 && (
                       <div className="text-xs text-muted-foreground mt-0.5">
                         Sabores: {it.pizza_flavors.map((f: any) => f.name).join(" e ")}
                       </div>
@@ -747,7 +747,7 @@ function OrderDetailDialog({
                         {it.pizza_crust_name ? ` · Borda: ${it.pizza_crust_name}` : ""}
                       </div>
                     )}
-                    {it.pizza_addons && Array.isArray(it.pizza_addons) && it.pizza_addons.length > 0 && (
+                    {it.pizza_addons && Array.isArray(it.pizza_addons) && (it.pizza_addons as any[]).length > 0 && (
                       <div className="text-xs text-muted-foreground">
                         Adicionais: {it.pizza_addons.map((a: any) => a.name).join(", ")}
                       </div>
