@@ -10,7 +10,10 @@ import {
   CalendarDays, 
   MenuSquare, 
   Globe, 
-  Bike,
+  Truck,
+  UserPlus,
+  FileText,
+  MapPin,
   Menu,
   X,
   ChevronDown,
@@ -70,6 +73,7 @@ function PedidosLojaPage() {
   const [transactionDialogOpen, setTransactionDialogOpen] = useState(false);
   const [transactionType, setTransactionType] = useState<"deposit" | "withdrawal">("deposit");
   const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
+  const [entregasOpen, setEntregasOpen] = useState(false);
 
   const { data: store } = useQuery({
     queryKey: ["pedidos-loja-store", storeId],
@@ -187,7 +191,7 @@ function PedidosLojaPage() {
     { label: "Pedidos agendados", icon: CalendarDays, badge: 0 },
     { label: "Gestor de cardápio", icon: MenuSquare, isLink: true, to: `/admin/loja/${storeId}` },
     { label: "Gestão Avançada", icon: Globe, isLink: true, to: `/admin/loja/${storeId}`, isPremium: true },
-    { label: "Entregas", icon: Bike, isLink: true, to: `/admin/loja/${storeId}` },
+    
   ];
 
   return (
@@ -368,6 +372,41 @@ function PedidosLojaPage() {
                 );
               })}
             </nav>
+
+            {/* Entregas - collapsible purple section */}
+            <div className="mt-1 px-0">
+              <button
+                onClick={() => setEntregasOpen((v) => !v)}
+                className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 transition-colors hover:bg-white/10 text-white/90 cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <Truck className="h-4 w-4 opacity-80" />
+                  <span className="text-sm font-medium">Entregas</span>
+                </div>
+                <ChevronDown className={cn("h-4 w-4 text-white/50 transition-transform", entregasOpen && "rotate-180")} />
+              </button>
+              {entregasOpen && (
+                <div className="ml-4 mt-0.5 space-y-0.5 border-l-2 border-purple-400/40 pl-3">
+                  {[
+                    { to: `/admin/entregas/cadastro`, label: "Cadastro entregadores", icon: UserPlus },
+                    { to: `/admin/entregas/relatorio`, label: "Relatório entregadores", icon: FileText },
+                    { to: `/admin/entregas/areas`, label: "Áreas de entrega", icon: MapPin },
+                  ].map((sub) => {
+                    const Icon = sub.icon;
+                    return (
+                      <Link
+                        key={sub.to}
+                        to={sub.to}
+                        className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-white/80 hover:bg-white/10 transition-colors"
+                      >
+                        <Icon className="h-3.5 w-3.5" />
+                        {sub.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
             
             <div className="mt-4 px-2">
                <div 
