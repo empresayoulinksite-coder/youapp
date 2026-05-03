@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -81,6 +81,7 @@ export function PizzaBuilderDialog({ open, onClose, storeId, baseItem, flavorIte
   const [crusts, setCrusts] = useState<Crust[]>([]);
   const [addons, setAddons] = useState<Addon[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [sizeId, setSizeId] = useState<string | null>(null);
   const [flavorIds, setFlavorIds] = useState<string[]>([]);
@@ -118,6 +119,7 @@ export function PizzaBuilderDialog({ open, onClose, storeId, baseItem, flavorIte
       setAddonIds([]);
       setPerFlavor({});
       setExpanded(null);
+      setSearchQuery("");
       setLoading(false);
     });
   }, [open, storeId, baseItem.id]);
@@ -262,6 +264,15 @@ export function PizzaBuilderDialog({ open, onClose, storeId, baseItem, flavorIte
 
   const canSeparate = flavorItems.length >= 1; // sempre pode separar
 
+  const filteredFlavorItems = useMemo(() => {
+    if (!searchQuery.trim()) return flavorItems;
+    const lowerQuery = searchQuery.toLowerCase();
+    return flavorItems.filter((f) => 
+      f.name.toLowerCase().includes(lowerQuery) || 
+      (f.description && f.description.toLowerCase().includes(lowerQuery))
+    );
+  }, [flavorItems, searchQuery]);
+
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center" onClick={onClose}>
       <div
@@ -365,10 +376,25 @@ export function PizzaBuilderDialog({ open, onClose, storeId, baseItem, flavorIte
                   ? "Cobramos o sabor mais caro entre os escolhidos."
                   : "Cada sabor vira uma pizza inteira na sacola."}
               </p>
+
+              <div className="relative mb-3">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Buscar sabor..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 bg-background border border-input rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                />
+              </div>
+
               <div className="space-y-1.5 max-h-72 overflow-y-auto border border-border rounded-xl p-2">
-                {flavorItems.map((f) => {
-                  const checked = flavorIds.includes(f.id);
-                  const p = priceOf(f.id, sizeId);
+                {filteredFlavorItems.length === 0 ? (
+                  <p className="text-center text-sm text-muted-foreground py-4">Nenhum sabor encontrado.</p>
+                ) : (
+                  filteredFlavorItems.map((f) => {
+                    const checked = flavorIds.includes(f.id);
+                    const p = priceOf(f.id, sizeId);
                   return (
                     <label
                       key={f.id}
@@ -395,7 +421,8 @@ export function PizzaBuilderDialog({ open, onClose, storeId, baseItem, flavorIte
                       </span>
                     </label>
                   );
-                })}
+                })
+                )}
               </div>
             </section>
 

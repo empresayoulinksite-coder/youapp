@@ -112,6 +112,23 @@ function isPickup(o: Order) {
     !o.delivery_address;
 }
 
+function getCustomerInfo(order: Order, profile?: { display_name: string | null; phone: string | null }) {
+  if (order.customer_notes) {
+    const match = order.customer_notes.match(/Cliente: (.*?) \| Fone: (.*?) \| Doc:/);
+    if (match) {
+      const name = match[1].trim();
+      const phone = match[2].trim();
+      if (name || phone) {
+        return {
+          display_name: name || "Cliente PDV",
+          phone: phone || null,
+        };
+      }
+    }
+  }
+  return profile;
+}
+
 function formatCurrency(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
@@ -187,6 +204,8 @@ export function OrdersManager({ storeId, fullScreen = false }: { storeId: string
 
   const { data: orders = [], isLoading: loadingOrders } = useQuery({
     queryKey: ["orders-manager", storeId],
+    refetchOnMount: true,
+    staleTime: 0,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
@@ -277,8 +296,9 @@ export function OrdersManager({ storeId, fullScreen = false }: { storeId: string
       if (filter === "pickup" && !isPickup(o)) return false;
       if (!s) return true;
       const num = String(o.order_number ?? "");
-      const name = (profilesMap[o.user_id]?.display_name ?? "").toLowerCase();
-      const phone = (profilesMap[o.user_id]?.phone ?? "").toLowerCase();
+      const cInfo = getCustomerInfo(o, profilesMap[o.user_id]);
+      const name = (cInfo?.display_name ?? "").toLowerCase();
+      const phone = (cInfo?.phone ?? "").toLowerCase();
       return num.includes(s) || name.includes(s) || phone.includes(s);
     });
   }, [orders, filter, search, profilesMap]);
@@ -405,7 +425,7 @@ export function OrdersManager({ storeId, fullScreen = false }: { storeId: string
                     key={o.id}
                     order={o}
                     store={store ?? undefined}
-                    customer={profilesMap[o.user_id]}
+                    customer={getCustomerInfo(o, profilesMap[o.user_id])}
                     onAdvance={() => {
                       const next: Record<OrderStatus, OrderStatus | null> = {
                         em_analise: "em_producao",
@@ -436,7 +456,7 @@ export function OrdersManager({ storeId, fullScreen = false }: { storeId: string
 
       <OrderDetailDialog
         order={detailOrder}
-        customer={detailOrder ? profilesMap[detailOrder.user_id] : undefined}
+        customer={detailOrder ? getCustomerInfo(detailOrder, profilesMap[detailOrder.user_id]) : undefined}
         store={store ?? undefined}
         onClose={() => setDetailOrder(null)}
       />

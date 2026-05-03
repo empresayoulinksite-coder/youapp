@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { OrdersManager } from "@/components/painel/OrdersManager";
+import { PDVManager } from "@/components/painel/PDVManager";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -68,7 +69,7 @@ function PedidosLojaPage() {
   });
 
   const handleNavClick = (label: string) => {
-    if (label === "Meus pedidos") {
+    if (label === "Meus pedidos" || label === "Pedidos balcão (PDV)") {
       setActiveTab(label);
     } else {
       toast.info(`Módulo "${label}" em desenvolvimento.`);
@@ -203,7 +204,7 @@ function PedidosLojaPage() {
       <div className="flex min-w-0 flex-1 flex-col bg-[#f5f6f8]">
         <header className="flex shrink-0 items-center gap-3 border-b bg-white px-4 py-3 shadow-sm z-10">
           <Button asChild variant="ghost" size="icon" className="h-8 w-8">
-            <Link to="/painel">
+            <Link to="/admin/loja/$storeId" params={{ storeId }}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
@@ -231,6 +232,8 @@ function PedidosLojaPage() {
         <div className="min-h-0 flex-1 overflow-hidden p-3 md:p-4">
           {activeTab === "Meus pedidos" ? (
             <OrdersManager storeId={storeId} fullScreen />
+          ) : activeTab === "Pedidos balcão (PDV)" ? (
+            <PDVManager storeId={storeId} />
           ) : (
             <div className="flex h-full items-center justify-center rounded-lg border bg-white p-8 text-center shadow-sm">
               <div>
