@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
-import { Store, LogOut, Home, Tags, LayoutGrid, Users, Upload, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Store, LogOut, Home, Tags, LayoutGrid, Users, Upload, Sparkles, Truck, ChevronDown, UserPlus, FileText, MapPin } from "lucide-react";
 import { useIsAdmin } from "@/hooks/use-admin";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -18,11 +18,24 @@ const NAV = [
   { to: "/admin/modal-boas-vindas", label: "Modal boas-vindas", icon: Sparkles },
 ];
 
+const ENTREGAS_SUB = [
+  { to: "/admin/entregas/cadastro", label: "Cadastro entregadores", icon: UserPlus },
+  { to: "/admin/entregas/relatorio", label: "Relatório entregadores", icon: FileText },
+  { to: "/admin/entregas/areas", label: "Áreas de entrega", icon: MapPin },
+];
+
 function AdminLayout() {
   const { isAdmin, loading, user } = useIsAdmin();
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const isEntregasActive = location.pathname.startsWith("/admin/entregas");
+  const [entregasOpen, setEntregasOpen] = useState(isEntregasActive);
+
+  useEffect(() => {
+    if (isEntregasActive) setEntregasOpen(true);
+  }, [isEntregasActive]);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
@@ -81,6 +94,51 @@ function AdminLayout() {
               </Link>
             );
           })}
+
+          {/* Entregas - collapsible purple section */}
+          <div className="pt-1">
+            <button
+              onClick={() => setEntregasOpen((v) => !v)}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                isEntregasActive
+                  ? "bg-purple-600 text-white"
+                  : "bg-purple-50 text-purple-700 hover:bg-purple-100 dark:bg-purple-950 dark:text-purple-300 dark:hover:bg-purple-900",
+              )}
+            >
+              <Truck className="h-4 w-4" />
+              Entregas
+              <ChevronDown
+                className={cn(
+                  "ml-auto h-4 w-4 transition-transform",
+                  entregasOpen && "rotate-180",
+                )}
+              />
+            </button>
+            {entregasOpen && (
+              <div className="ml-4 mt-1 space-y-0.5 border-l-2 border-purple-200 pl-3 dark:border-purple-800">
+                {ENTREGAS_SUB.map((sub) => {
+                  const active = location.pathname === sub.to;
+                  const Icon = sub.icon;
+                  return (
+                    <Link
+                      key={sub.to}
+                      to={sub.to}
+                      className={cn(
+                        "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
+                        active
+                          ? "bg-purple-600 text-white"
+                          : "text-purple-700 hover:bg-purple-50 dark:text-purple-300 dark:hover:bg-purple-900",
+                      )}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      {sub.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </nav>
         <div className="space-y-1 border-t p-3">
           <Link
@@ -121,6 +179,21 @@ function AdminLayout() {
                 )}
               >
                 {item.label}
+              </Link>
+            );
+          })}
+          {ENTREGAS_SUB.map((sub) => {
+            const active = location.pathname === sub.to;
+            return (
+              <Link
+                key={sub.to}
+                to={sub.to}
+                className={cn(
+                  "whitespace-nowrap rounded-full px-3 py-1.5 text-xs",
+                  active ? "bg-purple-600 text-white" : "bg-purple-50 text-purple-700",
+                )}
+              >
+                {sub.label}
               </Link>
             );
           })}
