@@ -41,7 +41,7 @@ export function CashSummaryDialog({
       const { data: transactions } = await supabase
         .from("cash_transactions")
         .select("type, amount")
-        .eq("cash_register_id", cashRegisterId);
+        .eq("cash_register_id", cashRegisterId!);
 
       const depositsTotal = (transactions || [])
         .filter(t => t.type === "deposit")
