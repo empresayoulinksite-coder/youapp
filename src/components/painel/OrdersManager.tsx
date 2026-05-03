@@ -203,11 +203,12 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
     },
   });
 
-  const { data: orders = [], isLoading: loadingOrders } = useQuery({
+  const { data: orders = [], isLoading: loadingOrders, error: ordersError } = useQuery({
     queryKey: ["orders-manager", storeId],
     refetchOnMount: true,
     staleTime: 0,
     queryFn: async () => {
+      console.log("Fetching orders for store:", storeId);
       const { data, error } = await supabase
         .from("orders")
         .select(
@@ -220,7 +221,11 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
         .eq("store_id", storeId)
         .in("status", ["em_analise", "em_producao", "pronto"])
         .order("created_at", { ascending: true });
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching orders:", error);
+        throw error;
+      }
+      console.log(`Fetched ${data?.length || 0} orders`);
       return (data ?? []) as unknown as Order[];
     },
   });
@@ -247,18 +252,22 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "orders", filter: `store_id=eq.${storeId}` },
-        () => {
+        (payload) => {
+          console.log("Realtime order change detected:", payload.eventType, (payload.new as any)?.id);
           qc.invalidateQueries({ queryKey: ["orders-manager", storeId] });
         },
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "order_items" },
-        () => {
+        (payload) => {
+          console.log("Realtime order_items change detected:", payload.eventType);
           qc.invalidateQueries({ queryKey: ["orders-manager", storeId] });
         },
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`Realtime subscription status for store ${storeId}:`, status);
+      });
     return () => {
       supabase.removeChannel(channel);
     };
@@ -322,6 +331,18 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
     return (
       <div className="flex h-64 items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (ordersError) {
+    return (
+      <div className="flex h-64 flex-col items-center justify-center gap-2 text-destructive">
+        <p className="text-sm font-semibold">Erro ao carregar pedidos</p>
+        <p className="text-xs">{(ordersError as any).message || "Erro de permissão ou conexão"}</p>
+        <Button variant="outline" size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["orders-manager"] })}>
+          Tentar novamente
+        </Button>
       </div>
     );
   }
