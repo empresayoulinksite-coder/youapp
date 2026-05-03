@@ -12,7 +12,9 @@ import {
   Globe, 
   Bike,
   Menu,
-  X
+  X,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -22,6 +24,8 @@ import { Input } from "@/components/ui/input";
 import { OrdersManager } from "@/components/painel/OrdersManager";
 import { PDVManager } from "@/components/painel/PDVManager";
 import { CashRegisterDialog } from "@/components/painel/CashRegisterDialog";
+import { CashTransactionDialog } from "@/components/painel/CashTransactionDialog";
+import { CashSummaryDialog } from "@/components/painel/CashSummaryDialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -61,6 +65,11 @@ function PedidosLojaPage() {
   // Cash Register States
   const [cashDialogOpen, setCashDialogOpen] = useState(false);
   const [cashDialogAction, setCashDialogAction] = useState<"open" | "close">("open");
+  const [cashMenuOpen, setCashMenuOpen] = useState(false);
+
+  const [transactionDialogOpen, setTransactionDialogOpen] = useState(false);
+  const [transactionType, setTransactionType] = useState<"deposit" | "withdrawal">("deposit");
+  const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
 
   const { data: store } = useQuery({
     queryKey: ["pedidos-loja-store", storeId],
@@ -95,6 +104,16 @@ function PedidosLojaPage() {
 
   const isCashOpen = cashRegister?.status === "open";
 
+  const getElapsedTime = (dateString?: string) => {
+    if (!dateString) return "";
+    const start = new Date(dateString).getTime();
+    const now = new Date().getTime();
+    const diff = now - start;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}h${minutes}min`;
+  };
+
   const handleCashAction = async (amount: number) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -123,6 +142,30 @@ function PedidosLojaPage() {
       qc.invalidateQueries({ queryKey: ["cash-register", storeId] });
     } catch (err: any) {
       toast.error("Erro ao realizar operação: " + err.message);
+    }
+  };
+
+  const handleCashTransaction = async (amount: number, reason: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      if (!cashRegister) throw new Error("Caixa não está aberto");
+
+      const { error } = await supabase.from("cash_transactions").insert({
+        cash_register_id: cashRegister.id,
+        user_id: user.id,
+        type: transactionType,
+        amount,
+        reason
+      });
+
+      if (error) throw error;
+      
+      toast.success(transactionType === "deposit" ? "Suprimento registrado com sucesso!" : "Retirada registrada com sucesso!");
+      setTransactionDialogOpen(false);
+    } catch (err: any) {
+      toast.error("Erro ao registrar transação: " + err.message);
     }
   };
 
@@ -178,17 +221,72 @@ function PedidosLojaPage() {
 
         <div className="flex-1 overflow-y-auto overflow-x-hidden">
           {/* Caixa Status */}
-          <div className="p-4 border-b border-white/10">
+          <div className="p-4 border-b border-white/10 relative">
             {isCashOpen ? (
-              <div 
-                className="flex items-center gap-3 rounded-lg bg-[#360e3c] p-3 hover:bg-[#280a2c] cursor-pointer transition-colors" 
-                onClick={() => { setCashDialogAction("close"); setCashDialogOpen(true); }}
-              >
-                <MonitorSmartphone className="h-5 w-5 opacity-90 text-white" />
-                <div className="flex flex-1 items-center justify-between">
-                  <span className="font-semibold text-sm text-white">Caixa</span>
-                  <span className="rounded bg-[#10b981] px-2 py-0.5 text-xs font-bold text-white shadow-sm">Aberto</span>
+              <div className="flex flex-col gap-1 relative">
+                <div 
+                  className="flex items-center gap-3 rounded-lg bg-[#360e3c] p-3 hover:bg-[#280a2c] cursor-pointer transition-colors border border-white/5" 
+                  onClick={() => setCashMenuOpen(!cashMenuOpen)}
+                >
+                  <MonitorSmartphone className="h-5 w-5 opacity-90 text-white" />
+                  <div className="flex flex-1 items-center justify-between">
+                    <span className="font-semibold text-sm text-white">Caixa</span>
+                    <div className="flex items-center gap-2">
+                      <span className="rounded bg-[#10b981] px-2 py-0.5 text-xs font-bold text-white shadow-sm">Aberto</span>
+                      {cashMenuOpen ? <ChevronUp className="h-4 w-4 text-white/70" /> : <ChevronDown className="h-4 w-4 text-white/70" />}
+                    </div>
+                  </div>
                 </div>
+                
+                {/* Menu Dropdown do Caixa */}
+                {cashMenuOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-1 z-10 bg-[#360e3c] border border-white/10 rounded-lg shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2">
+                    <div className="px-4 py-3 bg-[#280a2c] border-b border-white/5">
+                      <span className="text-xs text-white/70 font-medium">Caixa aberto há: {getElapsedTime(cashRegister?.opened_at)}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <button 
+                        onClick={() => {
+                          setCashMenuOpen(false);
+                          setSummaryDialogOpen(true);
+                        }}
+                        className="text-left px-4 py-3 text-sm text-white hover:bg-white/10 border-b border-white/5 transition-colors"
+                      >
+                        Resumo parcial
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setCashMenuOpen(false);
+                          setTransactionType("withdrawal");
+                          setTransactionDialogOpen(true);
+                        }}
+                        className="text-left px-4 py-3 text-sm text-white hover:bg-white/10 border-b border-white/5 transition-colors"
+                      >
+                        Informar retirada
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setCashMenuOpen(false);
+                          setTransactionType("deposit");
+                          setTransactionDialogOpen(true);
+                        }}
+                        className="text-left px-4 py-3 text-sm text-white hover:bg-white/10 border-b border-white/5 transition-colors"
+                      >
+                        Informar suprimento
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setCashMenuOpen(false);
+                          setCashDialogAction("close");
+                          setCashDialogOpen(true);
+                        }}
+                        className="text-left px-4 py-3 text-sm text-white hover:bg-white/10 transition-colors font-medium"
+                      >
+                        Fechar caixa
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex items-center gap-3 rounded-lg bg-[#360e3c] p-2 hover:bg-[#280a2c] transition-colors text-white">
@@ -348,6 +446,22 @@ function PedidosLojaPage() {
         isOpening={cashDialogAction === "open"}
         onClose={() => setCashDialogOpen(false)}
         onConfirm={handleCashAction}
+      />
+
+      <CashTransactionDialog
+        open={transactionDialogOpen}
+        type={transactionType}
+        onClose={() => setTransactionDialogOpen(false)}
+        onConfirm={handleCashTransaction}
+      />
+
+      <CashSummaryDialog
+        open={summaryDialogOpen}
+        onClose={() => setSummaryDialogOpen(false)}
+        cashRegisterId={cashRegister?.id}
+        storeId={storeId}
+        openingBalance={Number(cashRegister?.opening_balance || 0)}
+        openedAt={cashRegister?.opened_at}
       />
     </div>
   );
