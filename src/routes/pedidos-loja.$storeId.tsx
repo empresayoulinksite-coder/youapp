@@ -191,7 +191,7 @@ function PedidosLojaPage() {
     { label: "Pedidos agendados", icon: CalendarDays, badge: 0 },
     { label: "Gestor de cardápio", icon: MenuSquare, isLink: true, to: `/admin/loja/${storeId}` },
     { label: "Gestão Avançada", icon: Globe, isLink: true, to: `/admin/loja/${storeId}`, isPremium: true },
-    { label: "Entregas", icon: Bike, isLink: true, to: `/admin/loja/${storeId}` },
+    
   ];
 
   return (
