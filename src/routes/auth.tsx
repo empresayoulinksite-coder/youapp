@@ -73,13 +73,11 @@ function AuthPage() {
           type="button"
           onClick={async () => {
             setError(null);
-            const { error: signInError } = await supabase.auth.signInWithOAuth({
-              provider: "google",
-              options: {
-                redirectTo: window.location.origin,
-              }
+            const result = await lovable.auth.signInWithOAuth("google", {
+              redirect_uri: window.location.origin,
             });
-            if (signInError) setError(signInError.message ?? "Falha ao entrar com Google");
+            if (result.redirected) return;
+            if (result.error) setError(result.error.message ?? "Falha ao entrar com Google");
           }}
           className="w-full bg-card border border-border font-semibold py-3 rounded-full flex items-center justify-center gap-2 mb-4 hover:bg-muted"
         >
