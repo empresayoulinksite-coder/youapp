@@ -461,7 +461,7 @@ function PedidosLojaPage() {
         cashRegisterId={cashRegister?.id}
         storeId={storeId}
         openingBalance={Number(cashRegister?.opening_balance || 0)}
-        openedAt={cashRegister?.opened_at}
+        openedAt={cashRegister?.opened_at ?? new Date().toISOString()}
       />
     </div>
   );
