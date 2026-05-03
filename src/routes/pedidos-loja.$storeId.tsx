@@ -115,7 +115,7 @@ function PedidosLojaPage() {
           closing_balance: amount,
           closed_at: new Date().toISOString(),
           status: "closed"
-        }).eq("id", cashRegister.id);
+        }).eq("id", cashRegister!.id);
         if (error) throw error;
         toast.success("Caixa fechado com sucesso!");
       }
