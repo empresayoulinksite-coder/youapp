@@ -283,8 +283,7 @@ function PedidosLojaPage() {
                       <button 
                         onClick={() => {
                           setCashMenuOpen(false);
-                          setCashDialogAction("close");
-                          setCashDialogOpen(true);
+                          setCloseConfirmOpen(true);
                         }}
                         className="text-left px-4 py-3 text-sm text-white hover:bg-white/10 transition-colors font-medium"
                       >
