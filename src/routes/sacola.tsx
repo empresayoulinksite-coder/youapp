@@ -351,6 +351,15 @@ function CartPage() {
           )}
           <button
             onClick={() => {
+              if (loading) {
+                toast.error("Aguarde sua conta carregar antes de finalizar.");
+                return;
+              }
+              if (!authUser) {
+                toast.error("Entre na sua conta para finalizar o pedido.");
+                navigate({ to: "/auth" });
+                return;
+              }
               if (!storeOpen) {
                 toast.error("A loja está fechada no momento.");
                 return;
@@ -361,7 +370,7 @@ function CartPage() {
               }
               setReviewOpen(true);
             }}
-            disabled={!storeOpen || submitting}
+            disabled={!storeOpen || submitting || loading}
             className="w-full bg-brand text-brand-foreground font-bold py-3.5 rounded-full shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {storeOpen ? "Revisar e finalizar" : "Loja fechada"}
