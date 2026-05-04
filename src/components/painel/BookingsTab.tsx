@@ -647,19 +647,45 @@ function NewBookingDialog({
           </div>
 
           <div>
-            <Label className="text-xs">Serviço *</Label>
-            <Select value={serviceId} onValueChange={(v) => { setServiceId(v); setSlot(null); }}>
-              <SelectTrigger className="mt-1.5">
-                <SelectValue placeholder="Escolha o serviço" />
-              </SelectTrigger>
-              <SelectContent>
-                {services.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.name} · {s.duration_minutes}min · R$ {Number(s.price).toFixed(2).replace(".", ",")}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label className="text-xs">Serviços * <span className="font-normal text-muted-foreground">(selecione um ou mais)</span></Label>
+            <div className="mt-1.5 max-h-40 overflow-y-auto rounded-md border p-2 space-y-1">
+              {services.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-2">Nenhum serviço cadastrado.</p>
+              ) : (
+                services.map((s) => {
+                  const checked = selectedIds.includes(s.id);
+                  return (
+                    <label
+                      key={s.id}
+                      className={cn(
+                        "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors",
+                        checked ? "bg-primary/10 font-medium" : "hover:bg-muted",
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleService(s.id)}
+                        className="accent-[var(--primary)] h-4 w-4 rounded"
+                      />
+                      <span className="flex-1">{s.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {s.duration_minutes}min · R$ {Number(s.price).toFixed(2).replace(".", ",")}
+                      </span>
+                    </label>
+                  );
+                })
+              )}
+            </div>
+            {selectedServices.length > 0 && (
+              <div className="mt-1.5 flex items-center gap-3 text-xs text-muted-foreground">
+                <span>Total: <strong className="text-foreground">{totalDuration}min</strong></span>
+                <span>·</span>
+                <span>R$ <strong className="text-foreground">{totalPrice.toFixed(2).replace(".", ",")}</strong></span>
+                <span>·</span>
+                <span>{selectedServices.length} serviço{selectedServices.length > 1 ? "s" : ""}</span>
+              </div>
+            )}
           </div>
 
           <div>
