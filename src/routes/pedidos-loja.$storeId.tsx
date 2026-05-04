@@ -29,6 +29,7 @@ import { PDVManager } from "@/components/painel/PDVManager";
 import { CashRegisterDialog } from "@/components/painel/CashRegisterDialog";
 import { CashTransactionDialog } from "@/components/painel/CashTransactionDialog";
 import { CashSummaryDialog } from "@/components/painel/CashSummaryDialog";
+import { CashCloseConfirmDialog } from "@/components/painel/CashCloseConfirmDialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
