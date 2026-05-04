@@ -351,6 +351,15 @@ function CartPage() {
           )}
           <button
             onClick={() => {
+              if (loading) {
+                toast.error("Aguarde sua conta carregar antes de finalizar.");
+                return;
+              }
+              if (!authUser) {
+                toast.error("Entre na sua conta para finalizar o pedido.");
+                navigate({ to: "/auth" });
+                return;
+              }
               if (!storeOpen) {
                 toast.error("A loja está fechada no momento.");
                 return;
@@ -361,7 +370,7 @@ function CartPage() {
               }
               setReviewOpen(true);
             }}
-            disabled={!storeOpen || submitting}
+            disabled={!storeOpen || submitting || loading}
             className="w-full bg-brand text-brand-foreground font-bold py-3.5 rounded-full shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {storeOpen ? "Revisar e finalizar" : "Loja fechada"}
@@ -381,35 +390,45 @@ function CartPage() {
         storeAddress={storeAddress}
         submitting={submitting}
         onConfirm={async ({ paymentMethod, notes, number, complement, customerName, customerPhone }) => {
+          if (!authUser) {
+            toast.error("Entre na sua conta para finalizar o pedido.");
+            navigate({ to: "/auth" });
+            return;
+          }
+          if (!storeId) {
+            toast.error("Não foi possível identificar a loja deste pedido.");
+            return;
+          }
           if (!storeWhatsapp) return;
           setSubmitting(true);
-          const fmtBRL = (n: number) => `R$ ${n.toFixed(2).replace(".", ",")}`;
-          const lines = [
-            `Olá, ${storeName}! Gostaria de fazer um pedido:`,
-            "",
-            ...items.map((i) => {
-              const isPizza = Array.isArray(i.pizza_flavors) && i.pizza_flavors.length > 0;
-              const unit = Number(i.unit_price_override ?? i.menu_items?.price ?? 0);
-              if (isPizza) {
-                const flavorsTxt = (i.pizza_flavors ?? []).map((f) => f.name).join(" + ");
-                const parts: string[] = [];
-                parts.push(`• ${i.quantity}x 🍕 Pizza ${i.pizza_size_name ?? ""} — ${fmtBRL(unit * i.quantity)}`.replace(/\s+—/, " —"));
-                parts.push(`   Sabores: ${flavorsTxt}`);
-                if (i.pizza_crust_name) parts.push(`   Borda: ${i.pizza_crust_name}`);
-                if (Array.isArray(i.pizza_addons) && i.pizza_addons.length > 0) {
-                  parts.push(`   Adicionais: ${i.pizza_addons.map((a) => a.name).join(", ")}`);
+          try {
+            const fmtBRL = (n: number) => `R$ ${n.toFixed(2).replace(".", ",")}`;
+            const lines = [
+              `Olá, ${storeName}! Gostaria de fazer um pedido:`,
+              "",
+              ...items.map((i) => {
+                const isPizza = Array.isArray(i.pizza_flavors) && i.pizza_flavors.length > 0;
+                const unit = Number(i.unit_price_override ?? i.menu_items?.price ?? 0);
+                if (isPizza) {
+                  const flavorsTxt = (i.pizza_flavors ?? []).map((f) => f.name).join(" + ");
+                  const parts: string[] = [];
+                  parts.push(`• ${i.quantity}x 🍕 Pizza ${i.pizza_size_name ?? ""} — ${fmtBRL(unit * i.quantity)}`.replace(/\s+—/, " —"));
+                  parts.push(`   Sabores: ${flavorsTxt}`);
+                  if (i.pizza_crust_name) parts.push(`   Borda: ${i.pizza_crust_name}`);
+                  if (Array.isArray(i.pizza_addons) && i.pizza_addons.length > 0) {
+                    parts.push(`   Adicionais: ${i.pizza_addons.map((a) => a.name).join(", ")}`);
+                  }
+                  return parts.join("\n");
                 }
-                return parts.join("\n");
-              }
-              const name = i.half_two_name
-                ? `½ ${i.menu_items?.name} + ½ ${i.half_two_name}`
-                : (i.menu_items?.name ?? "Item");
-              const sizeSuffix = i.selected_size ? ` (Tamanho: ${i.selected_size})` : "";
-              return `• ${i.quantity}x ${name}${sizeSuffix} — ${fmtBRL(unit * i.quantity)}`;
-            }),
-            "",
-            `Subtotal: ${fmtBRL(total)}`,
-          ];
+                const name = i.half_two_name
+                  ? `½ ${i.menu_items?.name} + ½ ${i.half_two_name}`
+                  : (i.menu_items?.name ?? "Item");
+                const sizeSuffix = i.selected_size ? ` (Tamanho: ${i.selected_size})` : "";
+                return `• ${i.quantity}x ${name}${sizeSuffix} — ${fmtBRL(unit * i.quantity)}`;
+              }),
+              "",
+              `Subtotal: ${fmtBRL(total)}`,
+            ];
           if (discount > 0 && applied) {
             lines.push(`Cupom ${applied.code}: -${fmtBRL(discount)}`);
           }
@@ -467,7 +486,6 @@ function CartPage() {
           const message = lines.join("\n");
 
           // Salva o pedido no banco antes de abrir o WhatsApp
-          if (authUser && storeId) {
             const firstStore = items[0]?.stores;
             const { data: order, error: orderError } = await supabase
               .from("orders")
@@ -489,6 +507,7 @@ function CartPage() {
               })
               .select("id")
               .single();
+            if (orderError) throw orderError;
             if (!orderError && order) {
               const itemRows = items.map((i) => ({
                 order_id: order.id,
@@ -513,16 +532,21 @@ function CartPage() {
                 pizza_crust_price: i.pizza_crust_price ?? null,
                 pizza_addons: (i.pizza_addons ?? null) as any,
               }));
-              await supabase.from("order_items").insert(itemRows);
+              const { error: itemsError } = await supabase.from("order_items").insert(itemRows);
+              if (itemsError) throw itemsError;
             }
-          }
 
           openWhatsapp(storeWhatsapp, message);
           await clear();
           clearCoupon();
-          setSubmitting(false);
           setReviewOpen(false);
           toast.success("Pedido enviado! Continue no WhatsApp.");
+          } catch (error) {
+            console.error("Erro ao finalizar pedido:", error);
+            toast.error("Não foi possível salvar o pedido. Tente novamente antes de abrir o WhatsApp.");
+          } finally {
+            setSubmitting(false);
+          }
         }}
       />
     </div>
