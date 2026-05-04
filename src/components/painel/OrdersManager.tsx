@@ -219,14 +219,17 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
              pizza_size_name, pizza_crust_name, pizza_flavors, pizza_addons, half_two_name)`,
         )
         .eq("store_id", storeId)
-        .in("status", ["em_analise", "em_producao", "pronto"])
+        .in("status", ["sent", "em_analise", "em_producao", "pronto"])
         .order("created_at", { ascending: true });
       if (error) {
         console.error("Error fetching orders:", error);
         throw error;
       }
       console.log(`Fetched ${data?.length || 0} orders`);
-      return (data ?? []) as unknown as Order[];
+      return (data ?? []).map((order) => ({
+        ...order,
+        status: order.status === "sent" ? "em_analise" : order.status,
+      })) as unknown as Order[];
     },
   });
 
