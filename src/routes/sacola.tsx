@@ -390,35 +390,45 @@ function CartPage() {
         storeAddress={storeAddress}
         submitting={submitting}
         onConfirm={async ({ paymentMethod, notes, number, complement, customerName, customerPhone }) => {
+          if (!authUser) {
+            toast.error("Entre na sua conta para finalizar o pedido.");
+            navigate({ to: "/auth" });
+            return;
+          }
+          if (!storeId) {
+            toast.error("Não foi possível identificar a loja deste pedido.");
+            return;
+          }
           if (!storeWhatsapp) return;
           setSubmitting(true);
-          const fmtBRL = (n: number) => `R$ ${n.toFixed(2).replace(".", ",")}`;
-          const lines = [
-            `Olá, ${storeName}! Gostaria de fazer um pedido:`,
-            "",
-            ...items.map((i) => {
-              const isPizza = Array.isArray(i.pizza_flavors) && i.pizza_flavors.length > 0;
-              const unit = Number(i.unit_price_override ?? i.menu_items?.price ?? 0);
-              if (isPizza) {
-                const flavorsTxt = (i.pizza_flavors ?? []).map((f) => f.name).join(" + ");
-                const parts: string[] = [];
-                parts.push(`• ${i.quantity}x 🍕 Pizza ${i.pizza_size_name ?? ""} — ${fmtBRL(unit * i.quantity)}`.replace(/\s+—/, " —"));
-                parts.push(`   Sabores: ${flavorsTxt}`);
-                if (i.pizza_crust_name) parts.push(`   Borda: ${i.pizza_crust_name}`);
-                if (Array.isArray(i.pizza_addons) && i.pizza_addons.length > 0) {
-                  parts.push(`   Adicionais: ${i.pizza_addons.map((a) => a.name).join(", ")}`);
+          try {
+            const fmtBRL = (n: number) => `R$ ${n.toFixed(2).replace(".", ",")}`;
+            const lines = [
+              `Olá, ${storeName}! Gostaria de fazer um pedido:`,
+              "",
+              ...items.map((i) => {
+                const isPizza = Array.isArray(i.pizza_flavors) && i.pizza_flavors.length > 0;
+                const unit = Number(i.unit_price_override ?? i.menu_items?.price ?? 0);
+                if (isPizza) {
+                  const flavorsTxt = (i.pizza_flavors ?? []).map((f) => f.name).join(" + ");
+                  const parts: string[] = [];
+                  parts.push(`• ${i.quantity}x 🍕 Pizza ${i.pizza_size_name ?? ""} — ${fmtBRL(unit * i.quantity)}`.replace(/\s+—/, " —"));
+                  parts.push(`   Sabores: ${flavorsTxt}`);
+                  if (i.pizza_crust_name) parts.push(`   Borda: ${i.pizza_crust_name}`);
+                  if (Array.isArray(i.pizza_addons) && i.pizza_addons.length > 0) {
+                    parts.push(`   Adicionais: ${i.pizza_addons.map((a) => a.name).join(", ")}`);
+                  }
+                  return parts.join("\n");
                 }
-                return parts.join("\n");
-              }
-              const name = i.half_two_name
-                ? `½ ${i.menu_items?.name} + ½ ${i.half_two_name}`
-                : (i.menu_items?.name ?? "Item");
-              const sizeSuffix = i.selected_size ? ` (Tamanho: ${i.selected_size})` : "";
-              return `• ${i.quantity}x ${name}${sizeSuffix} — ${fmtBRL(unit * i.quantity)}`;
-            }),
-            "",
-            `Subtotal: ${fmtBRL(total)}`,
-          ];
+                const name = i.half_two_name
+                  ? `½ ${i.menu_items?.name} + ½ ${i.half_two_name}`
+                  : (i.menu_items?.name ?? "Item");
+                const sizeSuffix = i.selected_size ? ` (Tamanho: ${i.selected_size})` : "";
+                return `• ${i.quantity}x ${name}${sizeSuffix} — ${fmtBRL(unit * i.quantity)}`;
+              }),
+              "",
+              `Subtotal: ${fmtBRL(total)}`,
+            ];
           if (discount > 0 && applied) {
             lines.push(`Cupom ${applied.code}: -${fmtBRL(discount)}`);
           }
