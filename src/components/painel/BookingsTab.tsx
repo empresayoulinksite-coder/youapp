@@ -509,7 +509,7 @@ function NewBookingDialog({
 }) {
   const { user } = useAuth();
   const [services, setServices] = useState<ServiceLite[]>([]);
-  const [serviceId, setServiceId] = useState<string>("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [notes, setNotes] = useState("");
@@ -523,8 +523,16 @@ function NewBookingDialog({
   const [bookedRanges, setBookedRanges] = useState<BookedRange[]>([]);
   const [saving, setSaving] = useState(false);
 
-  const service = services.find((s) => s.id === serviceId) ?? null;
-  const duration = service?.duration_minutes ?? 30;
+  const selectedServices = services.filter((s) => selectedIds.includes(s.id));
+  const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration_minutes, 0) || 30;
+  const totalPrice = selectedServices.reduce((sum, s) => sum + Number(s.price), 0);
+
+  const toggleService = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+    setSlot(null);
+  };
 
   useEffect(() => {
     supabase
@@ -536,7 +544,6 @@ function NewBookingDialog({
       .then(({ data }) => {
         const list = (data ?? []) as ServiceLite[];
         setServices(list);
-        if (list.length && !serviceId) setServiceId(list[0].id);
       });
     supabase
       .from("store_hours")
@@ -561,40 +568,54 @@ function NewBookingDialog({
   }, [store.id, date]);
 
   const slots = useMemo(
-    () => generateSlots(date, hours, store.slot_minutes || 30, duration, bookedRanges),
-    [date, hours, store.slot_minutes, duration, bookedRanges],
+    () => generateSlots(date, hours, store.slot_minutes || 30, totalDuration, bookedRanges),
+    [date, hours, store.slot_minutes, totalDuration, bookedRanges],
   );
 
   const save = async () => {
-    if (!slot || !service || !user) return;
+    if (!slot || selectedServices.length === 0 || !user) return;
     if (!customerName.trim()) {
       toast.error("Informe o nome do cliente");
       return;
     }
     setSaving(true);
-    const ends = new Date(slot.getTime() + duration * 60_000);
     const noteParts = [
       `[Manual] ${customerName.trim()}`,
       customerPhone.trim() ? `Tel: ${customerPhone.trim()}` : "",
       notes.trim(),
     ].filter(Boolean);
-    const { error } = await supabase.from("bookings").insert({
-      store_id: store.id,
-      service_id: service.id,
-      user_id: user.id,
-      starts_at: slot.toISOString(),
-      ends_at: ends.toISOString(),
-      total_price: service.price,
-      status: "confirmed",
-      customer_notes: noteParts.join(" · "),
-    });
-    setSaving(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+    const noteStr = noteParts.join(" · ");
+
+    let cursor = new Date(slot);
+    let hasError = false;
+    for (const svc of selectedServices) {
+      const ends = new Date(cursor.getTime() + svc.duration_minutes * 60_000);
+      const { error } = await supabase.from("bookings").insert({
+        store_id: store.id,
+        service_id: svc.id,
+        user_id: user.id,
+        starts_at: cursor.toISOString(),
+        ends_at: ends.toISOString(),
+        total_price: svc.price,
+        status: "confirmed",
+        customer_notes: noteStr,
+      });
+      if (error) {
+        toast.error(error.message);
+        hasError = true;
+        break;
+      }
+      cursor = ends;
     }
-    toast.success("Agendamento criado");
-    onSaved();
+    setSaving(false);
+    if (!hasError) {
+      toast.success(
+        selectedServices.length > 1
+          ? `${selectedServices.length} agendamentos criados`
+          : "Agendamento criado",
+      );
+      onSaved();
+    }
   };
 
   return (
