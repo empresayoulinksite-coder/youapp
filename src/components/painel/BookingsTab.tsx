@@ -774,7 +774,7 @@ function NewBookingDialog({
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button onClick={save} disabled={!slot || !service || saving}>
+          <Button onClick={save} disabled={!slot || selectedServices.length === 0 || saving}>
             {saving ? "Salvando..." : "Criar agendamento"}
           </Button>
         </DialogFooter>
