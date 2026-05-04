@@ -486,7 +486,6 @@ function CartPage() {
           const message = lines.join("\n");
 
           // Salva o pedido no banco antes de abrir o WhatsApp
-          if (authUser && storeId) {
             const firstStore = items[0]?.stores;
             const { data: order, error: orderError } = await supabase
               .from("orders")
@@ -508,6 +507,7 @@ function CartPage() {
               })
               .select("id")
               .single();
+            if (orderError) throw orderError;
             if (!orderError && order) {
               const itemRows = items.map((i) => ({
                 order_id: order.id,
@@ -532,16 +532,21 @@ function CartPage() {
                 pizza_crust_price: i.pizza_crust_price ?? null,
                 pizza_addons: (i.pizza_addons ?? null) as any,
               }));
-              await supabase.from("order_items").insert(itemRows);
+              const { error: itemsError } = await supabase.from("order_items").insert(itemRows);
+              if (itemsError) throw itemsError;
             }
-          }
 
           openWhatsapp(storeWhatsapp, message);
           await clear();
           clearCoupon();
-          setSubmitting(false);
           setReviewOpen(false);
           toast.success("Pedido enviado! Continue no WhatsApp.");
+          } catch (error) {
+            console.error("Erro ao finalizar pedido:", error);
+            toast.error("Não foi possível salvar o pedido. Tente novamente antes de abrir o WhatsApp.");
+          } finally {
+            setSubmitting(false);
+          }
         }}
       />
     </div>
