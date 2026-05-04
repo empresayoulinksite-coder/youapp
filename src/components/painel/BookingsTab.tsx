@@ -22,13 +22,6 @@ import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Tabs,
@@ -509,7 +502,7 @@ function NewBookingDialog({
 }) {
   const { user } = useAuth();
   const [services, setServices] = useState<ServiceLite[]>([]);
-  const [serviceId, setServiceId] = useState<string>("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [notes, setNotes] = useState("");
@@ -523,8 +516,16 @@ function NewBookingDialog({
   const [bookedRanges, setBookedRanges] = useState<BookedRange[]>([]);
   const [saving, setSaving] = useState(false);
 
-  const service = services.find((s) => s.id === serviceId) ?? null;
-  const duration = service?.duration_minutes ?? 30;
+  const selectedServices = services.filter((s) => selectedIds.includes(s.id));
+  const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration_minutes, 0) || 30;
+  const totalPrice = selectedServices.reduce((sum, s) => sum + Number(s.price), 0);
+
+  const toggleService = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+    setSlot(null);
+  };
 
   useEffect(() => {
     supabase
@@ -536,7 +537,6 @@ function NewBookingDialog({
       .then(({ data }) => {
         const list = (data ?? []) as ServiceLite[];
         setServices(list);
-        if (list.length && !serviceId) setServiceId(list[0].id);
       });
     supabase
       .from("store_hours")
@@ -561,40 +561,54 @@ function NewBookingDialog({
   }, [store.id, date]);
 
   const slots = useMemo(
-    () => generateSlots(date, hours, store.slot_minutes || 30, duration, bookedRanges),
-    [date, hours, store.slot_minutes, duration, bookedRanges],
+    () => generateSlots(date, hours, store.slot_minutes || 30, totalDuration, bookedRanges),
+    [date, hours, store.slot_minutes, totalDuration, bookedRanges],
   );
 
   const save = async () => {
-    if (!slot || !service || !user) return;
+    if (!slot || selectedServices.length === 0 || !user) return;
     if (!customerName.trim()) {
       toast.error("Informe o nome do cliente");
       return;
     }
     setSaving(true);
-    const ends = new Date(slot.getTime() + duration * 60_000);
     const noteParts = [
       `[Manual] ${customerName.trim()}`,
       customerPhone.trim() ? `Tel: ${customerPhone.trim()}` : "",
       notes.trim(),
     ].filter(Boolean);
-    const { error } = await supabase.from("bookings").insert({
-      store_id: store.id,
-      service_id: service.id,
-      user_id: user.id,
-      starts_at: slot.toISOString(),
-      ends_at: ends.toISOString(),
-      total_price: service.price,
-      status: "confirmed",
-      customer_notes: noteParts.join(" · "),
-    });
-    setSaving(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+    const noteStr = noteParts.join(" · ");
+
+    let cursor = new Date(slot);
+    let hasError = false;
+    for (const svc of selectedServices) {
+      const ends = new Date(cursor.getTime() + svc.duration_minutes * 60_000);
+      const { error } = await supabase.from("bookings").insert({
+        store_id: store.id,
+        service_id: svc.id,
+        user_id: user.id,
+        starts_at: cursor.toISOString(),
+        ends_at: ends.toISOString(),
+        total_price: svc.price,
+        status: "confirmed",
+        customer_notes: noteStr,
+      });
+      if (error) {
+        toast.error(error.message);
+        hasError = true;
+        break;
+      }
+      cursor = ends;
     }
-    toast.success("Agendamento criado");
-    onSaved();
+    setSaving(false);
+    if (!hasError) {
+      toast.success(
+        selectedServices.length > 1
+          ? `${selectedServices.length} agendamentos criados`
+          : "Agendamento criado",
+      );
+      onSaved();
+    }
   };
 
   return (
@@ -626,19 +640,45 @@ function NewBookingDialog({
           </div>
 
           <div>
-            <Label className="text-xs">Serviço *</Label>
-            <Select value={serviceId} onValueChange={(v) => { setServiceId(v); setSlot(null); }}>
-              <SelectTrigger className="mt-1.5">
-                <SelectValue placeholder="Escolha o serviço" />
-              </SelectTrigger>
-              <SelectContent>
-                {services.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.name} · {s.duration_minutes}min · R$ {Number(s.price).toFixed(2).replace(".", ",")}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label className="text-xs">Serviços * <span className="font-normal text-muted-foreground">(selecione um ou mais)</span></Label>
+            <div className="mt-1.5 max-h-40 overflow-y-auto rounded-md border p-2 space-y-1">
+              {services.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-2">Nenhum serviço cadastrado.</p>
+              ) : (
+                services.map((s) => {
+                  const checked = selectedIds.includes(s.id);
+                  return (
+                    <label
+                      key={s.id}
+                      className={cn(
+                        "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors",
+                        checked ? "bg-primary/10 font-medium" : "hover:bg-muted",
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleService(s.id)}
+                        className="accent-[var(--primary)] h-4 w-4 rounded"
+                      />
+                      <span className="flex-1">{s.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {s.duration_minutes}min · R$ {Number(s.price).toFixed(2).replace(".", ",")}
+                      </span>
+                    </label>
+                  );
+                })
+              )}
+            </div>
+            {selectedServices.length > 0 && (
+              <div className="mt-1.5 flex items-center gap-3 text-xs text-muted-foreground">
+                <span>Total: <strong className="text-foreground">{totalDuration}min</strong></span>
+                <span>·</span>
+                <span>R$ <strong className="text-foreground">{totalPrice.toFixed(2).replace(".", ",")}</strong></span>
+                <span>·</span>
+                <span>{selectedServices.length} serviço{selectedServices.length > 1 ? "s" : ""}</span>
+              </div>
+            )}
           </div>
 
           <div>
@@ -677,7 +717,7 @@ function NewBookingDialog({
 
           <div>
             <Label className="text-xs">Horário</Label>
-            {!service ? (
+            {selectedServices.length === 0 ? (
               <p className="mt-2 rounded-md bg-muted p-3 text-center text-sm text-muted-foreground">
                 Escolha um serviço primeiro.
               </p>
@@ -727,7 +767,7 @@ function NewBookingDialog({
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button onClick={save} disabled={!slot || !service || saving}>
+          <Button onClick={save} disabled={!slot || selectedServices.length === 0 || saving}>
             {saving ? "Salvando..." : "Criar agendamento"}
           </Button>
         </DialogFooter>
