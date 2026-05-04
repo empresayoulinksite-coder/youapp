@@ -29,6 +29,7 @@ import { PDVManager } from "@/components/painel/PDVManager";
 import { CashRegisterDialog } from "@/components/painel/CashRegisterDialog";
 import { CashTransactionDialog } from "@/components/painel/CashTransactionDialog";
 import { CashSummaryDialog } from "@/components/painel/CashSummaryDialog";
+import { CashCloseConfirmDialog } from "@/components/painel/CashCloseConfirmDialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -73,6 +74,7 @@ function PedidosLojaPage() {
   const [transactionDialogOpen, setTransactionDialogOpen] = useState(false);
   const [transactionType, setTransactionType] = useState<"deposit" | "withdrawal">("deposit");
   const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
+  const [closeConfirmOpen, setCloseConfirmOpen] = useState(false);
   const [entregasOpen, setEntregasOpen] = useState(false);
 
   const { data: store } = useQuery({
@@ -281,8 +283,7 @@ function PedidosLojaPage() {
                       <button 
                         onClick={() => {
                           setCashMenuOpen(false);
-                          setCashDialogAction("close");
-                          setCashDialogOpen(true);
+                          setCloseConfirmOpen(true);
                         }}
                         className="text-left px-4 py-3 text-sm text-white hover:bg-white/10 transition-colors font-medium"
                       >
@@ -502,6 +503,35 @@ function PedidosLojaPage() {
         openingBalance={Number(cashRegister?.opening_balance || 0)}
         openedAt={cashRegister?.opened_at ?? new Date().toISOString()}
       />
+
+      {cashRegister && (
+        <CashCloseConfirmDialog
+          open={closeConfirmOpen}
+          onClose={() => setCloseConfirmOpen(false)}
+          onConfirm={async (amount) => {
+            try {
+              const { data: { user } } = await supabase.auth.getUser();
+              if (!user) throw new Error("Usuário não autenticado");
+              const { error } = await supabase.from("cash_registers").update({
+                closed_by: user.id,
+                closing_balance: amount,
+                closed_at: new Date().toISOString(),
+                status: "closed"
+              }).eq("id", cashRegister.id);
+              if (error) throw error;
+              toast.success("Caixa fechado com sucesso!");
+              setCloseConfirmOpen(false);
+              qc.invalidateQueries({ queryKey: ["cash-register", storeId] });
+            } catch (err: any) {
+              toast.error("Erro ao fechar caixa: " + err.message);
+            }
+          }}
+          cashRegisterId={cashRegister.id}
+          storeId={storeId}
+          openingBalance={Number(cashRegister.opening_balance || 0)}
+          openedAt={cashRegister.opened_at ?? new Date().toISOString()}
+        />
+      )}
     </div>
   );
 }
