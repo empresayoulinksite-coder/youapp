@@ -724,7 +724,7 @@ function NewBookingDialog({
 
           <div>
             <Label className="text-xs">Horário</Label>
-            {!service ? (
+            {selectedServices.length === 0 ? (
               <p className="mt-2 rounded-md bg-muted p-3 text-center text-sm text-muted-foreground">
                 Escolha um serviço primeiro.
               </p>
