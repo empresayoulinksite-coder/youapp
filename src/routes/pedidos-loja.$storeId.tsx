@@ -503,6 +503,35 @@ function PedidosLojaPage() {
         openingBalance={Number(cashRegister?.opening_balance || 0)}
         openedAt={cashRegister?.opened_at ?? new Date().toISOString()}
       />
+
+      {cashRegister && (
+        <CashCloseConfirmDialog
+          open={closeConfirmOpen}
+          onClose={() => setCloseConfirmOpen(false)}
+          onConfirm={async (amount) => {
+            try {
+              const { data: { user } } = await supabase.auth.getUser();
+              if (!user) throw new Error("Usuário não autenticado");
+              const { error } = await supabase.from("cash_registers").update({
+                closed_by: user.id,
+                closing_balance: amount,
+                closed_at: new Date().toISOString(),
+                status: "closed"
+              }).eq("id", cashRegister.id);
+              if (error) throw error;
+              toast.success("Caixa fechado com sucesso!");
+              setCloseConfirmOpen(false);
+              qc.invalidateQueries({ queryKey: ["cash-register", storeId] });
+            } catch (err: any) {
+              toast.error("Erro ao fechar caixa: " + err.message);
+            }
+          }}
+          cashRegisterId={cashRegister.id}
+          storeId={storeId}
+          openingBalance={Number(cashRegister.opening_balance || 0)}
+          openedAt={cashRegister.opened_at ?? new Date().toISOString()}
+        />
+      )}
     </div>
   );
 }
