@@ -153,7 +153,7 @@ function PainelPage() {
     return h > 0 ? `${h}h${m.toString().padStart(2, "0")}min` : `${m}min`;
   }
 
-
+  const { data: bookings = [], isLoading: bookingsLoading } = useQuery({
     queryKey: ["painel", "bookings", storeId],
     enabled: !!storeId,
     queryFn: async () => {
