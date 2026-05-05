@@ -94,6 +94,50 @@ const STATUS_VARIANT: Record<
   cancelled: "destructive",
 };
 
+function CashOpenMenu({
+  getElapsedTime,
+  cashRegister,
+  onDeposit,
+  onWithdrawal,
+  onSummary,
+  onCloseCash,
+}: {
+  getElapsedTime?: (openedAt?: string) => string;
+  cashRegister?: { opened_at: string } | null;
+  onDeposit?: () => void;
+  onWithdrawal?: () => void;
+  onSummary?: () => void;
+  onCloseCash?: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        className="flex items-center gap-2 rounded-lg bg-green-600 px-3 py-1.5 text-white text-sm font-semibold"
+        onClick={() => setOpen(!open)}
+      >
+        <Banknote className="h-4 w-4" />
+        Caixa
+        {open ? <ChevronUp className="h-3 w-3 opacity-70" /> : <ChevronDown className="h-3 w-3 opacity-70" />}
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full z-20 mt-1 w-56 rounded-lg border bg-card p-3 shadow-lg space-y-2">
+          <p className="text-xs text-muted-foreground">
+            Aberto há: {getElapsedTime?.(cashRegister?.opened_at) ?? ""}
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <Button size="sm" variant="outline" onClick={() => { onDeposit?.(); setOpen(false); }}>Reforço</Button>
+            <Button size="sm" variant="outline" onClick={() => { onWithdrawal?.(); setOpen(false); }}>Sangria</Button>
+            <Button size="sm" variant="outline" onClick={() => { onSummary?.(); setOpen(false); }}>Resumo</Button>
+            <Button size="sm" variant="destructive" onClick={() => { onCloseCash?.(); setOpen(false); }}>Fechar</Button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 export function BookingsTab({
   store,
   bookings,
