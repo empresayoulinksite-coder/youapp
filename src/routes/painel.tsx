@@ -1,10 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { LogOut, Power, LayoutDashboard, Calendar, Scissors, Ticket, Clock3, ArrowLeft, Users, Images, Dumbbell, ListOrdered, ClipboardList } from "lucide-react";
+import { LogOut, Power, LayoutDashboard, Calendar, Scissors, Ticket, Clock3, ArrowLeft, Users, Images, Dumbbell, ListOrdered, ClipboardList, Banknote, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { CashRegisterDialog } from "@/components/painel/CashRegisterDialog";
+import { CashTransactionDialog } from "@/components/painel/CashTransactionDialog";
+import { CashSummaryDialog } from "@/components/painel/CashSummaryDialog";
+import { CashCloseConfirmDialog } from "@/components/painel/CashCloseConfirmDialog";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -38,7 +42,16 @@ function PainelPage() {
   const qc = useQueryClient();
   const [storeId, setStoreId] = useState<string | null>(null);
   const [tab, setTab] = useState("overview");
-  
+
+  // Cash register state
+  const [cashDialogOpen, setCashDialogOpen] = useState(false);
+  const [cashDialogAction, setCashDialogAction] = useState<"open" | "close">("open");
+  const [cashMenuOpen, setCashMenuOpen] = useState(false);
+  const [txDialogOpen, setTxDialogOpen] = useState(false);
+  const [txType, setTxType] = useState<"deposit" | "withdrawal">("deposit");
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [closeConfirmOpen, setCloseConfirmOpen] = useState(false);
+
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/auth" });
@@ -66,6 +79,79 @@ function PainelPage() {
   }, [stores, storeId]);
 
   const currentStore = stores.find((s) => s.id === storeId) ?? null;
+
+  // Cash register query
+  const { data: cashRegister } = useQuery({
+    queryKey: ["cash-register", storeId],
+    enabled: !!storeId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("cash_registers")
+        .select("*")
+        .eq("store_id", storeId!)
+        .eq("status", "open")
+        .order("opened_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+  const isCashOpen = cashRegister?.status === "open";
+
+  const handleCashAction = async (amount: number) => {
+    if (!storeId || !user) return;
+    try {
+      if (cashDialogAction === "open") {
+        const { error } = await supabase.from("cash_registers").insert({
+          store_id: storeId,
+          opened_by: user.id,
+          opening_balance: amount,
+          status: "open",
+        });
+        if (error) throw error;
+        toast.success("Caixa aberto com sucesso!");
+      } else {
+        const { error } = await supabase.from("cash_registers").update({
+          closed_by: user.id,
+          closing_balance: amount,
+          closed_at: new Date().toISOString(),
+          status: "closed",
+        }).eq("id", cashRegister!.id);
+        if (error) throw error;
+        toast.success("Caixa fechado com sucesso!");
+      }
+      setCashDialogOpen(false);
+      qc.invalidateQueries({ queryKey: ["cash-register", storeId] });
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  const handleCashTransaction = async (amount: number, reason: string) => {
+    if (!cashRegister || !user) return;
+    try {
+      const { error } = await supabase.from("cash_transactions").insert({
+        cash_register_id: cashRegister.id,
+        user_id: user.id,
+        type: txType,
+        amount,
+        reason: reason || null,
+      });
+      if (error) throw error;
+      toast.success(txType === "deposit" ? "Reforço registrado" : "Sangria registrada");
+      setTxDialogOpen(false);
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  function getElapsedTime(openedAt?: string) {
+    if (!openedAt) return "";
+    const diff = Date.now() - new Date(openedAt).getTime();
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    return h > 0 ? `${h}h${m.toString().padStart(2, "0")}min` : `${m}min`;
+  }
 
   const { data: bookings = [], isLoading: bookingsLoading } = useQuery({
     queryKey: ["painel", "bookings", storeId],
@@ -244,6 +330,60 @@ function PainelPage() {
               <Power className="h-4 w-4" />
               {currentStore.is_paused ? "Reabrir" : "Pausar"}
             </Button>
+          </div>
+        )}
+
+        {/* Cash Register Control */}
+        {currentStore && (
+          <div className="rounded-lg border bg-card p-4 space-y-3">
+            {isCashOpen ? (
+              <>
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 rounded-lg bg-green-600 px-3 py-2"
+                    onClick={() => setCashMenuOpen(!cashMenuOpen)}
+                  >
+                    <Banknote className="h-4 w-4 text-white" />
+                    <span className="font-semibold text-sm text-white">Caixa aberto</span>
+                    {cashMenuOpen ? <ChevronUp className="h-4 w-4 text-white/70" /> : <ChevronDown className="h-4 w-4 text-white/70" />}
+                  </button>
+                </div>
+                {cashMenuOpen && (
+                  <div className="space-y-2 pt-1">
+                    <p className="text-xs text-muted-foreground">
+                      Aberto há: {getElapsedTime(cashRegister?.opened_at)}
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <Button size="sm" variant="outline" onClick={() => { setTxType("deposit"); setTxDialogOpen(true); setCashMenuOpen(false); }}>
+                        Reforço
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => { setTxType("withdrawal"); setTxDialogOpen(true); setCashMenuOpen(false); }}>
+                        Sangria
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => { setSummaryOpen(true); setCashMenuOpen(false); }}>
+                        Resumo
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => { setCloseConfirmOpen(true); setCashMenuOpen(false); }}>
+                        Fechar caixa
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold flex items-center gap-2">
+                    <Banknote className="h-4 w-4" /> Caixa fechado
+                  </p>
+                  <p className="text-xs text-muted-foreground">Abra o caixa para registrar movimentações.</p>
+                </div>
+                <Button size="sm" onClick={() => { setCashDialogAction("open"); setCashDialogOpen(true); }}>
+                  Abrir caixa
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
@@ -478,6 +618,52 @@ function PainelPage() {
             </TabsContent>
           )}
         </Tabs>
+
+        {/* Cash Register Dialogs */}
+        <CashRegisterDialog
+          open={cashDialogOpen}
+          onClose={() => setCashDialogOpen(false)}
+          onConfirm={handleCashAction}
+          isOpening={cashDialogAction === "open"}
+        />
+        <CashTransactionDialog
+          open={txDialogOpen}
+          type={txType}
+          onClose={() => setTxDialogOpen(false)}
+          onConfirm={handleCashTransaction}
+        />
+        {cashRegister && (
+          <CashSummaryDialog
+            open={summaryOpen}
+            onClose={() => setSummaryOpen(false)}
+            cashRegisterId={cashRegister.id}
+            storeId={storeId!}
+            openingBalance={Number(cashRegister.opening_balance || 0)}
+            openedAt={cashRegister.opened_at ?? new Date().toISOString()}
+          />
+        )}
+        {cashRegister && (
+          <CashCloseConfirmDialog
+            open={closeConfirmOpen}
+            onClose={() => setCloseConfirmOpen(false)}
+            onConfirm={async (amount) => {
+              const { error } = await supabase.from("cash_registers").update({
+                closed_by: user!.id,
+                closing_balance: amount,
+                closed_at: new Date().toISOString(),
+                status: "closed",
+              }).eq("id", cashRegister.id);
+              if (error) { toast.error(error.message); return; }
+              toast.success("Caixa fechado com sucesso!");
+              setCloseConfirmOpen(false);
+              qc.invalidateQueries({ queryKey: ["cash-register", storeId] });
+            }}
+            cashRegisterId={cashRegister.id}
+            storeId={storeId!}
+            openingBalance={Number(cashRegister.opening_balance || 0)}
+            openedAt={cashRegister.opened_at ?? new Date().toISOString()}
+          />
+        )}
       </main>
     </div>
   );
