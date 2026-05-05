@@ -325,6 +325,7 @@ export function BookingsTab({
                       setCompletePayment2("");
                       setSplitAmount1("");
                       setSplitAmount2("");
+                      setChangeAmount("");
                       return;
                     }
                     updateStatus.mutate({ id: b.id, status });
