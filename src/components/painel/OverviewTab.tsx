@@ -113,7 +113,7 @@ export function OverviewTab({ bookings }: { bookings: BookingRow[] }) {
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count);
 
-    // Payment method ranking
+    // Payment method ranking (month)
     const paymentCount = new Map<string, number>();
     for (const b of completedMonth) {
       if (b.payment_method) {
@@ -122,6 +122,18 @@ export function OverviewTab({ bookings }: { bookings: BookingRow[] }) {
       }
     }
     const topPayments = Array.from(paymentCount.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+
+    // Daily payment method ranking
+    const dailyPaymentCount = new Map<string, number>();
+    for (const b of completedToday) {
+      if (b.payment_method) {
+        const label = isPaymentKey(b.payment_method) ? PAYMENT_LABEL[b.payment_method] : b.payment_method;
+        dailyPaymentCount.set(label, (dailyPaymentCount.get(label) ?? 0) + 1);
+      }
+    }
+    const dailyTopPayments = Array.from(dailyPaymentCount.entries())
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count);
 
