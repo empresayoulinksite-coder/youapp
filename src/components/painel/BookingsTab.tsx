@@ -60,6 +60,7 @@ export type BookingRow = {
   user_id: string;
   store_id: string;
   service_id: string;
+  payment_method: string | null;
   services: { name: string; duration_minutes: number } | null;
   profiles?: { display_name: string | null; phone: string | null } | null;
 };
