@@ -152,6 +152,7 @@ export function OverviewTab({ bookings }: { bookings: BookingRow[] }) {
       upcoming,
       topServices,
       topPayments,
+      dailyTopPayments,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookings, monthKey]);
