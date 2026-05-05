@@ -1,11 +1,10 @@
-export type PaymentMethodKey = "pix" | "dinheiro" | "credito" | "debito" | "vale";
+export type PaymentMethodKey = "pix" | "dinheiro" | "credito" | "debito";
 
 export const PAYMENT_METHODS: { key: PaymentMethodKey; label: string }[] = [
   { key: "pix", label: "Pix" },
   { key: "dinheiro", label: "Dinheiro" },
   { key: "credito", label: "Cartão de crédito" },
   { key: "debito", label: "Cartão de débito" },
-  { key: "vale", label: "Vale refeição" },
 ];
 
 export const PAYMENT_LABEL: Record<PaymentMethodKey, string> = PAYMENT_METHODS.reduce(
