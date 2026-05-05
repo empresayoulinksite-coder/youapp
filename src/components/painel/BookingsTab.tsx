@@ -179,6 +179,13 @@ export function BookingsTab({
   const [completePayment2, setCompletePayment2] = useState("");
   const [splitAmount1, setSplitAmount1] = useState("");
   const [splitAmount2, setSplitAmount2] = useState("");
+  const [editTarget, setEditTarget] = useState<BookingRow | null>(null);
+  const [editPayment, setEditPayment] = useState("");
+  const [editSplit, setEditSplit] = useState(false);
+  const [editPayment2, setEditPayment2] = useState("");
+  const [editAmount1, setEditAmount1] = useState("");
+  const [editAmount2, setEditAmount2] = useState("");
+  const [editPrice, setEditPrice] = useState("");
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status, payment_method, payment_method_2, payment_amount_1, payment_amount_2 }: { id: string; status: BookingRow["status"]; payment_method?: string; payment_method_2?: string; payment_amount_1?: number; payment_amount_2?: number }) => {
