@@ -603,6 +603,11 @@ function BookingCard({
               </Button>
             </>
           )}
+          {(booking.status === "completed" || booking.status === "cancelled") && (
+            <Button size="sm" variant="outline" onClick={onEdit}>
+              <Pencil className="h-4 w-4" /> Editar
+            </Button>
+          )}
         </div>
       </div>
     </div>
