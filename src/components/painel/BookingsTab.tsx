@@ -296,6 +296,46 @@ export function BookingsTab({
           }}
         />
       )}
+
+      <Dialog open={!!completeTarget} onOpenChange={(o) => { if (!o) setCompleteTarget(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Concluir agendamento</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Selecione a forma de pagamento utilizada:
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {PAYMENT_METHODS.map((m) => (
+              <Button
+                key={m.key}
+                size="sm"
+                variant={completePayment === m.key ? "default" : "outline"}
+                onClick={() => setCompletePayment(m.key)}
+              >
+                {m.label}
+              </Button>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCompleteTarget(null)}>
+              Cancelar
+            </Button>
+            <Button
+              disabled={!completePayment || updateStatus.isPending}
+              onClick={() => {
+                if (!completeTarget) return;
+                updateStatus.mutate(
+                  { id: completeTarget.id, status: "completed", payment_method: completePayment },
+                  { onSuccess: () => setCompleteTarget(null) },
+                );
+              }}
+            >
+              <CheckCircle2 className="h-4 w-4" /> Concluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
