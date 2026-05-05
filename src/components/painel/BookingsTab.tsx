@@ -187,6 +187,7 @@ export function BookingsTab({
   const [editAmount1, setEditAmount1] = useState("");
   const [editAmount2, setEditAmount2] = useState("");
   const [editPrice, setEditPrice] = useState("");
+  const [changeAmount, setChangeAmount] = useState("");
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status, payment_method, payment_method_2, payment_amount_1, payment_amount_2 }: { id: string; status: BookingRow["status"]; payment_method?: string; payment_method_2?: string; payment_amount_1?: number; payment_amount_2?: number }) => {
