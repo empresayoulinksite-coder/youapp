@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/select";
 import type { BookingRow } from "./BookingsTab";
 import { PAYMENT_LABEL, isPaymentKey } from "@/lib/payment-methods";
+import { Badge } from "@/components/ui/badge";
 
 function brl(n: number) {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
