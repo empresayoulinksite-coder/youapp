@@ -1,0 +1,1 @@
+ALTER TABLE public.bookings ADD COLUMN change_amount numeric DEFAULT 0;
