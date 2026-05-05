@@ -156,7 +156,26 @@ export function BookingsTab({
 
   return (
     <div>
-      <div className="mb-3 flex justify-end">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        {/* Cash register button */}
+        <div className="flex items-center gap-2">
+          {isCashOpen ? (
+            <div className="relative">
+              <CashOpenMenu
+                getElapsedTime={getElapsedTime}
+                cashRegister={cashRegister}
+                onDeposit={onDeposit}
+                onWithdrawal={onWithdrawal}
+                onSummary={onSummary}
+                onCloseCash={onCloseCash}
+              />
+            </div>
+          ) : onOpenCash ? (
+            <Button size="sm" variant="outline" onClick={onOpenCash}>
+              <Banknote className="h-4 w-4" /> Abrir caixa
+            </Button>
+          ) : null}
+        </div>
         <Button size="sm" onClick={() => setNewOpen(true)}>
           <Plus className="h-4 w-4" /> Novo agendamento
         </Button>
