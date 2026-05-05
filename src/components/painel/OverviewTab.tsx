@@ -181,6 +181,51 @@ export function OverviewTab({ bookings }: { bookings: BookingRow[] }) {
         </Select>
       </div>
 
+      {stats.isCurrentMonth && (
+        <div className="rounded-lg border bg-card">
+          <div className="border-b px-4 py-3 flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <h3 className="font-semibold text-sm">Resumo do dia</h3>
+            <span className="ml-auto text-xs text-muted-foreground">
+              {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}
+            </span>
+          </div>
+          <div className="p-4 space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-md bg-muted/50 p-3">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Atendimentos
+                </div>
+                <p className="mt-1 text-xl font-bold">{stats.completedToday}</p>
+              </div>
+              <div className="rounded-md bg-muted/50 p-3">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <DollarSign className="h-3.5 w-3.5" />
+                  Faturamento
+                </div>
+                <p className="mt-1 text-xl font-bold text-success">{brl(stats.revenueToday)}</p>
+              </div>
+            </div>
+            {stats.dailyTopPayments.length > 0 && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
+                  <CreditCard className="h-3.5 w-3.5" />
+                  Formas de pagamento hoje
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {stats.dailyTopPayments.map((p) => (
+                    <Badge key={p.name} variant="secondary" className="text-xs">
+                      {p.name} · {p.count}x
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {stats.isCurrentMonth && (
           <StatCard
