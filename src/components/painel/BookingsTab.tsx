@@ -12,6 +12,9 @@ import {
   MessageSquare,
   Calendar as CalIcon,
   Plus,
+  Banknote,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
