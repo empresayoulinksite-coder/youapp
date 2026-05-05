@@ -314,6 +314,15 @@ export function BookingsTab({
                     updateStatus.mutate({ id: b.id, status });
                   }}
                   onReschedule={() => setReschedFor(b)}
+                  onEdit={() => {
+                    setEditTarget(b);
+                    setEditPayment(b.payment_method ?? "");
+                    setEditSplit(!!b.payment_method_2);
+                    setEditPayment2(b.payment_method_2 ?? "");
+                    setEditAmount1(b.payment_amount_1 != null ? String(b.payment_amount_1) : "");
+                    setEditAmount2(b.payment_amount_2 != null ? String(b.payment_amount_2) : "");
+                    setEditPrice(String(b.total_price ?? 0));
+                  }}
                   pending={updateStatus.isPending}
                 />
               ))}
