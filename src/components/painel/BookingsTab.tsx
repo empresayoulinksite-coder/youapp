@@ -209,7 +209,28 @@ export function BookingsTab({
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const filtered = useMemo(
+  const editBooking = useMutation({
+    mutationFn: async (vars: { id: string; total_price: number; payment_method: string; payment_method_2?: string; payment_amount_1?: number; payment_amount_2?: number }) => {
+      const { error } = await supabase
+        .from("bookings")
+        .update({
+          total_price: vars.total_price,
+          payment_method: vars.payment_method,
+          payment_method_2: vars.payment_method_2 ?? null,
+          payment_amount_1: vars.payment_amount_1 ?? null,
+          payment_amount_2: vars.payment_amount_2 ?? null,
+        })
+        .eq("id", vars.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Agendamento atualizado");
+      qc.invalidateQueries({ queryKey: ["painel", "bookings"] });
+      setEditTarget(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
     () =>
       bookings
         .filter((b) => (tab === "all" ? true : b.status === tab))
