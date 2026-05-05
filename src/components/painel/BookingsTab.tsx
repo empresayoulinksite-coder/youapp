@@ -173,9 +173,10 @@ export function BookingsTab({
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status, payment_method }: { id: string; status: BookingRow["status"]; payment_method?: string }) => {
-      const patch: Record<string, unknown> = { status };
-      if (payment_method) patch.payment_method = payment_method;
-      const { error } = await supabase.from("bookings").update(patch).eq("id", id);
+      const { error } = await supabase
+        .from("bookings")
+        .update({ status, ...(payment_method ? { payment_method } : {}) })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_d, vars) => {
