@@ -912,7 +912,9 @@ function AdminStores() {
           )}
           {editing && editing.id && (
             <div className="mt-4 space-y-4">
-              <StoreBenefitsEditor storeId={editing.id} />
+              {(editing.store_type === "food" || editing.store_type === "ecommerce") && (
+                <StoreBenefitsEditor storeId={editing.id} />
+              )}
               <StoreReelsEditor
                 storeId={editing.id}
                 reelsEnabled={!!editing.reels_enabled}
