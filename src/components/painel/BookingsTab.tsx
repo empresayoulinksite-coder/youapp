@@ -608,7 +608,19 @@ export function BookingsTab({
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="destructive"
+              className="sm:mr-auto"
+              disabled={deleteBooking.isPending || editBooking.isPending}
+              onClick={() => {
+                if (!editTarget) return;
+                if (!confirm("Tem certeza que deseja apagar este agendamento?")) return;
+                deleteBooking.mutate(editTarget.id);
+              }}
+            >
+              <Trash2 className="h-4 w-4" /> Apagar
+            </Button>
             <Button variant="outline" onClick={() => setEditTarget(null)}>
               Cancelar
             </Button>
