@@ -515,6 +515,14 @@ function PainelPage() {
                 store={currentStore}
                 bookings={bookings}
                 loading={bookingsLoading}
+                cashRegister={cashRegister}
+                isCashOpen={isCashOpen}
+                onOpenCash={() => { setCashDialogAction("open"); setCashDialogOpen(true); }}
+                onCloseCash={() => setCloseConfirmOpen(true)}
+                onDeposit={() => { setTxType("deposit"); setTxDialogOpen(true); }}
+                onWithdrawal={() => { setTxType("withdrawal"); setTxDialogOpen(true); }}
+                onSummary={() => setSummaryOpen(true)}
+                getElapsedTime={getElapsedTime}
               />
             )}
           </TabsContent>
