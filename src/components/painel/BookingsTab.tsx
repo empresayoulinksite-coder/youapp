@@ -42,6 +42,7 @@ import {
 import { generateSlots, formatSlotLabel, type BookedRange } from "@/lib/booking-slots";
 import type { StoreHour } from "@/lib/store-hours";
 import { cn } from "@/lib/utils";
+import { PAYMENT_METHODS } from "@/lib/payment-methods";
 
 type ServiceLite = {
   id: string;
