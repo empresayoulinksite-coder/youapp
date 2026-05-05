@@ -20,7 +20,10 @@ export type Database = {
           customer_notes: string | null
           ends_at: string
           id: string
+          payment_amount_1: number | null
+          payment_amount_2: number | null
           payment_method: string | null
+          payment_method_2: string | null
           service_id: string
           starts_at: string
           status: Database["public"]["Enums"]["booking_status"]
@@ -34,7 +37,10 @@ export type Database = {
           customer_notes?: string | null
           ends_at: string
           id?: string
+          payment_amount_1?: number | null
+          payment_amount_2?: number | null
           payment_method?: string | null
+          payment_method_2?: string | null
           service_id: string
           starts_at: string
           status?: Database["public"]["Enums"]["booking_status"]
@@ -48,7 +54,10 @@ export type Database = {
           customer_notes?: string | null
           ends_at?: string
           id?: string
+          payment_amount_1?: number | null
+          payment_amount_2?: number | null
           payment_method?: string | null
+          payment_method_2?: string | null
           service_id?: string
           starts_at?: string
           status?: Database["public"]["Enums"]["booking_status"]
