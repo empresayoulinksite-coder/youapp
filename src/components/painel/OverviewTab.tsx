@@ -215,7 +215,58 @@ export function OverviewTab({ bookings }: { bookings: BookingRow[] }) {
         />
       </div>
 
-      {stats.isCurrentMonth && (
+      <div className="grid gap-4 sm:grid-cols-2">
+        {/* Top services */}
+        <div className="rounded-lg border bg-card">
+          <div className="border-b px-4 py-3 flex items-center gap-2">
+            <Scissors className="h-4 w-4 text-muted-foreground" />
+            <h3 className="font-semibold text-sm">Serviços mais prestados</h3>
+          </div>
+          {stats.topServices.length === 0 ? (
+            <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+              Nenhum atendimento concluído.
+            </p>
+          ) : (
+            <ul className="divide-y">
+              {stats.topServices.map((s, i) => (
+                <li key={s.name} className="flex items-center justify-between px-4 py-2.5">
+                  <span className="text-sm">
+                    <span className="font-medium text-muted-foreground mr-2">{i + 1}.</span>
+                    {s.name}
+                  </span>
+                  <Badge variant="secondary" className="text-xs">{s.count}x</Badge>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Top payment methods */}
+        <div className="rounded-lg border bg-card">
+          <div className="border-b px-4 py-3 flex items-center gap-2">
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
+            <h3 className="font-semibold text-sm">Formas de pagamento</h3>
+          </div>
+          {stats.topPayments.length === 0 ? (
+            <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+              Nenhum pagamento registrado.
+            </p>
+          ) : (
+            <ul className="divide-y">
+              {stats.topPayments.map((p, i) => (
+                <li key={p.name} className="flex items-center justify-between px-4 py-2.5">
+                  <span className="text-sm">
+                    <span className="font-medium text-muted-foreground mr-2">{i + 1}.</span>
+                    {p.name}
+                  </span>
+                  <Badge variant="secondary" className="text-xs">{p.count}x</Badge>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+
         <div className="rounded-lg border bg-card">
           <div className="border-b px-4 py-3">
             <h3 className="font-semibold text-sm">Próximos atendimentos</h3>
