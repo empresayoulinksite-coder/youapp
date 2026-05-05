@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { LogOut, Power, LayoutDashboard, Calendar, Scissors, Ticket, Clock3, ArrowLeft, Users, Images, Dumbbell, ListOrdered, ClipboardList, Banknote, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
