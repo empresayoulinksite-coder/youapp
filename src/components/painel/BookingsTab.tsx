@@ -487,6 +487,145 @@ export function BookingsTab({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit dialog */}
+      <Dialog open={!!editTarget} onOpenChange={(o) => { if (!o) setEditTarget(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Editar agendamento</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div>
+              <Label className="text-sm">Valor total</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={editPrice}
+                onChange={(e) => setEditPrice(e.target.value)}
+                placeholder="0,00"
+              />
+            </div>
+
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">
+                {editSplit ? "1º método de pagamento:" : "Forma de pagamento:"}
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {PAYMENT_METHODS.map((m) => (
+                  <Button
+                    key={m.key}
+                    size="sm"
+                    variant={editPayment === m.key ? "default" : "outline"}
+                    onClick={() => setEditPayment(m.key)}
+                  >
+                    {m.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {editSplit && (
+              <>
+                <p className="text-sm text-muted-foreground">2º método de pagamento:</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {PAYMENT_METHODS.filter((m) => m.key !== editPayment).map((m) => (
+                    <Button
+                      key={m.key}
+                      size="sm"
+                      variant={editPayment2 === m.key ? "default" : "outline"}
+                      onClick={() => setEditPayment2(m.key)}
+                    >
+                      {m.label}
+                    </Button>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs text-muted-foreground">Valor 1º</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      className="w-full rounded-md border bg-background px-3 py-1.5 text-sm"
+                      value={editAmount1}
+                      onChange={(e) => {
+                        setEditAmount1(e.target.value);
+                        const total = parseFloat(editPrice) || 0;
+                        const v = parseFloat(e.target.value) || 0;
+                        setEditAmount2((total - v).toFixed(2));
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Valor 2º</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      className="w-full rounded-md border bg-background px-3 py-1.5 text-sm"
+                      value={editAmount2}
+                      onChange={(e) => {
+                        setEditAmount2(e.target.value);
+                        const total = parseFloat(editPrice) || 0;
+                        const v = parseFloat(e.target.value) || 0;
+                        setEditAmount1((total - v).toFixed(2));
+                      }}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="edit-split-toggle"
+                checked={editSplit}
+                onChange={(e) => {
+                  setEditSplit(e.target.checked);
+                  if (!e.target.checked) {
+                    setEditPayment2("");
+                    setEditAmount1("");
+                    setEditAmount2("");
+                  }
+                }}
+                className="rounded border"
+              />
+              <label htmlFor="edit-split-toggle" className="text-sm cursor-pointer">Dividir pagamento</label>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditTarget(null)}>
+              Cancelar
+            </Button>
+            <Button
+              disabled={
+                !editPayment ||
+                !editPrice ||
+                (editSplit && (!editPayment2 || !editAmount1 || !editAmount2)) ||
+                editBooking.isPending
+              }
+              onClick={() => {
+                if (!editTarget) return;
+                editBooking.mutate({
+                  id: editTarget.id,
+                  total_price: parseFloat(editPrice) || 0,
+                  payment_method: editPayment,
+                  ...(editSplit
+                    ? {
+                        payment_method_2: editPayment2,
+                        payment_amount_1: parseFloat(editAmount1) || 0,
+                        payment_amount_2: parseFloat(editAmount2) || 0,
+                      }
+                    : {}),
+                });
+              }}
+            >
+              <Check className="h-4 w-4" /> Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
