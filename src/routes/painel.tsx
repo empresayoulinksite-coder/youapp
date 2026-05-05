@@ -182,6 +182,35 @@ function PainelPage() {
     },
   });
 
+  // Realtime: escuta novos agendamentos e atualizações
+  useEffect(() => {
+    if (!storeId) return;
+    const channel = supabase
+      .channel(`bookings-store-${storeId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "bookings",
+          filter: `store_id=eq.${storeId}`,
+        },
+        (payload) => {
+          qc.invalidateQueries({ queryKey: ["painel", "bookings", storeId] });
+          if (payload.eventType === "INSERT") {
+            toast.info("🔔 Novo agendamento recebido!", {
+              description: "Um cliente acabou de fazer um agendamento.",
+              duration: 6000,
+            });
+          }
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [storeId, qc]);
+
   const togglePause = useMutation({
     mutationFn: async (paused: boolean) => {
       if (!storeId) return;
