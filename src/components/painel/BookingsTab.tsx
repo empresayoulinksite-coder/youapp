@@ -231,6 +231,7 @@ export function BookingsTab({
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const filtered = useMemo(
     () =>
       bookings
         .filter((b) => (tab === "all" ? true : b.status === tab))
