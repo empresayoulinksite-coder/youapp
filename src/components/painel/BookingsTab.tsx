@@ -187,15 +187,17 @@ export function BookingsTab({
   const [editAmount1, setEditAmount1] = useState("");
   const [editAmount2, setEditAmount2] = useState("");
   const [editPrice, setEditPrice] = useState("");
+  const [changeAmount, setChangeAmount] = useState("");
 
   const updateStatus = useMutation({
-    mutationFn: async ({ id, status, payment_method, payment_method_2, payment_amount_1, payment_amount_2 }: { id: string; status: BookingRow["status"]; payment_method?: string; payment_method_2?: string; payment_amount_1?: number; payment_amount_2?: number }) => {
+    mutationFn: async ({ id, status, payment_method, payment_method_2, payment_amount_1, payment_amount_2, change_amount }: { id: string; status: BookingRow["status"]; payment_method?: string; payment_method_2?: string; payment_amount_1?: number; payment_amount_2?: number; change_amount?: number }) => {
       const updateData = {
         status,
         payment_method: payment_method ?? null,
         payment_method_2: payment_method_2 ?? null,
         payment_amount_1: payment_amount_1 ?? null,
         payment_amount_2: payment_amount_2 ?? null,
+        change_amount: change_amount ?? 0,
       };
       const { error } = await supabase
         .from("bookings")
@@ -323,6 +325,7 @@ export function BookingsTab({
                       setCompletePayment2("");
                       setSplitAmount1("");
                       setSplitAmount2("");
+                      setChangeAmount("");
                       return;
                     }
                     updateStatus.mutate({ id: b.id, status });
@@ -467,6 +470,20 @@ export function BookingsTab({
             <label htmlFor="split-toggle" className="text-sm cursor-pointer">Dividir pagamento</label>
           </div>
 
+          {(completePayment === "dinheiro" || (splitEnabled && completePayment2 === "dinheiro")) && (
+            <div className="mt-2">
+              <Label className="text-sm">Troco (R$)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0,00"
+                value={changeAmount}
+                onChange={(e) => setChangeAmount(e.target.value)}
+              />
+            </div>
+          )}
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setCompleteTarget(null)}>
               Cancelar
@@ -484,6 +501,7 @@ export function BookingsTab({
                     id: completeTarget.id,
                     status: "completed",
                     payment_method: completePayment,
+                    change_amount: parseFloat(changeAmount) || 0,
                     ...(splitEnabled
                       ? {
                           payment_method_2: completePayment2,
