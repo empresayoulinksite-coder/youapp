@@ -102,6 +102,28 @@ export function OverviewTab({ bookings }: { bookings: BookingRow[] }) {
 
     const pending = isCurrentMonth ? bookings.filter((b) => b.status === "pending").length : 0;
 
+    // Service ranking
+    const serviceCount = new Map<string, number>();
+    for (const b of completedMonth) {
+      const name = b.services?.name ?? "Serviço";
+      serviceCount.set(name, (serviceCount.get(name) ?? 0) + 1);
+    }
+    const topServices = Array.from(serviceCount.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+
+    // Payment method ranking
+    const paymentCount = new Map<string, number>();
+    for (const b of completedMonth) {
+      if (b.payment_method) {
+        const label = isPaymentKey(b.payment_method) ? PAYMENT_LABEL[b.payment_method] : b.payment_method;
+        paymentCount.set(label, (paymentCount.get(label) ?? 0) + 1);
+      }
+    }
+    const topPayments = Array.from(paymentCount.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+
     return {
       isCurrentMonth,
       revenueToday,
@@ -115,6 +137,8 @@ export function OverviewTab({ bookings }: { bookings: BookingRow[] }) {
       ticketAvg,
       pending,
       upcoming,
+      topServices,
+      topPayments,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookings, monthKey]);
