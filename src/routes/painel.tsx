@@ -51,7 +51,7 @@ function PainelPage() {
   const [txType, setTxType] = useState<"deposit" | "withdrawal">("deposit");
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [closeConfirmOpen, setCloseConfirmOpen] = useState(false);
-  const qc = useQueryClient();
+
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/auth" });
