@@ -98,10 +98,26 @@ export function BookingsTab({
   store,
   bookings,
   loading,
+  cashRegister,
+  isCashOpen,
+  onOpenCash,
+  onCloseCash,
+  onDeposit,
+  onWithdrawal,
+  onSummary,
+  getElapsedTime,
 }: {
   store: StoreLite;
   bookings: BookingRow[];
   loading: boolean;
+  cashRegister?: { id: string; opened_at: string; opening_balance: number; status: string } | null;
+  isCashOpen?: boolean;
+  onOpenCash?: () => void;
+  onCloseCash?: () => void;
+  onDeposit?: () => void;
+  onWithdrawal?: () => void;
+  onSummary?: () => void;
+  getElapsedTime?: (openedAt?: string) => string;
 }) {
   const qc = useQueryClient();
   const [tab, setTab] = useState("pending");
