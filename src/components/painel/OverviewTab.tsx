@@ -267,6 +267,7 @@ export function OverviewTab({ bookings }: { bookings: BookingRow[] }) {
         </div>
       </div>
 
+      {stats.isCurrentMonth && (
         <div className="rounded-lg border bg-card">
           <div className="border-b px-4 py-3">
             <h3 className="font-semibold text-sm">Próximos atendimentos</h3>
