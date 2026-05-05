@@ -190,13 +190,14 @@ export function BookingsTab({
   const [changeAmount, setChangeAmount] = useState("");
 
   const updateStatus = useMutation({
-    mutationFn: async ({ id, status, payment_method, payment_method_2, payment_amount_1, payment_amount_2 }: { id: string; status: BookingRow["status"]; payment_method?: string; payment_method_2?: string; payment_amount_1?: number; payment_amount_2?: number }) => {
-      const updateData = {
+    mutationFn: async ({ id, status, payment_method, payment_method_2, payment_amount_1, payment_amount_2, change_amount }: { id: string; status: BookingRow["status"]; payment_method?: string; payment_method_2?: string; payment_amount_1?: number; payment_amount_2?: number; change_amount?: number }) => {
+      const updateData: Record<string, unknown> = {
         status,
         payment_method: payment_method ?? null,
         payment_method_2: payment_method_2 ?? null,
         payment_amount_1: payment_amount_1 ?? null,
         payment_amount_2: payment_amount_2 ?? null,
+        change_amount: change_amount ?? 0,
       };
       const { error } = await supabase
         .from("bookings")
