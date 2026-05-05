@@ -168,10 +168,14 @@ export function BookingsTab({
   const [tab, setTab] = useState("pending");
   const [reschedFor, setReschedFor] = useState<BookingRow | null>(null);
   const [newOpen, setNewOpen] = useState(false);
+  const [completeTarget, setCompleteTarget] = useState<BookingRow | null>(null);
+  const [completePayment, setCompletePayment] = useState("");
 
   const updateStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: BookingRow["status"] }) => {
-      const { error } = await supabase.from("bookings").update({ status }).eq("id", id);
+    mutationFn: async ({ id, status, payment_method }: { id: string; status: BookingRow["status"]; payment_method?: string }) => {
+      const patch: Record<string, unknown> = { status };
+      if (payment_method) patch.payment_method = payment_method;
+      const { error } = await supabase.from("bookings").update(patch).eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_d, vars) => {
