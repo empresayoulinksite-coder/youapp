@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { DollarSign, Calendar, CheckCircle2, XCircle, TrendingUp, Clock } from "lucide-react";
+import { DollarSign, Calendar, CheckCircle2, XCircle, TrendingUp, Clock, Scissors, CreditCard } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -8,6 +8,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { BookingRow } from "./BookingsTab";
+import { PAYMENT_LABEL, isPaymentKey } from "@/lib/payment-methods";
+import { Badge } from "@/components/ui/badge";
 
 function brl(n: number) {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -101,6 +103,28 @@ export function OverviewTab({ bookings }: { bookings: BookingRow[] }) {
 
     const pending = isCurrentMonth ? bookings.filter((b) => b.status === "pending").length : 0;
 
+    // Service ranking
+    const serviceCount = new Map<string, number>();
+    for (const b of completedMonth) {
+      const name = b.services?.name ?? "Serviço";
+      serviceCount.set(name, (serviceCount.get(name) ?? 0) + 1);
+    }
+    const topServices = Array.from(serviceCount.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+
+    // Payment method ranking
+    const paymentCount = new Map<string, number>();
+    for (const b of completedMonth) {
+      if (b.payment_method) {
+        const label = isPaymentKey(b.payment_method) ? PAYMENT_LABEL[b.payment_method] : b.payment_method;
+        paymentCount.set(label, (paymentCount.get(label) ?? 0) + 1);
+      }
+    }
+    const topPayments = Array.from(paymentCount.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+
     return {
       isCurrentMonth,
       revenueToday,
@@ -114,6 +138,8 @@ export function OverviewTab({ bookings }: { bookings: BookingRow[] }) {
       ticketAvg,
       pending,
       upcoming,
+      topServices,
+      topPayments,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookings, monthKey]);
@@ -188,6 +214,58 @@ export function OverviewTab({ bookings }: { bookings: BookingRow[] }) {
           label="Ticket médio (mês)"
           value={brl(stats.ticketAvg)}
         />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        {/* Top services */}
+        <div className="rounded-lg border bg-card">
+          <div className="border-b px-4 py-3 flex items-center gap-2">
+            <Scissors className="h-4 w-4 text-muted-foreground" />
+            <h3 className="font-semibold text-sm">Serviços mais prestados</h3>
+          </div>
+          {stats.topServices.length === 0 ? (
+            <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+              Nenhum atendimento concluído.
+            </p>
+          ) : (
+            <ul className="divide-y">
+              {stats.topServices.map((s, i) => (
+                <li key={s.name} className="flex items-center justify-between px-4 py-2.5">
+                  <span className="text-sm">
+                    <span className="font-medium text-muted-foreground mr-2">{i + 1}.</span>
+                    {s.name}
+                  </span>
+                  <Badge variant="secondary" className="text-xs">{s.count}x</Badge>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Top payment methods */}
+        <div className="rounded-lg border bg-card">
+          <div className="border-b px-4 py-3 flex items-center gap-2">
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
+            <h3 className="font-semibold text-sm">Formas de pagamento</h3>
+          </div>
+          {stats.topPayments.length === 0 ? (
+            <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+              Nenhum pagamento registrado.
+            </p>
+          ) : (
+            <ul className="divide-y">
+              {stats.topPayments.map((p, i) => (
+                <li key={p.name} className="flex items-center justify-between px-4 py-2.5">
+                  <span className="text-sm">
+                    <span className="font-medium text-muted-foreground mr-2">{i + 1}.</span>
+                    {p.name}
+                  </span>
+                  <Badge variant="secondary" className="text-xs">{p.count}x</Badge>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
 
       {stats.isCurrentMonth && (

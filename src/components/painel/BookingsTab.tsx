@@ -42,6 +42,7 @@ import {
 import { generateSlots, formatSlotLabel, type BookedRange } from "@/lib/booking-slots";
 import type { StoreHour } from "@/lib/store-hours";
 import { cn } from "@/lib/utils";
+import { PAYMENT_METHODS } from "@/lib/payment-methods";
 
 type ServiceLite = {
   id: string;
@@ -60,6 +61,7 @@ export type BookingRow = {
   user_id: string;
   store_id: string;
   service_id: string;
+  payment_method: string | null;
   services: { name: string; duration_minutes: number } | null;
   profiles?: { display_name: string | null; phone: string | null } | null;
 };
@@ -167,10 +169,15 @@ export function BookingsTab({
   const [tab, setTab] = useState("pending");
   const [reschedFor, setReschedFor] = useState<BookingRow | null>(null);
   const [newOpen, setNewOpen] = useState(false);
+  const [completeTarget, setCompleteTarget] = useState<BookingRow | null>(null);
+  const [completePayment, setCompletePayment] = useState("");
 
   const updateStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: BookingRow["status"] }) => {
-      const { error } = await supabase.from("bookings").update({ status }).eq("id", id);
+    mutationFn: async ({ id, status, payment_method }: { id: string; status: BookingRow["status"]; payment_method?: string }) => {
+      const { error } = await supabase
+        .from("bookings")
+        .update({ status, ...(payment_method ? { payment_method } : {}) })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_d, vars) => {
@@ -250,7 +257,14 @@ export function BookingsTab({
                 <BookingCard
                   key={b.id}
                   booking={b}
-                  onUpdate={(status) => updateStatus.mutate({ id: b.id, status })}
+                  onUpdate={(status) => {
+                    if (status === "completed") {
+                      setCompleteTarget(b);
+                      setCompletePayment("");
+                      return;
+                    }
+                    updateStatus.mutate({ id: b.id, status });
+                  }}
                   onReschedule={() => setReschedFor(b)}
                   pending={updateStatus.isPending}
                 />
@@ -282,6 +296,46 @@ export function BookingsTab({
           }}
         />
       )}
+
+      <Dialog open={!!completeTarget} onOpenChange={(o) => { if (!o) setCompleteTarget(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Concluir agendamento</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Selecione a forma de pagamento utilizada:
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {PAYMENT_METHODS.map((m) => (
+              <Button
+                key={m.key}
+                size="sm"
+                variant={completePayment === m.key ? "default" : "outline"}
+                onClick={() => setCompletePayment(m.key)}
+              >
+                {m.label}
+              </Button>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCompleteTarget(null)}>
+              Cancelar
+            </Button>
+            <Button
+              disabled={!completePayment || updateStatus.isPending}
+              onClick={() => {
+                if (!completeTarget) return;
+                updateStatus.mutate(
+                  { id: completeTarget.id, status: "completed", payment_method: completePayment },
+                  { onSuccess: () => setCompleteTarget(null) },
+                );
+              }}
+            >
+              <CheckCircle2 className="h-4 w-4" /> Concluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
