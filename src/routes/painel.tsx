@@ -333,59 +333,6 @@ function PainelPage() {
           </div>
         )}
 
-        {/* Cash Register Control */}
-        {currentStore && (
-          <div className="rounded-lg border bg-card p-4 space-y-3">
-            {isCashOpen ? (
-              <>
-                <div className="flex items-center justify-between">
-                  <button
-                    type="button"
-                    className="flex items-center gap-2 rounded-lg bg-green-600 px-3 py-2"
-                    onClick={() => setCashMenuOpen(!cashMenuOpen)}
-                  >
-                    <Banknote className="h-4 w-4 text-white" />
-                    <span className="font-semibold text-sm text-white">Caixa aberto</span>
-                    {cashMenuOpen ? <ChevronUp className="h-4 w-4 text-white/70" /> : <ChevronDown className="h-4 w-4 text-white/70" />}
-                  </button>
-                </div>
-                {cashMenuOpen && (
-                  <div className="space-y-2 pt-1">
-                    <p className="text-xs text-muted-foreground">
-                      Aberto há: {getElapsedTime(cashRegister?.opened_at)}
-                    </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      <Button size="sm" variant="outline" onClick={() => { setTxType("deposit"); setTxDialogOpen(true); setCashMenuOpen(false); }}>
-                        Reforço
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => { setTxType("withdrawal"); setTxDialogOpen(true); setCashMenuOpen(false); }}>
-                        Sangria
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => { setSummaryOpen(true); setCashMenuOpen(false); }}>
-                        Resumo
-                      </Button>
-                      <Button size="sm" variant="destructive" onClick={() => { setCloseConfirmOpen(true); setCashMenuOpen(false); }}>
-                        Fechar caixa
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold flex items-center gap-2">
-                    <Banknote className="h-4 w-4" /> Caixa fechado
-                  </p>
-                  <p className="text-xs text-muted-foreground">Abra o caixa para registrar movimentações.</p>
-                </div>
-                <Button size="sm" onClick={() => { setCashDialogAction("open"); setCashDialogOpen(true); }}>
-                  Abrir caixa
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
 
         {currentStore && (
           <div className="flex items-center justify-between rounded-lg border bg-card p-4">
@@ -568,6 +515,14 @@ function PainelPage() {
                 store={currentStore}
                 bookings={bookings}
                 loading={bookingsLoading}
+                cashRegister={cashRegister}
+                isCashOpen={isCashOpen}
+                onOpenCash={() => { setCashDialogAction("open"); setCashDialogOpen(true); }}
+                onCloseCash={() => setCloseConfirmOpen(true)}
+                onDeposit={() => { setTxType("deposit"); setTxDialogOpen(true); }}
+                onWithdrawal={() => { setTxType("withdrawal"); setTxDialogOpen(true); }}
+                onSummary={() => setSummaryOpen(true)}
+                getElapsedTime={getElapsedTime}
               />
             )}
           </TabsContent>
