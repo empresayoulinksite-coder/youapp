@@ -171,6 +171,7 @@ export function BookingsTab({
   getElapsedTime?: (openedAt?: string) => string;
 }) {
   const qc = useQueryClient();
+  const { user: authUser } = useAuth();
   const [tab, setTab] = useState("pending");
   const [reschedFor, setReschedFor] = useState<BookingRow | null>(null);
   const [newOpen, setNewOpen] = useState(false);
