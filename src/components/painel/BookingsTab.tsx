@@ -15,6 +15,7 @@ import {
   Banknote,
   ChevronDown,
   ChevronUp,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
