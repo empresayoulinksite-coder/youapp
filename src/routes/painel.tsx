@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { LogOut, Power, LayoutDashboard, Calendar, Scissors, Ticket, Clock3, ArrowLeft, Users, Images, Dumbbell, ListOrdered, ClipboardList, Banknote, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
@@ -182,34 +182,57 @@ function PainelPage() {
     },
   });
 
-  // Realtime: escuta novos agendamentos e atualizações
-  useEffect(() => {
-    if (!storeId) return;
-    const channel = supabase
-      .channel(`bookings-store-${storeId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "bookings",
-          filter: `store_id=eq.${storeId}`,
-        },
-        (payload) => {
-          qc.invalidateQueries({ queryKey: ["painel", "bookings", storeId] });
-          if (payload.eventType === "INSERT") {
-            toast.info("🔔 Novo agendamento recebido!", {
-              description: "Um cliente acabou de fazer um agendamento.",
-              duration: 6000,
-            });
-          }
-        },
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [storeId, qc]);
+   // Som de notificação usando Web Audio API
+   const playNotificationSound = useCallback(() => {
+     try {
+       const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+       const playTone = (freq: number, start: number, dur: number) => {
+         const osc = ctx.createOscillator();
+         const gain = ctx.createGain();
+         osc.connect(gain);
+         gain.connect(ctx.destination);
+         osc.type = "sine";
+         osc.frequency.value = freq;
+         gain.gain.setValueAtTime(0.3, ctx.currentTime + start);
+         gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + start + dur);
+         osc.start(ctx.currentTime + start);
+         osc.stop(ctx.currentTime + start + dur);
+       };
+       playTone(880, 0, 0.15);
+       playTone(1100, 0.18, 0.15);
+       playTone(1320, 0.36, 0.25);
+     } catch {}
+   }, []);
+
+   // Realtime: escuta novos agendamentos e atualizações
+   useEffect(() => {
+     if (!storeId) return;
+     const channel = supabase
+       .channel(`bookings-store-${storeId}`)
+       .on(
+         "postgres_changes",
+         {
+           event: "*",
+           schema: "public",
+           table: "bookings",
+           filter: `store_id=eq.${storeId}`,
+         },
+         (payload) => {
+           qc.invalidateQueries({ queryKey: ["painel", "bookings", storeId] });
+           if (payload.eventType === "INSERT") {
+             playNotificationSound();
+             toast.info("🔔 Novo agendamento recebido!", {
+               description: "Um cliente acabou de fazer um agendamento.",
+               duration: 6000,
+             });
+           }
+         },
+       )
+       .subscribe();
+     return () => {
+       supabase.removeChannel(channel);
+     };
+   }, [storeId, qc, playNotificationSound]);
 
   const togglePause = useMutation({
     mutationFn: async (paused: boolean) => {
