@@ -387,7 +387,7 @@ function PainelPage() {
           </div>
         )}
 
-
+        {currentStore && (
           <div className="flex items-center justify-between rounded-lg border bg-card p-4">
             <div>
               <p className="text-sm font-semibold">
