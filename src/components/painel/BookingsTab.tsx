@@ -171,12 +171,23 @@ export function BookingsTab({
   const [newOpen, setNewOpen] = useState(false);
   const [completeTarget, setCompleteTarget] = useState<BookingRow | null>(null);
   const [completePayment, setCompletePayment] = useState("");
+  const [splitEnabled, setSplitEnabled] = useState(false);
+  const [completePayment2, setCompletePayment2] = useState("");
+  const [splitAmount1, setSplitAmount1] = useState("");
+  const [splitAmount2, setSplitAmount2] = useState("");
 
   const updateStatus = useMutation({
-    mutationFn: async ({ id, status, payment_method }: { id: string; status: BookingRow["status"]; payment_method?: string }) => {
+    mutationFn: async ({ id, status, payment_method, payment_method_2, payment_amount_1, payment_amount_2 }: { id: string; status: BookingRow["status"]; payment_method?: string; payment_method_2?: string; payment_amount_1?: number; payment_amount_2?: number }) => {
+      const updateData = {
+        status,
+        payment_method: payment_method ?? null,
+        payment_method_2: payment_method_2 ?? null,
+        payment_amount_1: payment_amount_1 ?? null,
+        payment_amount_2: payment_amount_2 ?? null,
+      };
       const { error } = await supabase
         .from("bookings")
-        .update({ status, ...(payment_method ? { payment_method } : {}) })
+        .update(updateData)
         .eq("id", id);
       if (error) throw error;
     },
@@ -261,6 +272,10 @@ export function BookingsTab({
                     if (status === "completed") {
                       setCompleteTarget(b);
                       setCompletePayment("");
+                      setSplitEnabled(false);
+                      setCompletePayment2("");
+                      setSplitAmount1("");
+                      setSplitAmount2("");
                       return;
                     }
                     updateStatus.mutate({ id: b.id, status });
@@ -303,7 +318,7 @@ export function BookingsTab({
             <DialogTitle>Concluir agendamento</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Selecione a forma de pagamento utilizada:
+            {splitEnabled ? "Selecione o 1º método:" : "Selecione a forma de pagamento utilizada:"}
           </p>
           <div className="grid grid-cols-2 gap-2">
             {PAYMENT_METHODS.map((m) => (
@@ -317,16 +332,110 @@ export function BookingsTab({
               </Button>
             ))}
           </div>
+
+          {splitEnabled && (
+            <>
+              <p className="text-sm text-muted-foreground mt-2">Selecione o 2º método:</p>
+              <div className="grid grid-cols-2 gap-2">
+                {PAYMENT_METHODS.filter((m) => m.key !== completePayment).map((m) => (
+                  <Button
+                    key={m.key}
+                    size="sm"
+                    variant={completePayment2 === m.key ? "default" : "outline"}
+                    onClick={() => setCompletePayment2(m.key)}
+                  >
+                    {m.label}
+                  </Button>
+                ))}
+              </div>
+
+              {completeTarget && (
+                <div className="space-y-2 mt-2">
+                  <p className="text-xs text-muted-foreground">
+                    Total: R$ {(completeTarget.total_price ?? 0).toFixed(2).replace(".", ",")}
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs text-muted-foreground">Valor 1º</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        className="w-full rounded-md border bg-background px-3 py-1.5 text-sm"
+                        placeholder="0,00"
+                        value={splitAmount1}
+                        onChange={(e) => {
+                          setSplitAmount1(e.target.value);
+                          const total = completeTarget.total_price ?? 0;
+                          const v = parseFloat(e.target.value) || 0;
+                          setSplitAmount2((total - v).toFixed(2));
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">Valor 2º</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        className="w-full rounded-md border bg-background px-3 py-1.5 text-sm"
+                        placeholder="0,00"
+                        value={splitAmount2}
+                        onChange={(e) => {
+                          setSplitAmount2(e.target.value);
+                          const total = completeTarget.total_price ?? 0;
+                          const v = parseFloat(e.target.value) || 0;
+                          setSplitAmount1((total - v).toFixed(2));
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          <div className="flex items-center gap-2 mt-2">
+            <input
+              type="checkbox"
+              id="split-toggle"
+              checked={splitEnabled}
+              onChange={(e) => {
+                setSplitEnabled(e.target.checked);
+                if (!e.target.checked) {
+                  setCompletePayment2("");
+                  setSplitAmount1("");
+                  setSplitAmount2("");
+                }
+              }}
+              className="rounded border"
+            />
+            <label htmlFor="split-toggle" className="text-sm cursor-pointer">Dividir pagamento</label>
+          </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setCompleteTarget(null)}>
               Cancelar
             </Button>
             <Button
-              disabled={!completePayment || updateStatus.isPending}
+              disabled={
+                !completePayment ||
+                (splitEnabled && (!completePayment2 || !splitAmount1 || !splitAmount2)) ||
+                updateStatus.isPending
+              }
               onClick={() => {
                 if (!completeTarget) return;
                 updateStatus.mutate(
-                  { id: completeTarget.id, status: "completed", payment_method: completePayment },
+                  {
+                    id: completeTarget.id,
+                    status: "completed",
+                    payment_method: completePayment,
+                    ...(splitEnabled
+                      ? {
+                          payment_method_2: completePayment2,
+                          payment_amount_1: parseFloat(splitAmount1) || 0,
+                          payment_amount_2: parseFloat(splitAmount2) || 0,
+                        }
+                      : {}),
+                  },
                   { onSuccess: () => setCompleteTarget(null) },
                 );
               }}
