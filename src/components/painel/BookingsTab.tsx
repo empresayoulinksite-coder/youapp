@@ -256,7 +256,14 @@ export function BookingsTab({
                 <BookingCard
                   key={b.id}
                   booking={b}
-                  onUpdate={(status) => updateStatus.mutate({ id: b.id, status })}
+                  onUpdate={(status) => {
+                    if (status === "completed") {
+                      setCompleteTarget(b);
+                      setCompletePayment("");
+                      return;
+                    }
+                    updateStatus.mutate({ id: b.id, status });
+                  }}
                   onReschedule={() => setReschedFor(b)}
                   pending={updateStatus.isPending}
                 />
