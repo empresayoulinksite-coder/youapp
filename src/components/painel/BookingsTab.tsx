@@ -63,6 +63,9 @@ export type BookingRow = {
   store_id: string;
   service_id: string;
   payment_method: string | null;
+  payment_method_2: string | null;
+  payment_amount_1: number | null;
+  payment_amount_2: number | null;
   services: { name: string; duration_minutes: number } | null;
   profiles?: { display_name: string | null; phone: string | null } | null;
 };
