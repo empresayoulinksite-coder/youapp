@@ -469,6 +469,20 @@ export function BookingsTab({
             <label htmlFor="split-toggle" className="text-sm cursor-pointer">Dividir pagamento</label>
           </div>
 
+          {(completePayment === "dinheiro" || (splitEnabled && completePayment2 === "dinheiro")) && (
+            <div className="mt-2">
+              <Label className="text-sm">Troco (R$)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0,00"
+                value={changeAmount}
+                onChange={(e) => setChangeAmount(e.target.value)}
+              />
+            </div>
+          )}
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setCompleteTarget(null)}>
               Cancelar
@@ -486,6 +500,7 @@ export function BookingsTab({
                     id: completeTarget.id,
                     status: "completed",
                     payment_method: completePayment,
+                    change_amount: parseFloat(changeAmount) || 0,
                     ...(splitEnabled
                       ? {
                           payment_method_2: completePayment2,
