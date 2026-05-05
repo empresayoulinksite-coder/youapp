@@ -1,21 +1,19 @@
-## Resumo do Dia no Painel
+Entendi: o print mostra que o problema está no `/painel` da loja, não apenas na tela de administração. Encontrei no arquivo `src/routes/painel.tsx` que os componentes de Entrega e Benefícios ainda estão sendo renderizados para qualquer loja.
 
-Adicionar uma nova seção no topo do `OverviewTab` mostrando o resumo do dia atual, com:
+Plano para corrigir:
 
-1. **Atendimentos concluídos hoje** - quantidade total
-2. **Faturamento do dia** - soma dos valores dos atendimentos concluídos
-3. **Formas de pagamento mais usadas no dia** - ranking com contagem
+1. Ajustar o painel da loja (`src/routes/painel.tsx`)
+   - Criar/usar uma condição para identificar lojas de serviço: `currentStore?.store_type === "service"`.
+   - Renderizar `StoreDeliveryEditor` e `StoreBenefitsEditor` somente quando a loja não for de serviço.
+   - Assim, esses dois cards somem do painel da loja para serviços.
 
-### Detalhes Técnicos
+2. Conferir consistência com o admin
+   - Manter a regra já aplicada em `src/routes/admin.loja.$storeId.tsx`, onde Entrega e Benefícios já ficam ocultos quando `isService` é verdadeiro.
 
-**Arquivo: `src/components/painel/OverviewTab.tsx`**
-
-- Adicionar um card/seção "Resumo do dia" antes do resumo mensal
-- Calcular a partir dos bookings com status `completed` e `starts_at` no dia atual:
-  - Total de atendimentos
-  - Faturamento (soma de `total_price`)
-  - Ranking de `payment_method` com labels traduzidos
-- Visual: card com bordas, ícones e layout similar ao ranking mensal já existente
-- A seção só aparece quando o mês selecionado for o mês atual (já existe essa lógica com `isCurrentMonth`)
-
-Nenhuma alteração de banco de dados necessária - todos os dados já existem.
+3. Resultado esperado
+   - Para lojas de serviço, como a loja do print, não aparecerão mais:
+     - “Entrega”
+     - “Faz entrega”
+     - “Benefícios na página do produto”
+     - Linhas de entrega/garantia/troca
+   - Esses campos continuarão disponíveis para lojas de comida/e-commerce, onde fazem sentido.

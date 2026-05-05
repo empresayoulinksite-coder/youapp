@@ -410,11 +410,11 @@ function PainelPage() {
           />
         )}
 
-        {currentStore && currentStore.id && (
+        {currentStore && currentStore.id && currentStore.store_type !== "service" && (
           <StoreDeliveryEditor storeId={currentStore.id} />
         )}
 
-        {currentStore && currentStore.id && (
+        {currentStore && currentStore.id && currentStore.store_type !== "service" && (
           <StoreBenefitsEditor storeId={currentStore.id} />
         )}
 
