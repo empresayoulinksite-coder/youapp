@@ -42,7 +42,16 @@ function PainelPage() {
   const qc = useQueryClient();
   const [storeId, setStoreId] = useState<string | null>(null);
   const [tab, setTab] = useState("overview");
-  
+
+  // Cash register state
+  const [cashDialogOpen, setCashDialogOpen] = useState(false);
+  const [cashDialogAction, setCashDialogAction] = useState<"open" | "close">("open");
+  const [cashMenuOpen, setCashMenuOpen] = useState(false);
+  const [txDialogOpen, setTxDialogOpen] = useState(false);
+  const [txType, setTxType] = useState<"deposit" | "withdrawal">("deposit");
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [closeConfirmOpen, setCloseConfirmOpen] = useState(false);
+
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/auth" });
