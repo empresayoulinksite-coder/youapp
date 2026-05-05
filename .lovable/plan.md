@@ -1,36 +1,21 @@
+## Resumo do Dia no Painel
 
-## O que será feito
+Adicionar uma nova seção no topo do `OverviewTab` mostrando o resumo do dia atual, com:
 
-Adicionar duas novas seções no resumo mensal (OverviewTab):
+1. **Atendimentos concluídos hoje** - quantidade total
+2. **Faturamento do dia** - soma dos valores dos atendimentos concluídos
+3. **Formas de pagamento mais usadas no dia** - ranking com contagem
 
-1. **Serviços mais prestados** -- ranking dos serviços com quantidade de atendimentos concluídos no mês selecionado
-2. **Forma de pagamento mais usada** -- ranking das formas de pagamento usadas nos agendamentos concluídos
+### Detalhes Técnicos
 
-Sim, é totalmente possível. Novos serviços e novas formas de pagamento aparecerão automaticamente conforme forem usados.
+**Arquivo: `src/components/painel/OverviewTab.tsx`**
 
-## Mudanças necessárias
+- Adicionar um card/seção "Resumo do dia" antes do resumo mensal
+- Calcular a partir dos bookings com status `completed` e `starts_at` no dia atual:
+  - Total de atendimentos
+  - Faturamento (soma de `total_price`)
+  - Ranking de `payment_method` com labels traduzidos
+- Visual: card com bordas, ícones e layout similar ao ranking mensal já existente
+- A seção só aparece quando o mês selecionado for o mês atual (já existe essa lógica com `isCurrentMonth`)
 
-### 1. Adicionar `payment_method` na tabela `bookings`
-
-Hoje a tabela de agendamentos (bookings) não tem campo de forma de pagamento. Será criada uma migration adicionando a coluna `payment_method` (texto, opcional) à tabela bookings.
-
-### 2. Permitir registrar forma de pagamento ao concluir agendamento
-
-No BookingsTab, quando o lojista marca um agendamento como "concluído", será exibido um seletor de forma de pagamento (Pix, Dinheiro, Crédito, Débito, etc.) antes de salvar. As opções vêm da lista de métodos da loja, então novas formas de pagamento adicionadas à loja aparecem automaticamente.
-
-### 3. Atualizar o BookingRow type e a query de bookings
-
-Incluir `payment_method` no tipo BookingRow e na query que busca os agendamentos.
-
-### 4. Adicionar seções no OverviewTab
-
-- **Serviços mais prestados**: agrupa os bookings concluídos do mês por `services.name`, conta quantos de cada, e exibe em lista ordenada do mais para o menos prestado.
-- **Forma de pagamento mais usada**: agrupa os bookings concluídos do mês por `payment_method`, conta quantos de cada, e exibe em lista ordenada.
-
-Ambos são calculados dinamicamente a partir dos dados existentes -- qualquer novo serviço ou forma de pagamento aparece automaticamente no ranking.
-
-## Arquivos afetados
-
-- Nova migration SQL (adicionar coluna `payment_method` em bookings)
-- `src/components/painel/BookingsTab.tsx` -- adicionar seletor de pagamento ao concluir, atualizar tipo e query
-- `src/components/painel/OverviewTab.tsx` -- adicionar as duas novas seções de ranking
+Nenhuma alteração de banco de dados necessária - todos os dados já existem.
