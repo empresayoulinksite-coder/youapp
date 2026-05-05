@@ -232,7 +232,19 @@ export function BookingsTab({
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const filtered = useMemo(
+  const deleteBooking = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("bookings").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Agendamento apagado");
+      qc.invalidateQueries({ queryKey: ["painel", "bookings"] });
+      setEditTarget(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
     () =>
       bookings
         .filter((b) => (tab === "all" ? true : b.status === tab))
