@@ -495,11 +495,13 @@ function BookingCard({
   booking,
   onUpdate,
   onReschedule,
+  onEdit,
   pending,
 }: {
   booking: BookingRow;
   onUpdate: (status: BookingRow["status"]) => void;
   onReschedule: () => void;
+  onEdit: () => void;
   pending: boolean;
 }) {
   const start = new Date(booking.starts_at);
