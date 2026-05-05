@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { DollarSign, Calendar, CheckCircle2, XCircle, TrendingUp, Clock } from "lucide-react";
+import { DollarSign, Calendar, CheckCircle2, XCircle, TrendingUp, Clock, Scissors, CreditCard } from "lucide-react";
 import {
   Select,
   SelectContent,
