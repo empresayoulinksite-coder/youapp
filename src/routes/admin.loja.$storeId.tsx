@@ -237,13 +237,17 @@ function AdminStoreManagePage() {
             </Button>
           </Section>
 
-          <Section title="Entrega" icon={<Truck className="h-4 w-4" />}>
-            <StoreDeliveryEditor storeId={store.id} />
-          </Section>
+          {!isService && (
+            <>
+              <Section title="Entrega" icon={<Truck className="h-4 w-4" />}>
+                <StoreDeliveryEditor storeId={store.id} />
+              </Section>
 
-          <Section title="Benefícios" icon={<ShieldCheck className="h-4 w-4" />}>
-            <StoreBenefitsEditor storeId={store.id} />
-          </Section>
+              <Section title="Benefícios" icon={<ShieldCheck className="h-4 w-4" />}>
+                <StoreBenefitsEditor storeId={store.id} />
+              </Section>
+            </>
+          )}
         </TabsContent>
 
         <TabsContent value="hours" className="mt-4">
