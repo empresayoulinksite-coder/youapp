@@ -80,7 +80,80 @@ function PainelPage() {
 
   const currentStore = stores.find((s) => s.id === storeId) ?? null;
 
-  const { data: bookings = [], isLoading: bookingsLoading } = useQuery({
+  // Cash register query
+  const { data: cashRegister } = useQuery({
+    queryKey: ["cash-register", storeId],
+    enabled: !!storeId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("cash_registers")
+        .select("*")
+        .eq("store_id", storeId!)
+        .eq("status", "open")
+        .order("opened_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+  const isCashOpen = cashRegister?.status === "open";
+
+  const handleCashAction = async (amount: number) => {
+    if (!storeId || !user) return;
+    try {
+      if (cashDialogAction === "open") {
+        const { error } = await supabase.from("cash_registers").insert({
+          store_id: storeId,
+          opened_by: user.id,
+          opening_balance: amount,
+          status: "open",
+        });
+        if (error) throw error;
+        toast.success("Caixa aberto com sucesso!");
+      } else {
+        const { error } = await supabase.from("cash_registers").update({
+          closed_by: user.id,
+          closing_balance: amount,
+          closed_at: new Date().toISOString(),
+          status: "closed",
+        }).eq("id", cashRegister!.id);
+        if (error) throw error;
+        toast.success("Caixa fechado com sucesso!");
+      }
+      setCashDialogOpen(false);
+      qc.invalidateQueries({ queryKey: ["cash-register", storeId] });
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  const handleCashTransaction = async (amount: number, reason: string) => {
+    if (!cashRegister || !user) return;
+    try {
+      const { error } = await supabase.from("cash_transactions").insert({
+        cash_register_id: cashRegister.id,
+        user_id: user.id,
+        type: txType,
+        amount,
+        reason: reason || null,
+      });
+      if (error) throw error;
+      toast.success(txType === "deposit" ? "Reforço registrado" : "Sangria registrada");
+      setTxDialogOpen(false);
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  function getElapsedTime(openedAt?: string) {
+    if (!openedAt) return "";
+    const diff = Date.now() - new Date(openedAt).getTime();
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    return h > 0 ? `${h}h${m.toString().padStart(2, "0")}min` : `${m}min`;
+  }
+
+
     queryKey: ["painel", "bookings", storeId],
     enabled: !!storeId,
     queryFn: async () => {
