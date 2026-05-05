@@ -1,19 +1,17 @@
-Entendi: o print mostra que o problema está no `/painel` da loja, não apenas na tela de administração. Encontrei no arquivo `src/routes/painel.tsx` que os componentes de Entrega e Benefícios ainda estão sendo renderizados para qualquer loja.
+## Vincular Troco ao Caixa
 
-Plano para corrigir:
+Quando um agendamento for concluído com troco > 0 e o caixa estiver aberto, o sistema registrará automaticamente uma transação de saída (withdrawal) no caixa.
 
-1. Ajustar o painel da loja (`src/routes/painel.tsx`)
-   - Criar/usar uma condição para identificar lojas de serviço: `currentStore?.store_type === "service"`.
-   - Renderizar `StoreDeliveryEditor` e `StoreBenefitsEditor` somente quando a loja não for de serviço.
-   - Assim, esses dois cards somem do painel da loja para serviços.
+### O que muda para o usuário
 
-2. Conferir consistência com o admin
-   - Manter a regra já aplicada em `src/routes/admin.loja.$storeId.tsx`, onde Entrega e Benefícios já ficam ocultos quando `isService` é verdadeiro.
+- Ao concluir um agendamento com troco em dinheiro, o valor do troco será descontado automaticamente do saldo do caixa
+- Aparecerá como "Troco - Agendamento" nas transações do caixa
+- Se o caixa estiver fechado, o troco é salvo normalmente no agendamento mas sem criar transação
 
-3. Resultado esperado
-   - Para lojas de serviço, como a loja do print, não aparecerão mais:
-     - “Entrega”
-     - “Faz entrega”
-     - “Benefícios na página do produto”
-     - Linhas de entrega/garantia/troca
-   - Esses campos continuarão disponíveis para lojas de comida/e-commerce, onde fazem sentido.
+### Alterações técnicas
+
+**`src/components/painel/BookingsTab.tsx`**:
+- Adicionar `useAuth()` no nível do `BookingsTab` para obter o `user.id`
+- No `onSuccess` da mutation `updateStatus`, quando `status === "completed"` e `change_amount > 0` e `cashRegister` estiver aberto:
+  - Inserir uma linha em `cash_transactions` com `type: "withdrawal"`, `amount: change_amount`, `reason: "Troco - Agendamento"`, `cash_register_id`, e `user_id`
+  - Invalidar queries do caixa para atualizar o saldo em tempo real
