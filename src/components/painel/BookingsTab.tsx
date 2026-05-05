@@ -191,7 +191,7 @@ export function BookingsTab({
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status, payment_method, payment_method_2, payment_amount_1, payment_amount_2, change_amount }: { id: string; status: BookingRow["status"]; payment_method?: string; payment_method_2?: string; payment_amount_1?: number; payment_amount_2?: number; change_amount?: number }) => {
-      const updateData: Record<string, unknown> = {
+      const updateData = {
         status,
         payment_method: payment_method ?? null,
         payment_method_2: payment_method_2 ?? null,
