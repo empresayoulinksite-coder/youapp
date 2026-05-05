@@ -1,10 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { LogOut, Power, LayoutDashboard, Calendar, Scissors, Ticket, Clock3, ArrowLeft, Users, Images, Dumbbell, ListOrdered, ClipboardList } from "lucide-react";
+import { LogOut, Power, LayoutDashboard, Calendar, Scissors, Ticket, Clock3, ArrowLeft, Users, Images, Dumbbell, ListOrdered, ClipboardList, Banknote, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { CashRegisterDialog } from "@/components/painel/CashRegisterDialog";
+import { CashTransactionDialog } from "@/components/painel/CashTransactionDialog";
+import { CashSummaryDialog } from "@/components/painel/CashSummaryDialog";
+import { CashCloseConfirmDialog } from "@/components/painel/CashCloseConfirmDialog";
 import { Button } from "@/components/ui/button";
 import {
   Select,
