@@ -177,10 +177,15 @@ export function BookingsTab({
   const [splitAmount2, setSplitAmount2] = useState("");
 
   const updateStatus = useMutation({
-    mutationFn: async ({ id, status, payment_method }: { id: string; status: BookingRow["status"]; payment_method?: string }) => {
+    mutationFn: async ({ id, status, payment_method, payment_method_2, payment_amount_1, payment_amount_2 }: { id: string; status: BookingRow["status"]; payment_method?: string; payment_method_2?: string; payment_amount_1?: number; payment_amount_2?: number }) => {
+      const updateData: Record<string, unknown> = { status };
+      if (payment_method) updateData.payment_method = payment_method;
+      if (payment_method_2) updateData.payment_method_2 = payment_method_2;
+      if (payment_amount_1 != null) updateData.payment_amount_1 = payment_amount_1;
+      if (payment_amount_2 != null) updateData.payment_amount_2 = payment_amount_2;
       const { error } = await supabase
         .from("bookings")
-        .update({ status, ...(payment_method ? { payment_method } : {}) })
+        .update(updateData)
         .eq("id", id);
       if (error) throw error;
     },
