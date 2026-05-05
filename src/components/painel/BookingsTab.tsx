@@ -16,6 +16,7 @@ import {
   ChevronDown,
   ChevronUp,
   Pencil,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -225,6 +226,19 @@ export function BookingsTab({
     },
     onSuccess: () => {
       toast.success("Agendamento atualizado");
+      qc.invalidateQueries({ queryKey: ["painel", "bookings"] });
+      setEditTarget(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const deleteBooking = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("bookings").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Agendamento apagado");
       qc.invalidateQueries({ queryKey: ["painel", "bookings"] });
       setEditTarget(null);
     },
@@ -594,7 +608,19 @@ export function BookingsTab({
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="destructive"
+              className="sm:mr-auto"
+              disabled={deleteBooking.isPending || editBooking.isPending}
+              onClick={() => {
+                if (!editTarget) return;
+                if (!confirm("Tem certeza que deseja apagar este agendamento?")) return;
+                deleteBooking.mutate(editTarget.id);
+              }}
+            >
+              <Trash2 className="h-4 w-4" /> Apagar
+            </Button>
             <Button variant="outline" onClick={() => setEditTarget(null)}>
               Cancelar
             </Button>
