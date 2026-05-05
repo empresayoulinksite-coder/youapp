@@ -272,6 +272,10 @@ export function BookingsTab({
                     if (status === "completed") {
                       setCompleteTarget(b);
                       setCompletePayment("");
+                      setSplitEnabled(false);
+                      setCompletePayment2("");
+                      setSplitAmount1("");
+                      setSplitAmount2("");
                       return;
                     }
                     updateStatus.mutate({ id: b.id, status });
