@@ -363,7 +363,9 @@ function CartPage() {
               )}
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Entrega</span>
-                <span className="font-semibold text-success">Grátis</span>
+                <span className={`font-semibold ${deliveryFeeValue === 0 ? "text-success" : ""}`}>
+                  {deliveryMode === "pickup" ? "—" : deliveryFeeLabel}
+                </span>
               </div>
               <div className="border-t border-border pt-2 flex justify-between">
                 <span className="font-bold">Total</span>
