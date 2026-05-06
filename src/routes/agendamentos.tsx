@@ -215,10 +215,23 @@ function BookingCard({
         )}
         <div className="min-w-0 flex-1">
           <p className="text-xs text-muted-foreground truncate">{b.stores?.name}</p>
-          <h3 className="font-semibold truncate">{b.services?.name ?? "Serviço"}</h3>
+          <h3 className="font-semibold truncate">
+            {b.booked_services && b.booked_services.length > 0
+              ? b.booked_services.map((s) => s.name).join(" + ")
+              : b.services?.name ?? "Serviço"}
+          </h3>
           <p className="text-xs text-muted-foreground mt-0.5">
             {format(start, "EEE, dd 'de' MMM 'às' HH:mm", { locale: ptBR })}
           </p>
+          {b.booked_services && b.booked_services.length > 1 && (
+            <div className="text-[11px] text-muted-foreground mt-0.5 space-y-0">
+              {b.booked_services.map((s, i) => (
+                <p key={i}>
+                  {s.name}: {new Date(s.starts_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })} - {new Date(s.ends_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                </p>
+              ))}
+            </div>
+          )}
         </div>
         <span
           className={`shrink-0 text-[11px] font-bold px-2 py-1 rounded-full ${status.cls}`}
