@@ -336,7 +336,7 @@ function PedidosLojaPage() {
                     <div className="flex items-center gap-3">
                       <Icon className={cn("h-4 w-4", isActive ? "opacity-100" : "opacity-80")} />
                       <span className="text-sm font-medium">{item.label}</span>
-                       {'isPremium' in item && item.isPremium && (
+                       {(item as any).isPremium && (
                         <span className="ml-1 flex h-4 w-4 items-center justify-center rounded-full bg-orange-400 text-[10px]">👑</span>
                       )}
                     </div>
