@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { StoreDeliveryAreasEditor } from "@/components/StoreDeliveryAreasEditor";
 
 interface Props {
   storeId: string;
@@ -116,6 +117,8 @@ export function StoreDeliveryEditor({ storeId }: Props) {
       <Button size="sm" onClick={() => save.mutate()} disabled={save.isPending}>
         Salvar
       </Button>
+
+      {deliveryEnabled && <StoreDeliveryAreasEditor storeId={storeId} />}
     </div>
   );
 }

@@ -48,6 +48,8 @@ function CartPage() {
   const [profilePhone, setProfilePhone] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
   const [submitting, setSubmitting] = useState(false);
+  const [deliveryFeeValue, setDeliveryFeeValue] = useState<number>(0);
+  const [deliveryFeeLabel, setDeliveryFeeLabel] = useState<string>("Grátis");
   const [reviewOpen, setReviewOpen] = useState(false);
   const { active } = useAddress();
   const { user: authUser } = useAuth();
@@ -115,6 +117,38 @@ function CartPage() {
       });
   }, [storeId]);
 
+  // Busca taxa de entrega por bairro do endereço ativo
+  useEffect(() => {
+    if (!storeId || deliveryMode === "pickup" || !active?.neighborhood) {
+      setDeliveryFeeValue(0);
+      setDeliveryFeeLabel(deliveryMode === "pickup" ? "—" : "Grátis");
+      return;
+    }
+    const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    supabase
+      .from("store_delivery_areas")
+      .select("fee, is_active, neighborhood")
+      .eq("store_id", storeId)
+      .then(({ data }) => {
+        if (!data || data.length === 0) {
+          setDeliveryFeeValue(0);
+          setDeliveryFeeLabel("Grátis");
+          return;
+        }
+        const match = data.find(
+          (a) => a.is_active && norm(a.neighborhood) === norm(active.neighborhood!),
+        );
+        if (match) {
+          const fee = Number(match.fee);
+          setDeliveryFeeValue(fee);
+          setDeliveryFeeLabel(fee > 0 ? `R$ ${fee.toFixed(2).replace(".", ",")}` : "Grátis");
+        } else {
+          setDeliveryFeeValue(0);
+          setDeliveryFeeLabel("Grátis");
+        }
+      });
+  }, [storeId, deliveryMode, active?.neighborhood]);
+
   const withinHours = storeHours.length === 0 ? true : isStoreOpen(storeHours, now);
   const storeOpen = !storePaused && withinHours;
   const nextOpen = !storeOpen && !storePaused ? nextOpeningLabel(storeHours, now) : null;
@@ -125,7 +159,7 @@ function CartPage() {
   }, [pickupEnabled, deliveryMode]);
 
   const { discount, reason } = calculateDiscount(applied, total, storeId);
-  const grandTotal = Math.max(0, total - discount);
+  const grandTotal = Math.max(0, total - discount + (deliveryMode === "pickup" ? 0 : deliveryFeeValue));
 
   const applyCode = async (codeToTry?: string) => {
     const c = (codeToTry ?? code).trim().toUpperCase();
@@ -329,7 +363,9 @@ function CartPage() {
               )}
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Entrega</span>
-                <span className="font-semibold text-success">Grátis</span>
+                <span className={`font-semibold ${deliveryFeeValue === 0 ? "text-success" : ""}`}>
+                  {deliveryMode === "pickup" ? "—" : deliveryFeeLabel}
+                </span>
               </div>
               <div className="border-t border-border pt-2 flex justify-between">
                 <span className="font-bold">Total</span>
@@ -432,6 +468,9 @@ function CartPage() {
           if (discount > 0 && applied) {
             lines.push(`Cupom ${applied.code}: -${fmtBRL(discount)}`);
           }
+          if (deliveryMode !== "pickup" && deliveryFeeValue > 0) {
+            lines.push(`🛵 Entrega: ${fmtBRL(deliveryFeeValue)}`);
+          }
           lines.push(`*Total: ${fmtBRL(grandTotal)}*`);
           lines.push("", `💳 Pagamento: ${paymentMethod}`);
 
@@ -498,6 +537,7 @@ function CartPage() {
                 store_image_url: storeImageUrl,
                 store_whatsapp: storeWhatsapp,
                 total: grandTotal,
+                delivery_fee: deliveryMode === "pickup" ? 0 : deliveryFeeValue,
                 discount,
                 delivery_address: deliveryAddress,
                 payment_method: paymentMethod,

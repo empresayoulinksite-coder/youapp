@@ -1281,6 +1281,41 @@ export type Database = {
           },
         ]
       }
+      store_delivery_areas: {
+        Row: {
+          created_at: string
+          fee: number
+          id: string
+          is_active: boolean
+          neighborhood: string
+          store_id: string
+        }
+        Insert: {
+          created_at?: string
+          fee?: number
+          id?: string
+          is_active?: boolean
+          neighborhood: string
+          store_id: string
+        }
+        Update: {
+          created_at?: string
+          fee?: number
+          id?: string
+          is_active?: boolean
+          neighborhood?: string
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_delivery_areas_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_feed_categories: {
         Row: {
           created_at: string
