@@ -534,6 +534,7 @@ function CartPage() {
                 store_image_url: storeImageUrl,
                 store_whatsapp: storeWhatsapp,
                 total: grandTotal,
+                delivery_fee: deliveryMode === "pickup" ? 0 : deliveryFeeValue,
                 discount,
                 delivery_address: deliveryAddress,
                 payment_method: paymentMethod,
