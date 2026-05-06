@@ -110,8 +110,18 @@ const STATUS_VARIANT: Record<
   completed: "secondary",
   cancelled: "destructive",
 };
+/** Get display label for booking services */
+function getBookingServiceLabel(booking: BookingRow): string {
+  if (booking.booked_services && booking.booked_services.length > 0) {
+    return booking.booked_services.map((s) => s.name).join(" + ");
+  }
+  return booking.services?.name ?? "Serviço";
+}
 
-function CashOpenMenu({
+const fmtTime = (iso: string) =>
+  new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+
+
   getElapsedTime,
   cashRegister,
   onDeposit,
