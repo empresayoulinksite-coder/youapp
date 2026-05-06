@@ -759,6 +759,15 @@ function BookingCard({
             <span className="text-muted-foreground">·</span>
             <span>{timeLabel}</span>
           </div>
+          {booking.booked_services && booking.booked_services.length > 1 && (
+            <div className="text-xs text-muted-foreground space-y-0.5 ml-5">
+              {booking.booked_services.map((s, i) => (
+                <p key={i}>
+                  {s.name}: {fmtTime(s.starts_at)} - {fmtTime(s.ends_at)}
+                </p>
+              ))}
+            </div>
+          )}
           <p className="text-sm">
             <span className="text-muted-foreground">Cliente:</span>{" "}
             {booking.profiles?.display_name ?? "—"}
