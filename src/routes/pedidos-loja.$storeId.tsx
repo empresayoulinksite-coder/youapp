@@ -190,9 +190,7 @@ function PedidosLojaPage() {
     { label: "Meus pedidos", icon: KanbanSquare, badge: 0 },
     { label: "Pedidos balcão (PDV)", icon: PenSquare },
     { label: "Pedidos salão", icon: Armchair, badge: "+" },
-    { label: "Pedidos agendados", icon: CalendarDays, badge: 0 },
     { label: "Gestor de cardápio", icon: MenuSquare, isLink: true, to: `/admin/loja/${storeId}` },
-    { label: "Gestão Avançada", icon: Globe, isLink: true, to: `/admin/loja/${storeId}`, isPremium: true },
     
   ];
 
@@ -409,15 +407,6 @@ function PedidosLojaPage() {
               )}
             </div>
             
-            <div className="mt-4 px-2">
-               <div 
-                 className="rounded-lg bg-gradient-to-r from-[#d946ef] to-[#e845f0] p-3 text-center shadow-sm cursor-pointer hover:brightness-110 transition-all"
-                 onClick={() => toast.info("Integração de notas fiscais em breve!")}
-               >
-                 <div className="text-xs font-bold leading-tight text-white">Nota fiscal descomplicada</div>
-                 <div className="text-[10px] opacity-90 mt-0.5 text-white">com agilidade e sem erros</div>
-               </div>
-            </div>
           </div>
         </div>
       </aside>
