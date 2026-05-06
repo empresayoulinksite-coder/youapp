@@ -410,6 +410,45 @@ function PedidosLojaPage() {
                 </div>
               )}
             </div>
+
+            {/* Relatórios - collapsible section */}
+            <div className="mt-1 px-0">
+              <button
+                onClick={() => setRelatoriosOpen((v) => !v)}
+                className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 transition-colors hover:bg-white/10 text-white/90 cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <BarChart3 className="h-4 w-4 opacity-80" />
+                  <span className="text-sm font-medium">Relatórios</span>
+                </div>
+                <ChevronDown className={cn("h-4 w-4 text-white/50 transition-transform", relatoriosOpen && "rotate-180")} />
+              </button>
+              {relatoriosOpen && (
+                <div className="ml-4 mt-0.5 space-y-0.5 border-l-2 border-purple-400/40 pl-3">
+                  {[
+                    { label: "Geral", icon: PieChart },
+                    { label: "Caixa", icon: MonitorSmartphone },
+                  ].map((sub) => {
+                    const Icon = sub.icon;
+                    const tabName = `Relatório ${sub.label}`;
+                    const isActive = activeTab === tabName;
+                    return (
+                      <div
+                        key={sub.label}
+                        onClick={() => handleNavClick(tabName)}
+                        className={cn(
+                          "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors",
+                          isActive ? "bg-white/20 text-white font-semibold" : "text-white/80 hover:bg-white/10"
+                        )}
+                      >
+                        <Icon className="h-3.5 w-3.5" />
+                        {sub.label}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
             
           </div>
         </div>
