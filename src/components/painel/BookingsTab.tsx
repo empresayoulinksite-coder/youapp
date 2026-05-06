@@ -748,7 +748,7 @@ function BookingCard({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-semibold">{booking.services?.name ?? "Serviço"}</h3>
+            <h3 className="font-semibold">{getBookingServiceLabel(booking)}</h3>
             <Badge variant={STATUS_VARIANT[booking.status]}>
               {STATUS_LABEL[booking.status]}
             </Badge>
