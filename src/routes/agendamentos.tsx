@@ -28,6 +28,15 @@ export const Route = createFileRoute("/agendamentos")({
   component: BookingsPage,
 });
 
+type BookedServiceItem = {
+  service_id: string;
+  name: string;
+  duration_minutes: number;
+  price: number;
+  starts_at: string;
+  ends_at: string;
+};
+
 type BookingRow = {
   id: string;
   starts_at: string;
@@ -37,6 +46,7 @@ type BookingRow = {
   total_price: number;
   store_id: string;
   service_id: string;
+  booked_services: BookedServiceItem[] | null;
   stores: { id: string; name: string; slug: string; emoji: string; image_url: string | null } | null;
   services: { id: string; name: string; duration_minutes: number } | null;
 };
