@@ -1143,11 +1143,7 @@ function NewBookingDialog({
     }
     setSaving(false);
     if (!hasError) {
-      toast.success(
-        selectedServices.length > 1
-          ? `${selectedServices.length} agendamentos criados`
-          : "Agendamento criado",
-      );
+      toast.success("Agendamento criado");
       onSaved();
     }
   };
