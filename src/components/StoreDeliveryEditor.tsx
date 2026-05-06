@@ -117,6 +117,8 @@ export function StoreDeliveryEditor({ storeId }: Props) {
       <Button size="sm" onClick={() => save.mutate()} disabled={save.isPending}>
         Salvar
       </Button>
+
+      {deliveryEnabled && <StoreDeliveryAreasEditor storeId={storeId} />}
     </div>
   );
 }
