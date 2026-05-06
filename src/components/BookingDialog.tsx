@@ -167,7 +167,7 @@ export function BookingDialog({
       booked_services: bookedServices,
     };
 
-    const { error } = await supabase.from("bookings").insert(rows);
+    const { error } = await supabase.from("bookings").insert(row);
     setSubmitting(false);
     if (error) {
       toast.error(error.message);
