@@ -79,6 +79,7 @@ function PedidosLojaPage() {
   const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
   const [closeConfirmOpen, setCloseConfirmOpen] = useState(false);
   const [entregasOpen, setEntregasOpen] = useState(false);
+  const [relatoriosOpen, setRelatoriosOpen] = useState(false);
 
   const { data: store } = useQuery({
     queryKey: ["pedidos-loja-store", storeId],
