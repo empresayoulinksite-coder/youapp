@@ -160,7 +160,7 @@ function PainelPage() {
       const { data, error } = await supabase
         .from("bookings")
         .select(
-          "id,status,starts_at,ends_at,total_price,customer_notes,user_id,store_id,service_id,payment_method,payment_method_2,payment_amount_1,payment_amount_2,services(name,duration_minutes)",
+          "id,status,starts_at,ends_at,total_price,customer_notes,user_id,store_id,service_id,payment_method,payment_method_2,payment_amount_1,payment_amount_2,booked_services,services(name,duration_minutes)",
         )
         .eq("store_id", storeId!)
         .order("starts_at", { ascending: true });

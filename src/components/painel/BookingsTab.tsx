@@ -53,6 +53,15 @@ type ServiceLite = {
   price: number;
 };
 
+export type BookedServiceItem = {
+  service_id: string;
+  name: string;
+  duration_minutes: number;
+  price: number;
+  starts_at: string;
+  ends_at: string;
+};
+
 export type BookingRow = {
   id: string;
   status: "pending" | "confirmed" | "cancelled" | "completed";
@@ -67,6 +76,7 @@ export type BookingRow = {
   payment_method_2: string | null;
   payment_amount_1: number | null;
   payment_amount_2: number | null;
+  booked_services: BookedServiceItem[] | null;
   services: { name: string; duration_minutes: number } | null;
   profiles?: { display_name: string | null; phone: string | null } | null;
 };
