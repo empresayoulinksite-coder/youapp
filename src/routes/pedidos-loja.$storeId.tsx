@@ -180,7 +180,7 @@ function PedidosLojaPage() {
   };
 
   const handleNavClick = (label: string) => {
-    if (label === "Meus pedidos" || label === "Pedidos balcão (PDV)") {
+    if (["Meus pedidos", "Pedidos balcão (PDV)", "Relatório Geral", "Relatório Caixa"].includes(label)) {
       setActiveTab(label);
       if (label === "Meus pedidos" && editingOrder) {
         setEditingOrder(null);
