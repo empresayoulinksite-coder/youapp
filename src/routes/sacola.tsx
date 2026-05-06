@@ -468,6 +468,9 @@ function CartPage() {
           if (discount > 0 && applied) {
             lines.push(`Cupom ${applied.code}: -${fmtBRL(discount)}`);
           }
+          if (deliveryMode !== "pickup" && deliveryFeeValue > 0) {
+            lines.push(`🛵 Entrega: ${fmtBRL(deliveryFeeValue)}`);
+          }
           lines.push(`*Total: ${fmtBRL(grandTotal)}*`);
           lines.push("", `💳 Pagamento: ${paymentMethod}`);
 
