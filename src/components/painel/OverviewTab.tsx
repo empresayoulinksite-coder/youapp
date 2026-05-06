@@ -15,16 +15,14 @@ function brl(n: number) {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-function startOfDay(d: Date) {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
-}
 function startOfMonth(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), 1);
 }
 function endOfMonth(d: Date) {
   return new Date(d.getFullYear(), d.getMonth() + 1, 1);
+}
+function daysInMonth(year: number, month: number) {
+  return new Date(year, month + 1, 0).getDate();
 }
 
 const MONTH_NAMES = [
@@ -36,11 +34,32 @@ export function OverviewTab({ bookings }: { bookings: BookingRow[] }) {
   const now = new Date();
   const currentMonthKey = `${now.getFullYear()}-${now.getMonth()}`;
   const [monthKey, setMonthKey] = useState(currentMonthKey);
+  const [selectedDay, setSelectedDay] = useState<number>(now.getDate());
 
-  // Build list of available months (last 12 + any month with bookings)
+  // Parse current month/year from key
+  const [selYear, selMonth] = useMemo(() => {
+    const [yStr, mStr] = monthKey.split("-");
+    return [Number(yStr), Number(mStr)];
+  }, [monthKey]);
+
+  const isCurrentMonth = monthKey === currentMonthKey;
+
+  // When month changes, reset day
+  const handleMonthChange = (newKey: string) => {
+    setMonthKey(newKey);
+    if (newKey === currentMonthKey) {
+      setSelectedDay(now.getDate());
+    } else {
+      setSelectedDay(1);
+    }
+  };
+
+  // Day options for selected month
+  const dayCount = useMemo(() => daysInMonth(selYear, selMonth), [selYear, selMonth]);
+
+  // Build list of available months
   const monthOptions = useMemo(() => {
     const set = new Map<string, { year: number; month: number }>();
-    // Last 12 months
     for (let i = 0; i < 12; i++) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       set.set(`${d.getFullYear()}-${d.getMonth()}`, {
@@ -48,7 +67,6 @@ export function OverviewTab({ bookings }: { bookings: BookingRow[] }) {
         month: d.getMonth(),
       });
     }
-    // Any month from bookings
     for (const b of bookings) {
       const d = new Date(b.starts_at);
       set.set(`${d.getFullYear()}-${d.getMonth()}`, {
@@ -63,33 +81,26 @@ export function OverviewTab({ bookings }: { bookings: BookingRow[] }) {
   }, [bookings]);
 
   const stats = useMemo(() => {
-    const [yStr, mStr] = monthKey.split("-");
-    const y = Number(yStr);
-    const m = Number(mStr);
-    const monthStart = new Date(y, m, 1);
+    const monthStart = new Date(selYear, selMonth, 1);
     const monthEnd = endOfMonth(monthStart);
-    const isCurrentMonth = monthKey === currentMonthKey;
 
-    const today = startOfDay(now);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dayStart = new Date(selYear, selMonth, selectedDay);
+    const dayEnd = new Date(selYear, selMonth, selectedDay + 1);
 
     const completed = bookings.filter((b) => b.status === "completed");
     const cancelled = bookings.filter((b) => b.status === "cancelled");
 
-    const completedToday = isCurrentMonth
-      ? completed.filter((b) => {
-          const t = new Date(b.starts_at);
-          return t >= today && t < tomorrow;
-        })
-      : [];
+    const completedDay = completed.filter((b) => {
+      const t = new Date(b.starts_at);
+      return t >= dayStart && t < dayEnd;
+    });
 
     const completedMonth = completed.filter((b) => {
       const t = new Date(b.starts_at);
       return t >= monthStart && t < monthEnd;
     });
 
-    const revenueToday = completedToday.reduce((s, b) => s + Number(b.total_price), 0);
+    const revenueDay = completedDay.reduce((s, b) => s + Number(b.total_price), 0);
     const revenueMonth = completedMonth.reduce((s, b) => s + Number(b.total_price), 0);
 
     const upcoming = isCurrentMonth
@@ -127,7 +138,7 @@ export function OverviewTab({ bookings }: { bookings: BookingRow[] }) {
 
     // Daily payment method ranking
     const dailyPaymentCount = new Map<string, number>();
-    for (const b of completedToday) {
+    for (const b of completedDay) {
       if (b.payment_method) {
         const label = isPaymentKey(b.payment_method) ? PAYMENT_LABEL[b.payment_method] : b.payment_method;
         dailyPaymentCount.set(label, (dailyPaymentCount.get(label) ?? 0) + 1);
@@ -138,10 +149,9 @@ export function OverviewTab({ bookings }: { bookings: BookingRow[] }) {
       .sort((a, b) => b.count - a.count);
 
     return {
-      isCurrentMonth,
-      revenueToday,
+      revenueDay,
       revenueMonth,
-      completedToday: completedToday.length,
+      completedDay: completedDay.length,
       completedMonth: completedMonth.length,
       cancelledMonth: cancelled.filter((b) => {
         const t = new Date(b.starts_at);
@@ -155,105 +165,121 @@ export function OverviewTab({ bookings }: { bookings: BookingRow[] }) {
       dailyTopPayments,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookings, monthKey]);
+  }, [bookings, monthKey, selectedDay]);
+
+  const selectedDate = new Date(selYear, selMonth, selectedDay);
+  const dayLabel = selectedDate.toLocaleDateString("pt-BR", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+  });
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <p className="text-xs text-muted-foreground">Período</p>
           <p className="text-sm font-semibold">
-            {stats.isCurrentMonth ? "Mês atual" : "Mês selecionado"}
+            {isCurrentMonth ? "Mês atual" : "Mês selecionado"}
           </p>
         </div>
-        <Select value={monthKey} onValueChange={setMonthKey}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {monthOptions.map((o) => (
-              <SelectItem key={o.key} value={o.key}>
-                {MONTH_NAMES[o.month]} {o.year}
-                {o.key === currentMonthKey ? " (atual)" : ""}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <Select value={monthKey} onValueChange={handleMonthChange}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {monthOptions.map((o) => (
+                <SelectItem key={o.key} value={o.key}>
+                  {MONTH_NAMES[o.month]} {o.year}
+                  {o.key === currentMonthKey ? " (atual)" : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={String(selectedDay)} onValueChange={(v) => setSelectedDay(Number(v))}>
+            <SelectTrigger className="w-[90px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from({ length: dayCount }, (_, i) => i + 1).map((d) => (
+                <SelectItem key={d} value={String(d)}>
+                  Dia {d}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      {stats.isCurrentMonth && (
-        <div className="rounded-lg border bg-card">
-          <div className="border-b px-4 py-3 flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <h3 className="font-semibold text-sm">Resumo do dia</h3>
-            <span className="ml-auto text-xs text-muted-foreground">
-              {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}
-            </span>
-          </div>
-          <div className="p-4 space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-md bg-muted/50 p-3">
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  Atendimentos
-                </div>
-                <p className="mt-1 text-xl font-bold">{stats.completedToday}</p>
+      {/* Resumo do dia selecionado */}
+      <div className="rounded-lg border bg-card">
+        <div className="border-b px-4 py-3 flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <h3 className="font-semibold text-sm">Resumo do dia</h3>
+          <span className="ml-auto text-xs text-muted-foreground">
+            {dayLabel}
+          </span>
+        </div>
+        <div className="p-4 space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-md bg-muted/50 p-3">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Atendimentos
               </div>
-              <div className="rounded-md bg-muted/50 p-3">
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <DollarSign className="h-3.5 w-3.5" />
-                  Faturamento
-                </div>
-                <p className="mt-1 text-xl font-bold text-success">{brl(stats.revenueToday)}</p>
+              <p className="mt-1 text-xl font-bold">{stats.completedDay}</p>
+            </div>
+            <div className="rounded-md bg-muted/50 p-3">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <DollarSign className="h-3.5 w-3.5" />
+                Faturamento
+              </div>
+              <p className="mt-1 text-xl font-bold text-success">{brl(stats.revenueDay)}</p>
+            </div>
+          </div>
+          {stats.dailyTopPayments.length > 0 && (
+            <div>
+              <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
+                <CreditCard className="h-3.5 w-3.5" />
+                Formas de pagamento do dia
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {stats.dailyTopPayments.map((p) => (
+                  <Badge key={p.name} variant="secondary" className="text-xs">
+                    {p.name} · {p.count}x
+                  </Badge>
+                ))}
               </div>
             </div>
-            {stats.dailyTopPayments.length > 0 && (
-              <div>
-                <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
-                  <CreditCard className="h-3.5 w-3.5" />
-                  Formas de pagamento hoje
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {stats.dailyTopPayments.map((p) => (
-                    <Badge key={p.name} variant="secondary" className="text-xs">
-                      {p.name} · {p.count}x
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          )}
         </div>
-      )}
+      </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.isCurrentMonth && (
-          <StatCard
-            icon={DollarSign}
-            label="Faturamento hoje"
-            value={brl(stats.revenueToday)}
-            accent="text-success"
-          />
-        )}
+        <StatCard
+          icon={DollarSign}
+          label="Faturamento do dia"
+          value={brl(stats.revenueDay)}
+          accent="text-success"
+        />
         <StatCard
           icon={TrendingUp}
           label="Faturamento do mês"
           value={brl(stats.revenueMonth)}
           accent="text-primary"
         />
-        {stats.isCurrentMonth && (
-          <StatCard
-            icon={CheckCircle2}
-            label="Atendimentos hoje"
-            value={String(stats.completedToday)}
-          />
-        )}
+        <StatCard
+          icon={CheckCircle2}
+          label="Atendimentos do dia"
+          value={String(stats.completedDay)}
+        />
         <StatCard
           icon={Calendar}
           label="Atendimentos no mês"
           value={String(stats.completedMonth)}
         />
-        {stats.isCurrentMonth && (
+        {isCurrentMonth && (
           <StatCard
             icon={Clock}
             label="Pendentes de confirmação"
@@ -326,7 +352,7 @@ export function OverviewTab({ bookings }: { bookings: BookingRow[] }) {
         </div>
       </div>
 
-      {stats.isCurrentMonth && (
+      {isCurrentMonth && (
         <div className="rounded-lg border bg-card">
           <div className="border-b px-4 py-3">
             <h3 className="font-semibold text-sm">Próximos atendimentos</h3>
