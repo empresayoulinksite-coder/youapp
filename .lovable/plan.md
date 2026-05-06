@@ -1,22 +1,9 @@
 
-## Problema
+## O que muda
 
-O formulário de agendamento manual no painel (`BookingsTab.tsx`) ainda cria **uma linha por serviço** usando um `for` loop (linhas 1114-1131). Ele não usa a coluna `booked_services` nem unifica os serviços.
+A opção **"Retirar no local"** no painel do lojista será ocultada para lojas com `store_type === "service"`, já que não faz sentido para serviços.
 
-O `BookingDialog.tsx` (lado do cliente) já foi corrigido anteriormente, mas o fluxo manual do painel ficou de fora.
+## Detalhes técnicos
 
-## Solução
-
-### Arquivo: `src/components/painel/BookingsTab.tsx`
-
-Substituir o `for` loop (linhas 1112-1131) por uma inserção única, seguindo o mesmo padrão do `BookingDialog.tsx`:
-
-1. Construir o array `booked_services` com os horários individuais de cada serviço (starts_at, ends_at, name, price, duration_minutes, service_id)
-2. Inserir **uma única row** com:
-   - `service_id` = primeiro serviço
-   - `starts_at` = início do primeiro serviço
-   - `ends_at` = fim do último serviço
-   - `total_price` = soma dos preços
-   - `booked_services` = JSON array com detalhes de cada serviço
-   - `status` = "confirmed"
-3. Atualizar a mensagem de sucesso para "Agendamento criado" (singular)
+### `src/routes/painel.tsx`
+- Adicionar a condição `currentStore.store_type !== "service"` ao bloco de "Retirar no local" (linhas 389-408), para que ele só apareça em lojas do tipo `food` ou `ecommerce`.
