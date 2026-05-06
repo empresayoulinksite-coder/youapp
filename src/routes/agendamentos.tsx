@@ -74,7 +74,7 @@ function BookingsPage() {
       const { data, error } = await supabase
         .from("bookings")
         .select(
-          "id, starts_at, ends_at, status, customer_notes, total_price, store_id, service_id, stores:stores(id, name, slug, emoji, image_url), services:services(id, name, duration_minutes)",
+          "id, starts_at, ends_at, status, customer_notes, total_price, store_id, service_id, booked_services, stores:stores(id, name, slug, emoji, image_url), services:services(id, name, duration_minutes)",
         )
         .eq("user_id", user!.id)
         .order("starts_at", { ascending: false });
