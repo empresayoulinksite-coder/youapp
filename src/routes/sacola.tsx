@@ -48,6 +48,8 @@ function CartPage() {
   const [profilePhone, setProfilePhone] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
   const [submitting, setSubmitting] = useState(false);
+  const [deliveryFeeValue, setDeliveryFeeValue] = useState<number>(0);
+  const [deliveryFeeLabel, setDeliveryFeeLabel] = useState<string>("Grátis");
   const [reviewOpen, setReviewOpen] = useState(false);
   const { active } = useAddress();
   const { user: authUser } = useAuth();
