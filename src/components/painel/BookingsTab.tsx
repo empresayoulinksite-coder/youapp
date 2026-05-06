@@ -930,7 +930,7 @@ function RescheduleDialog({
         </DialogHeader>
         <div className="space-y-4">
           <p className="text-xs text-muted-foreground">
-            {booking.services?.name} · {duration} min ·{" "}
+            {getBookingServiceLabel(booking)} · {duration} min ·{" "}
             {booking.profiles?.display_name ?? "Cliente"}
           </p>
           <div>
