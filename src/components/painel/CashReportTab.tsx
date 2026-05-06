@@ -128,14 +128,20 @@ export function CashReportTab({ storeId }: { storeId: string }) {
       )}
 
       {/* Summary Dialog */}
-      {viewingRegisterId && (
-        <CashSummaryDialog
-          open={!!viewingRegisterId}
-          onClose={() => setViewingRegisterId(null)}
-          registerId={viewingRegisterId}
-          storeId={storeId}
-        />
-      )}
+      {viewingRegisterId && (() => {
+        const reg = registers.find(r => r.id === viewingRegisterId);
+        if (!reg) return null;
+        return (
+          <CashSummaryDialog
+            open
+            onClose={() => setViewingRegisterId(null)}
+            cashRegisterId={reg.id}
+            storeId={storeId}
+            openingBalance={reg.opening_balance}
+            openedAt={reg.opened_at}
+          />
+        );
+      })()}
     </div>
   );
 }
