@@ -28,6 +28,15 @@ export const Route = createFileRoute("/agendamentos")({
   component: BookingsPage,
 });
 
+type BookedServiceItem = {
+  service_id: string;
+  name: string;
+  duration_minutes: number;
+  price: number;
+  starts_at: string;
+  ends_at: string;
+};
+
 type BookingRow = {
   id: string;
   starts_at: string;
@@ -37,6 +46,7 @@ type BookingRow = {
   total_price: number;
   store_id: string;
   service_id: string;
+  booked_services: BookedServiceItem[] | null;
   stores: { id: string; name: string; slug: string; emoji: string; image_url: string | null } | null;
   services: { id: string; name: string; duration_minutes: number } | null;
 };
@@ -64,7 +74,7 @@ function BookingsPage() {
       const { data, error } = await supabase
         .from("bookings")
         .select(
-          "id, starts_at, ends_at, status, customer_notes, total_price, store_id, service_id, stores:stores(id, name, slug, emoji, image_url), services:services(id, name, duration_minutes)",
+          "id, starts_at, ends_at, status, customer_notes, total_price, store_id, service_id, booked_services, stores:stores(id, name, slug, emoji, image_url), services:services(id, name, duration_minutes)",
         )
         .eq("user_id", user!.id)
         .order("starts_at", { ascending: false });
@@ -205,10 +215,23 @@ function BookingCard({
         )}
         <div className="min-w-0 flex-1">
           <p className="text-xs text-muted-foreground truncate">{b.stores?.name}</p>
-          <h3 className="font-semibold truncate">{b.services?.name ?? "Serviço"}</h3>
+          <h3 className="font-semibold truncate">
+            {b.booked_services && b.booked_services.length > 0
+              ? b.booked_services.map((s) => s.name).join(" + ")
+              : b.services?.name ?? "Serviço"}
+          </h3>
           <p className="text-xs text-muted-foreground mt-0.5">
             {format(start, "EEE, dd 'de' MMM 'às' HH:mm", { locale: ptBR })}
           </p>
+          {b.booked_services && b.booked_services.length > 1 && (
+            <div className="text-[11px] text-muted-foreground mt-0.5 space-y-0">
+              {b.booked_services.map((s, i) => (
+                <p key={i}>
+                  {s.name}: {new Date(s.starts_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })} - {new Date(s.ends_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                </p>
+              ))}
+            </div>
+          )}
         </div>
         <span
           className={`shrink-0 text-[11px] font-bold px-2 py-1 rounded-full ${status.cls}`}

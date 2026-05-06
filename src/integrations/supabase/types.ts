@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       bookings: {
         Row: {
+          booked_services: Json | null
           change_amount: number | null
           created_at: string
           customer_notes: string | null
@@ -34,6 +35,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          booked_services?: Json | null
           change_amount?: number | null
           created_at?: string
           customer_notes?: string | null
@@ -52,6 +54,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          booked_services?: Json | null
           change_amount?: number | null
           created_at?: string
           customer_notes?: string | null

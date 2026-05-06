@@ -139,25 +139,35 @@ export function BookingDialog({
     }
     setSubmitting(true);
 
-    // Sequentially append bookings starting at selectedSlot
+    // Build booked_services JSON with individual time slots
     let cursor = new Date(selectedSlot);
-    const rows = selectedServices.map((s) => {
+    const bookedServices = selectedServices.map((s) => {
       const start = new Date(cursor);
       const end = new Date(start.getTime() + s.duration_minutes * 60_000);
       cursor = end;
       return {
-        user_id: user.id,
-        store_id: storeId,
         service_id: s.id,
+        name: s.name,
+        duration_minutes: s.duration_minutes,
+        price: s.price,
         starts_at: start.toISOString(),
         ends_at: end.toISOString(),
-        status: "pending" as const,
-        customer_notes: notes || null,
-        total_price: s.price,
       };
     });
 
-    const { error } = await supabase.from("bookings").insert(rows);
+    const row = {
+      user_id: user.id,
+      store_id: storeId,
+      service_id: selectedServices[0].id,
+      starts_at: selectedSlot.toISOString(),
+      ends_at: cursor.toISOString(),
+      status: "pending" as const,
+      customer_notes: notes || null,
+      total_price: totalPrice,
+      booked_services: bookedServices,
+    };
+
+    const { error } = await supabase.from("bookings").insert(row);
     setSubmitting(false);
     if (error) {
       toast.error(error.message);

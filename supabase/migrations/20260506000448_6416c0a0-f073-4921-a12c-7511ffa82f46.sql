@@ -1,0 +1,1 @@
+ALTER TABLE public.bookings ADD COLUMN booked_services jsonb DEFAULT NULL;

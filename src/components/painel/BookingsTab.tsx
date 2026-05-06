@@ -53,6 +53,15 @@ type ServiceLite = {
   price: number;
 };
 
+export type BookedServiceItem = {
+  service_id: string;
+  name: string;
+  duration_minutes: number;
+  price: number;
+  starts_at: string;
+  ends_at: string;
+};
+
 export type BookingRow = {
   id: string;
   status: "pending" | "confirmed" | "cancelled" | "completed";
@@ -67,6 +76,7 @@ export type BookingRow = {
   payment_method_2: string | null;
   payment_amount_1: number | null;
   payment_amount_2: number | null;
+  booked_services: BookedServiceItem[] | null;
   services: { name: string; duration_minutes: number } | null;
   profiles?: { display_name: string | null; phone: string | null } | null;
 };
@@ -100,6 +110,16 @@ const STATUS_VARIANT: Record<
   completed: "secondary",
   cancelled: "destructive",
 };
+/** Get display label for booking services */
+function getBookingServiceLabel(booking: BookingRow): string {
+  if (booking.booked_services && booking.booked_services.length > 0) {
+    return booking.booked_services.map((s) => s.name).join(" + ");
+  }
+  return booking.services?.name ?? "Serviço";
+}
+
+const fmtTime = (iso: string) =>
+  new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
 function CashOpenMenu({
   getElapsedTime,
@@ -728,7 +748,7 @@ function BookingCard({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-semibold">{booking.services?.name ?? "Serviço"}</h3>
+            <h3 className="font-semibold">{getBookingServiceLabel(booking)}</h3>
             <Badge variant={STATUS_VARIANT[booking.status]}>
               {STATUS_LABEL[booking.status]}
             </Badge>
@@ -739,6 +759,15 @@ function BookingCard({
             <span className="text-muted-foreground">·</span>
             <span>{timeLabel}</span>
           </div>
+          {booking.booked_services && booking.booked_services.length > 1 && (
+            <div className="text-xs text-muted-foreground space-y-0.5 ml-5">
+              {booking.booked_services.map((s, i) => (
+                <p key={i}>
+                  {s.name}: {fmtTime(s.starts_at)} - {fmtTime(s.ends_at)}
+                </p>
+              ))}
+            </div>
+          )}
           <p className="text-sm">
             <span className="text-muted-foreground">Cliente:</span>{" "}
             {booking.profiles?.display_name ?? "—"}
@@ -910,7 +939,7 @@ function RescheduleDialog({
         </DialogHeader>
         <div className="space-y-4">
           <p className="text-xs text-muted-foreground">
-            {booking.services?.name} · {duration} min ·{" "}
+            {getBookingServiceLabel(booking)} · {duration} min ·{" "}
             {booking.profiles?.display_name ?? "Cliente"}
           </p>
           <div>
