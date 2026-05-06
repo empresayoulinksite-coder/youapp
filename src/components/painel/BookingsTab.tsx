@@ -1110,33 +1110,40 @@ function NewBookingDialog({
     const noteStr = noteParts.join(" · ");
 
     let cursor = new Date(slot);
-    let hasError = false;
-    for (const svc of selectedServices) {
-      const ends = new Date(cursor.getTime() + svc.duration_minutes * 60_000);
-      const { error } = await supabase.from("bookings").insert({
-        store_id: store.id,
+    const bookedServices = selectedServices.map((svc) => {
+      const start = new Date(cursor);
+      const end = new Date(start.getTime() + svc.duration_minutes * 60_000);
+      cursor = end;
+      return {
         service_id: svc.id,
-        user_id: user.id,
-        starts_at: cursor.toISOString(),
-        ends_at: ends.toISOString(),
-        total_price: svc.price,
-        status: "confirmed",
-        customer_notes: noteStr,
-      });
-      if (error) {
-        toast.error(error.message);
-        hasError = true;
-        break;
-      }
-      cursor = ends;
+        name: svc.name,
+        duration_minutes: svc.duration_minutes,
+        price: svc.price,
+        starts_at: start.toISOString(),
+        ends_at: end.toISOString(),
+      };
+    });
+
+    const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
+
+    const { error } = await supabase.from("bookings").insert({
+      store_id: store.id,
+      service_id: selectedServices[0].id,
+      user_id: user.id,
+      starts_at: new Date(slot).toISOString(),
+      ends_at: cursor.toISOString(),
+      total_price: totalPrice,
+      status: "confirmed",
+      customer_notes: noteStr,
+      booked_services: bookedServices,
+    });
+    const hasError = !!error;
+    if (error) {
+      toast.error(error.message);
     }
     setSaving(false);
     if (!hasError) {
-      toast.success(
-        selectedServices.length > 1
-          ? `${selectedServices.length} agendamentos criados`
-          : "Agendamento criado",
-      );
+      toast.success("Agendamento criado");
       onSaved();
     }
   };
