@@ -117,6 +117,38 @@ function CartPage() {
       });
   }, [storeId]);
 
+  // Busca taxa de entrega por bairro do endereço ativo
+  useEffect(() => {
+    if (!storeId || deliveryMode === "pickup" || !active?.neighborhood) {
+      setDeliveryFeeValue(0);
+      setDeliveryFeeLabel(deliveryMode === "pickup" ? "—" : "Grátis");
+      return;
+    }
+    const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    supabase
+      .from("store_delivery_areas")
+      .select("fee, is_active, neighborhood")
+      .eq("store_id", storeId)
+      .then(({ data }) => {
+        if (!data || data.length === 0) {
+          setDeliveryFeeValue(0);
+          setDeliveryFeeLabel("Grátis");
+          return;
+        }
+        const match = data.find(
+          (a) => a.is_active && norm(a.neighborhood) === norm(active.neighborhood!),
+        );
+        if (match) {
+          const fee = Number(match.fee);
+          setDeliveryFeeValue(fee);
+          setDeliveryFeeLabel(fee > 0 ? `R$ ${fee.toFixed(2).replace(".", ",")}` : "Grátis");
+        } else {
+          setDeliveryFeeValue(0);
+          setDeliveryFeeLabel("Grátis");
+        }
+      });
+  }, [storeId, deliveryMode, active?.neighborhood]);
+
   const withinHours = storeHours.length === 0 ? true : isStoreOpen(storeHours, now);
   const storeOpen = !storePaused && withinHours;
   const nextOpen = !storeOpen && !storePaused ? nextOpeningLabel(storeHours, now) : null;
@@ -127,7 +159,7 @@ function CartPage() {
   }, [pickupEnabled, deliveryMode]);
 
   const { discount, reason } = calculateDiscount(applied, total, storeId);
-  const grandTotal = Math.max(0, total - discount);
+  const grandTotal = Math.max(0, total - discount + (deliveryMode === "pickup" ? 0 : deliveryFeeValue));
 
   const applyCode = async (codeToTry?: string) => {
     const c = (codeToTry ?? code).trim().toUpperCase();
