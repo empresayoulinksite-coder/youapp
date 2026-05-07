@@ -94,7 +94,7 @@ export function TablesManager({ storeId, storeSlug }: { storeId: string; storeSl
   });
 
   const updateStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+    mutationFn: async ({ id, status }: { id: string; status: "livre" | "ocupada" | "fechando_conta" }) => {
       const { error } = await supabase.from("store_tables").update({ status }).eq("id", id);
       if (error) throw error;
     },
