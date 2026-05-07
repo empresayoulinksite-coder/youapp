@@ -36,6 +36,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { CashReportTab } from "@/components/painel/CashReportTab";
 import { GeneralReportTab } from "@/components/painel/GeneralReportTab";
+import { TablesManager } from "@/components/painel/TablesManager";
 
 export const Route = createFileRoute("/pedidos-loja/$storeId")({
   component: PedidosLojaPage,
