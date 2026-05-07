@@ -100,7 +100,7 @@ export function GeneralReportTab({ storeId }: { storeId: string }) {
         const m = b.payment_method || "Não informado";
         byMethod[m] = (byMethod[m] || 0) + 1;
       }
-      const COLORS = ["#3B82F6", "#93C5FD", "#1E40AF", "#60A5FA", "#BFDBFE", "#2563EB", "#DBEAFE"];
+      const COLORS = ["#7C3AED", "#A78BFA", "#5B21B6", "#8B5CF6", "#DDD6FE", "#6D28D9", "#EDE9FE"];
       return Object.entries(byMethod)
         .sort((a, b) => b[1] - a[1])
         .map(([name, value], i) => ({ name, value, fill: COLORS[i % COLORS.length] }));
