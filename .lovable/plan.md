@@ -1,26 +1,38 @@
-## Plano: Seção Relatórios na Sidebar
+## Plano: Relatório Geral estilo Anota Aí
 
 ### O que será feito
 
-1. **Nova seção colapsável "Relatórios" na sidebar** (`pedidos-loja.$storeId.tsx`)
-   - Abaixo da seção "Entregas", adicionar uma seção colapsável "Relatórios" com ícone `BarChart3`
-   - Dois sub-itens: **Geral** e **Caixa**
-   - Ao clicar, cada um muda o `activeTab` para renderizar o conteúdo correspondente
+Novo componente `src/components/painel/GeneralReportTab.tsx` substituindo o placeholder atual "Em desenvolvimento".
 
-2. **Tela "Relatório Caixa"** (novo componente `src/components/painel/CashReportTab.tsx`)
-   - Estilo inspirado no Anota Aí (imagem de referência)
-   - Filtro de período (data inicial e final) no topo
-   - Tabela com colunas: Nº do caixa, Abertura, Fechamento, Status
-   - Dados vindos da tabela `cash_registers` já existente no banco
-   - Paginação na tabela
-   - Botões de ação por linha (visualizar resumo)
+### Layout e funcionalidades
 
-3. **Tela "Relatório Geral"** (placeholder inicial)
-   - Componente simples com título "Relatório Geral" e mensagem "Em desenvolvimento"
-   - Pode ser expandido futuramente
+1. **Filtro de período** no topo
+   - Seletor de intervalo de datas (data inicial e final)
+   - Toggle "Comparar períodos" (visual, funcionalidade futura)
+
+2. **4 cards de resumo** (dados vindos da tabela `bookings` filtrados por `store_id` e período)
+   - **Faturamento** — soma dos valores dos pedidos concluídos
+   - **Ticket médio** — faturamento / total de pedidos
+   - **Total de pedidos** — contagem de pedidos no período
+   - **Clientes ativos** — contagem distinta de `user_id`
+
+3. **Abas de visualização**
+   - **Pedidos e Entregas** — gráfico de barras agrupado por dia da semana (Dom-Sáb), com barras de Entregas vs Pedidos
+   - **Faturamento** — gráfico de barras do faturamento por dia da semana
+   - **Formas de pagamento** — distribuição por método de pagamento
+
+4. **Seletor de agrupamento** (Diário / Semanal / Mensal) ao lado das abas
+
+### Estilo visual
+- Cards com ícones coloridos em fundo azul claro, valores em destaque
+- Gráfico de barras com cores azul escuro (entregas) e azul claro (pedidos)
+- Labels nos topos das barras com os valores
+- Design limpo, fundo branco, bordas suaves
 
 ### Detalhes técnicos
 
-- **Sidebar**: adicionar estado `relatoriosOpen` e lógica colapsável idêntica à seção "Entregas"
-- **CashReportTab**: query na tabela `cash_registers` filtrando por `store_id` e período, ordenado por `opened_at DESC`
-- Sem alterações no banco de dados — usa tabelas existentes
+- **Componente**: `src/components/painel/GeneralReportTab.tsx`
+- **Gráficos**: biblioteca `recharts` (já disponível no projeto)
+- **Dados**: query na tabela `bookings` com filtros de `store_id`, `status = 'completed'`, e intervalo de datas
+- **Sidebar**: atualizar `pedidos-loja.$storeId.tsx` para renderizar `GeneralReportTab` no lugar do placeholder
+- Sem alterações no banco de dados
