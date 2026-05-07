@@ -447,6 +447,7 @@ function CartPage() {
         customerPhone={profilePhone}
         deliveryMode={deliveryMode}
         storeAddress={storeAddress}
+        tableNumber={tableNumber}
         submitting={submitting}
         onConfirm={async ({ paymentMethod, notes, number, complement, customerName, customerPhone }) => {
           if (!authUser) {
