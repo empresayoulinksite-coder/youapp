@@ -364,7 +364,7 @@ function PedidosLojaPage() {
 
                 if (item.isLink && item.to) {
                   return (
-                    <Link key={idx} to={item.to} className={baseClass}>
+                    <Link key={idx} to={item.to} params={(item as any).params} search={(item as any).search} className={baseClass}>
                       {content}
                     </Link>
                   );
