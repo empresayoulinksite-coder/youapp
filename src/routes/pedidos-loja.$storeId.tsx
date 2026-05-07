@@ -196,7 +196,7 @@ function PedidosLojaPage() {
     { label: "Meus pedidos", icon: KanbanSquare, badge: 0 },
     { label: "Pedidos balcão (PDV)", icon: PenSquare },
     { label: "Pedidos salão", icon: Armchair, badge: "+" },
-    { label: "Gestor de cardápio", icon: MenuSquare, isLink: true, to: `/admin/loja/${storeId}` },
+    { label: "Gestor de cardápio", icon: MenuSquare, isLink: true, to: `/admin/loja/${storeId}?tab=catalog` },
     
   ];
 

@@ -41,6 +41,9 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/admin/loja/$storeId")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    tab: (search.tab as string) || "info",
+  }),
   component: AdminStoreManagePage,
   errorComponent: ({ error }) => (
     <div className="p-6">
