@@ -22,8 +22,9 @@ interface Props {
   acceptedPaymentMethods?: string[] | null;
   customerName?: string | null;
   customerPhone?: string | null;
-  deliveryMode?: "delivery" | "pickup";
+  deliveryMode?: "delivery" | "pickup" | "mesa";
   storeAddress?: string | null;
+  tableNumber?: number | null;
   submitting: boolean;
   onConfirm: (data: {
     paymentMethod: PaymentMethod;
@@ -76,10 +77,12 @@ export function CheckoutReviewDialog({
   customerPhone: initialPhone,
   deliveryMode = "delivery",
   storeAddress,
+  tableNumber,
   submitting,
   onConfirm,
 }: Props) {
   const isPickup = deliveryMode === "pickup";
+  const isMesa = deliveryMode === "mesa";
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [notes, setNotes] = useState("");
   const [number, setNumber] = useState("");
@@ -115,7 +118,7 @@ export function CheckoutReviewDialog({
   const hasName = name.trim().length > 0;
   const phoneDigits = phone.replace(/\D/g, "");
   const hasPhone = phoneDigits.length >= 10;
-  const addressOk = isPickup ? true : !!addressText && hasNumber;
+  const addressOk = isPickup || isMesa ? true : !!addressText && hasNumber;
   const canConfirm =
     !!paymentMethod && addressOk && hasName && hasPhone && !submitting;
 
@@ -178,86 +181,98 @@ export function CheckoutReviewDialog({
             </div>
           </section>
 
-          {/* Endereço / Retirada */}
-          <section>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5" />
-                {isPickup ? "Retirada no local" : "Endereço de entrega"}
+          {/* Endereço / Retirada / Mesa */}
+          {isMesa ? (
+            <section>
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 mb-2">
+                <MapPin className="h-3.5 w-3.5" /> Local
               </h3>
-              {!isPickup && (
-                <Link
-                  to="/perfil"
-                  className="text-xs font-semibold text-brand flex items-center gap-1"
-                >
-                  <Pencil className="h-3 w-3" /> Editar
-                </Link>
-              )}
-            </div>
-            {isPickup ? (
               <div className="rounded-xl border border-border bg-background p-3">
-                <p className="text-sm font-semibold">🏪 Você vai retirar na loja</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {storeAddress ?? "Confirme o endereço com a loja pelo WhatsApp."}
-                </p>
+                <p className="text-sm font-semibold">🍽️ Mesa {tableNumber}</p>
+                <p className="text-xs text-muted-foreground mt-1">Pedido na mesa — sem necessidade de entrega</p>
               </div>
-            ) : address ? (
-              <div className="rounded-xl border border-border bg-background p-3 space-y-3">
-                <div>
-                  <p className="text-sm font-semibold">{address.label}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {[address.street, address.neighborhood, address.city]
-                      .filter(Boolean)
-                      .join(", ")}
-                  </p>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-[11px] font-semibold text-muted-foreground uppercase">
-                      Número *
-                    </label>
-                    <Input
-                      value={number}
-                      onChange={(e) => setNumber(e.target.value)}
-                      placeholder="123 ou Apto 45"
-                      className="mt-1 h-9"
-                      maxLength={20}
-                      inputMode="text"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-semibold text-muted-foreground uppercase">
-                      Complemento
-                    </label>
-                    <Input
-                      value={complement}
-                      onChange={(e) => setComplement(e.target.value)}
-                      placeholder="Bloco, fundos..."
-                      className="mt-1 h-9"
-                      maxLength={80}
-                    />
-                  </div>
-                </div>
-                {!hasNumber && (
-                  <p className="text-[11px] text-destructive font-semibold">
-                    Informe o número da casa/apartamento
-                  </p>
+            </section>
+          ) : (
+            <section>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5" />
+                  {isPickup ? "Retirada no local" : "Endereço de entrega"}
+                </h3>
+                {!isPickup && (
+                  <Link
+                    to="/perfil"
+                    className="text-xs font-semibold text-brand flex items-center gap-1"
+                  >
+                    <Pencil className="h-3 w-3" /> Editar
+                  </Link>
                 )}
               </div>
-            ) : (
-              <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3">
-                <p className="text-sm text-destructive font-semibold">
-                  Nenhum endereço cadastrado
-                </p>
-                <Link
-                  to="/perfil"
-                  className="text-xs font-semibold text-brand mt-1 inline-block"
-                >
-                  Cadastrar endereço →
-                </Link>
-              </div>
-            )}
-          </section>
+              {isPickup ? (
+                <div className="rounded-xl border border-border bg-background p-3">
+                  <p className="text-sm font-semibold">🏪 Você vai retirar na loja</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {storeAddress ?? "Confirme o endereço com a loja pelo WhatsApp."}
+                  </p>
+                </div>
+              ) : address ? (
+                <div className="rounded-xl border border-border bg-background p-3 space-y-3">
+                  <div>
+                    <p className="text-sm font-semibold">{address.label}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {[address.street, address.neighborhood, address.city]
+                        .filter(Boolean)
+                        .join(", ")}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[11px] font-semibold text-muted-foreground uppercase">
+                        Número *
+                      </label>
+                      <Input
+                        value={number}
+                        onChange={(e) => setNumber(e.target.value)}
+                        placeholder="123 ou Apto 45"
+                        className="mt-1 h-9"
+                        maxLength={20}
+                        inputMode="text"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-muted-foreground uppercase">
+                        Complemento
+                      </label>
+                      <Input
+                        value={complement}
+                        onChange={(e) => setComplement(e.target.value)}
+                        placeholder="Bloco, fundos..."
+                        className="mt-1 h-9"
+                        maxLength={80}
+                      />
+                    </div>
+                  </div>
+                  {!hasNumber && (
+                    <p className="text-[11px] text-destructive font-semibold">
+                      Informe o número da casa/apartamento
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3">
+                  <p className="text-sm text-destructive font-semibold">
+                    Nenhum endereço cadastrado
+                  </p>
+                  <Link
+                    to="/perfil"
+                    className="text-xs font-semibold text-brand mt-1 inline-block"
+                  >
+                    Cadastrar endereço →
+                  </Link>
+                </div>
+              )}
+            </section>
+          )}
 
           {/* WhatsApp da loja */}
           <section>
@@ -354,9 +369,9 @@ export function CheckoutReviewDialog({
                 ? "Informe seu nome"
                 : !hasPhone
                   ? "Informe seu telefone"
-                  : !isPickup && !address
-                    ? "Cadastre um endereço"
-                    : !isPickup && !hasNumber
+                   : !isPickup && !isMesa && !address
+                     ? "Cadastre um endereço"
+                     : !isPickup && !isMesa && !hasNumber
                       ? "Informe o número"
                       : !paymentMethod
                         ? "Escolha o pagamento"

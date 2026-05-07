@@ -43,7 +43,8 @@ function CartPage() {
   const [storePaymentMethods, setStorePaymentMethods] = useState<string[] | null>(null);
   const [pickupEnabled, setPickupEnabled] = useState(false);
   const [storeAddress, setStoreAddress] = useState<string | null>(null);
-  const [deliveryMode, setDeliveryMode] = useState<"delivery" | "pickup">("delivery");
+  const [deliveryMode, setDeliveryMode] = useState<"delivery" | "pickup" | "mesa">("delivery");
+  const [tableNumber, setTableNumber] = useState<number | null>(null);
   const [profileName, setProfileName] = useState<string | null>(null);
   const [profilePhone, setProfilePhone] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
@@ -83,6 +84,20 @@ function CartPage() {
     return () => clearInterval(t);
   }, []);
 
+  // Detecta se é pedido de mesa via sessionStorage
+  useEffect(() => {
+    if (typeof window === "undefined" || !storeId) return;
+    const mesa = sessionStorage.getItem("youapp_mesa");
+    const mesaStore = sessionStorage.getItem("youapp_mesa_store");
+    if (mesa && mesaStore === storeId) {
+      setTableNumber(parseInt(mesa, 10));
+      setDeliveryMode("mesa");
+    } else {
+      setTableNumber(null);
+      if (deliveryMode === "mesa") setDeliveryMode("delivery");
+    }
+  }, [storeId]);
+
   useEffect(() => {
     if (!storeId) {
       setStoreHours([]);
@@ -119,9 +134,9 @@ function CartPage() {
 
   // Busca taxa de entrega por bairro do endereço ativo
   useEffect(() => {
-    if (!storeId || deliveryMode === "pickup" || !active?.neighborhood) {
+    if (!storeId || deliveryMode === "pickup" || deliveryMode === "mesa" || !active?.neighborhood) {
       setDeliveryFeeValue(0);
-      setDeliveryFeeLabel(deliveryMode === "pickup" ? "—" : "Grátis");
+      setDeliveryFeeLabel(deliveryMode === "pickup" || deliveryMode === "mesa" ? "—" : "Grátis");
       return;
     }
     const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
@@ -159,7 +174,7 @@ function CartPage() {
   }, [pickupEnabled, deliveryMode]);
 
   const { discount, reason } = calculateDiscount(applied, total, storeId);
-  const grandTotal = Math.max(0, total - discount + (deliveryMode === "pickup" ? 0 : deliveryFeeValue));
+  const grandTotal = Math.max(0, total - discount + (deliveryMode === "pickup" || deliveryMode === "mesa" ? 0 : deliveryFeeValue));
 
   const applyCode = async (codeToTry?: string) => {
     const c = (codeToTry ?? code).trim().toUpperCase();
@@ -325,8 +340,8 @@ function CartPage() {
               )}
             </div>
 
-            {/* Toggle Entrega / Retirada */}
-            {pickupEnabled && (
+            {/* Toggle Entrega / Retirada (esconde no modo mesa) */}
+            {pickupEnabled && deliveryMode !== "mesa" && (
               <div className="bg-card rounded-2xl p-3 mt-3 shadow-[var(--shadow-card)]">
                 <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Como você quer receber?</p>
                 <div className="grid grid-cols-2 gap-2">
@@ -350,6 +365,14 @@ function CartPage() {
               </div>
             )}
 
+            {/* Indicador de mesa */}
+            {deliveryMode === "mesa" && tableNumber && (
+              <div className="bg-card rounded-2xl p-3 mt-3 shadow-[var(--shadow-card)]">
+                <p className="text-sm font-bold">🍽️ Mesa {tableNumber}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Pedido será feito diretamente na mesa</p>
+              </div>
+            )}
+
             <div className="bg-card rounded-2xl p-4 mt-3 shadow-[var(--shadow-card)] space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
@@ -364,7 +387,7 @@ function CartPage() {
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Entrega</span>
                 <span className={`font-semibold ${deliveryFeeValue === 0 ? "text-success" : ""}`}>
-                  {deliveryMode === "pickup" ? "—" : deliveryFeeLabel}
+                  {deliveryMode === "pickup" || deliveryMode === "mesa" ? "—" : deliveryFeeLabel}
                 </span>
               </div>
               <div className="border-t border-border pt-2 flex justify-between">
@@ -424,6 +447,7 @@ function CartPage() {
         customerPhone={profilePhone}
         deliveryMode={deliveryMode}
         storeAddress={storeAddress}
+        tableNumber={tableNumber}
         submitting={submitting}
         onConfirm={async ({ paymentMethod, notes, number, complement, customerName, customerPhone }) => {
           if (!authUser) {
@@ -468,7 +492,7 @@ function CartPage() {
           if (discount > 0 && applied) {
             lines.push(`Cupom ${applied.code}: -${fmtBRL(discount)}`);
           }
-          if (deliveryMode !== "pickup" && deliveryFeeValue > 0) {
+          if (deliveryMode !== "pickup" && deliveryMode !== "mesa" && deliveryFeeValue > 0) {
             lines.push(`🛵 Entrega: ${fmtBRL(deliveryFeeValue)}`);
           }
           lines.push(`*Total: ${fmtBRL(grandTotal)}*`);
@@ -501,7 +525,9 @@ function CartPage() {
             setProfilePhone(customerPhone || null);
           }
           let deliveryAddress: string | null = null;
-          if (deliveryMode === "pickup") {
+          if (deliveryMode === "mesa" && tableNumber) {
+            lines.push(`🍽️ Mesa ${tableNumber}`);
+          } else if (deliveryMode === "pickup") {
             lines.push(`🏪 Retirada no local${storeAddress ? `: ${storeAddress}` : ""}`);
           } else if (active) {
             const finalNumber = number || active.number || "";
@@ -537,13 +563,14 @@ function CartPage() {
                 store_image_url: storeImageUrl,
                 store_whatsapp: storeWhatsapp,
                 total: grandTotal,
-                delivery_fee: deliveryMode === "pickup" ? 0 : deliveryFeeValue,
+                delivery_fee: deliveryMode === "pickup" || deliveryMode === "mesa" ? 0 : deliveryFeeValue,
                 discount,
                 delivery_address: deliveryAddress,
                 payment_method: paymentMethod,
                 customer_notes: notes || null,
                 whatsapp_message: message,
                 status: "em_analise",
+                table_number: tableNumber ?? null,
               })
               .select("id")
               .single();
@@ -579,6 +606,11 @@ function CartPage() {
           openWhatsapp(storeWhatsapp, message);
           await clear();
           clearCoupon();
+          // Limpa mesa da sessão após pedido
+          if (tableNumber) {
+            sessionStorage.removeItem("youapp_mesa");
+            sessionStorage.removeItem("youapp_mesa_store");
+          }
           setReviewOpen(false);
           toast.success("Pedido enviado! Continue no WhatsApp.");
           } catch (error) {

@@ -194,6 +194,17 @@ function StorePage() {
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [menuSheetOpen, setMenuSheetOpen] = useState(false);
 
+  // Captura ?mesa=N da URL e salva em sessionStorage para o checkout simplificado
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const mesa = params.get("mesa");
+    if (mesa && /^\d+$/.test(mesa)) {
+      sessionStorage.setItem("youapp_mesa", mesa);
+      sessionStorage.setItem("youapp_mesa_store", store.id);
+    }
+  }, [store.id]);
+
   // Reviews e cupons são carregados sob demanda (só quando o usuário abre as abas / vê)
   const { data: reviews = [] } = useQuery({
     queryKey: ["store-reviews", store.id],

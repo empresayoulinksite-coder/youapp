@@ -1,46 +1,31 @@
 
-## O que será feito
+## Pedido na Mesa - Checkout Simplificado
 
-Implementar o módulo "Pedidos salão" (que já existe como item de navegação mas mostra "em desenvolvimento") com um sistema de **Mesas e Comandas** inspirado no Anota Aí, conforme as imagens de referência.
+Quando o cliente acessa o cardápio digital via QR Code da mesa (`?mesa=N`), o fluxo de checkout será simplificado: apenas **nome** e **telefone** serão solicitados, sem endereço de entrega nem seleção delivery/retirada.
 
-### Layout e funcionalidades
+### O que muda
 
-1. **Abas superiores**: "Mesas" e "Comandas" (toggle entre os dois modos)
+1. **Capturar o parâmetro `?mesa=N` na URL**
+   - Na página da loja (`loja.$slug.tsx`), ler o parâmetro `mesa` da URL e salvar no contexto do carrinho ou via search params.
+   - Propagar esse valor até a sacola.
 
-2. **Barra de filtros**:
-   - Campo de busca (Nº da mesa / Nº da comanda)
-   - Filtro por status: Todos, Livre, Ocupada, Fechando conta
-   - Legenda com indicadores coloridos (verde = Livre, laranja = Ocupada, cinza = Fechando conta)
+2. **Sacola (`sacola.tsx`) - Modo Mesa**
+   - Quando `mesa` estiver presente, esconder o toggle "Entrega / Retirada" e a seção de endereço.
+   - Taxa de entrega = 0.
+   - Passar `deliveryMode="mesa"` para o checkout dialog.
 
-3. **Grid de cards** (3 colunas):
-   - Cada card mostra: número da mesa/comanda, botão "+ Pedido", botão dropdown com opções
-   - Barra colorida no rodapé indicando status (verde = Livre, etc.)
-   - Ao clicar "+ Pedido", abre o PDV vinculado àquela mesa/comanda
+3. **CheckoutReviewDialog - Modo Mesa**
+   - Mostrar apenas: **Nome**, **Telefone**, **Forma de pagamento** e **Observação**.
+   - Esconder a seção de endereço.
+   - Mostrar uma indicação "🍽️ Mesa N" no lugar do endereço.
 
-4. **Menu dropdown** de cada card:
-   - "+ Novo Pedido" — abre o PDV vinculado à mesa
-   - "Imprimir QR Code" — gera e exibe QR Code da mesa (link para o cardápio digital da loja com parâmetro de mesa)
-
-5. **Botões de ação no topo**:
-   - "+ Criar comanda" / "+ Criar mesa"
-   - "+ Novo pedido"
-
-6. **QR Code da mesa**:
-   - Gera um QR Code com a URL do cardápio digital da loja + parâmetro `?mesa=N`
-   - Dialog para visualizar e imprimir
+4. **Pedido salvo no banco**
+   - Adicionar campo `table_number` (integer, nullable) na tabela `orders` para registrar de qual mesa veio o pedido.
+   - Na mensagem do WhatsApp, incluir "🍽️ Mesa N" ao invés de endereço.
 
 ### Detalhes técnicos
 
-**Banco de dados** (nova tabela):
-- `store_tables` — id, store_id, number, label (ex: "Mesa #1"), type (mesa/comanda), status (livre/ocupada/fechando_conta), created_at
-- RLS: donos e staff da loja podem gerenciar
-
-**Componente**: `src/components/painel/TablesManager.tsx`
-- Grid responsivo de cards
-- Integração com PDVManager para criar pedidos vinculados a mesas
-- QR Code gerado via biblioteca `qrcode.react`
-
-**Atualização**: `src/routes/pedidos-loja.$storeId.tsx`
-- "Pedidos salão" passa a renderizar `TablesManager`
-
-**Dependência**: `qrcode.react` para geração do QR Code
+- **Migration**: `ALTER TABLE orders ADD COLUMN table_number integer;` (nullable, sem breaking change)
+- **Arquivos editados**: `loja.$slug.tsx`, `sacola.tsx`, `CheckoutReviewDialog.tsx`
+- **CartContext**: armazenar `tableNumber` quando presente na URL
+- **Tipo de deliveryMode**: expandir para `"delivery" | "pickup" | "mesa"`
