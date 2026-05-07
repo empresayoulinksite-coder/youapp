@@ -463,7 +463,7 @@ function CartPage() {
             toast.error("Não foi possível identificar a loja deste pedido.");
             return;
           }
-          if (!storeWhatsapp) return;
+          if (!storeWhatsapp && deliveryMode !== "mesa") return;
           setSubmitting(true);
           try {
             const fmtBRL = (n: number) => `R$ ${n.toFixed(2).replace(".", ",")}`;
