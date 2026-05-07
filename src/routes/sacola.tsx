@@ -11,6 +11,7 @@ import { isStoreOpen, nextOpeningLabel, type StoreHour } from "@/lib/store-hours
 import { openWhatsapp } from "@/lib/whatsapp";
 import { toast } from "sonner";
 import { CheckoutReviewDialog, type PaymentMethod } from "@/components/CheckoutReviewDialog";
+import { OrderTrackingDialog } from "@/components/OrderTrackingDialog";
 
 export const Route = createFileRoute("/sacola")({
   head: () => ({
@@ -52,6 +53,9 @@ function CartPage() {
   const [deliveryFeeValue, setDeliveryFeeValue] = useState<number>(0);
   const [deliveryFeeLabel, setDeliveryFeeLabel] = useState<string>("Grátis");
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [trackingOrderId, setTrackingOrderId] = useState<string | null>(null);
+  const [trackingOrderNumber, setTrackingOrderNumber] = useState<number | null>(null);
+  const [trackingOpen, setTrackingOpen] = useState(false);
   const { active } = useAddress();
   const { user: authUser } = useAuth();
 
@@ -423,7 +427,7 @@ function CartPage() {
                 toast.error("A loja está fechada no momento.");
                 return;
               }
-              if (!storeWhatsapp) {
+              if (!storeWhatsapp && deliveryMode !== "mesa") {
                 toast.error("Loja sem WhatsApp cadastrado. Não é possível finalizar.");
                 return;
               }
@@ -459,7 +463,7 @@ function CartPage() {
             toast.error("Não foi possível identificar a loja deste pedido.");
             return;
           }
-          if (!storeWhatsapp) return;
+          if (!storeWhatsapp && deliveryMode !== "mesa") return;
           setSubmitting(true);
           try {
             const fmtBRL = (n: number) => `R$ ${n.toFixed(2).replace(".", ",")}`;
@@ -572,7 +576,7 @@ function CartPage() {
                 status: "em_analise",
                 table_number: tableNumber ?? null,
               })
-              .select("id")
+              .select("id, order_number")
               .single();
             if (orderError) throw orderError;
             if (!orderError && order) {
@@ -603,7 +607,17 @@ function CartPage() {
               if (itemsError) throw itemsError;
             }
 
-          openWhatsapp(storeWhatsapp, message);
+          // Mesa: abre tracking dialog; outros: abre WhatsApp
+          if (deliveryMode === "mesa" && order) {
+            setTrackingOrderId(order.id);
+            setTrackingOrderNumber(order.order_number ?? null);
+            setReviewOpen(false);
+            setTrackingOpen(true);
+          } else if (storeWhatsapp) {
+            openWhatsapp(storeWhatsapp, message);
+            setReviewOpen(false);
+          }
+
           await clear();
           clearCoupon();
           // Limpa mesa da sessão após pedido
@@ -611,15 +625,25 @@ function CartPage() {
             sessionStorage.removeItem("youapp_mesa");
             sessionStorage.removeItem("youapp_mesa_store");
           }
-          setReviewOpen(false);
-          toast.success("Pedido enviado! Continue no WhatsApp.");
+          if (deliveryMode !== "mesa") {
+            toast.success("Pedido enviado! Continue no WhatsApp.");
+          }
           } catch (error) {
             console.error("Erro ao finalizar pedido:", error);
-            toast.error("Não foi possível salvar o pedido. Tente novamente antes de abrir o WhatsApp.");
+            toast.error("Não foi possível salvar o pedido. Tente novamente.");
           } finally {
             setSubmitting(false);
           }
         }}
+      />
+
+      <OrderTrackingDialog
+        open={trackingOpen}
+        onOpenChange={setTrackingOpen}
+        orderId={trackingOrderId}
+        orderNumber={trackingOrderNumber}
+        tableNumber={tableNumber}
+        storeName={storeName}
       />
     </div>
   );

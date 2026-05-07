@@ -1,16 +1,29 @@
-## Remover forma de pagamento para pedidos na mesa
+## Acompanhamento de pedido na mesa (sem WhatsApp)
 
-Quando o pedido é feito na mesa (`deliveryMode === "mesa"`), o cliente paga direto no caixa. A seção de forma de pagamento será escondida e o campo não será obrigatório.
+Para pedidos feitos na mesa, ao invés de abrir o WhatsApp, o pedido será salvo no banco e o cliente verá uma tela de acompanhamento com o status em tempo real.
 
 ### Alterações
 
-**`src/components/CheckoutReviewDialog.tsx`**
-- Esconder toda a seção "FORMA DE PAGAMENTO" quando `isMesa` for true
-- Ajustar `canConfirm`: não exigir `paymentMethod` quando `isMesa`
-- Se mesa, enviar `paymentMethod` como `"Pagamento no caixa"` no `onConfirm`
+**Novo componente `src/components/OrderTrackingDialog.tsx`**
+- Modal/dialog que mostra o status do pedido recém-feito
+- Timeline visual com os passos: Em análise → Em produção → Pronto
+- Usa Supabase Realtime para atualizar o status automaticamente quando o lojista muda
+- Mostra número do pedido, itens resumidos e mesa
+- Botão para fechar
 
 **`src/routes/sacola.tsx`**
-- Na montagem da mensagem WhatsApp: quando mesa, mostrar "💳 Pagamento no caixa" ao invés do método selecionado
-- No insert do pedido: salvar `payment_method: "Pagamento no caixa"` para pedidos de mesa
+- Quando `deliveryMode === "mesa"`:
+  - Não exige `storeWhatsapp` (remove a validação de WhatsApp obrigatório)
+  - Após salvar o pedido no banco, NÃO chama `openWhatsapp()`
+  - Ao invés disso, abre o `OrderTrackingDialog` com o ID do pedido criado
+  - Limpa o carrinho e a mesa da sessão normalmente
+- Pedidos delivery/retirada continuam com o fluxo WhatsApp normal
 
-O botão do checkout mudará de "Escolha o pagamento" para "Enviar pedido" quando for mesa.
+**Realtime (migration)**
+- Habilitar realtime na tabela `orders` para que o status atualize automaticamente no dialog do cliente
+
+### Detalhes técnicos
+
+- O `OrderTrackingDialog` receberá o `orderId` e fará um subscribe no canal Realtime filtrando por aquele pedido
+- A timeline mostrará 3 etapas com ícones/cores: Em análise (amarelo), Em produção (azul), Pronto (verde)
+- O lojista já muda o status pela tela de pedidos existente — nenhuma alteração necessária no painel
