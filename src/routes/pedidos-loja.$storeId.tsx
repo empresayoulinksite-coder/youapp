@@ -36,6 +36,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { CashReportTab } from "@/components/painel/CashReportTab";
 import { GeneralReportTab } from "@/components/painel/GeneralReportTab";
+import { TablesManager } from "@/components/painel/TablesManager";
 
 export const Route = createFileRoute("/pedidos-loja/$storeId")({
   component: PedidosLojaPage,
@@ -181,7 +182,7 @@ function PedidosLojaPage() {
   };
 
   const handleNavClick = (label: string) => {
-    if (["Meus pedidos", "Pedidos balcão (PDV)", "Relatório Geral", "Relatório Caixa"].includes(label)) {
+    if (["Meus pedidos", "Pedidos balcão (PDV)", "Pedidos salão", "Relatório Geral", "Relatório Caixa"].includes(label)) {
       setActiveTab(label);
       if (label === "Meus pedidos" && editingOrder) {
         setEditingOrder(null);
@@ -507,6 +508,8 @@ function PedidosLojaPage() {
             <CashReportTab storeId={storeId} />
           ) : activeTab === "Relatório Geral" ? (
             <GeneralReportTab storeId={storeId} />
+          ) : activeTab === "Pedidos salão" ? (
+            <TablesManager storeId={storeId} storeSlug={store?.slug} />
           ) : (
             <div className="flex h-full items-center justify-center rounded-lg border bg-white p-8 text-center shadow-sm">
               <div>

@@ -1,38 +1,46 @@
-## Plano: Relatório Geral estilo Anota Aí
 
-### O que será feito
+## O que será feito
 
-Novo componente `src/components/painel/GeneralReportTab.tsx` substituindo o placeholder atual "Em desenvolvimento".
+Implementar o módulo "Pedidos salão" (que já existe como item de navegação mas mostra "em desenvolvimento") com um sistema de **Mesas e Comandas** inspirado no Anota Aí, conforme as imagens de referência.
 
 ### Layout e funcionalidades
 
-1. **Filtro de período** no topo
-   - Seletor de intervalo de datas (data inicial e final)
-   - Toggle "Comparar períodos" (visual, funcionalidade futura)
+1. **Abas superiores**: "Mesas" e "Comandas" (toggle entre os dois modos)
 
-2. **4 cards de resumo** (dados vindos da tabela `bookings` filtrados por `store_id` e período)
-   - **Faturamento** — soma dos valores dos pedidos concluídos
-   - **Ticket médio** — faturamento / total de pedidos
-   - **Total de pedidos** — contagem de pedidos no período
-   - **Clientes ativos** — contagem distinta de `user_id`
+2. **Barra de filtros**:
+   - Campo de busca (Nº da mesa / Nº da comanda)
+   - Filtro por status: Todos, Livre, Ocupada, Fechando conta
+   - Legenda com indicadores coloridos (verde = Livre, laranja = Ocupada, cinza = Fechando conta)
 
-3. **Abas de visualização**
-   - **Pedidos e Entregas** — gráfico de barras agrupado por dia da semana (Dom-Sáb), com barras de Entregas vs Pedidos
-   - **Faturamento** — gráfico de barras do faturamento por dia da semana
-   - **Formas de pagamento** — distribuição por método de pagamento
+3. **Grid de cards** (3 colunas):
+   - Cada card mostra: número da mesa/comanda, botão "+ Pedido", botão dropdown com opções
+   - Barra colorida no rodapé indicando status (verde = Livre, etc.)
+   - Ao clicar "+ Pedido", abre o PDV vinculado àquela mesa/comanda
 
-4. **Seletor de agrupamento** (Diário / Semanal / Mensal) ao lado das abas
+4. **Menu dropdown** de cada card:
+   - "+ Novo Pedido" — abre o PDV vinculado à mesa
+   - "Imprimir QR Code" — gera e exibe QR Code da mesa (link para o cardápio digital da loja com parâmetro de mesa)
 
-### Estilo visual
-- Cards com ícones coloridos em fundo azul claro, valores em destaque
-- Gráfico de barras com cores azul escuro (entregas) e azul claro (pedidos)
-- Labels nos topos das barras com os valores
-- Design limpo, fundo branco, bordas suaves
+5. **Botões de ação no topo**:
+   - "+ Criar comanda" / "+ Criar mesa"
+   - "+ Novo pedido"
+
+6. **QR Code da mesa**:
+   - Gera um QR Code com a URL do cardápio digital da loja + parâmetro `?mesa=N`
+   - Dialog para visualizar e imprimir
 
 ### Detalhes técnicos
 
-- **Componente**: `src/components/painel/GeneralReportTab.tsx`
-- **Gráficos**: biblioteca `recharts` (já disponível no projeto)
-- **Dados**: query na tabela `bookings` com filtros de `store_id`, `status = 'completed'`, e intervalo de datas
-- **Sidebar**: atualizar `pedidos-loja.$storeId.tsx` para renderizar `GeneralReportTab` no lugar do placeholder
-- Sem alterações no banco de dados
+**Banco de dados** (nova tabela):
+- `store_tables` — id, store_id, number, label (ex: "Mesa #1"), type (mesa/comanda), status (livre/ocupada/fechando_conta), created_at
+- RLS: donos e staff da loja podem gerenciar
+
+**Componente**: `src/components/painel/TablesManager.tsx`
+- Grid responsivo de cards
+- Integração com PDVManager para criar pedidos vinculados a mesas
+- QR Code gerado via biblioteca `qrcode.react`
+
+**Atualização**: `src/routes/pedidos-loja.$storeId.tsx`
+- "Pedidos salão" passa a renderizar `TablesManager`
+
+**Dependência**: `qrcode.react` para geração do QR Code
