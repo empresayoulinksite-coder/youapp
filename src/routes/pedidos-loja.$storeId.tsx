@@ -484,7 +484,7 @@ function PedidosLojaPage() {
           )}
         </header>
         
-        <div className="min-h-0 flex-1 overflow-hidden p-3 md:p-4">
+        <div className="min-h-0 flex-1 overflow-y-auto p-3 md:p-4">
           {activeTab === "Meus pedidos" ? (
             <OrdersManager 
               storeId={storeId} 
