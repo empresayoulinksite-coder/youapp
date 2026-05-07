@@ -120,7 +120,7 @@ export function CheckoutReviewDialog({
   const hasPhone = phoneDigits.length >= 10;
   const addressOk = isPickup || isMesa ? true : !!addressText && hasNumber;
   const canConfirm =
-    !!paymentMethod && addressOk && hasName && hasPhone && !submitting;
+    (isMesa || !!paymentMethod) && addressOk && hasName && hasPhone && !submitting;
 
   return (
     <div
@@ -289,45 +289,47 @@ export function CheckoutReviewDialog({
             </div>
           </section>
 
-          {/* Pagamento */}
-          <section>
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 mb-2">
-              <CreditCard className="h-3.5 w-3.5" /> Forma de pagamento
-            </h3>
-            {noMethodsConfigured && (
-              <p className="text-[11px] text-muted-foreground mb-2">
-                A loja ainda não definiu formas de pagamento. Mostrando todas as opções.
-              </p>
-            )}
-            <div className="space-y-2">
-              {finalMethods.map((m) => {
-                const checked = paymentMethod === m.label;
-                return (
-                  <button
-                    key={m.key}
-                    type="button"
-                    onClick={() => setPaymentMethod(m.label)}
-                    className={cn(
-                      "w-full flex items-center gap-3 rounded-xl border p-3 text-left transition-colors",
-                      checked
-                        ? "border-brand bg-brand-soft"
-                        : "border-border bg-background hover:border-brand/50",
-                    )}
-                  >
-                    <div
+          {/* Pagamento — esconde no modo mesa (pagamento no caixa) */}
+          {!isMesa && (
+            <section>
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1.5 mb-2">
+                <CreditCard className="h-3.5 w-3.5" /> Forma de pagamento
+              </h3>
+              {noMethodsConfigured && (
+                <p className="text-[11px] text-muted-foreground mb-2">
+                  A loja ainda não definiu formas de pagamento. Mostrando todas as opções.
+                </p>
+              )}
+              <div className="space-y-2">
+                {finalMethods.map((m) => {
+                  const checked = paymentMethod === m.label;
+                  return (
+                    <button
+                      key={m.key}
+                      type="button"
+                      onClick={() => setPaymentMethod(m.label)}
                       className={cn(
-                        "h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0",
-                        checked ? "border-brand bg-brand" : "border-border",
+                        "w-full flex items-center gap-3 rounded-xl border p-3 text-left transition-colors",
+                        checked
+                          ? "border-brand bg-brand-soft"
+                          : "border-border bg-background hover:border-brand/50",
                       )}
                     >
-                      {checked && <Check className="h-3 w-3 text-brand-foreground" />}
-                    </div>
-                    <span className="text-sm font-semibold">{m.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
+                      <div
+                        className={cn(
+                          "h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0",
+                          checked ? "border-brand bg-brand" : "border-border",
+                        )}
+                      >
+                        {checked && <Check className="h-3 w-3 text-brand-foreground" />}
+                      </div>
+                      <span className="text-sm font-semibold">{m.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          )}
 
           {/* Observação */}
           <section>
@@ -349,17 +351,18 @@ export function CheckoutReviewDialog({
 
         <div className="sticky bottom-0 bg-card border-t border-border p-4">
           <button
-            onClick={() =>
-              paymentMethod &&
+            onClick={() => {
+              const finalPayment = isMesa ? "Pagamento no caixa" : paymentMethod;
+              if (!finalPayment) return;
               onConfirm({
-                paymentMethod,
+                paymentMethod: finalPayment,
                 notes: notes.trim(),
                 number: number.trim(),
                 complement: complement.trim(),
                 customerName: name.trim(),
                 customerPhone: phoneDigits,
-              })
-            }
+              });
+            }}
             disabled={!canConfirm}
             className="w-full bg-brand text-brand-foreground font-bold py-3.5 rounded-full shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -373,7 +376,7 @@ export function CheckoutReviewDialog({
                      ? "Cadastre um endereço"
                      : !isPickup && !isMesa && !hasNumber
                       ? "Informe o número"
-                      : !paymentMethod
+                      : !isMesa && !paymentMethod
                         ? "Escolha o pagamento"
                         : "Confirmar e enviar pelo WhatsApp"}
           </button>
