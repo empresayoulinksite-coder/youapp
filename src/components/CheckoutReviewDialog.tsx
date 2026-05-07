@@ -77,10 +77,12 @@ export function CheckoutReviewDialog({
   customerPhone: initialPhone,
   deliveryMode = "delivery",
   storeAddress,
+  tableNumber,
   submitting,
   onConfirm,
 }: Props) {
   const isPickup = deliveryMode === "pickup";
+  const isMesa = deliveryMode === "mesa";
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [notes, setNotes] = useState("");
   const [number, setNumber] = useState("");
