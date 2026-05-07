@@ -84,6 +84,20 @@ function CartPage() {
     return () => clearInterval(t);
   }, []);
 
+  // Detecta se é pedido de mesa via sessionStorage
+  useEffect(() => {
+    if (typeof window === "undefined" || !storeId) return;
+    const mesa = sessionStorage.getItem("youapp_mesa");
+    const mesaStore = sessionStorage.getItem("youapp_mesa_store");
+    if (mesa && mesaStore === storeId) {
+      setTableNumber(parseInt(mesa, 10));
+      setDeliveryMode("mesa");
+    } else {
+      setTableNumber(null);
+      if (deliveryMode === "mesa") setDeliveryMode("delivery");
+    }
+  }, [storeId]);
+
   useEffect(() => {
     if (!storeId) {
       setStoreHours([]);
