@@ -157,10 +157,10 @@ export function GeneralReportTab({ storeId }: { storeId: string }) {
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard icon={<DollarSign className="h-5 w-5 text-blue-500" />} value={`R$ ${stats.totalRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} label="Faturamento" />
-        <StatCard icon={<Tag className="h-5 w-5 text-blue-500" />} value={`R$ ${stats.avgTicket.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} label="Ticket médio" />
-        <StatCard icon={<ListOrdered className="h-5 w-5 text-blue-500" />} value={String(stats.totalCount)} label="Total de pedidos" />
-        <StatCard icon={<Users className="h-5 w-5 text-blue-500" />} value={String(stats.activeClients)} label="Clientes ativos" />
+        <StatCard icon={<DollarSign className="h-5 w-5 text-primary" />} value={`R$ ${stats.totalRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} label="Faturamento" />
+        <StatCard icon={<Tag className="h-5 w-5 text-primary" />} value={`R$ ${stats.avgTicket.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} label="Ticket médio" />
+        <StatCard icon={<ListOrdered className="h-5 w-5 text-primary" />} value={String(stats.totalCount)} label="Total de pedidos" />
+        <StatCard icon={<Users className="h-5 w-5 text-primary" />} value={String(stats.activeClients)} label="Clientes ativos" />
       </div>
 
       {/* Chart tabs + grouping */}
@@ -176,7 +176,7 @@ export function GeneralReportTab({ storeId }: { storeId: string }) {
               onClick={() => setChartTab(key)}
               className={cn(
                 "px-3 py-2 text-sm font-medium border-b-2 transition-colors",
-                chartTab === key ? "border-blue-500 text-blue-600" : "border-transparent text-slate-500 hover:text-slate-700"
+                chartTab === key ? "border-primary text-primary" : "border-transparent text-slate-500 hover:text-slate-700"
               )}
             >
               {label}
@@ -231,7 +231,7 @@ export function GeneralReportTab({ storeId }: { storeId: string }) {
               <XAxis dataKey="name" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `R$${v}`} />
               <Tooltip formatter={(v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />
-              <Bar dataKey="faturamento" fill="#3B82F6" radius={[4, 4, 0, 0]}>
+              <Bar dataKey="faturamento" fill="#7C3AED" radius={[4, 4, 0, 0]}>
                 <LabelList dataKey="faturamento" position="top" fontSize={10} formatter={(v: number) => v > 0 ? `R$${v.toFixed(0)}` : ""} />
               </Bar>
             </BarChart>
@@ -244,10 +244,10 @@ export function GeneralReportTab({ storeId }: { storeId: string }) {
               <YAxis tick={{ fontSize: 11 }} />
               <Tooltip />
               <Legend />
-              <Bar dataKey="entregas" name="Entregas" fill="#1E40AF" radius={[4, 4, 0, 0]}>
+              <Bar dataKey="entregas" name="Entregas" fill="#5B21B6" radius={[4, 4, 0, 0]}>
                 <LabelList dataKey="entregas" position="top" fontSize={10} />
               </Bar>
-              <Bar dataKey="pedidos" name="Pedidos" fill="#93C5FD" radius={[4, 4, 0, 0]}>
+              <Bar dataKey="pedidos" name="Pedidos" fill="#A78BFA" radius={[4, 4, 0, 0]}>
                 <LabelList dataKey="pedidos" position="top" fontSize={10} />
               </Bar>
             </BarChart>
@@ -261,7 +261,7 @@ export function GeneralReportTab({ storeId }: { storeId: string }) {
 function StatCard({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) {
   return (
     <div className="flex flex-col items-center rounded-xl border bg-white p-4 shadow-sm text-center">
-      <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-blue-50">
+      <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
         {icon}
       </div>
       <span className="text-lg font-bold text-slate-800">{value}</span>
