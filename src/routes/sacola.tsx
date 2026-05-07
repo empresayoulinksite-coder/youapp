@@ -134,9 +134,9 @@ function CartPage() {
 
   // Busca taxa de entrega por bairro do endereço ativo
   useEffect(() => {
-    if (!storeId || deliveryMode === "pickup" || !active?.neighborhood) {
+    if (!storeId || deliveryMode === "pickup" || deliveryMode === "mesa" || !active?.neighborhood) {
       setDeliveryFeeValue(0);
-      setDeliveryFeeLabel(deliveryMode === "pickup" ? "—" : "Grátis");
+      setDeliveryFeeLabel(deliveryMode === "pickup" || deliveryMode === "mesa" ? "—" : "Grátis");
       return;
     }
     const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
