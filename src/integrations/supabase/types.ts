@@ -1660,6 +1660,39 @@ export type Database = {
         }
         Relationships: []
       }
+      store_tables: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          number: number
+          status: Database["public"]["Enums"]["store_table_status"]
+          store_id: string
+          type: Database["public"]["Enums"]["store_table_type"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          number: number
+          status?: Database["public"]["Enums"]["store_table_status"]
+          store_id: string
+          type?: Database["public"]["Enums"]["store_table_type"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          number?: number
+          status?: Database["public"]["Enums"]["store_table_status"]
+          store_id?: string
+          type?: Database["public"]["Enums"]["store_table_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       stores: {
         Row: {
           about: string | null
@@ -2079,6 +2112,8 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user"
       booking_status: "pending" | "confirmed" | "cancelled" | "completed"
+      store_table_status: "livre" | "ocupada" | "fechando_conta"
+      store_table_type: "mesa" | "comanda"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2208,6 +2243,8 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user"],
       booking_status: ["pending", "confirmed", "cancelled", "completed"],
+      store_table_status: ["livre", "ocupada", "fechando_conta"],
+      store_table_type: ["mesa", "comanda"],
     },
   },
 } as const
