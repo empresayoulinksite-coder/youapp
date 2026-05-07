@@ -53,6 +53,9 @@ function CartPage() {
   const [deliveryFeeValue, setDeliveryFeeValue] = useState<number>(0);
   const [deliveryFeeLabel, setDeliveryFeeLabel] = useState<string>("Grátis");
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [trackingOrderId, setTrackingOrderId] = useState<string | null>(null);
+  const [trackingOrderNumber, setTrackingOrderNumber] = useState<number | null>(null);
+  const [trackingOpen, setTrackingOpen] = useState(false);
   const { active } = useAddress();
   const { user: authUser } = useAuth();
 
