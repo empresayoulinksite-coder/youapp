@@ -118,7 +118,7 @@ export function CheckoutReviewDialog({
   const hasName = name.trim().length > 0;
   const phoneDigits = phone.replace(/\D/g, "");
   const hasPhone = phoneDigits.length >= 10;
-  const addressOk = isPickup ? true : !!addressText && hasNumber;
+  const addressOk = isPickup || isMesa ? true : !!addressText && hasNumber;
   const canConfirm =
     !!paymentMethod && addressOk && hasName && hasPhone && !submitting;
 
