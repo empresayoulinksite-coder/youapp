@@ -563,13 +563,14 @@ function CartPage() {
                 store_image_url: storeImageUrl,
                 store_whatsapp: storeWhatsapp,
                 total: grandTotal,
-                delivery_fee: deliveryMode === "pickup" ? 0 : deliveryFeeValue,
+                delivery_fee: deliveryMode === "pickup" || deliveryMode === "mesa" ? 0 : deliveryFeeValue,
                 discount,
                 delivery_address: deliveryAddress,
                 payment_method: paymentMethod,
                 customer_notes: notes || null,
                 whatsapp_message: message,
                 status: "em_analise",
+                table_number: tableNumber ?? null,
               })
               .select("id")
               .single();
