@@ -508,6 +508,8 @@ function PedidosLojaPage() {
             <CashReportTab storeId={storeId} />
           ) : activeTab === "Relatório Geral" ? (
             <GeneralReportTab storeId={storeId} />
+          ) : activeTab === "Pedidos salão" ? (
+            <TablesManager storeId={storeId} storeSlug={store?.slug} />
           ) : (
             <div className="flex h-full items-center justify-center rounded-lg border bg-white p-8 text-center shadow-sm">
               <div>
