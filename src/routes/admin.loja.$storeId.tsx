@@ -79,6 +79,7 @@ type StoreFull = {
 
 function AdminStoreManagePage() {
   const { storeId } = Route.useParams();
+  const { tab } = Route.useSearch();
   const router = useRouter();
   const qc = useQueryClient();
 
@@ -156,7 +157,7 @@ function AdminStoreManagePage() {
         </Button>
       </header>
 
-      <Tabs defaultValue="info">
+      <Tabs defaultValue={tab}>
         <div className="overflow-x-auto">
           <TabsList className="inline-flex w-auto">
             <TabsTrigger value="info" className="gap-1.5">
