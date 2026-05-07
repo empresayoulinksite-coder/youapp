@@ -174,7 +174,7 @@ function CartPage() {
   }, [pickupEnabled, deliveryMode]);
 
   const { discount, reason } = calculateDiscount(applied, total, storeId);
-  const grandTotal = Math.max(0, total - discount + (deliveryMode === "pickup" ? 0 : deliveryFeeValue));
+  const grandTotal = Math.max(0, total - discount + (deliveryMode === "pickup" || deliveryMode === "mesa" ? 0 : deliveryFeeValue));
 
   const applyCode = async (codeToTry?: string) => {
     const c = (codeToTry ?? code).trim().toUpperCase();
