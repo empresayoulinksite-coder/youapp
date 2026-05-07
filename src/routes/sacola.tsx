@@ -576,7 +576,7 @@ function CartPage() {
                 status: "em_analise",
                 table_number: tableNumber ?? null,
               })
-              .select("id")
+              .select("id, order_number")
               .single();
             if (orderError) throw orderError;
             if (!orderError && order) {
