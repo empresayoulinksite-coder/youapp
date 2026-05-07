@@ -427,7 +427,7 @@ function CartPage() {
                 toast.error("A loja está fechada no momento.");
                 return;
               }
-              if (!storeWhatsapp) {
+              if (!storeWhatsapp && deliveryMode !== "mesa") {
                 toast.error("Loja sem WhatsApp cadastrado. Não é possível finalizar.");
                 return;
               }
