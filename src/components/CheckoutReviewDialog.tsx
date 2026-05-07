@@ -369,9 +369,9 @@ export function CheckoutReviewDialog({
                 ? "Informe seu nome"
                 : !hasPhone
                   ? "Informe seu telefone"
-                  : !isPickup && !address
-                    ? "Cadastre um endereço"
-                    : !isPickup && !hasNumber
+                   : !isPickup && !isMesa && !address
+                     ? "Cadastre um endereço"
+                     : !isPickup && !isMesa && !hasNumber
                       ? "Informe o número"
                       : !paymentMethod
                         ? "Escolha o pagamento"
