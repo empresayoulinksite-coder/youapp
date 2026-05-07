@@ -610,13 +610,7 @@ function CartPage() {
           // Mesa: abre tracking dialog; outros: abre WhatsApp
           if (deliveryMode === "mesa" && order) {
             setTrackingOrderId(order.id);
-            // Busca order_number gerado pelo trigger
-            const { data: freshOrder } = await supabase
-              .from("orders")
-              .select("order_number")
-              .eq("id", order.id)
-              .single();
-            setTrackingOrderNumber(freshOrder?.order_number ?? null);
+            setTrackingOrderNumber(order.order_number ?? null);
             setReviewOpen(false);
             setTrackingOpen(true);
           } else if (storeWhatsapp) {
