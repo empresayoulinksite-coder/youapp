@@ -607,7 +607,23 @@ function CartPage() {
               if (itemsError) throw itemsError;
             }
 
-          openWhatsapp(storeWhatsapp, message);
+          // Mesa: abre tracking dialog; outros: abre WhatsApp
+          if (deliveryMode === "mesa" && order) {
+            setTrackingOrderId(order.id);
+            // Busca order_number gerado pelo trigger
+            const { data: freshOrder } = await supabase
+              .from("orders")
+              .select("order_number")
+              .eq("id", order.id)
+              .single();
+            setTrackingOrderNumber(freshOrder?.order_number ?? null);
+            setReviewOpen(false);
+            setTrackingOpen(true);
+          } else if (storeWhatsapp) {
+            openWhatsapp(storeWhatsapp, message);
+            setReviewOpen(false);
+          }
+
           await clear();
           clearCoupon();
           // Limpa mesa da sessão após pedido
@@ -615,15 +631,25 @@ function CartPage() {
             sessionStorage.removeItem("youapp_mesa");
             sessionStorage.removeItem("youapp_mesa_store");
           }
-          setReviewOpen(false);
-          toast.success("Pedido enviado! Continue no WhatsApp.");
+          if (deliveryMode !== "mesa") {
+            toast.success("Pedido enviado! Continue no WhatsApp.");
+          }
           } catch (error) {
             console.error("Erro ao finalizar pedido:", error);
-            toast.error("Não foi possível salvar o pedido. Tente novamente antes de abrir o WhatsApp.");
+            toast.error("Não foi possível salvar o pedido. Tente novamente.");
           } finally {
             setSubmitting(false);
           }
         }}
+      />
+
+      <OrderTrackingDialog
+        open={trackingOpen}
+        onOpenChange={setTrackingOpen}
+        orderId={trackingOrderId}
+        orderNumber={trackingOrderNumber}
+        tableNumber={tableNumber}
+        storeName={storeName}
       />
     </div>
   );
