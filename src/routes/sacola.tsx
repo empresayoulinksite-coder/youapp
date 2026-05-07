@@ -606,6 +606,11 @@ function CartPage() {
           openWhatsapp(storeWhatsapp, message);
           await clear();
           clearCoupon();
+          // Limpa mesa da sessão após pedido
+          if (tableNumber) {
+            sessionStorage.removeItem("youapp_mesa");
+            sessionStorage.removeItem("youapp_mesa_store");
+          }
           setReviewOpen(false);
           toast.success("Pedido enviado! Continue no WhatsApp.");
           } catch (error) {
