@@ -35,6 +35,7 @@ import { CashCloseConfirmDialog } from "@/components/painel/CashCloseConfirmDial
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { CashReportTab } from "@/components/painel/CashReportTab";
+import { GeneralReportTab } from "@/components/painel/GeneralReportTab";
 
 export const Route = createFileRoute("/pedidos-loja/$storeId")({
   component: PedidosLojaPage,
@@ -505,12 +506,7 @@ function PedidosLojaPage() {
           ) : activeTab === "Relatório Caixa" ? (
             <CashReportTab storeId={storeId} />
           ) : activeTab === "Relatório Geral" ? (
-            <div className="flex h-full items-center justify-center rounded-lg border bg-white p-8 text-center shadow-sm">
-              <div>
-                <h2 className="text-lg font-bold text-slate-800">Relatório Geral</h2>
-                <p className="mt-2 text-sm text-muted-foreground">Esta área está sendo desenvolvida e chegará em breve!</p>
-              </div>
-            </div>
+            <GeneralReportTab storeId={storeId} />
           ) : (
             <div className="flex h-full items-center justify-center rounded-lg border bg-white p-8 text-center shadow-sm">
               <div>
