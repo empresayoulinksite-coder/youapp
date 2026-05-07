@@ -947,6 +947,7 @@ export type Database = {
           store_name: string
           store_slug: string
           store_whatsapp: string | null
+          table_number: number | null
           total: number
           updated_at: string
           user_id: string
@@ -973,6 +974,7 @@ export type Database = {
           store_name: string
           store_slug: string
           store_whatsapp?: string | null
+          table_number?: number | null
           total?: number
           updated_at?: string
           user_id: string
@@ -999,6 +1001,7 @@ export type Database = {
           store_name?: string
           store_slug?: string
           store_whatsapp?: string | null
+          table_number?: number | null
           total?: number
           updated_at?: string
           user_id?: string
