@@ -340,8 +340,8 @@ function CartPage() {
               )}
             </div>
 
-            {/* Toggle Entrega / Retirada */}
-            {pickupEnabled && (
+            {/* Toggle Entrega / Retirada (esconde no modo mesa) */}
+            {pickupEnabled && deliveryMode !== "mesa" && (
               <div className="bg-card rounded-2xl p-3 mt-3 shadow-[var(--shadow-card)]">
                 <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Como você quer receber?</p>
                 <div className="grid grid-cols-2 gap-2">
@@ -362,6 +362,14 @@ function CartPage() {
                     <p className="text-[11px] text-muted-foreground mt-0.5">Buscar na loja</p>
                   </button>
                 </div>
+              </div>
+            )}
+
+            {/* Indicador de mesa */}
+            {deliveryMode === "mesa" && tableNumber && (
+              <div className="bg-card rounded-2xl p-3 mt-3 shadow-[var(--shadow-card)]">
+                <p className="text-sm font-bold">🍽️ Mesa {tableNumber}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Pedido será feito diretamente na mesa</p>
               </div>
             )}
 
