@@ -525,7 +525,9 @@ function CartPage() {
             setProfilePhone(customerPhone || null);
           }
           let deliveryAddress: string | null = null;
-          if (deliveryMode === "pickup") {
+          if (deliveryMode === "mesa" && tableNumber) {
+            lines.push(`🍽️ Mesa ${tableNumber}`);
+          } else if (deliveryMode === "pickup") {
             lines.push(`🏪 Retirada no local${storeAddress ? `: ${storeAddress}` : ""}`);
           } else if (active) {
             const finalNumber = number || active.number || "";
