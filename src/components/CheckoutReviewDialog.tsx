@@ -22,8 +22,9 @@ interface Props {
   acceptedPaymentMethods?: string[] | null;
   customerName?: string | null;
   customerPhone?: string | null;
-  deliveryMode?: "delivery" | "pickup";
+  deliveryMode?: "delivery" | "pickup" | "mesa";
   storeAddress?: string | null;
+  tableNumber?: number | null;
   submitting: boolean;
   onConfirm: (data: {
     paymentMethod: PaymentMethod;
