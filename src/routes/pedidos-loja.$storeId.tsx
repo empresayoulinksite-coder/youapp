@@ -35,6 +35,7 @@ import { CashCloseConfirmDialog } from "@/components/painel/CashCloseConfirmDial
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { CashReportTab } from "@/components/painel/CashReportTab";
+import { GeneralReportTab } from "@/components/painel/GeneralReportTab";
 
 export const Route = createFileRoute("/pedidos-loja/$storeId")({
   component: PedidosLojaPage,
