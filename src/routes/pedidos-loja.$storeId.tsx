@@ -196,7 +196,7 @@ function PedidosLojaPage() {
     { label: "Meus pedidos", icon: KanbanSquare, badge: 0 },
     { label: "Pedidos balcão (PDV)", icon: PenSquare },
     { label: "Pedidos salão", icon: Armchair, badge: "+" },
-    { label: "Gestor de cardápio", icon: MenuSquare, isLink: true, to: `/admin/loja/${storeId}?tab=catalog` },
+    { label: "Gestor de cardápio", icon: MenuSquare, isLink: true, to: "/admin/loja/$storeId" as const, params: { storeId }, search: { tab: "catalog" } },
     
   ];
 
@@ -364,7 +364,7 @@ function PedidosLojaPage() {
 
                 if (item.isLink && item.to) {
                   return (
-                    <Link key={idx} to={item.to} className={baseClass}>
+                    <Link key={idx} to={item.to} params={(item as any).params} search={(item as any).search} className={baseClass}>
                       {content}
                     </Link>
                   );

@@ -1,7 +1,13 @@
+## Problema
+
+O botão "Gestor de cardápio" no menu lateral da página de pedidos não abre na aba Cardápio. O conteúdo fica vazio porque o `?tab=catalog` está sendo passado como parte do `to` do `<Link>`, mas o TanStack Router não interpreta query strings dentro do `to` — ele precisa receber os search params via prop `search`.
+
 ## O que muda
 
-1. **`src/routes/admin.loja.$storeId.tsx`** — Adicionar suporte ao search param `?tab=` para que a aba correta seja selecionada ao abrir a página. O `<Tabs defaultValue="info">` passará a usar o valor do param `tab` (se presente) como valor inicial.
-
-2. **`src/routes/pedidos-loja.$storeId.tsx`** — Alterar o link do botão "Gestor de cardápio" de `/admin/loja/${storeId}` para `/admin/loja/${storeId}?tab=catalog`, para que abra direto na aba do cardápio.
+1. **`src/routes/pedidos-loja.$storeId.tsx`** — Separar o `to` e o `search` no item de navegação "Gestor de cardápio":
+   - `to` → `/admin/loja/$storeId` (com `params`)
+   - `search` → `{ tab: "catalog" }`
+   
+2. Ajustar o render do `<Link>` para passar `params` e `search` corretamente, em vez de interpolar tudo numa string.
 
 Nenhuma mudança de backend necessária.
