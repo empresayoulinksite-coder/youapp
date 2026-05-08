@@ -38,6 +38,7 @@ import { toast } from "sonner";
 import { CashReportTab } from "@/components/painel/CashReportTab";
 import { GeneralReportTab } from "@/components/painel/GeneralReportTab";
 import { TablesManager } from "@/components/painel/TablesManager";
+import { FinishedOrdersTab } from "@/components/painel/FinishedOrdersTab";
 
 export const Route = createFileRoute("/pedidos-loja/$storeId")({
   component: PedidosLojaPage,
