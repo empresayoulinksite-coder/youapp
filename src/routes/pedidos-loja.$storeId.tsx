@@ -184,7 +184,7 @@ function PedidosLojaPage() {
   };
 
   const handleNavClick = (label: string) => {
-    if (["Meus pedidos", "Pedidos balcão (PDV)", "Pedidos salão", "Relatório Geral", "Relatório Caixa"].includes(label)) {
+    if (["Meus pedidos", "Pedidos balcão (PDV)", "Pedidos salão", "Pedidos finalizados", "Relatório Geral", "Relatório Caixa"].includes(label)) {
       setActiveTab(label);
       if (label === "Meus pedidos" && editingOrder) {
         setEditingOrder(null);
@@ -198,6 +198,7 @@ function PedidosLojaPage() {
     { label: "Meus pedidos", icon: KanbanSquare, badge: 0 },
     { label: "Pedidos balcão (PDV)", icon: PenSquare },
     { label: "Pedidos salão", icon: Armchair, badge: "+" },
+    { label: "Pedidos finalizados", icon: CheckCircle2 },
     { label: "Gestor de cardápio", icon: MenuSquare, isLink: true, to: "/admin/loja/$storeId" as const, params: { storeId }, search: { tab: "catalog" } },
     
   ];
