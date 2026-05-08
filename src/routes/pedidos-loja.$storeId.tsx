@@ -19,7 +19,8 @@ import {
   ChevronDown,
   ChevronUp,
   BarChart3,
-  PieChart
+  PieChart,
+  CheckCircle2
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -37,6 +38,7 @@ import { toast } from "sonner";
 import { CashReportTab } from "@/components/painel/CashReportTab";
 import { GeneralReportTab } from "@/components/painel/GeneralReportTab";
 import { TablesManager } from "@/components/painel/TablesManager";
+import { FinishedOrdersTab } from "@/components/painel/FinishedOrdersTab";
 
 export const Route = createFileRoute("/pedidos-loja/$storeId")({
   component: PedidosLojaPage,
@@ -182,7 +184,7 @@ function PedidosLojaPage() {
   };
 
   const handleNavClick = (label: string) => {
-    if (["Meus pedidos", "Pedidos balcão (PDV)", "Pedidos salão", "Relatório Geral", "Relatório Caixa"].includes(label)) {
+    if (["Meus pedidos", "Pedidos balcão (PDV)", "Pedidos salão", "Pedidos finalizados", "Relatório Geral", "Relatório Caixa"].includes(label)) {
       setActiveTab(label);
       if (label === "Meus pedidos" && editingOrder) {
         setEditingOrder(null);
@@ -196,6 +198,7 @@ function PedidosLojaPage() {
     { label: "Meus pedidos", icon: KanbanSquare, badge: 0 },
     { label: "Pedidos balcão (PDV)", icon: PenSquare },
     { label: "Pedidos salão", icon: Armchair, badge: "+" },
+    { label: "Pedidos finalizados", icon: CheckCircle2 },
     { label: "Gestor de cardápio", icon: MenuSquare, isLink: true, to: "/admin/loja/$storeId" as const, params: { storeId }, search: { tab: "catalog" } },
     
   ];
@@ -510,6 +513,8 @@ function PedidosLojaPage() {
             <GeneralReportTab storeId={storeId} />
           ) : activeTab === "Pedidos salão" ? (
             <TablesManager storeId={storeId} storeSlug={store?.slug} />
+          ) : activeTab === "Pedidos finalizados" ? (
+            <FinishedOrdersTab storeId={storeId} />
           ) : (
             <div className="flex h-full items-center justify-center rounded-lg border bg-white p-8 text-center shadow-sm">
               <div>
