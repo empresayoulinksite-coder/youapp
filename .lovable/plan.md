@@ -1,13 +1,43 @@
-## Problema
+## Pedidos finalizados — botão e tela de histórico
 
-O botão "Gestor de cardápio" no menu lateral da página de pedidos não abre na aba Cardápio. O conteúdo fica vazio porque o `?tab=catalog` está sendo passado como parte do `to` do `<Link>`, mas o TanStack Router não interpreta query strings dentro do `to` — ele precisa receber os search params via prop `search`.
+Adicionar uma forma de visualizar os pedidos já finalizados (status `entregue`) no Gestor de Pedidos, com filtros por dia e mês.
 
-## O que muda
+### Onde fica o botão
 
-1. **`src/routes/pedidos-loja.$storeId.tsx`** — Separar o `to` e o `search` no item de navegação "Gestor de cardápio":
-   - `to` → `/admin/loja/$storeId` (com `params`)
-   - `search` → `{ tab: "catalog" }`
-   
-2. Ajustar o render do `<Link>` para passar `params` e `search` corretamente, em vez de interpolar tudo numa string.
+No menu lateral do Gestor de Pedidos (`pedidos-loja/$storeId`), logo abaixo de "Meus pedidos", adicionar um novo item:
 
-Nenhuma mudança de backend necessária.
+- **"Pedidos finalizados"** (ícone de histórico/arquivo)
+
+Ao clicar, abre uma nova aba dentro da própria página (mesmo padrão das demais — sem trocar de rota).
+
+### Tela "Pedidos finalizados"
+
+Layout limpo focado em consulta/histórico:
+
+**Topo — Filtros:**
+- Botões rápidos: **Hoje**, **Esta semana**, **Este mês**, **Personalizado** (abre um seletor de data inicial e final)
+- Filtro de **tipo**: Todos / Balcão / Mesa / Delivery
+- Campo de busca: por nº do pedido ou cliente
+
+**Resumo (cards no topo):**
+- Total de pedidos no período
+- Faturamento total (R$)
+- Ticket médio
+
+**Lista de pedidos:**
+Tabela/cards com: nº do pedido, data/hora, cliente, tipo (mesa/balcão/delivery), valor total, forma de pagamento. Ao clicar em um pedido, abre um diálogo com os detalhes completos (itens, observações, endereço se delivery).
+
+**Padrão:** ao abrir a aba, o filtro inicial é **Hoje**.
+
+### Detalhes técnicos
+
+- Nova aba `"Pedidos finalizados"` em `NAV_ITEMS` e em `handleNavClick` no arquivo `src/routes/pedidos-loja.$storeId.tsx`.
+- Novo componente `src/components/painel/FinishedOrdersTab.tsx` contendo filtros + resumo + lista.
+- Query Supabase: `orders` filtrando por `store_id`, `status = 'entregue'` e `created_at` dentro do período selecionado, ordenando por `created_at desc`.
+- Reaproveitar tipos e utilitários já existentes em `OrdersManager.tsx` para exibir itens/totais.
+- Diálogo de detalhes pode reaproveitar componentes já usados no `OrdersManager`.
+
+### O que não muda
+
+- Nenhuma alteração no fluxo de status dos pedidos ativos.
+- Nenhuma migração de banco — usamos a tabela `orders` que já existe.
