@@ -378,7 +378,9 @@ export function CheckoutReviewDialog({
                       ? "Informe o número"
                       : !isMesa && !paymentMethod
                         ? "Escolha o pagamento"
-                        : "Confirmar e enviar pelo WhatsApp"}
+                        : isMesa
+                          ? "Confirmar pedido"
+                          : "Confirmar e enviar pelo WhatsApp"}
           </button>
         </div>
       </div>
