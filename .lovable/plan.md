@@ -1,43 +1,18 @@
-## Pedidos finalizados — botão e tela de histórico
+## Renomear botão de checkout no modo mesa
 
-Adicionar uma forma de visualizar os pedidos já finalizados (status `entregue`) no Gestor de Pedidos, com filtros por dia e mês.
+No diálogo de revisão do pedido (`CheckoutReviewDialog.tsx`), quando o pedido é em **mesa**, o botão final hoje diz **"Confirmar e enviar pelo WhatsApp"**. Vou trocar apenas esse texto para **"Confirmar pedido"** quando `deliveryMode === "mesa"`.
 
-### Onde fica o botão
+### O que muda
 
-No menu lateral do Gestor de Pedidos (`pedidos-loja/$storeId`), logo abaixo de "Meus pedidos", adicionar um novo item:
+- Quando o tipo de pedido for **mesa**: botão exibe **"Confirmar pedido"**.
+- Quando for **delivery** ou **retirada**: continua exibindo **"Confirmar e enviar pelo WhatsApp"** (sem alteração).
 
-- **"Pedidos finalizados"** (ícone de histórico/arquivo)
+### O que NÃO muda
 
-Ao clicar, abre uma nova aba dentro da própria página (mesmo padrão das demais — sem trocar de rota).
+- O comportamento do botão continua o mesmo: o pedido segue sendo enviado pelo WhatsApp da loja normalmente.
+- O card **"WHATSAPP DA LOJA"** continua visível no resumo (conforme sua escolha).
+- Nenhuma alteração em banco de dados, fluxo de status, ou demais modos de pedido.
 
-### Tela "Pedidos finalizados"
+### Detalhe técnico
 
-Layout limpo focado em consulta/histórico:
-
-**Topo — Filtros:**
-- Botões rápidos: **Hoje**, **Esta semana**, **Este mês**, **Personalizado** (abre um seletor de data inicial e final)
-- Filtro de **tipo**: Todos / Balcão / Mesa / Delivery
-- Campo de busca: por nº do pedido ou cliente
-
-**Resumo (cards no topo):**
-- Total de pedidos no período
-- Faturamento total (R$)
-- Ticket médio
-
-**Lista de pedidos:**
-Tabela/cards com: nº do pedido, data/hora, cliente, tipo (mesa/balcão/delivery), valor total, forma de pagamento. Ao clicar em um pedido, abre um diálogo com os detalhes completos (itens, observações, endereço se delivery).
-
-**Padrão:** ao abrir a aba, o filtro inicial é **Hoje**.
-
-### Detalhes técnicos
-
-- Nova aba `"Pedidos finalizados"` em `NAV_ITEMS` e em `handleNavClick` no arquivo `src/routes/pedidos-loja.$storeId.tsx`.
-- Novo componente `src/components/painel/FinishedOrdersTab.tsx` contendo filtros + resumo + lista.
-- Query Supabase: `orders` filtrando por `store_id`, `status = 'entregue'` e `created_at` dentro do período selecionado, ordenando por `created_at desc`.
-- Reaproveitar tipos e utilitários já existentes em `OrdersManager.tsx` para exibir itens/totais.
-- Diálogo de detalhes pode reaproveitar componentes já usados no `OrdersManager`.
-
-### O que não muda
-
-- Nenhuma alteração no fluxo de status dos pedidos ativos.
-- Nenhuma migração de banco — usamos a tabela `orders` que já existe.
+Edição pontual em `src/components/CheckoutReviewDialog.tsx`, no texto do botão (linha ~381): adicionar uma condição `isMesa ? "Confirmar pedido" : "Confirmar e enviar pelo WhatsApp"` no último ramo do ternário.
