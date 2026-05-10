@@ -88,13 +88,12 @@ function CartPage() {
     return () => clearInterval(t);
   }, []);
 
-  // Detecta se é pedido de mesa via sessionStorage
+  // Detecta se é pedido de mesa via sessionStorage (com validade)
   useEffect(() => {
     if (typeof window === "undefined" || !storeId) return;
-    const mesa = sessionStorage.getItem("youapp_mesa");
-    const mesaStore = sessionStorage.getItem("youapp_mesa_store");
-    if (mesa && mesaStore === storeId) {
-      setTableNumber(parseInt(mesa, 10));
+    const session = getMesaSession(storeId);
+    if (session) {
+      setTableNumber(session.tableNumber);
       setDeliveryMode("mesa");
     } else {
       setTableNumber(null);
