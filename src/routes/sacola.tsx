@@ -622,8 +622,7 @@ function CartPage() {
           clearCoupon();
           // Limpa mesa da sessão após pedido
           if (tableNumber) {
-            sessionStorage.removeItem("youapp_mesa");
-            sessionStorage.removeItem("youapp_mesa_store");
+            clearMesaSession();
           }
           if (deliveryMode !== "mesa") {
             toast.success("Pedido enviado! Continue no WhatsApp.");
