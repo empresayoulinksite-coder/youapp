@@ -12,6 +12,7 @@ import { openWhatsapp } from "@/lib/whatsapp";
 import { toast } from "sonner";
 import { CheckoutReviewDialog, type PaymentMethod } from "@/components/CheckoutReviewDialog";
 import { OrderTrackingDialog } from "@/components/OrderTrackingDialog";
+import { getMesaSession, clearMesaSession } from "@/lib/mesa-session";
 
 export const Route = createFileRoute("/sacola")({
   head: () => ({
