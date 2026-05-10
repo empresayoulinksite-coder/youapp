@@ -1,18 +1,40 @@
-## Renomear botão de checkout no modo mesa
+Corrigir "modo mesa" persistindo entre visitas
 
-No diálogo de revisão do pedido (`CheckoutReviewDialog.tsx`), quando o pedido é em **mesa**, o botão final hoje diz **"Confirmar e enviar pelo WhatsApp"**. Vou trocar apenas esse texto para **"Confirmar pedido"** quando `deliveryMode === "mesa"`.
+## Problema
 
-### O que muda
+Quando o cliente lê o QR Code da mesa, salvamos `youapp_mesa` e `youapp_mesa_store` no `sessionStorage` do navegador. Esses valores só somem quando:
 
-- Quando o tipo de pedido for **mesa**: botão exibe **"Confirmar pedido"**.
-- Quando for **delivery** ou **retirada**: continua exibindo **"Confirmar e enviar pelo WhatsApp"** (sem alteração).
+- O pedido é finalizado, **ou**
+- A aba/janela do navegador é fechada.
 
-### O que NÃO muda
+No celular, a aba quase nunca é fechada. Resultado: dias depois, o cliente abre a loja para pedir delivery e o checkout ainda acha que ele está sentado na mesa.
 
-- O comportamento do botão continua o mesmo: o pedido segue sendo enviado pelo WhatsApp da loja normalmente.
-- O card **"WHATSAPP DA LOJA"** continua visível no resumo (conforme sua escolha).
-- Nenhuma alteração em banco de dados, fluxo de status, ou demais modos de pedido.
+## Solução
 
-### Detalhe técnico
+Dar um **prazo de validade curto** para o modo mesa e revalidar sempre que o cliente entra na loja.
 
-Edição pontual em `src/components/CheckoutReviewDialog.tsx`, no texto do botão (linha ~381): adicionar uma condição `isMesa ? "Confirmar pedido" : "Confirmar e enviar pelo WhatsApp"` no último ramo do ternário.
+### Regras
+
+1. Quando o QR Code é lido (`?mesa=N` na URL da loja), salvar também um **timestamp** junto: `youapp_mesa_ts` = `Date.now()`.
+2. Definir validade de **3 horas** (tempo razoável para uma refeição). Após esse tempo, o modo mesa é descartado automaticamente.
+3. Na sacola, ao detectar o modo mesa, verificar se o timestamp ainda é válido. Se estiver expirado, limpar o `sessionStorage` e voltar para `delivery`.
+4. Na página da loja (`loja.$slug.tsx`), se o cliente entrar **sem** `?mesa` na URL e já houver um modo mesa salvo expirado para essa loja, limpar também — assim ele não vê nada relacionado a mesa indevidamente.
+
+### Arquivos a alterar
+
+- `**src/routes/loja.$slug.tsx**` (efeito que captura `?mesa` da URL): salvar `youapp_mesa_ts` junto. Se entrar sem `?mesa`, checar se o mesa salvo expirou e limpar.
+- `**src/routes/sacola.tsx**` (efeito que detecta mesa via `sessionStorage`): ler o timestamp, comparar com `Date.now()`, e se passou de 3h, limpar tudo e ficar em `delivery`.
+
+### Constante compartilhada
+
+Definir `MESA_TTL_MS = 3 * 60 * 60 * 1000` (3 horas) nos dois arquivos (ou criar `src/lib/mesa-session.ts` com helpers `setMesaSession`, `getMesaSession`, `clearMesaSession`). Recomendado o helper, fica mais limpo e evita duplicação de lógica.
+
+## Não muda
+
+- Comportamento do botão "Confirmar pedido" no modo mesa (mantido como está).
+- Fluxo de QR Code novo: continua funcionando igual, só passa a ter validade.
+- Limpeza após pedido finalizado: continua igual.
+
+## Pergunta
+
+O prazo de **3 horas** está bom, ou prefere outro valor (ex: 2h, 6h, "até meia-noite")?
