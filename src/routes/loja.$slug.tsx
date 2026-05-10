@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound, useRouter, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, lazy, Suspense } from "react";
+import { setMesaSession, getMesaSession } from "@/lib/mesa-session";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Star, Clock, Bike, MapPin, CreditCard, Tag, Plus, Minus, ShoppingBag, MessageSquare, X, CalendarClock, Navigation, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
