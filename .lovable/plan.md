@@ -1,19 +1,12 @@
-# Trocar a logo da home pela imagem do baú Youlink
+## Mudar a luz roxa atrás da logo no carregamento para dourado
 
-Substituir a logo atual (`src/assets/youlink-logo.png`) pela nova imagem do baú dourado/roxo com "Youlink.site" enviada agora.
+A luz roxa que você vê é o brilho atrás da logo na tela de carregamento (`src/components/ProfileGate.tsx`). Hoje ela usa `bg-primary/20` (a cor primária roxa do tema).
 
-## Passos
+### Mudança
 
-1. Copiar `user-uploads://Youlink_7.png` para `src/assets/youlink-logo.png` (sobrescrever).
-2. Manter o import e o `<img>` em `src/routes/index.tsx` (linha ~277) exatamente como está — só o arquivo muda.
-3. Verificar no preview que a nova logo aparece corretamente no topo da home.
+- Trocar `bg-primary/20` por um dourado equivalente ao baú (algo como `#F5B72A` / âmbar) com opacidade ~30% e blur, mantendo o `animate-pulse`.
+- Os 3 pontinhos de loading abaixo continuam roxos (mantêm a identidade Youlink). Se preferir dourados também, é só avisar.
 
-## Observação
+### Arquivos alterados
 
-A imagem nova tem proporção horizontal (mais larga que a logo atual). O `<img>` atual usa classes de tamanho fixas — pode ser que ela apareça um pouco diferente em altura/largura. Se ficar estranha, ajusto o tamanho depois.
-
-## Não muda
-
-- Posição da logo na home.
-- Nenhum outro elemento da página.
-- Meta tags sociais (og:image continua a antiga até você pedir).
+- `src/components/ProfileGate.tsx` (linha 66) — troca da classe do glow.
