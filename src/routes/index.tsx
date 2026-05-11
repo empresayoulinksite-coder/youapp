@@ -276,11 +276,11 @@ function Index() {
           <img
             src={youlinkLogo}
             alt="Youapp"
-            className="h-14 w-auto shrink-0 object-contain"
+            className="h-16 w-auto shrink-0 object-contain"
           />
           <button
             onClick={() => setPickerOpen(true)}
-            className="flex items-center gap-1.5 text-left mx-auto min-w-0 max-w-[55%]"
+            className="flex items-center gap-1.5 text-left mr-auto min-w-0 max-w-[55%]"
             title="Trocar endereço"
           >
             <MapPin className="h-5 w-5 text-brand shrink-0" />
