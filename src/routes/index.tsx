@@ -276,7 +276,7 @@ function Index() {
           <img
             src={youlinkLogo}
             alt="Youapp"
-            className="h-9 w-auto shrink-0 object-contain"
+            className="h-14 w-auto shrink-0 object-contain"
           />
           <button
             onClick={() => setPickerOpen(true)}
