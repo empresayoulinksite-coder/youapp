@@ -62,15 +62,13 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30">
         <div className="flex flex-col items-center gap-6 animate-in fade-in duration-500">
           {/* Logo Youlink animado */}
-          <div className="relative">
-            <div className="absolute inset-0 rounded-full bg-[#F5B72A]/40 blur-xl animate-pulse" />
-            <div className="relative flex h-20 w-44 items-center justify-center">
-              <img
-                src={youlinkLogo}
-                alt="Youlink"
-                className="h-full w-full object-contain"
-              />
-            </div>
+          <div className="relative flex h-32 w-32 items-center justify-center">
+            <div className="absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#F5B72A]/50 blur-2xl animate-pulse" />
+            <img
+              src={youlinkLogo}
+              alt="Youlink"
+              className="relative h-full w-full object-contain"
+            />
           </div>
 
           {/* Spinner */}
