@@ -405,7 +405,7 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
 
       let bestScore = 0;
       let bestItem: (typeof items)[number] | null = null;
-      for (const it of items ?? []) {
+      for (const it of scopedItems) {
         const s = similarity(it.name, queryName);
         if (s > bestScore) {
           bestScore = s;
