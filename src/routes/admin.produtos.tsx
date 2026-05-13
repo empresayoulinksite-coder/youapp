@@ -1596,6 +1596,17 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
         position={categories.length}
       />
 
+      <CategorySizesDialog
+        open={sizesDialogOpen}
+        onOpenChange={(o) => {
+          setSizesDialogOpen(o);
+          if (!o) setSizesDialogCat(null);
+        }}
+        storeId={storeId}
+        categoryId={sizesDialogCat?.id ?? null}
+        categoryName={sizesDialogCat?.name}
+      />
+
       {storeId && (
         <BulkEditAIDialog
           open={aiBulkOpen}
