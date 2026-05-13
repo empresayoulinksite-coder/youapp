@@ -46,6 +46,7 @@ const ALL_CATEGORIES = "__all__";
 const EXAMPLE = `Pizza Calabresa - R$ 49,90 - descrição: massa fina, calabresa fatiada e cebola roxa
 Coca-Cola 2L - R$ 12,00
 Aumentar todos os preços em 10%
+Deixe todos os produtos da categoria Porções a R$ 29,90
 Deixe todos os produtos a R$ 29,90
 Desativar Pizza Doce de Banana
 Excluir Suco de Uva 300ml
