@@ -60,6 +60,7 @@ import {
 } from "@/components/ui/dialog";
 import { uploadImage } from "@/lib/upload";
 import { PizzaCategoryWizard } from "@/components/PizzaCategoryWizard";
+import { CategorySizesDialog } from "@/components/CategorySizesDialog";
 import { BulkEditAIDialog } from "@/components/BulkEditAIDialog";
 
 export const Route = createFileRoute("/admin/produtos")({
@@ -150,6 +151,8 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
   const [catTypeChooserOpen, setCatTypeChooserOpen] = useState(false);
   const [originalCatIsPizza, setOriginalCatIsPizza] = useState<boolean | null>(null);
   const [aiBulkOpen, setAiBulkOpen] = useState(false);
+  const [sizesDialogOpen, setSizesDialogOpen] = useState(false);
+  const [sizesDialogCat, setSizesDialogCat] = useState<Category | null>(null);
 
   const { data: stores = [] } = useQuery({
     queryKey: ["admin-stores-list", storeType],
@@ -369,17 +372,17 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
       const filledPizzaPrices = pizzaSizes
         .map((s) => Number(pizzaPrices[s.id]))
         .filter((n) => !isNaN(n) && n > 0);
-      // Só tratamos como pizza quando o usuário realmente preencheu preços por tamanho.
-      // Isso evita zerar o preço base de produtos como "porções" cuja categoria foi marcada
-      // como is_pizza por engano.
-      const isPizza = !!cat?.is_pizza && pizzaSizes.length > 0 && filledPizzaPrices.length > 0;
-      const pizzaAutoPrice = isPizza ? Math.max(0, ...filledPizzaPrices) : 0;
+      // Usa preço por tamanho sempre que a categoria tem tamanhos cadastrados
+      // (pizzas OU produtos com tamanhos compartilhados como Inteira/Meia).
+      const usesSizes = pizzaSizes.length > 0 && filledPizzaPrices.length > 0;
+      const isPizza = !!cat?.is_pizza && usesSizes;
+      const pizzaAutoPrice = usesSizes ? Math.max(0, ...filledPizzaPrices) : 0;
       const payload = {
         store_id: storeId,
         category_id: m.category_id!,
         name: m.name!,
         description: m.description || null,
-        price: isPizza ? pizzaAutoPrice : Number(m.price) || 0,
+        price: usesSizes ? pizzaAutoPrice : Number(m.price) || 0,
         original_price: m.original_price ? Number(m.original_price) : null,
         promo: m.promo || null,
         emoji: m.emoji || (isPizzeria ? "🍕" : "🍽️"),
@@ -431,8 +434,8 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
         }
       }
 
-      // Sincroniza preços por tamanho (pizzas)
-      if (isPizza) {
+      // Sincroniza preços por tamanho (qualquer categoria com tamanhos compartilhados)
+      if (pizzaSizes.length > 0) {
         const { data: existingPrices } = await supabase
           .from("menu_item_size_prices")
           .select("id,pizza_size_id")
@@ -777,8 +780,8 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
     setColorsInput((m.colors ?? []).join(", "));
     setEditingPizzaPrices({});
     setOpen(true);
-    const cat = categories.find((c) => c.id === m.category_id);
-    if (cat?.is_pizza) {
+    const pizzaSizes = sizesByCategory(m.category_id);
+    if (pizzaSizes.length > 0) {
       const { data } = await supabase
         .from("menu_item_size_prices")
         .select("pizza_size_id,price")
@@ -1100,6 +1103,18 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
                 <Pizza className="h-4 w-4" /> Configurar tamanhos, bordas e sabores
               </Button>
             )}
+            {editingCat?.id && !editingCat?.is_pizza && storeType === "food" && (
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  setSizesDialogCat(editingCat as Category);
+                  setSizesDialogOpen(true);
+                }}
+              >
+                📏 Configurar tamanhos da categoria (Inteira, Meia…)
+              </Button>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCatOpen(false)}>
@@ -1260,29 +1275,27 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
                 />
               </div>
               {(() => {
-                const cat = categories.find((c) => c.id === editing.category_id);
                 const pizzaSizes = sizesByCategory(editing.category_id);
                 const filled = pizzaSizes
                   .map((s) => Number(editingPizzaPrices[s.id]))
                   .filter((n) => !isNaN(n) && n > 0);
-                const isPizza =
-                  !!cat?.is_pizza && pizzaSizes.length > 0 && filled.length > 0;
-                const autoPrice = isPizza ? Math.max(0, ...filled) : null;
+                const usesSizes = pizzaSizes.length > 0 && filled.length > 0;
+                const autoPrice = usesSizes ? Math.max(0, ...filled) : null;
                 return (
                   <div>
                     <Label>Preço base (R$)</Label>
                     <Input
                       type="number"
                       step="0.01"
-                      disabled={isPizza}
-                      value={isPizza ? (autoPrice || 0) : (editing.price ?? "")}
+                      disabled={usesSizes}
+                      value={usesSizes ? (autoPrice || 0) : (editing.price ?? "")}
                       onChange={(e) =>
                         setEditing({ ...editing, price: Number(e.target.value) })
                       }
                     />
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {isPizza
-                        ? "Definido automaticamente pelo maior tamanho (Grande)"
+                      {usesSizes
+                        ? "Definido automaticamente pelo maior preço por tamanho"
                         : "Usado quando não há variações"}
                     </p>
                   </div>
@@ -1397,22 +1410,23 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
               </div>
 
 
-              {/* Preços por tamanho (pizzas) */}
+              {/* Preços por tamanho (categorias com tamanhos compartilhados) */}
               {(() => {
                 const cat = categories.find(
                   (c) => c.id === editing.category_id,
                 );
                 const pizzaSizes = sizesByCategory(editing.category_id);
-                if (!cat?.is_pizza || pizzaSizes.length === 0) return null;
+                if (pizzaSizes.length === 0) return null;
+                const isPizza = !!cat?.is_pizza;
                 return (
                   <div className="sm:col-span-2 rounded-md border p-3">
                     <div className="mb-2">
                       <p className="text-sm font-semibold">
-                        🍕 Preço por tamanho de pizza
+                        {isPizza ? "🍕 Preço por tamanho de pizza" : "📏 Preço por tamanho"}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Defina o preço deste sabor em cada tamanho. Deixe vazio
-                        para não vender neste tamanho.
+                        Defina o preço deste produto em cada tamanho. Deixe vazio
+                        para não vender naquele tamanho.
                       </p>
                     </div>
                     <div className="grid gap-2 sm:grid-cols-2">
@@ -1580,6 +1594,17 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
         storeId={storeId}
         initial={pizzaWizardInitial}
         position={categories.length}
+      />
+
+      <CategorySizesDialog
+        open={sizesDialogOpen}
+        onOpenChange={(o) => {
+          setSizesDialogOpen(o);
+          if (!o) setSizesDialogCat(null);
+        }}
+        storeId={storeId}
+        categoryId={sizesDialogCat?.id ?? null}
+        categoryName={sizesDialogCat?.name}
       />
 
       {storeId && (

@@ -1,63 +1,38 @@
-## Problema
+## Objetivo
 
-Na categoria **Porções** (que está marcada como categoria de pizza, com tamanhos **Inteira** e **Meia**), quando você pede para a IA mudar o preço, ela só atualiza o **preço base** do produto. Os campos **Inteira (R$)** e **Meia (R$)** continuam em **0,00**, e por isso o produto aparece sem preço por tamanho no editor.
-
-A IA precisa entender comandos como:
-- "mude o Frango à parmegiana para Inteira R$ 44,90 e Meia R$ 24,90"
-- "porção inteira R$ 50, meia R$ 28"
-- "todas as porções: inteira 45, meia 25"
-
-…e gravar esses valores em `menu_item_size_prices` para cada tamanho da categoria, em vez de só gravar `menu_items.price`.
+Permitir que categorias do tipo **Produtos** tenham **tamanhos compartilhados** (ex: Inteira / Meia, Pequena / Média / Grande), cada um com seu próprio preço por item — exatamente como já funciona em Pizzas. Assim a IA do bulk edit consegue alterar preços por tamanho com precisão.
 
 ## Plano
 
-### 1. Ensinar a IA a ler preços por tamanho
+### 1. Reusar a estrutura de tamanhos da pizza
+Não criar tabela nova. As tabelas `pizza_sizes` e `menu_item_size_prices` já são ligadas por `category_id` / `menu_item_id` e funcionam para qualquer categoria. Vamos só liberar o uso delas em categorias com `is_pizza = false`.
 
-No arquivo `src/server/bulk-edit.functions.ts`, ampliar o schema do que a IA pode retornar para cada item. Hoje ela retorna basicamente `{ id, price, ... }`. Vou adicionar um campo opcional:
+(Apenas reuso conceitual — o nome físico continua `pizza_sizes` para não quebrar tipos.)
 
-```text
-size_prices: [
-  { size_name: "Inteira", price: 44.90 },
-  { size_name: "Meia",    price: 24.90 }
-]
-```
+### 2. UI da categoria de Produtos (`admin.produtos.tsx`)
+- No diálogo de edição de uma categoria de **Produto** (food), adicionar um botão **"Configurar tamanhos da categoria"** abrindo um editor enxuto: lista de tamanhos (nome + posição), com adicionar/remover/ordenar. Sem bordas, sem sabores, sem fatias.
+- Quando uma categoria de Produto tem tamanhos cadastrados, no editor de cada item dessa categoria a seção atual de "Tamanhos / Variações" é substituída por uma grade **"Preço por tamanho"** (igual à de pizza): uma linha por tamanho da categoria, com input de preço.
+- Quando a categoria não tem tamanhos cadastrados, o comportamento atual (preço base + variações livres) permanece.
 
-E atualizar o prompt do sistema para deixar claro:
+### 3. Vitrine / Sacola
+- Em `produto.$id.tsx`, `loja.$slug.tsx` e `PizzaBuilderDialog`, ao montar o item, se a categoria não-pizza tiver `pizza_sizes`, mostrar um seletor de tamanho parecido com o de pizza, mas sem etapa de bordas/sabores. O preço exibido vem de `menu_item_size_prices`.
+- No `cart_items` reusamos `pizza_size_id` / `pizza_size_name` / `unit_price_override` que já existem.
 
-- Se a categoria do item tiver tamanhos (ex.: Inteira/Meia), e o usuário mencionar valores por tamanho, preencher `size_prices` com **um item por tamanho citado**, usando o nome exato do tamanho.
-- Se o usuário só disser "mude para R$ X" sem citar tamanhos, e a categoria tiver tamanhos, **aplicar o mesmo valor X em todos os tamanhos disponíveis** (Inteira e Meia recebem X).
-- Se o item realmente não for de pizza/tamanhos, continuar usando apenas `price` (preço base), como hoje.
+### 4. Bulk edit IA (`bulk-edit.functions.ts`)
+- A lógica de `size_prices` por `category_id` já existe e não checa `is_pizza`. Confirmar que continua valendo para Produtos.
+- Atualizar o prompt do sistema para deixar claro que tamanhos compartilhados existem em qualquer categoria. Exemplo novo: "todas as porções: inteira 45 e meia 25" passa a funcionar para a categoria Porções (Produto).
 
-Adicionar exemplos no prompt:
-- "porção inteira R$ 50 e meia R$ 28" → `size_prices: [{Inteira:50},{Meia:28}]`
-- "mude todas as porções para R$ 40" → para cada item: `size_prices: [{Inteira:40},{Meia:40}]`
+### 5. Importação de cardápio (`admin.importar-cardapio.tsx`)
+- Quando a IA detectar produtos com variações de tamanho explícitas em uma categoria de Produto (ex: "Porção de Calabresa — Inteira R$ 45 / Meia R$ 25"), criar automaticamente os `pizza_sizes` da categoria e gravar os `menu_item_size_prices` correspondentes.
+- Já temos a escolha Pizzas / Produtos no import — não muda.
 
-### 2. Aplicar os preços por tamanho no banco
+### 6. Verificação manual
+- Criar categoria "Porções" (Produto), adicionar tamanhos Inteira/Meia, criar 2 itens, preencher preços por tamanho.
+- Abrir o app: o item mostra seletor Inteira/Meia com preços diferentes; carrinho registra o tamanho.
+- Rodar bulk edit IA: "todas as porções: inteira 50, meia 28" → preview mostra mudanças por tamanho corretas.
 
-Ainda em `bulk-edit.functions.ts`, quando o item:
-
-- estiver numa categoria com `is_pizza = true` **e**
-- a IA retornar `size_prices`,
-
-o handler vai:
-
-1. Buscar os `pizza_sizes` ativos da categoria desse item (id + nome).
-2. Para cada `{ size_name, price }` retornado pela IA, casar com o `pizza_size_id` correspondente (comparação case-insensitive, com a mesma função `similarity` já usada no arquivo, para tolerar "inteira" vs "Inteira").
-3. Fazer **upsert** em `menu_item_size_prices` (`menu_item_id` + `pizza_size_id` → `price`, `is_available = true`).
-4. Continuar atualizando `menu_items.price` com o **maior** valor dentre os tamanhos preenchidos (mantém a regra atual de exibição/preço base coerente).
-
-Quando a IA não retornar `size_prices` mas o item for de categoria pizza com tamanhos, manter o comportamento atual (atualiza só o preço base) — isso evita zerar tamanhos sem necessidade.
-
-### 3. Não mexer no fluxo de produtos sem tamanhos
-
-Para itens que não são de categoria pizza, ou cuja categoria pizza não tem tamanhos, nada muda: continua atualizando `menu_items.price` normalmente. Os ajustes feitos no editor (preço base editável quando não há tamanhos) e na exibição da lista permanecem como estão.
-
-### 4. Verificação manual depois de implementar
-
-- Pedir na IA: "mude o Frango à parmegiana para Inteira 44,90 e Meia 24,90" → conferir no editor que ambos os campos aparecem preenchidos.
-- Pedir: "mude todas as porções para R$ 40" → conferir que cada item da categoria Porções tem Inteira=40 e Meia=40.
-- Pedir uma alteração num produto que **não é** de categoria pizza → conferir que continua atualizando só o preço base, sem efeitos colaterais.
-
-## Observação
-
-Não vou desmarcar o switch "Categoria de pizza" da categoria Porções — você confirmou que quer manter os tamanhos Inteira/Meia ativos. A correção é fazer a IA entender e gravar os preços por tamanho conforme o que você pedir no comando.
+## Detalhes técnicos
+- Reusar `pizza_sizes` (sem migração). Ignorar `slices` e `max_flavors` para tamanhos de Produtos (default fica 8/1 mas não é usado fora do builder de pizza).
+- Extrair a aba "Tamanhos" do `PizzaCategoryWizard.tsx` num subcomponente `CategorySizesEditor` reutilizado pelo wizard de pizza e pelo botão novo na categoria de Produto.
+- Em `admin.produtos.tsx`, condicional para "Preço por tamanho" passa de `cat.is_pizza` para `pizzaSizes.length > 0` (vários trechos já estão assim).
+- Sem alterações de RLS necessárias — políticas atuais de `pizza_sizes` e `menu_item_size_prices` já cobrem os donos da loja.
