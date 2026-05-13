@@ -470,7 +470,7 @@ function PricesTab({ storeId, qc }: { storeId: string; qc: ReturnType<typeof use
 
 /* ====================== BORDAS ====================== */
 function CrustsTab({ storeId, qc }: { storeId: string; qc: ReturnType<typeof useQueryClient> }) {
-  return <SimpleListEditor
+  return <CategoryScopedListEditor
     storeId={storeId}
     qc={qc}
     table="pizza_crusts"
@@ -483,7 +483,7 @@ function CrustsTab({ storeId, qc }: { storeId: string; qc: ReturnType<typeof use
 
 /* ====================== ADICIONAIS ====================== */
 function AddonsTab({ storeId, qc }: { storeId: string; qc: ReturnType<typeof useQueryClient> }) {
-  return <SimpleListEditor
+  return <CategoryScopedListEditor
     storeId={storeId}
     qc={qc}
     table="pizza_addons"
@@ -494,7 +494,69 @@ function AddonsTab({ storeId, qc }: { storeId: string; qc: ReturnType<typeof use
   />;
 }
 
-type SimpleRow = { id: string; store_id: string; name: string; price: number; position: number; is_active: boolean };
+type SimpleRow = { id: string; store_id: string; category_id: string; name: string; price: number; position: number; is_active: boolean };
+
+function CategoryScopedListEditor(props: {
+  storeId: string;
+  qc: ReturnType<typeof useQueryClient>;
+  table: "pizza_crusts" | "pizza_addons";
+  keyName: string;
+  labelSingular: string;
+  labelPlural: string;
+  placeholder: string;
+}) {
+  const { storeId, labelPlural } = props;
+  const { data: pizzaCategories = [] } = useQuery({
+    queryKey: ["pizza-categories", storeId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("menu_categories")
+        .select("id, name, store_id, is_pizza")
+        .eq("store_id", storeId)
+        .eq("is_pizza", true)
+        .order("position");
+      return (data || []) as PizzaCategory[];
+    },
+  });
+
+  const [categoryId, setCategoryId] = useState<string>("");
+  const effectiveCategoryId = categoryId || pizzaCategories[0]?.id || "";
+
+  if (pizzaCategories.length === 0) {
+    return (
+      <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+        Nenhuma categoria de pizza nesta loja. Vá em <strong>Produtos</strong> e ative o switch
+        <em> Categoria de pizza 🍕</em> em alguma categoria para cadastrar {labelPlural}.
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {pizzaCategories.length > 1 && (
+        <div className="max-w-md">
+          <Label>Categoria de pizza</Label>
+          <Select value={effectiveCategoryId} onValueChange={setCategoryId}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {pizzaCategories.map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="mt-1 text-xs text-muted-foreground">
+            As {labelPlural} cadastradas valem só para esta categoria.
+          </p>
+        </div>
+      )}
+      {effectiveCategoryId && (
+        <SimpleListEditor {...props} categoryId={effectiveCategoryId} />
+      )}
+    </div>
+  );
+}
 
 function SimpleListEditor({
   storeId,
