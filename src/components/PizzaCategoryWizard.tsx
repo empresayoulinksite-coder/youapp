@@ -98,22 +98,22 @@ export function PizzaCategoryWizard({
     }
   }, [open, initial]);
 
-  // ---- Sizes & Crusts (globais da loja) ----
+  const categoryId = initial?.id ?? null;
+
+  // ---- Sizes & Crusts (escopados por categoria) ----
   const { data: sizes = [] } = useQuery({
-    queryKey: ["pizza-sizes", storeId],
-    enabled: !!storeId && open,
+    queryKey: ["pizza-sizes", "cat", categoryId],
+    enabled: !!categoryId && open,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("pizza_sizes")
         .select("*")
-        .eq("store_id", storeId)
+        .eq("category_id", categoryId!)
         .order("position");
       if (error) throw error;
       return (data || []) as PizzaSize[];
     },
   });
-
-  const categoryId = initial?.id ?? null;
 
   const { data: crusts = [] } = useQuery({
     queryKey: ["pizza-crusts", "cat", categoryId],
@@ -130,6 +130,7 @@ export function PizzaCategoryWizard({
   });
 
   const invalidatePizza = () => {
+    qc.invalidateQueries({ queryKey: ["pizza-sizes", "cat", categoryId] });
     qc.invalidateQueries({ queryKey: ["pizza-sizes", storeId] });
     qc.invalidateQueries({ queryKey: ["pizza-crusts", "cat", categoryId] });
     qc.invalidateQueries({ queryKey: ["pizza-crusts", storeId] });
@@ -139,8 +140,12 @@ export function PizzaCategoryWizard({
   // ---- Size mutations ----
   const addSize = useMutation({
     mutationFn: async () => {
+      if (!categoryId) {
+        throw new Error("Salve a categoria antes de adicionar tamanhos");
+      }
       const { error } = await supabase.from("pizza_sizes").insert({
         store_id: storeId,
+        category_id: categoryId,
         name: "Novo tamanho",
         slices: 8,
         max_flavors: 1,
