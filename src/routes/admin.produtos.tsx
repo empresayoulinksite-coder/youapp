@@ -1103,6 +1103,18 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
                 <Pizza className="h-4 w-4" /> Configurar tamanhos, bordas e sabores
               </Button>
             )}
+            {editingCat?.id && !editingCat?.is_pizza && storeType === "food" && (
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  setSizesDialogCat(editingCat as Category);
+                  setSizesDialogOpen(true);
+                }}
+              >
+                📏 Configurar tamanhos da categoria (Inteira, Meia…)
+              </Button>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCatOpen(false)}>
