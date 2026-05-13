@@ -312,6 +312,54 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
     const changes: PreviewChange[] = [];
     const notFound: string[] = [];
 
+    // Helper: emit per-size changes for an item from e.size_prices.
+    // Returns true if at least one change was emitted (so callers can skip the base-price branch).
+    const emitSizePriceChangesForItem = (
+      it: { id: string; name: string; price: number | string; description: string | null; category_id: string },
+      e: ParsedEdit,
+    ): boolean => {
+      if (!e.size_prices?.length) return false;
+      const catSizes = (sizes ?? []).filter((s) => s.category_id === it.category_id);
+      if (catSizes.length === 0) return false;
+      let emitted = false;
+      for (const sp of e.size_prices) {
+        if (sp == null || typeof sp.price !== "number" || !Number.isFinite(sp.price)) continue;
+        // Match size by name (case/accent-insensitive, with similarity for "inteira" vs "Inteira")
+        let bestSize: (typeof catSizes)[number] | null = null;
+        let bestScore = 0;
+        for (const cs of catSizes) {
+          const score = similarity(cs.name, sp.size_name);
+          if (score > bestScore) {
+            bestScore = score;
+            bestSize = cs;
+          }
+        }
+        if (!bestSize || bestScore < 0.5) continue;
+        const existing = (sizePrices ?? []).find(
+          (row) => row.menu_item_id === it.id && row.pizza_size_id === bestSize!.id,
+        );
+        const cur = existing ? Number(existing.price) : 0;
+        const next = Math.max(0, round2(sp.price));
+        if (existing && cur === next) continue;
+        changes.push({
+          menu_item_id: it.id,
+          action: "set_price",
+          current_name: it.name,
+          current_price: cur,
+          current_description: it.description ?? null,
+          new_name: null,
+          new_price: next,
+          new_description: null,
+          matched_query: e.product_name,
+          pizza_size_id: bestSize.id,
+          pizza_size_name: bestSize.name,
+          size_price_id: existing?.id ?? null,
+        });
+        emitted = true;
+      }
+      return emitted;
+    };
+
     for (const e of edits) {
       const action: BulkAction = e.action ?? "update";
       const targetCategoryId = categoryIdFromEdit(e);
@@ -322,6 +370,14 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
       const scopedItems = targetCategoryId
         ? (items ?? []).filter((it) => it.category_id === targetCategoryId)
         : (items ?? []);
+
+      // ===== Apply per-size prices to ALL items in scope =====
+      if (e.apply_to_all && e.size_prices?.length) {
+        for (const it of scopedItems) {
+          emitSizePriceChangesForItem(it, e);
+        }
+        continue;
+      }
 
       // ===== Set fixed price applied to ALL items in scope =====
       if (action === "set_price" && e.apply_to_all && e.new_price != null) {
