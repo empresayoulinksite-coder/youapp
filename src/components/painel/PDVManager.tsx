@@ -609,6 +609,7 @@ export function PDVManager({ storeId, editingOrder, onClearEdit }: { storeId: st
           open={!!pizzaBuilderItem}
           onClose={() => setPizzaBuilderItem(null)}
           storeId={storeId}
+          categoryId={pizzaBuilderItem.category_id}
           baseItem={{
             id: pizzaBuilderItem.id,
             name: pizzaBuilderItem.name,
