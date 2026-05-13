@@ -958,11 +958,16 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
                         setCollapsed((p) => ({ ...p, [cat.id]: !p[cat.id] }))
                       }
                       onEditCategory={() => {
-                        if (cat.is_pizza || isPizzeria) {
-                          setPizzaWizardInitial(cat);
-                          setPizzaWizardOpen(true);
+                        if (storeType === "food") {
+                          // No food ramo, sempre abre o dialog para que o lojista
+                          // possa renomear, pausar OU trocar o tipo (Pizzas/Produtos).
+                          // Para tamanhos/bordas, o dialog tem um atalho para o wizard.
+                          setEditingCat(cat);
+                          setOriginalCatIsPizza(cat.is_pizza);
+                          setCatOpen(true);
                         } else {
                           setEditingCat(cat);
+                          setOriginalCatIsPizza(null);
                           setCatOpen(true);
                         }
                       }}
