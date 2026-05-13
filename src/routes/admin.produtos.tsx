@@ -1263,29 +1263,27 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
                 />
               </div>
               {(() => {
-                const cat = categories.find((c) => c.id === editing.category_id);
                 const pizzaSizes = sizesByCategory(editing.category_id);
                 const filled = pizzaSizes
                   .map((s) => Number(editingPizzaPrices[s.id]))
                   .filter((n) => !isNaN(n) && n > 0);
-                const isPizza =
-                  !!cat?.is_pizza && pizzaSizes.length > 0 && filled.length > 0;
-                const autoPrice = isPizza ? Math.max(0, ...filled) : null;
+                const usesSizes = pizzaSizes.length > 0 && filled.length > 0;
+                const autoPrice = usesSizes ? Math.max(0, ...filled) : null;
                 return (
                   <div>
                     <Label>Preço base (R$)</Label>
                     <Input
                       type="number"
                       step="0.01"
-                      disabled={isPizza}
-                      value={isPizza ? (autoPrice || 0) : (editing.price ?? "")}
+                      disabled={usesSizes}
+                      value={usesSizes ? (autoPrice || 0) : (editing.price ?? "")}
                       onChange={(e) =>
                         setEditing({ ...editing, price: Number(e.target.value) })
                       }
                     />
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {isPizza
-                        ? "Definido automaticamente pelo maior tamanho (Grande)"
+                      {usesSizes
+                        ? "Definido automaticamente pelo maior preço por tamanho"
                         : "Usado quando não há variações"}
                     </p>
                   </div>
