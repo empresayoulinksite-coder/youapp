@@ -502,60 +502,6 @@ function PricesGrid({ categoryId }: { categoryId: string }) {
     );
   }
 
-  const itemIds = items.map((i) => i.id);
-  const { data: prices = [], refetch } = useQuery({
-    queryKey: ["pizza-size-prices", itemIds.join(",")],
-    queryFn: async () => {
-      if (itemIds.length === 0) return [] as SizePrice[];
-      const { data } = await supabase
-        .from("menu_item_size_prices")
-        .select("*")
-        .in("menu_item_id", itemIds);
-      return (data || []) as SizePrice[];
-    },
-    enabled: itemIds.length > 0,
-  });
-
-  const getPrice = (itemId: string, sizeId: string) =>
-    prices.find((p) => p.menu_item_id === itemId && p.pizza_size_id === sizeId);
-
-  const setPrice = useMutation({
-    mutationFn: async ({ itemId, sizeId, value }: { itemId: string; sizeId: string; value: number }) => {
-      const existing = getPrice(itemId, sizeId);
-      if (existing?.id) {
-        const { error } = await supabase
-          .from("menu_item_size_prices")
-          .update({ price: value })
-          .eq("id", existing.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("menu_item_size_prices").insert({
-          menu_item_id: itemId,
-          pizza_size_id: sizeId,
-          price: value,
-        });
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => refetch(),
-  });
-
-  if (pizzaCategories.length === 0) {
-    return (
-      <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-        Nenhuma categoria está marcada como “categoria de pizza”. Vá em <strong>Produtos</strong> e ative o switch
-        <em> Categoria de pizza 🍕</em> nas categorias desejadas.
-      </div>
-    );
-  }
-
-  if (sizes.length === 0) {
-    return (
-      <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-        Cadastre pelo menos um tamanho na aba <strong>Tamanhos</strong>.
-      </div>
-    );
-  }
 
   return (
     <div className="overflow-auto">
