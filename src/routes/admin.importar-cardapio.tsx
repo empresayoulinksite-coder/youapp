@@ -69,17 +69,25 @@ function ImportMenuPage() {
 
   const handleParsed = (cats: ParsedCategory[]) => {
     const cleaned = cats
-      .map((c) => ({
-        name: c.name?.trim() || "Cardápio",
-        items: (c.items || [])
-          .filter((i) => i?.name?.trim())
-          .map((i) => ({
-            name: i.name.trim(),
-            description: i.description?.trim() || null,
-            price: Number(i.price) || 0,
-            original_price: i.original_price ? Number(i.original_price) : null,
-          })),
-      }))
+      .map((c) => {
+        const name = c.name?.trim() || "Cardápio";
+        // Autodetecta categoria de pizza pelo nome (lojista pode trocar depois)
+        const guessPizza =
+          c.is_pizza ??
+          /\bpizz/i.test(name);
+        return {
+          name,
+          is_pizza: guessPizza,
+          items: (c.items || [])
+            .filter((i) => i?.name?.trim())
+            .map((i) => ({
+              name: i.name.trim(),
+              description: i.description?.trim() || null,
+              price: Number(i.price) || 0,
+              original_price: i.original_price ? Number(i.original_price) : null,
+            })),
+        };
+      })
       .filter((c) => c.items.length > 0);
     if (cleaned.length === 0) {
       toast.error("Nenhum item encontrado no cardápio");
@@ -113,6 +121,8 @@ function ImportMenuPage() {
   };
   const updateCategoryName = (ci: number, name: string) =>
     setCategories((prev) => prev.map((c, i) => (i !== ci ? c : { ...c, name })));
+  const updateCategoryType = (ci: number, is_pizza: boolean) =>
+    setCategories((prev) => prev.map((c, i) => (i !== ci ? c : { ...c, is_pizza })));
   const appendItemsToCategory = (ci: number, items: ParsedItem[]) => {
     const cleaned = items
       .filter((i) => i?.name?.trim())
@@ -158,7 +168,12 @@ function ImportMenuPage() {
         } else {
           const { data: newCat, error: catErr } = await supabase
             .from("menu_categories")
-            .insert({ store_id: storeId, name: cat.name, position: nextPos++ })
+            .insert({
+              store_id: storeId,
+              name: cat.name,
+              position: nextPos++,
+              is_pizza: storeType === "food" ? !!cat.is_pizza : false,
+            })
             .select("id")
             .single();
           if (catErr) throw catErr;
@@ -282,12 +297,26 @@ function ImportMenuPage() {
 
           {categories.map((cat, ci) => (
             <div key={ci} className="rounded-lg border bg-card">
-              <div className="flex items-center gap-2 border-b p-3">
+              <div className="flex flex-wrap items-center gap-2 border-b p-3">
                 <Input
                   value={cat.name}
                   onChange={(e) => updateCategoryName(ci, e.target.value)}
-                  className="font-semibold"
+                  className="min-w-[180px] flex-1 font-semibold"
                 />
+                {storeType === "food" && (
+                  <Select
+                    value={cat.is_pizza ? "pizza" : "produto"}
+                    onValueChange={(v) => updateCategoryType(ci, v === "pizza")}
+                  >
+                    <SelectTrigger className="w-[170px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="produto">🍔 Produtos</SelectItem>
+                      <SelectItem value="pizza">🍕 Pizzas</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
                 <Button size="sm" variant="ghost" onClick={() => addItem(ci)} title="Adicionar item em branco">
                   <Plus className="h-4 w-4" />
                 </Button>
