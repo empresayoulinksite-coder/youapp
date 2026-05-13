@@ -364,15 +364,14 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
     }) => {
       const cat = categories.find((c) => c.id === m.category_id);
       const pizzaSizes = sizesByCategory(m.category_id);
-      const isPizza = !!cat?.is_pizza && pizzaSizes.length > 0;
-      const pizzaAutoPrice = isPizza
-        ? Math.max(
-            0,
-            ...pizzaSizes
-              .map((s) => Number(pizzaPrices[s.id]))
-              .filter((n) => !isNaN(n) && n > 0),
-          )
-        : 0;
+      const filledPizzaPrices = pizzaSizes
+        .map((s) => Number(pizzaPrices[s.id]))
+        .filter((n) => !isNaN(n) && n > 0);
+      // Só tratamos como pizza quando o usuário realmente preencheu preços por tamanho.
+      // Isso evita zerar o preço base de produtos como "porções" cuja categoria foi marcada
+      // como is_pizza por engano.
+      const isPizza = !!cat?.is_pizza && pizzaSizes.length > 0 && filledPizzaPrices.length > 0;
+      const pizzaAutoPrice = isPizza ? Math.max(0, ...filledPizzaPrices) : 0;
       const payload = {
         store_id: storeId,
         category_id: m.category_id!,
@@ -1171,15 +1170,12 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
               {(() => {
                 const cat = categories.find((c) => c.id === editing.category_id);
                 const pizzaSizes = sizesByCategory(editing.category_id);
-                const isPizza = !!cat?.is_pizza && pizzaSizes.length > 0;
-                const autoPrice = isPizza
-                  ? Math.max(
-                      0,
-                      ...pizzaSizes
-                        .map((s) => Number(editingPizzaPrices[s.id]))
-                        .filter((n) => !isNaN(n) && n > 0),
-                    )
-                  : null;
+                const filled = pizzaSizes
+                  .map((s) => Number(editingPizzaPrices[s.id]))
+                  .filter((n) => !isNaN(n) && n > 0);
+                const isPizza =
+                  !!cat?.is_pizza && pizzaSizes.length > 0 && filled.length > 0;
+                const autoPrice = isPizza ? Math.max(0, ...filled) : null;
                 return (
                   <div>
                     <Label>Preço base (R$)</Label>
@@ -1681,7 +1677,11 @@ function SortableCategory({
                     key={m.id}
                     item={m}
                     variations={variationsByItem[m.id] || []}
-                    pizzaPrice={isPizzaCategory ? (pizzaPriceByItem[m.id] ?? 0) : null}
+                    pizzaPrice={
+                      isPizzaCategory && pizzaPriceByItem[m.id] != null && pizzaPriceByItem[m.id]! > 0
+                        ? pizzaPriceByItem[m.id]!
+                        : null
+                    }
                     onEdit={() => onEditItem(m)}
                     onDelete={() => onDeleteItem(m.id, m.name)}
                     onToggleAvailable={() => onToggleItemAvailable(m)}
