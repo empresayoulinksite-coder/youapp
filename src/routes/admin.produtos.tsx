@@ -253,20 +253,23 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
     },
   });
 
-  const { data: pizzaSizes = [] } = useQuery({
+  const { data: allPizzaSizes = [] } = useQuery({
     queryKey: ["admin-pizza-sizes", storeId],
     enabled: !!storeId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("pizza_sizes")
-        .select("id,name,position")
+        .select("id,name,position,category_id")
         .eq("store_id", storeId)
         .eq("is_active", true)
         .order("position");
       if (error) throw error;
-      return data as { id: string; name: string; position: number }[];
+      return data as { id: string; name: string; position: number; category_id: string }[];
     },
   });
+
+  const sizesByCategory = (categoryId: string | null | undefined) =>
+    categoryId ? allPizzaSizes.filter((s) => s.category_id === categoryId) : [];
 
   // ---------- Mutations ----------
   const saveCategory = useMutation({
