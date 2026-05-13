@@ -39,6 +39,7 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   storeId: string;
+  initialCategoryId?: string | null;
 }
 
 const ALL_CATEGORIES = "__all__";
@@ -65,7 +66,7 @@ function fmt(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-export function BulkEditAIDialog({ open, onOpenChange, storeId }: Props) {
+export function BulkEditAIDialog({ open, onOpenChange, storeId, initialCategoryId }: Props) {
   const qc = useQueryClient();
   const [prompt, setPrompt] = useState("");
   const [categoryId, setCategoryId] = useState<string>(ALL_CATEGORIES);
@@ -84,8 +85,8 @@ export function BulkEditAIDialog({ open, onOpenChange, storeId }: Props) {
 
   useEffect(() => {
     if (!open) return;
-    setCategoryId(ALL_CATEGORIES);
-  }, [open, storeId]);
+    setCategoryId(initialCategoryId || ALL_CATEGORIES);
+  }, [open, storeId, initialCategoryId]);
 
   const previewMut = useMutation({
     mutationFn: async () => {
