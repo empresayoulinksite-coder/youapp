@@ -301,7 +301,7 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
 
     const { data: sizes } = await supabaseAdmin
       .from("pizza_sizes")
-      .select("id, name")
+      .select("id, name, category_id")
       .eq("store_id", data.storeId)
       .eq("is_active", true);
 
