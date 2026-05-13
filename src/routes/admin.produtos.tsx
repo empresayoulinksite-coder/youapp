@@ -434,8 +434,8 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
         }
       }
 
-      // Sincroniza preços por tamanho (pizzas)
-      if (isPizza) {
+      // Sincroniza preços por tamanho (qualquer categoria com tamanhos compartilhados)
+      if (pizzaSizes.length > 0) {
         const { data: existingPrices } = await supabase
           .from("menu_item_size_prices")
           .select("id,pizza_size_id")
