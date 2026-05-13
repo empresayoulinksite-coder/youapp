@@ -104,6 +104,17 @@ const TOOL_SCHEMA = {
               adjust_percent: { type: "number" },
               adjust_amount: { type: "number" },
               apply_to_all: { type: "boolean" },
+              size_prices: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    size_name: { type: "string" },
+                    price: { type: "number" },
+                  },
+                  required: ["size_name", "price"],
+                },
+              },
             },
             required: ["product_name"],
           },
