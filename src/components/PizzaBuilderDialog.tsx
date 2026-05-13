@@ -106,8 +106,8 @@ export function PizzaBuilderDialog({ open, onClose, storeId, categoryId, baseIte
       itemIds.length > 0
         ? supabase.from("menu_item_size_prices").select("*").in("menu_item_id", itemIds)
         : Promise.resolve({ data: [] as SizePrice[] }),
-      supabase.from("pizza_crusts").select("*").eq("store_id", storeId).eq("is_active", true).order("position"),
-      supabase.from("pizza_addons").select("*").eq("store_id", storeId).eq("is_active", true).order("position"),
+      supabase.from("pizza_crusts").select("*").eq("category_id", categoryId).eq("is_active", true).order("position"),
+      supabase.from("pizza_addons").select("*").eq("category_id", categoryId).eq("is_active", true).order("position"),
     ]).then(([sz, pr, cr, ad]: any) => {
       const sizesData = (sz.data ?? []) as PizzaSize[];
       setSizes(sizesData);
