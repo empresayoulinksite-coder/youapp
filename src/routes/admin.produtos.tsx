@@ -151,6 +151,8 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
   const [catTypeChooserOpen, setCatTypeChooserOpen] = useState(false);
   const [originalCatIsPizza, setOriginalCatIsPizza] = useState<boolean | null>(null);
   const [aiBulkOpen, setAiBulkOpen] = useState(false);
+  const [sizesDialogOpen, setSizesDialogOpen] = useState(false);
+  const [sizesDialogCat, setSizesDialogCat] = useState<Category | null>(null);
 
   const { data: stores = [] } = useQuery({
     queryKey: ["admin-stores-list", storeType],
