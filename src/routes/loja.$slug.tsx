@@ -1190,6 +1190,7 @@ function StorePage() {
             open={!!pizzaBuilderItem}
             onClose={() => setPizzaBuilderItem(null)}
             storeId={store.id}
+            categoryId={pizzaBuilderItem.category_id}
             baseItem={{
               id: pizzaBuilderItem.id,
               name: pizzaBuilderItem.name,
