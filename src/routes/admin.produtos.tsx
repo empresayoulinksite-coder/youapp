@@ -898,11 +898,11 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
             <Button
               variant="outline"
               onClick={() => {
-                if (isPizzeria) {
-                  setPizzaWizardInitial(null);
-                  setPizzaWizardOpen(true);
+                if (storeType === "food") {
+                  setCatTypeChooserOpen(true);
                 } else {
                   setEditingCat({ name: "", is_available: true });
+                  setOriginalCatIsPizza(null);
                   setCatOpen(true);
                 }
               }}
