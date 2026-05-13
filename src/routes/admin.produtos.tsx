@@ -1170,15 +1170,12 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
               {(() => {
                 const cat = categories.find((c) => c.id === editing.category_id);
                 const pizzaSizes = sizesByCategory(editing.category_id);
-                const isPizza = !!cat?.is_pizza && pizzaSizes.length > 0;
-                const autoPrice = isPizza
-                  ? Math.max(
-                      0,
-                      ...pizzaSizes
-                        .map((s) => Number(editingPizzaPrices[s.id]))
-                        .filter((n) => !isNaN(n) && n > 0),
-                    )
-                  : null;
+                const filled = pizzaSizes
+                  .map((s) => Number(editingPizzaPrices[s.id]))
+                  .filter((n) => !isNaN(n) && n > 0);
+                const isPizza =
+                  !!cat?.is_pizza && pizzaSizes.length > 0 && filled.length > 0;
+                const autoPrice = isPizza ? Math.max(0, ...filled) : null;
                 return (
                   <div>
                     <Label>Preço base (R$)</Label>
