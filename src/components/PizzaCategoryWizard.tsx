@@ -113,14 +113,16 @@ export function PizzaCategoryWizard({
     },
   });
 
+  const categoryId = initial?.id ?? null;
+
   const { data: crusts = [] } = useQuery({
-    queryKey: ["pizza-crusts", storeId],
-    enabled: !!storeId && open,
+    queryKey: ["pizza-crusts", "cat", categoryId],
+    enabled: !!categoryId && open,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("pizza_crusts")
         .select("*")
-        .eq("store_id", storeId)
+        .eq("category_id", categoryId!)
         .order("position");
       if (error) throw error;
       return (data || []) as PizzaCrust[];
@@ -129,8 +131,10 @@ export function PizzaCategoryWizard({
 
   const invalidatePizza = () => {
     qc.invalidateQueries({ queryKey: ["pizza-sizes", storeId] });
+    qc.invalidateQueries({ queryKey: ["pizza-crusts", "cat", categoryId] });
     qc.invalidateQueries({ queryKey: ["pizza-crusts", storeId] });
   };
+
 
   // ---- Size mutations ----
   const addSize = useMutation({
