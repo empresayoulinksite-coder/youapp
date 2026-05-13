@@ -380,20 +380,7 @@ function SizesEditor({
 }
 
 /* ====================== PREÇOS POR SABOR x TAMANHO ====================== */
-function PricesTab({ storeId, qc }: { storeId: string; qc: ReturnType<typeof useQueryClient> }) {
-  const { data: sizes = [] } = useQuery({
-    queryKey: ["pizza-sizes", storeId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("pizza_sizes")
-        .select("*")
-        .eq("store_id", storeId)
-        .eq("is_active", true)
-        .order("position");
-      return (data || []) as PizzaSize[];
-    },
-  });
-
+function PricesTab({ storeId, qc: _qc }: { storeId: string; qc: ReturnType<typeof useQueryClient> }) {
   const { data: pizzaCategories = [] } = useQuery({
     queryKey: ["pizza-categories", storeId],
     queryFn: async () => {
@@ -401,26 +388,119 @@ function PricesTab({ storeId, qc }: { storeId: string; qc: ReturnType<typeof use
         .from("menu_categories")
         .select("id, name, store_id, is_pizza")
         .eq("store_id", storeId)
-        .eq("is_pizza", true);
+        .eq("is_pizza", true)
+        .order("position");
       return (data || []) as PizzaCategory[];
     },
   });
 
-  const categoryIds = pizzaCategories.map((c) => c.id);
+  const [categoryId, setCategoryId] = useState<string>("");
+  const effectiveCategoryId = categoryId || pizzaCategories[0]?.id || "";
+
+  if (pizzaCategories.length === 0) {
+    return (
+      <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+        Nenhuma categoria está marcada como “categoria de pizza”. Vá em <strong>Produtos</strong> e ative o switch
+        <em> Categoria de pizza 🍕</em> nas categorias desejadas.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {pizzaCategories.length > 1 && (
+        <div className="max-w-md">
+          <Label>Categoria de pizza</Label>
+          <Select value={effectiveCategoryId} onValueChange={setCategoryId}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {pizzaCategories.map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      {effectiveCategoryId && (
+        <PricesGrid categoryId={effectiveCategoryId} />
+      )}
+    </div>
+  );
+}
+
+function PricesGrid({ categoryId }: { categoryId: string }) {
+  const { data: sizes = [] } = useQuery({
+    queryKey: ["pizza-sizes", "cat", categoryId, "active"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("pizza_sizes")
+        .select("*")
+        .eq("category_id", categoryId)
+        .eq("is_active", true)
+        .order("position");
+      return (data || []) as PizzaSize[];
+    },
+  });
 
   const { data: items = [] } = useQuery({
-    queryKey: ["pizza-items", storeId, categoryIds.join(",")],
+    queryKey: ["pizza-items", "cat", categoryId],
     queryFn: async () => {
-      if (categoryIds.length === 0) return [] as PizzaItem[];
       const { data } = await supabase
         .from("menu_items")
         .select("id, name, category_id, emoji")
-        .in("category_id", categoryIds)
+        .eq("category_id", categoryId)
         .order("position");
       return (data || []) as PizzaItem[];
     },
-    enabled: categoryIds.length > 0,
   });
+
+  const itemIds = items.map((i) => i.id);
+  const { data: prices = [], refetch } = useQuery({
+    queryKey: ["pizza-size-prices", itemIds.join(",")],
+    queryFn: async () => {
+      if (itemIds.length === 0) return [] as SizePrice[];
+      const { data } = await supabase
+        .from("menu_item_size_prices")
+        .select("*")
+        .in("menu_item_id", itemIds);
+      return (data || []) as SizePrice[];
+    },
+    enabled: itemIds.length > 0,
+  });
+
+  const getPrice = (itemId: string, sizeId: string) =>
+    prices.find((p) => p.menu_item_id === itemId && p.pizza_size_id === sizeId);
+
+  const setPrice = useMutation({
+    mutationFn: async ({ itemId, sizeId, value }: { itemId: string; sizeId: string; value: number }) => {
+      const existing = getPrice(itemId, sizeId);
+      if (existing?.id) {
+        const { error } = await supabase
+          .from("menu_item_size_prices")
+          .update({ price: value })
+          .eq("id", existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("menu_item_size_prices").insert({
+          menu_item_id: itemId,
+          pizza_size_id: sizeId,
+          price: value,
+        });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => refetch(),
+  });
+
+  if (sizes.length === 0) {
+    return (
+      <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+        Cadastre pelo menos um tamanho na aba <strong>Tamanhos</strong> para esta categoria.
+      </div>
+    );
+  }
 
   const itemIds = items.map((i) => i.id);
   const { data: prices = [], refetch } = useQuery({
