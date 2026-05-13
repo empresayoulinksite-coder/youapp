@@ -305,10 +305,11 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
       if (action === "set_price" && e.apply_to_all && e.new_price != null) {
         const target = Number(e.new_price);
         for (const it of scopedItems) {
+          const itemSizes = (sizePrices ?? []).filter((sp) => sp.menu_item_id === it.id);
           const isPizza =
-            (it as { menu_categories?: { is_pizza?: boolean } }).menu_categories?.is_pizza === true;
+            (it as { menu_categories?: { is_pizza?: boolean } }).menu_categories?.is_pizza === true &&
+            itemSizes.length > 0;
           if (isPizza) {
-            const itemSizes = (sizePrices ?? []).filter((sp) => sp.menu_item_id === it.id);
             for (const sp of itemSizes) {
               const cur = Number(sp.price);
               if (cur === target) continue;
@@ -350,11 +351,12 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
       // ===== Bulk adjust applied to ALL items in scope =====
       if (action === "adjust_price" && e.apply_to_all) {
         for (const it of scopedItems) {
+          const itemSizes = (sizePrices ?? []).filter((sp) => sp.menu_item_id === it.id);
           const isPizza =
-            (it as { menu_categories?: { is_pizza?: boolean } }).menu_categories?.is_pizza === true;
+            (it as { menu_categories?: { is_pizza?: boolean } }).menu_categories?.is_pizza === true &&
+            itemSizes.length > 0;
           if (isPizza) {
             // adjust each size price
-            const itemSizes = (sizePrices ?? []).filter((sp) => sp.menu_item_id === it.id);
             for (const sp of itemSizes) {
               const cur = Number(sp.price);
               const next = computeAdjustedPrice(cur, e);
