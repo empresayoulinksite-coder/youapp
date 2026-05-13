@@ -566,6 +566,7 @@ function SimpleListEditor({
   labelSingular,
   labelPlural,
   placeholder,
+  categoryId,
 }: {
   storeId: string;
   qc: ReturnType<typeof useQueryClient>;
@@ -574,16 +575,17 @@ function SimpleListEditor({
   labelSingular: string;
   labelPlural: string;
   placeholder: string;
+  categoryId: string;
 }) {
   const [editing, setEditing] = useState<Partial<SimpleRow> | null>(null);
 
   const { data: rows = [] } = useQuery({
-    queryKey: [keyName, storeId],
+    queryKey: [keyName, storeId, categoryId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from(table)
         .select("*")
-        .eq("store_id", storeId)
+        .eq("category_id", categoryId)
         .order("position");
       if (error) throw error;
       return (data || []) as SimpleRow[];
@@ -601,6 +603,7 @@ function SimpleListEditor({
       } else {
         const { error } = await supabase.from(table).insert({
           store_id: storeId,
+          category_id: categoryId,
           name: r.name!,
           price: r.price ?? 0,
           position: rows.length,
@@ -611,7 +614,7 @@ function SimpleListEditor({
     },
     onSuccess: () => {
       toast.success("Salvo");
-      qc.invalidateQueries({ queryKey: [keyName, storeId] });
+      qc.invalidateQueries({ queryKey: [keyName, storeId, categoryId] });
       setEditing(null);
     },
     onError: (e: Error) => toast.error(e.message),
