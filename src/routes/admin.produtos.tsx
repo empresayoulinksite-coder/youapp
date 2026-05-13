@@ -363,6 +363,7 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
       pizzaPrices: Record<string, string>;
     }) => {
       const cat = categories.find((c) => c.id === m.category_id);
+      const pizzaSizes = sizesByCategory(m.category_id);
       const isPizza = !!cat?.is_pizza && pizzaSizes.length > 0;
       const pizzaAutoPrice = isPizza
         ? Math.max(
