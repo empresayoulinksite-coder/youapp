@@ -1499,6 +1499,7 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
           open={aiBulkOpen}
           onOpenChange={setAiBulkOpen}
           storeId={storeId}
+          initialCategoryId={filterCat === "all" ? null : filterCat}
         />
       )}
     </div>
