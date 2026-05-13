@@ -68,7 +68,16 @@ REGRAS:
 - Quando o usuário mencionar uma categoria/departamento (ex: "porções", "bebidas", "pizzas doces"), preencha category_name com esse texto e aplique só nessa categoria.
 - Para "activate"/"deactivate"/"delete": só preencha product_name e action.
 - Cada produto distinto = um item separado. "Pizza Grande" e "Broto" são DOIS itens.
-- Não invente produtos.`;
+- Não invente produtos.
+
+PREÇO POR TAMANHO (size_prices):
+- Categorias de pizza/porção podem ter tamanhos como "Inteira"/"Meia" ou "Grande"/"Broto".
+- Se o usuário citar valores POR TAMANHO no mesmo comando, preencha "size_prices" com um item por tamanho citado, usando o nome do tamanho como aparece (ex: "Inteira", "Meia"). NÃO preencha new_price nesse caso.
+- Exemplos:
+  • "Frango à parmegiana: Inteira R$ 44,90 e Meia R$ 24,90" → action="update", product_name="Frango à parmegiana", size_prices=[{size_name:"Inteira", price:44.9},{size_name:"Meia", price:24.9}]
+  • "porção de calabresa inteira 50, meia 28" → product_name="porção de calabresa", size_prices=[{size_name:"Inteira", price:50},{size_name:"Meia", price:28}]
+  • "todas as porções: inteira 45 e meia 25" → apply_to_all=true, category_name="porções", size_prices=[{size_name:"Inteira", price:45},{size_name:"Meia", price:25}]
+- Se o usuário disser apenas "mude X para R$ Y" sem citar tamanhos e X for de categoria com tamanhos, preencha new_price normalmente — o sistema decide.`;
 
 const TOOL_SCHEMA = {
   type: "function" as const,
