@@ -780,8 +780,8 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
     setColorsInput((m.colors ?? []).join(", "));
     setEditingPizzaPrices({});
     setOpen(true);
-    const cat = categories.find((c) => c.id === m.category_id);
-    if (cat?.is_pizza) {
+    const pizzaSizes = sizesByCategory(m.category_id);
+    if (pizzaSizes.length > 0) {
       const { data } = await supabase
         .from("menu_item_size_prices")
         .select("pizza_size_id,price")
