@@ -1398,22 +1398,23 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
               </div>
 
 
-              {/* Preços por tamanho (pizzas) */}
+              {/* Preços por tamanho (categorias com tamanhos compartilhados) */}
               {(() => {
                 const cat = categories.find(
                   (c) => c.id === editing.category_id,
                 );
                 const pizzaSizes = sizesByCategory(editing.category_id);
-                if (!cat?.is_pizza || pizzaSizes.length === 0) return null;
+                if (pizzaSizes.length === 0) return null;
+                const isPizza = !!cat?.is_pizza;
                 return (
                   <div className="sm:col-span-2 rounded-md border p-3">
                     <div className="mb-2">
                       <p className="text-sm font-semibold">
-                        🍕 Preço por tamanho de pizza
+                        {isPizza ? "🍕 Preço por tamanho de pizza" : "📏 Preço por tamanho"}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Defina o preço deste sabor em cada tamanho. Deixe vazio
-                        para não vender neste tamanho.
+                        Defina o preço deste produto em cada tamanho. Deixe vazio
+                        para não vender naquele tamanho.
                       </p>
                     </div>
                     <div className="grid gap-2 sm:grid-cols-2">
