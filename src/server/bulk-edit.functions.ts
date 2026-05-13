@@ -293,6 +293,10 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
     for (const e of edits) {
       const action: BulkAction = e.action ?? "update";
       const targetCategoryId = categoryIdFromEdit(e);
+      if (e.category_name?.trim() && !targetCategoryId) {
+        notFound.push(`Categoria: ${e.category_name}`);
+        continue;
+      }
       const scopedItems = targetCategoryId
         ? (items ?? []).filter((it) => it.category_id === targetCategoryId)
         : (items ?? []);
