@@ -15,6 +15,7 @@ export interface ParsedEdit {
   new_price?: number | null;
   new_description?: string | null;
   new_name?: string | null;
+  category_name?: string | null;
   // For adjust_price: percentage (10 = +10%, -15 = -15%) OR fixed delta in BRL
   adjust_percent?: number | null;
   adjust_amount?: number | null;
@@ -62,6 +63,7 @@ REGRAS:
 - Para "adjust_price": preencha adjust_percent (ex: 10 = +10%, -15 = -15%) OU adjust_amount (delta fixo em reais, positivo ou negativo). Não preencha new_price.
 - Para "set_price": preencha new_price com o valor desejado.
 - Para ajuste em TODOS os produtos (ex: "aumente todos os preços em 10%", "20% off em tudo", "deixe todos os produtos a R$ 29,90"), use apply_to_all=true e product_name="*".
+- Quando o usuário mencionar uma categoria/departamento (ex: "porções", "bebidas", "pizzas doces"), preencha category_name com esse texto e aplique só nessa categoria.
 - Para "activate"/"deactivate"/"delete": só preencha product_name e action.
 - Cada produto distinto = um item separado. "Pizza Grande" e "Broto" são DOIS itens.
 - Não invente produtos.`;
@@ -87,6 +89,7 @@ const TOOL_SCHEMA = {
               new_price: { type: "number" },
               new_description: { type: "string" },
               new_name: { type: "string" },
+              category_name: { type: "string" },
               adjust_percent: { type: "number" },
               adjust_amount: { type: "number" },
               apply_to_all: { type: "boolean" },
