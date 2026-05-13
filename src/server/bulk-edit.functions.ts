@@ -21,6 +21,8 @@ export interface ParsedEdit {
   adjust_amount?: number | null;
   // When user wants to apply to ALL products in scope (e.g. "aumente todos os preços em 10%")
   apply_to_all?: boolean;
+  // Per-size prices for pizza/portion categories (Inteira/Meia, Grande/Broto, etc.)
+  size_prices?: { size_name: string; price: number }[] | null;
 }
 
 export interface PreviewChange {
@@ -66,7 +68,16 @@ REGRAS:
 - Quando o usuário mencionar uma categoria/departamento (ex: "porções", "bebidas", "pizzas doces"), preencha category_name com esse texto e aplique só nessa categoria.
 - Para "activate"/"deactivate"/"delete": só preencha product_name e action.
 - Cada produto distinto = um item separado. "Pizza Grande" e "Broto" são DOIS itens.
-- Não invente produtos.`;
+- Não invente produtos.
+
+PREÇO POR TAMANHO (size_prices):
+- Categorias de pizza/porção podem ter tamanhos como "Inteira"/"Meia" ou "Grande"/"Broto".
+- Se o usuário citar valores POR TAMANHO no mesmo comando, preencha "size_prices" com um item por tamanho citado, usando o nome do tamanho como aparece (ex: "Inteira", "Meia"). NÃO preencha new_price nesse caso.
+- Exemplos:
+  • "Frango à parmegiana: Inteira R$ 44,90 e Meia R$ 24,90" → action="update", product_name="Frango à parmegiana", size_prices=[{size_name:"Inteira", price:44.9},{size_name:"Meia", price:24.9}]
+  • "porção de calabresa inteira 50, meia 28" → product_name="porção de calabresa", size_prices=[{size_name:"Inteira", price:50},{size_name:"Meia", price:28}]
+  • "todas as porções: inteira 45 e meia 25" → apply_to_all=true, category_name="porções", size_prices=[{size_name:"Inteira", price:45},{size_name:"Meia", price:25}]
+- Se o usuário disser apenas "mude X para R$ Y" sem citar tamanhos e X for de categoria com tamanhos, preencha new_price normalmente — o sistema decide.`;
 
 const TOOL_SCHEMA = {
   type: "function" as const,
@@ -93,6 +104,17 @@ const TOOL_SCHEMA = {
               adjust_percent: { type: "number" },
               adjust_amount: { type: "number" },
               apply_to_all: { type: "boolean" },
+              size_prices: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    size_name: { type: "string" },
+                    price: { type: "number" },
+                  },
+                  required: ["size_name", "price"],
+                },
+              },
             },
             required: ["product_name"],
           },
@@ -279,7 +301,7 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
 
     const { data: sizes } = await supabaseAdmin
       .from("pizza_sizes")
-      .select("id, name")
+      .select("id, name, category_id")
       .eq("store_id", data.storeId)
       .eq("is_active", true);
 
@@ -289,6 +311,54 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
 
     const changes: PreviewChange[] = [];
     const notFound: string[] = [];
+
+    // Helper: emit per-size changes for an item from e.size_prices.
+    // Returns true if at least one change was emitted (so callers can skip the base-price branch).
+    const emitSizePriceChangesForItem = (
+      it: { id: string; name: string; price: number | string; description: string | null; category_id: string },
+      e: ParsedEdit,
+    ): boolean => {
+      if (!e.size_prices?.length) return false;
+      const catSizes = (sizes ?? []).filter((s) => s.category_id === it.category_id);
+      if (catSizes.length === 0) return false;
+      let emitted = false;
+      for (const sp of e.size_prices) {
+        if (sp == null || typeof sp.price !== "number" || !Number.isFinite(sp.price)) continue;
+        // Match size by name (case/accent-insensitive, with similarity for "inteira" vs "Inteira")
+        let bestSize: (typeof catSizes)[number] | null = null;
+        let bestScore = 0;
+        for (const cs of catSizes) {
+          const score = similarity(cs.name, sp.size_name);
+          if (score > bestScore) {
+            bestScore = score;
+            bestSize = cs;
+          }
+        }
+        if (!bestSize || bestScore < 0.5) continue;
+        const existing = (sizePrices ?? []).find(
+          (row) => row.menu_item_id === it.id && row.pizza_size_id === bestSize!.id,
+        );
+        const cur = existing ? Number(existing.price) : 0;
+        const next = Math.max(0, round2(sp.price));
+        if (existing && cur === next) continue;
+        changes.push({
+          menu_item_id: it.id,
+          action: "set_price",
+          current_name: it.name,
+          current_price: cur,
+          current_description: it.description ?? null,
+          new_name: null,
+          new_price: next,
+          new_description: null,
+          matched_query: e.product_name,
+          pizza_size_id: bestSize.id,
+          pizza_size_name: bestSize.name,
+          size_price_id: existing?.id ?? null,
+        });
+        emitted = true;
+      }
+      return emitted;
+    };
 
     for (const e of edits) {
       const action: BulkAction = e.action ?? "update";
@@ -300,6 +370,14 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
       const scopedItems = targetCategoryId
         ? (items ?? []).filter((it) => it.category_id === targetCategoryId)
         : (items ?? []);
+
+      // ===== Apply per-size prices to ALL items in scope =====
+      if (e.apply_to_all && e.size_prices?.length) {
+        for (const it of scopedItems) {
+          emitSizePriceChangesForItem(it, e);
+        }
+        continue;
+      }
 
       // ===== Set fixed price applied to ALL items in scope =====
       if (action === "set_price" && e.apply_to_all && e.new_price != null) {
@@ -527,6 +605,12 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
         continue;
       }
 
+      // ===== Per-size prices targeted at a single product (Inteira/Meia, Grande/Broto, ...) =====
+      if (e.size_prices?.length) {
+        const emitted = emitSizePriceChangesForItem(bestItem, e);
+        if (emitted) continue;
+      }
+
       // action === "update" or single-product "set_price"
       if (e.new_price == null && e.new_description == null && e.new_name == null) continue;
 
@@ -741,6 +825,37 @@ export const applyBulkEdit = createServerFn({ method: "POST" })
       const { error } = await supabaseAdmin.from("menu_item_size_prices").insert(rows);
       if (error) console.error("bulk size_price insert error", error);
       else applied += rows.length;
+    }
+
+    // 7) Recompute menu_items.price = max(size_prices) for any item touched by size changes,
+    //    so the editor's "preço base" and the product list stay coherent.
+    const touchedItemIds = new Set<string>();
+    for (const c of data.changes) {
+      if (c.pizza_size_id) touchedItemIds.add(c.menu_item_id);
+    }
+    if (touchedItemIds.size > 0) {
+      const ids = Array.from(touchedItemIds);
+      const { data: rows } = await supabaseAdmin
+        .from("menu_item_size_prices")
+        .select("menu_item_id, price")
+        .in("menu_item_id", ids);
+      const maxByItem = new Map<string, number>();
+      for (const r of rows ?? []) {
+        const cur = maxByItem.get(r.menu_item_id) ?? 0;
+        const p = Number(r.price) || 0;
+        if (p > cur) maxByItem.set(r.menu_item_id, p);
+      }
+      const baseTasks: (() => Promise<void>)[] = [];
+      for (const [itemId, price] of maxByItem) {
+        baseTasks.push(async () => {
+          const { error } = await supabaseAdmin
+            .from("menu_items")
+            .update({ price })
+            .eq("id", itemId);
+          if (error) console.error("recompute base price error", itemId, error);
+        });
+      }
+      await runConcurrent(baseTasks, 10);
     }
 
     return { applied };
