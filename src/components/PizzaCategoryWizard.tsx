@@ -358,35 +358,43 @@ export function PizzaCategoryWizard({
                 </p>
               </div>
 
-              <div className="space-y-3">
-                {sizes.map((s) => (
-                  <SizeRow
-                    key={s.id}
-                    size={s}
-                    onUpdate={(patch) =>
-                      updateSize.mutate({ id: s.id, ...patch })
-                    }
-                    onDelete={() => {
-                      if (confirm(`Excluir tamanho "${s.name}"?`))
-                        delSize.mutate(s.id);
-                    }}
-                  />
-                ))}
-                {sizes.length === 0 && (
-                  <p className="rounded-md border border-dashed p-4 text-center text-sm text-muted-foreground">
-                    Nenhum tamanho cadastrado.
-                  </p>
-                )}
-              </div>
+              {!categoryId ? (
+                <p className="rounded-md border border-dashed p-4 text-center text-sm text-muted-foreground">
+                  Salve a categoria primeiro para cadastrar tamanhos exclusivos dela.
+                </p>
+              ) : (
+                <>
+                  <div className="space-y-3">
+                    {sizes.map((s) => (
+                      <SizeRow
+                        key={s.id}
+                        size={s}
+                        onUpdate={(patch) =>
+                          updateSize.mutate({ id: s.id, ...patch })
+                        }
+                        onDelete={() => {
+                          if (confirm(`Excluir tamanho "${s.name}"?`))
+                            delSize.mutate(s.id);
+                        }}
+                      />
+                    ))}
+                    {sizes.length === 0 && (
+                      <p className="rounded-md border border-dashed p-4 text-center text-sm text-muted-foreground">
+                        Nenhum tamanho cadastrado.
+                      </p>
+                    )}
+                  </div>
 
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => addSize.mutate()}
-                className="w-full"
-              >
-                <Plus className="h-4 w-4" /> Adicionar tamanho
-              </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => addSize.mutate()}
+                    className="w-full"
+                  >
+                    <Plus className="h-4 w-4" /> Adicionar tamanho
+                  </Button>
+                </>
+              )}
             </div>
           )}
 
