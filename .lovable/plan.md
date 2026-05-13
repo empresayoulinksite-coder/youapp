@@ -1,34 +1,27 @@
-## Contexto
+Encontrei o motivo provável: existe uma categoria chamada **Porções** marcada como categoria de pizza (`is_pizza=true`), mas os produtos dela **não têm preços por tamanho**. Por isso a tela trata esses itens como pizza e exibe o preço calculado de tamanhos; como não há linhas de tamanho, aparece **R$ 0,00**. Os tamanhos **Inteira** e **Meia** são configurações de pizza e não deveriam afetar porções.
 
-- **Tamanhos** (`pizza_sizes`): hoje têm só `store_id`, então toda categoria de pizza compartilha "Grande / Broto / etc." — confirmado por você.
-- **Disponibilidade**: já é por categoria (`menu_categories.is_available`, `available_days`, `available_start`, `available_end`). Não precisa mexer.
+Plano:
 
-## Plano: escopar tamanhos por categoria
+1. **Corrigir a regra de exibição na lista de produtos**
+   - Hoje a lista usa `is_pizza` da categoria para decidir se mostra preço de pizza.
+   - Vou mudar para considerar “pizza” apenas quando o produto tiver preços reais em `menu_item_size_prices`.
+   - Se a categoria estiver marcada como pizza mas o produto não tiver preços por tamanho, a tela vai mostrar o `menu_items.price` normal.
 
-Mesmo padrão já aplicado em bordas e adicionais.
+2. **Corrigir edição rápida de preço**
+   - Em produtos de porção, permitir clicar no preço e editar o preço base normalmente.
+   - Só bloquear edição rápida e abrir o formulário de tamanhos quando o produto realmente tiver preço por tamanho de pizza.
 
-### 1. Banco (migration)
-- Adicionar coluna `category_id uuid` em `pizza_sizes` referenciando `menu_categories(id)` com `ON DELETE CASCADE`.
-- Backfill: para cada tamanho atual, **clonar em todas as categorias `is_pizza = true` da mesma loja** (cardápio fica idêntico ao de hoje).
-- Apagar registros órfãos (sem categoria).
-- Tornar `category_id` NOT NULL.
-- Substituir `idx_pizza_sizes_store` por índice em `(category_id, position)`.
+3. **Ajustar a lógica do Assistente IA para produto individual**
+   - A IA já foi ajustada para ações “todos da categoria”, mas para produto individual ainda pode tratar como pizza só por causa da categoria marcada.
+   - Vou mudar para tratar como pizza apenas se existir preço por tamanho para aquele produto.
+   - Assim pedidos como “mude o Frango à parmegiana para R$ 44,90” vão atualizar o preço base da porção.
 
-### 2. Admin de pizzas (`src/routes/admin.pizzas.tsx`)
-- Aba "Tamanhos" ganha o mesmo seletor de categoria de pizza que já existe em "Bordas" e "Adicionais".
-- Queries e mutations passam a filtrar/gravar por `category_id`.
-- Ao criar uma categoria nova, exibir aviso: "Salve a categoria primeiro para cadastrar tamanhos exclusivos dela".
+4. **Evitar confusão no formulário de produto**
+   - No editor, a seção “Preço por tamanho de pizza” só deve aparecer quando a categoria realmente tiver tamanhos configurados e o produto estiver sendo tratado como pizza.
+   - Para porções, o campo “Preço base” continuará editável.
 
-### 3. Wizard de categoria (`src/components/PizzaCategoryWizard.tsx`)
-- Aba "Tamanho" do wizard passa a operar via `category_id` da categoria sendo editada.
-- Em categoria nova (sem id), mesmo aviso de "salve primeiro".
+5. **Verificação**
+   - Conferir no código que porções sem linhas de tamanho usam `menu_items.price`.
+   - Verificar que pizzas com tamanhos continuam usando os preços por tamanho normalmente.
 
-### 4. Builder do cliente (`src/components/PizzaBuilderDialog.tsx`)
-- Query de `pizza_sizes` passa a filtrar por `category_id` em vez de `store_id`.
-- Adicionar `categoryId` ao array de dependências do `useEffect` que recarrega tamanhos.
-
-### 5. Tipos
-- `src/integrations/supabase/types.ts` será regenerado automaticamente após a migration.
-
-## Resultado
-Cada categoria de pizza ("Salgadas", "Doces", etc.) terá seu próprio conjunto de tamanhos, sem interferir nas outras. As "Porções" (categoria não-pizza) continuam sem tamanhos de pizza.
+Observação: não pretendo mexer nos tamanhos “Inteira” e “Meia” agora, porque eles fazem sentido para pizzas. A correção é separar corretamente porções de pizzas na regra de preço.
