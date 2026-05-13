@@ -180,8 +180,12 @@ export function PizzaCategoryWizard({
   // ---- Crust mutations ----
   const addCrust = useMutation({
     mutationFn: async () => {
+      if (!categoryId) {
+        throw new Error("Salve a categoria antes de adicionar bordas");
+      }
       const { error } = await supabase.from("pizza_crusts").insert({
         store_id: storeId,
+        category_id: categoryId,
         name: "Nova borda",
         price: 0,
         position: crusts.length,
