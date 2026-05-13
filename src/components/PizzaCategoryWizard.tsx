@@ -98,22 +98,22 @@ export function PizzaCategoryWizard({
     }
   }, [open, initial]);
 
-  // ---- Sizes & Crusts (globais da loja) ----
+  const categoryId = initial?.id ?? null;
+
+  // ---- Sizes & Crusts (escopados por categoria) ----
   const { data: sizes = [] } = useQuery({
-    queryKey: ["pizza-sizes", storeId],
-    enabled: !!storeId && open,
+    queryKey: ["pizza-sizes", "cat", categoryId],
+    enabled: !!categoryId && open,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("pizza_sizes")
         .select("*")
-        .eq("store_id", storeId)
+        .eq("category_id", categoryId!)
         .order("position");
       if (error) throw error;
       return (data || []) as PizzaSize[];
     },
   });
-
-  const categoryId = initial?.id ?? null;
 
   const { data: crusts = [] } = useQuery({
     queryKey: ["pizza-crusts", "cat", categoryId],
@@ -130,6 +130,7 @@ export function PizzaCategoryWizard({
   });
 
   const invalidatePizza = () => {
+    qc.invalidateQueries({ queryKey: ["pizza-sizes", "cat", categoryId] });
     qc.invalidateQueries({ queryKey: ["pizza-sizes", storeId] });
     qc.invalidateQueries({ queryKey: ["pizza-crusts", "cat", categoryId] });
     qc.invalidateQueries({ queryKey: ["pizza-crusts", storeId] });
@@ -139,8 +140,12 @@ export function PizzaCategoryWizard({
   // ---- Size mutations ----
   const addSize = useMutation({
     mutationFn: async () => {
+      if (!categoryId) {
+        throw new Error("Salve a categoria antes de adicionar tamanhos");
+      }
       const { error } = await supabase.from("pizza_sizes").insert({
         store_id: storeId,
+        category_id: categoryId,
         name: "Novo tamanho",
         slices: 8,
         max_flavors: 1,
@@ -353,35 +358,43 @@ export function PizzaCategoryWizard({
                 </p>
               </div>
 
-              <div className="space-y-3">
-                {sizes.map((s) => (
-                  <SizeRow
-                    key={s.id}
-                    size={s}
-                    onUpdate={(patch) =>
-                      updateSize.mutate({ id: s.id, ...patch })
-                    }
-                    onDelete={() => {
-                      if (confirm(`Excluir tamanho "${s.name}"?`))
-                        delSize.mutate(s.id);
-                    }}
-                  />
-                ))}
-                {sizes.length === 0 && (
-                  <p className="rounded-md border border-dashed p-4 text-center text-sm text-muted-foreground">
-                    Nenhum tamanho cadastrado.
-                  </p>
-                )}
-              </div>
+              {!categoryId ? (
+                <p className="rounded-md border border-dashed p-4 text-center text-sm text-muted-foreground">
+                  Salve a categoria primeiro para cadastrar tamanhos exclusivos dela.
+                </p>
+              ) : (
+                <>
+                  <div className="space-y-3">
+                    {sizes.map((s) => (
+                      <SizeRow
+                        key={s.id}
+                        size={s}
+                        onUpdate={(patch) =>
+                          updateSize.mutate({ id: s.id, ...patch })
+                        }
+                        onDelete={() => {
+                          if (confirm(`Excluir tamanho "${s.name}"?`))
+                            delSize.mutate(s.id);
+                        }}
+                      />
+                    ))}
+                    {sizes.length === 0 && (
+                      <p className="rounded-md border border-dashed p-4 text-center text-sm text-muted-foreground">
+                        Nenhum tamanho cadastrado.
+                      </p>
+                    )}
+                  </div>
 
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => addSize.mutate()}
-                className="w-full"
-              >
-                <Plus className="h-4 w-4" /> Adicionar tamanho
-              </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => addSize.mutate()}
+                    className="w-full"
+                  >
+                    <Plus className="h-4 w-4" /> Adicionar tamanho
+                  </Button>
+                </>
+              )}
             </div>
           )}
 

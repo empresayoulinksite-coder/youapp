@@ -102,7 +102,7 @@ export function PizzaBuilderDialog({ open, onClose, storeId, categoryId, baseIte
     setLoading(true);
     const itemIds = flavorItems.map((f) => f.id);
     Promise.all([
-      supabase.from("pizza_sizes").select("*").eq("store_id", storeId).eq("is_active", true).order("position"),
+      supabase.from("pizza_sizes").select("*").eq("category_id", categoryId).eq("is_active", true).order("position"),
       itemIds.length > 0
         ? supabase.from("menu_item_size_prices").select("*").in("menu_item_id", itemIds)
         : Promise.resolve({ data: [] as SizePrice[] }),

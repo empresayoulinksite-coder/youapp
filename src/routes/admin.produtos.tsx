@@ -253,20 +253,23 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
     },
   });
 
-  const { data: pizzaSizes = [] } = useQuery({
+  const { data: allPizzaSizes = [] } = useQuery({
     queryKey: ["admin-pizza-sizes", storeId],
     enabled: !!storeId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("pizza_sizes")
-        .select("id,name,position")
+        .select("id,name,position,category_id")
         .eq("store_id", storeId)
         .eq("is_active", true)
         .order("position");
       if (error) throw error;
-      return data as { id: string; name: string; position: number }[];
+      return data as { id: string; name: string; position: number; category_id: string }[];
     },
   });
+
+  const sizesByCategory = (categoryId: string | null | undefined) =>
+    categoryId ? allPizzaSizes.filter((s) => s.category_id === categoryId) : [];
 
   // ---------- Mutations ----------
   const saveCategory = useMutation({
@@ -360,6 +363,7 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
       pizzaPrices: Record<string, string>;
     }) => {
       const cat = categories.find((c) => c.id === m.category_id);
+      const pizzaSizes = sizesByCategory(m.category_id);
       const isPizza = !!cat?.is_pizza && pizzaSizes.length > 0;
       const pizzaAutoPrice = isPizza
         ? Math.max(
@@ -1166,6 +1170,7 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
               </div>
               {(() => {
                 const cat = categories.find((c) => c.id === editing.category_id);
+                const pizzaSizes = sizesByCategory(editing.category_id);
                 const isPizza = !!cat?.is_pizza && pizzaSizes.length > 0;
                 const autoPrice = isPizza
                   ? Math.max(
@@ -1309,6 +1314,7 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
                 const cat = categories.find(
                   (c) => c.id === editing.category_id,
                 );
+                const pizzaSizes = sizesByCategory(editing.category_id);
                 if (!cat?.is_pizza || pizzaSizes.length === 0) return null;
                 return (
                   <div className="sm:col-span-2 rounded-md border p-3">
