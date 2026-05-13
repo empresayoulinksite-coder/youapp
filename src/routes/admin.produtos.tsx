@@ -1170,6 +1170,7 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
               </div>
               {(() => {
                 const cat = categories.find((c) => c.id === editing.category_id);
+                const pizzaSizes = sizesByCategory(editing.category_id);
                 const isPizza = !!cat?.is_pizza && pizzaSizes.length > 0;
                 const autoPrice = isPizza
                   ? Math.max(
