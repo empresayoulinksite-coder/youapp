@@ -66,6 +66,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   storeId: string;
+  categoryId: string;
   baseItem: { id: string; name: string; emoji: string; image_url: string | null; description: string | null };
   flavorItems: FlavorItem[];
   /** Recebe 1 payload (modo meio a meio) ou N payloads (modo separadas). */
@@ -75,7 +76,8 @@ interface Props {
 
 type Mode = "combined" | "separate";
 
-export function PizzaBuilderDialog({ open, onClose, storeId, baseItem, flavorItems, onConfirm, disabled }: Props) {
+export function PizzaBuilderDialog({ open, onClose, storeId, categoryId, baseItem, flavorItems, onConfirm, disabled }: Props) {
+
   const [sizes, setSizes] = useState<PizzaSize[]>([]);
   const [prices, setPrices] = useState<SizePrice[]>([]);
   const [crusts, setCrusts] = useState<Crust[]>([]);
