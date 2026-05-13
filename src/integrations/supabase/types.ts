@@ -1099,6 +1099,7 @@ export type Database = {
       }
       pizza_sizes: {
         Row: {
+          category_id: string
           created_at: string
           id: string
           is_active: boolean
@@ -1110,6 +1111,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category_id: string
           created_at?: string
           id?: string
           is_active?: boolean
@@ -1121,6 +1123,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category_id?: string
           created_at?: string
           id?: string
           is_active?: boolean
@@ -1131,7 +1134,15 @@ export type Database = {
           store_id?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pizza_sizes_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "menu_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
