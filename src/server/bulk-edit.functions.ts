@@ -15,6 +15,7 @@ export interface ParsedEdit {
   new_price?: number | null;
   new_description?: string | null;
   new_name?: string | null;
+  category_name?: string | null;
   // For adjust_price: percentage (10 = +10%, -15 = -15%) OR fixed delta in BRL
   adjust_percent?: number | null;
   adjust_amount?: number | null;
@@ -62,6 +63,7 @@ REGRAS:
 - Para "adjust_price": preencha adjust_percent (ex: 10 = +10%, -15 = -15%) OU adjust_amount (delta fixo em reais, positivo ou negativo). Não preencha new_price.
 - Para "set_price": preencha new_price com o valor desejado.
 - Para ajuste em TODOS os produtos (ex: "aumente todos os preços em 10%", "20% off em tudo", "deixe todos os produtos a R$ 29,90"), use apply_to_all=true e product_name="*".
+- Quando o usuário mencionar uma categoria/departamento (ex: "porções", "bebidas", "pizzas doces"), preencha category_name com esse texto e aplique só nessa categoria.
 - Para "activate"/"deactivate"/"delete": só preencha product_name e action.
 - Cada produto distinto = um item separado. "Pizza Grande" e "Broto" são DOIS itens.
 - Não invente produtos.`;
@@ -87,6 +89,7 @@ const TOOL_SCHEMA = {
               new_price: { type: "number" },
               new_description: { type: "string" },
               new_name: { type: "string" },
+              category_name: { type: "string" },
               adjust_percent: { type: "number" },
               adjust_amount: { type: "number" },
               apply_to_all: { type: "boolean" },
@@ -245,6 +248,27 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
 
     const edits = await callAI(data.prompt);
 
+    const { data: categories, error: categoriesError } = await supabaseAdmin
+      .from("menu_categories")
+      .select("id, name")
+      .eq("store_id", data.storeId);
+    if (categoriesError) throw new Error(categoriesError.message);
+
+    const categoryIdFromEdit = (edit: ParsedEdit) => {
+      const categoryName = edit.category_name?.trim();
+      if (!categoryName) return null;
+      let bestScore = 0;
+      let bestCategoryId: string | null = null;
+      for (const cat of categories ?? []) {
+        const score = similarity(cat.name, categoryName);
+        if (score > bestScore) {
+          bestScore = score;
+          bestCategoryId = cat.id;
+        }
+      }
+      return bestScore >= 0.5 ? bestCategoryId : null;
+    };
+
     let query = supabaseAdmin
       .from("menu_items")
       .select("id, name, price, description, is_available, category_id, menu_categories!inner(is_pizza)")
@@ -268,15 +292,24 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
 
     for (const e of edits) {
       const action: BulkAction = e.action ?? "update";
+      const targetCategoryId = categoryIdFromEdit(e);
+      if (e.category_name?.trim() && !targetCategoryId) {
+        notFound.push(`Categoria: ${e.category_name}`);
+        continue;
+      }
+      const scopedItems = targetCategoryId
+        ? (items ?? []).filter((it) => it.category_id === targetCategoryId)
+        : (items ?? []);
 
       // ===== Set fixed price applied to ALL items in scope =====
       if (action === "set_price" && e.apply_to_all && e.new_price != null) {
         const target = Number(e.new_price);
-        for (const it of items ?? []) {
+        for (const it of scopedItems) {
+          const itemSizes = (sizePrices ?? []).filter((sp) => sp.menu_item_id === it.id);
           const isPizza =
-            (it as { menu_categories?: { is_pizza?: boolean } }).menu_categories?.is_pizza === true;
+            (it as { menu_categories?: { is_pizza?: boolean } }).menu_categories?.is_pizza === true &&
+            itemSizes.length > 0;
           if (isPizza) {
-            const itemSizes = (sizePrices ?? []).filter((sp) => sp.menu_item_id === it.id);
             for (const sp of itemSizes) {
               const cur = Number(sp.price);
               if (cur === target) continue;
@@ -317,12 +350,13 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
 
       // ===== Bulk adjust applied to ALL items in scope =====
       if (action === "adjust_price" && e.apply_to_all) {
-        for (const it of items ?? []) {
+        for (const it of scopedItems) {
+          const itemSizes = (sizePrices ?? []).filter((sp) => sp.menu_item_id === it.id);
           const isPizza =
-            (it as { menu_categories?: { is_pizza?: boolean } }).menu_categories?.is_pizza === true;
+            (it as { menu_categories?: { is_pizza?: boolean } }).menu_categories?.is_pizza === true &&
+            itemSizes.length > 0;
           if (isPizza) {
             // adjust each size price
-            const itemSizes = (sizePrices ?? []).filter((sp) => sp.menu_item_id === it.id);
             for (const sp of itemSizes) {
               const cur = Number(sp.price);
               const next = computeAdjustedPrice(cur, e);
@@ -377,7 +411,7 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
 
       let bestScore = 0;
       let bestItem: (typeof items)[number] | null = null;
-      for (const it of items ?? []) {
+      for (const it of scopedItems) {
         const s = similarity(it.name, queryName);
         if (s > bestScore) {
           bestScore = s;

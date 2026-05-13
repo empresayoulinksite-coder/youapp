@@ -39,6 +39,7 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   storeId: string;
+  initialCategoryId?: string | null;
 }
 
 const ALL_CATEGORIES = "__all__";
@@ -46,6 +47,7 @@ const ALL_CATEGORIES = "__all__";
 const EXAMPLE = `Pizza Calabresa - R$ 49,90 - descrição: massa fina, calabresa fatiada e cebola roxa
 Coca-Cola 2L - R$ 12,00
 Aumentar todos os preços em 10%
+Deixe todos os produtos da categoria Porções a R$ 29,90
 Deixe todos os produtos a R$ 29,90
 Desativar Pizza Doce de Banana
 Excluir Suco de Uva 300ml
@@ -64,7 +66,7 @@ function fmt(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-export function BulkEditAIDialog({ open, onOpenChange, storeId }: Props) {
+export function BulkEditAIDialog({ open, onOpenChange, storeId, initialCategoryId }: Props) {
   const qc = useQueryClient();
   const [prompt, setPrompt] = useState("");
   const [categoryId, setCategoryId] = useState<string>(ALL_CATEGORIES);
@@ -83,8 +85,8 @@ export function BulkEditAIDialog({ open, onOpenChange, storeId }: Props) {
 
   useEffect(() => {
     if (!open) return;
-    setCategoryId(ALL_CATEGORIES);
-  }, [open, storeId]);
+    setCategoryId(initialCategoryId || ALL_CATEGORIES);
+  }, [open, storeId, initialCategoryId]);
 
   const previewMut = useMutation({
     mutationFn: async () => {
