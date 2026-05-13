@@ -147,6 +147,8 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
   const [editingCat, setEditingCat] = useState<Partial<Category> | null>(null);
   const [pizzaWizardOpen, setPizzaWizardOpen] = useState(false);
   const [pizzaWizardInitial, setPizzaWizardInitial] = useState<Category | null>(null);
+  const [catTypeChooserOpen, setCatTypeChooserOpen] = useState(false);
+  const [originalCatIsPizza, setOriginalCatIsPizza] = useState<boolean | null>(null);
   const [aiBulkOpen, setAiBulkOpen] = useState(false);
 
   const { data: stores = [] } = useQuery({
@@ -896,11 +898,11 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
             <Button
               variant="outline"
               onClick={() => {
-                if (isPizzeria) {
-                  setPizzaWizardInitial(null);
-                  setPizzaWizardOpen(true);
+                if (storeType === "food") {
+                  setCatTypeChooserOpen(true);
                 } else {
                   setEditingCat({ name: "", is_available: true });
+                  setOriginalCatIsPizza(null);
                   setCatOpen(true);
                 }
               }}
@@ -956,11 +958,16 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
                         setCollapsed((p) => ({ ...p, [cat.id]: !p[cat.id] }))
                       }
                       onEditCategory={() => {
-                        if (cat.is_pizza || isPizzeria) {
-                          setPizzaWizardInitial(cat);
-                          setPizzaWizardOpen(true);
+                        if (storeType === "food") {
+                          // No food ramo, sempre abre o dialog para que o lojista
+                          // possa renomear, pausar OU trocar o tipo (Pizzas/Produtos).
+                          // Para tamanhos/bordas, o dialog tem um atalho para o wizard.
+                          setEditingCat(cat);
+                          setOriginalCatIsPizza(cat.is_pizza);
+                          setCatOpen(true);
                         } else {
                           setEditingCat(cat);
+                          setOriginalCatIsPizza(null);
                           setCatOpen(true);
                         }
                       }}
@@ -1000,7 +1007,10 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
         open={catOpen}
         onOpenChange={(o) => {
           setCatOpen(o);
-          if (!o) setEditingCat(null);
+          if (!o) {
+            setEditingCat(null);
+            setOriginalCatIsPizza(null);
+          }
         }}
       >
         <DialogContent>
@@ -1017,23 +1027,50 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
                 onChange={(e) =>
                   setEditingCat({ ...editingCat, name: e.target.value })
                 }
-                placeholder="Ex: Pizzas Salgadas"
-              />
-            </div>
-            <div className="flex items-center justify-between rounded-md border p-3">
-              <div>
-                <p className="text-sm font-medium">Categoria de pizza 🍕</p>
-                <p className="text-xs text-muted-foreground">
-                  Permite que o cliente monte pedido meio a meio com 2 sabores desta categoria.
-                </p>
-              </div>
-              <Switch
-                checked={editingCat?.is_pizza ?? false}
-                onCheckedChange={(v) =>
-                  setEditingCat({ ...editingCat, is_pizza: v })
+                placeholder={
+                  editingCat?.is_pizza
+                    ? "Ex: Pizzas Salgadas"
+                    : "Ex: Bebidas, Lanches, Sobremesas"
                 }
               />
             </div>
+            {storeType === "food" && (
+              <div className="space-y-2 rounded-md border p-3">
+                <p className="text-sm font-medium">Tipo da categoria</p>
+                <Select
+                  value={editingCat?.is_pizza ? "pizza" : "produto"}
+                  onValueChange={(v) =>
+                    setEditingCat({ ...editingCat, is_pizza: v === "pizza" })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="produto">
+                      🍔 Produtos — preço único por item
+                    </SelectItem>
+                    <SelectItem value="pizza">
+                      🍕 Pizzas — com tamanhos, sabores e bordas
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {editingCat?.is_pizza
+                    ? "Cada item tem preços por tamanho (Inteira, Meia, Grande, Broto…) e o cliente pode montar meio a meio."
+                    : "Cada item tem um único preço. Ideal para lanches, bebidas, porções, sobremesas."}
+                </p>
+                {editingCat?.id &&
+                  originalCatIsPizza !== null &&
+                  !!editingCat?.is_pizza !== originalCatIsPizza && (
+                    <div className="rounded-md bg-amber-50 p-2 text-xs text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                      {originalCatIsPizza
+                        ? "⚠️ Ao mudar para Produtos, os campos de Inteira/Meia somem do editor e a IA passa a atualizar só o preço base. Os tamanhos cadastrados não são apagados."
+                        : "⚠️ Ao mudar para Pizzas, configure os tamanhos, bordas e sabores no próximo passo."}
+                    </div>
+                  )}
+              </div>
+            )}
             {editingCat?.id && (
               <div className="flex items-center justify-between rounded-md border p-3">
                 <div>
@@ -1050,6 +1087,19 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
                 />
               </div>
             )}
+            {editingCat?.id && editingCat?.is_pizza && storeType === "food" && (
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  setCatOpen(false);
+                  setPizzaWizardInitial(editingCat as Category);
+                  setPizzaWizardOpen(true);
+                }}
+              >
+                <Pizza className="h-4 w-4" /> Configurar tamanhos, bordas e sabores
+              </Button>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCatOpen(false)}>
@@ -1062,6 +1112,48 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
               Salvar
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog escolha de tipo de categoria (food) */}
+      <Dialog open={catTypeChooserOpen} onOpenChange={setCatTypeChooserOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Que tipo de categoria você quer criar?</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => {
+                setCatTypeChooserOpen(false);
+                setEditingCat({ name: "", is_available: true, is_pizza: false });
+                setOriginalCatIsPizza(null);
+                setCatOpen(true);
+              }}
+              className="flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-colors hover:border-primary hover:bg-accent"
+            >
+              <div className="text-3xl">🍔</div>
+              <p className="text-base font-semibold">Produtos</p>
+              <p className="text-xs text-muted-foreground">
+                Itens com preço único. Ideal para lanches, bebidas, porções, sobremesas, marmitas.
+              </p>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setCatTypeChooserOpen(false);
+                setPizzaWizardInitial(null);
+                setPizzaWizardOpen(true);
+              }}
+              className="flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-colors hover:border-primary hover:bg-accent"
+            >
+              <div className="text-3xl">🍕</div>
+              <p className="text-base font-semibold">Pizzas</p>
+              <p className="text-xs text-muted-foreground">
+                Itens com tamanhos (Inteira, Meia, Grande, Broto…), bordas, sabores e meio a meio.
+              </p>
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
 
