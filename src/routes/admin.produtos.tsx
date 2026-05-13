@@ -1314,6 +1314,7 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
                 const cat = categories.find(
                   (c) => c.id === editing.category_id,
                 );
+                const pizzaSizes = sizesByCategory(editing.category_id);
                 if (!cat?.is_pizza || pizzaSizes.length === 0) return null;
                 return (
                   <div className="sm:col-span-2 rounded-md border p-3">
