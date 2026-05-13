@@ -66,6 +66,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   storeId: string;
+  categoryId: string;
   baseItem: { id: string; name: string; emoji: string; image_url: string | null; description: string | null };
   flavorItems: FlavorItem[];
   /** Recebe 1 payload (modo meio a meio) ou N payloads (modo separadas). */
@@ -75,7 +76,8 @@ interface Props {
 
 type Mode = "combined" | "separate";
 
-export function PizzaBuilderDialog({ open, onClose, storeId, baseItem, flavorItems, onConfirm, disabled }: Props) {
+export function PizzaBuilderDialog({ open, onClose, storeId, categoryId, baseItem, flavorItems, onConfirm, disabled }: Props) {
+
   const [sizes, setSizes] = useState<PizzaSize[]>([]);
   const [prices, setPrices] = useState<SizePrice[]>([]);
   const [crusts, setCrusts] = useState<Crust[]>([]);
@@ -104,8 +106,8 @@ export function PizzaBuilderDialog({ open, onClose, storeId, baseItem, flavorIte
       itemIds.length > 0
         ? supabase.from("menu_item_size_prices").select("*").in("menu_item_id", itemIds)
         : Promise.resolve({ data: [] as SizePrice[] }),
-      supabase.from("pizza_crusts").select("*").eq("store_id", storeId).eq("is_active", true).order("position"),
-      supabase.from("pizza_addons").select("*").eq("store_id", storeId).eq("is_active", true).order("position"),
+      supabase.from("pizza_crusts").select("*").eq("category_id", categoryId).eq("is_active", true).order("position"),
+      supabase.from("pizza_addons").select("*").eq("category_id", categoryId).eq("is_active", true).order("position"),
     ]).then(([sz, pr, cr, ad]: any) => {
       const sizesData = (sz.data ?? []) as PizzaSize[];
       setSizes(sizesData);
@@ -122,7 +124,7 @@ export function PizzaBuilderDialog({ open, onClose, storeId, baseItem, flavorIte
       setSearchQuery("");
       setLoading(false);
     });
-  }, [open, storeId, baseItem.id]);
+  }, [open, storeId, categoryId, baseItem.id]);
 
   const selectedSize = sizes.find((s) => s.id === sizeId) ?? null;
   const maxFlavorsCombined = selectedSize?.max_flavors ?? 1;
