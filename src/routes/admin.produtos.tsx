@@ -372,11 +372,11 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
       const filledPizzaPrices = pizzaSizes
         .map((s) => Number(pizzaPrices[s.id]))
         .filter((n) => !isNaN(n) && n > 0);
-      // Só tratamos como pizza quando o usuário realmente preencheu preços por tamanho.
-      // Isso evita zerar o preço base de produtos como "porções" cuja categoria foi marcada
-      // como is_pizza por engano.
-      const isPizza = !!cat?.is_pizza && pizzaSizes.length > 0 && filledPizzaPrices.length > 0;
-      const pizzaAutoPrice = isPizza ? Math.max(0, ...filledPizzaPrices) : 0;
+      // Usa preço por tamanho sempre que a categoria tem tamanhos cadastrados
+      // (pizzas OU produtos com tamanhos compartilhados como Inteira/Meia).
+      const usesSizes = pizzaSizes.length > 0 && filledPizzaPrices.length > 0;
+      const isPizza = !!cat?.is_pizza && usesSizes;
+      const pizzaAutoPrice = usesSizes ? Math.max(0, ...filledPizzaPrices) : 0;
       const payload = {
         store_id: storeId,
         category_id: m.category_id!,
