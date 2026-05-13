@@ -60,6 +60,7 @@ import {
 } from "@/components/ui/dialog";
 import { uploadImage } from "@/lib/upload";
 import { PizzaCategoryWizard } from "@/components/PizzaCategoryWizard";
+import { CategorySizesDialog } from "@/components/CategorySizesDialog";
 import { BulkEditAIDialog } from "@/components/BulkEditAIDialog";
 
 export const Route = createFileRoute("/admin/produtos")({
