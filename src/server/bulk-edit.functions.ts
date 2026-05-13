@@ -248,6 +248,27 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
 
     const edits = await callAI(data.prompt);
 
+    const { data: categories, error: categoriesError } = await supabaseAdmin
+      .from("menu_categories")
+      .select("id, name")
+      .eq("store_id", data.storeId);
+    if (categoriesError) throw new Error(categoriesError.message);
+
+    const categoryIdFromEdit = (edit: ParsedEdit) => {
+      const categoryName = edit.category_name?.trim();
+      if (!categoryName) return null;
+      let bestScore = 0;
+      let bestCategoryId: string | null = null;
+      for (const cat of categories ?? []) {
+        const score = similarity(cat.name, categoryName);
+        if (score > bestScore) {
+          bestScore = score;
+          bestCategoryId = cat.id;
+        }
+      }
+      return bestScore >= 0.5 ? bestCategoryId : null;
+    };
+
     let query = supabaseAdmin
       .from("menu_items")
       .select("id, name, price, description, is_available, category_id, menu_categories!inner(is_pizza)")
@@ -271,11 +292,15 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
 
     for (const e of edits) {
       const action: BulkAction = e.action ?? "update";
+      const targetCategoryId = categoryIdFromEdit(e);
+      const scopedItems = targetCategoryId
+        ? (items ?? []).filter((it) => it.category_id === targetCategoryId)
+        : (items ?? []);
 
       // ===== Set fixed price applied to ALL items in scope =====
       if (action === "set_price" && e.apply_to_all && e.new_price != null) {
         const target = Number(e.new_price);
-        for (const it of items ?? []) {
+        for (const it of scopedItems) {
           const isPizza =
             (it as { menu_categories?: { is_pizza?: boolean } }).menu_categories?.is_pizza === true;
           if (isPizza) {
@@ -320,7 +345,7 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
 
       // ===== Bulk adjust applied to ALL items in scope =====
       if (action === "adjust_price" && e.apply_to_all) {
-        for (const it of items ?? []) {
+        for (const it of scopedItems) {
           const isPizza =
             (it as { menu_categories?: { is_pizza?: boolean } }).menu_categories?.is_pizza === true;
           if (isPizza) {
