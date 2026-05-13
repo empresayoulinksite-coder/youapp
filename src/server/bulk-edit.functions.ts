@@ -605,6 +605,12 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
         continue;
       }
 
+      // ===== Per-size prices targeted at a single product (Inteira/Meia, Grande/Broto, ...) =====
+      if (e.size_prices?.length) {
+        const emitted = emitSizePriceChangesForItem(bestItem, e);
+        if (emitted) continue;
+      }
+
       // action === "update" or single-product "set_price"
       if (e.new_price == null && e.new_description == null && e.new_name == null) continue;
 
