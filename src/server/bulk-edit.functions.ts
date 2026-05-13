@@ -827,5 +827,36 @@ export const applyBulkEdit = createServerFn({ method: "POST" })
       else applied += rows.length;
     }
 
+    // 7) Recompute menu_items.price = max(size_prices) for any item touched by size changes,
+    //    so the editor's "preço base" and the product list stay coherent.
+    const touchedItemIds = new Set<string>();
+    for (const c of data.changes) {
+      if (c.pizza_size_id) touchedItemIds.add(c.menu_item_id);
+    }
+    if (touchedItemIds.size > 0) {
+      const ids = Array.from(touchedItemIds);
+      const { data: rows } = await supabaseAdmin
+        .from("menu_item_size_prices")
+        .select("menu_item_id, price")
+        .in("menu_item_id", ids);
+      const maxByItem = new Map<string, number>();
+      for (const r of rows ?? []) {
+        const cur = maxByItem.get(r.menu_item_id) ?? 0;
+        const p = Number(r.price) || 0;
+        if (p > cur) maxByItem.set(r.menu_item_id, p);
+      }
+      const baseTasks: (() => Promise<void>)[] = [];
+      for (const [itemId, price] of maxByItem) {
+        baseTasks.push(async () => {
+          const { error } = await supabaseAdmin
+            .from("menu_items")
+            .update({ price })
+            .eq("id", itemId);
+          if (error) console.error("recompute base price error", itemId, error);
+        });
+      }
+      await runConcurrent(baseTasks, 10);
+    }
+
     return { applied };
   });
