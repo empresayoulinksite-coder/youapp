@@ -382,7 +382,7 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
         category_id: m.category_id!,
         name: m.name!,
         description: m.description || null,
-        price: isPizza ? pizzaAutoPrice : Number(m.price) || 0,
+        price: usesSizes ? pizzaAutoPrice : Number(m.price) || 0,
         original_price: m.original_price ? Number(m.original_price) : null,
         promo: m.promo || null,
         emoji: m.emoji || (isPizzeria ? "🍕" : "🍽️"),
