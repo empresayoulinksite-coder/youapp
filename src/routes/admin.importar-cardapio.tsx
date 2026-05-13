@@ -69,17 +69,25 @@ function ImportMenuPage() {
 
   const handleParsed = (cats: ParsedCategory[]) => {
     const cleaned = cats
-      .map((c) => ({
-        name: c.name?.trim() || "Cardápio",
-        items: (c.items || [])
-          .filter((i) => i?.name?.trim())
-          .map((i) => ({
-            name: i.name.trim(),
-            description: i.description?.trim() || null,
-            price: Number(i.price) || 0,
-            original_price: i.original_price ? Number(i.original_price) : null,
-          })),
-      }))
+      .map((c) => {
+        const name = c.name?.trim() || "Cardápio";
+        // Autodetecta categoria de pizza pelo nome (lojista pode trocar depois)
+        const guessPizza =
+          c.is_pizza ??
+          /\bpizz/i.test(name);
+        return {
+          name,
+          is_pizza: guessPizza,
+          items: (c.items || [])
+            .filter((i) => i?.name?.trim())
+            .map((i) => ({
+              name: i.name.trim(),
+              description: i.description?.trim() || null,
+              price: Number(i.price) || 0,
+              original_price: i.original_price ? Number(i.original_price) : null,
+            })),
+        };
+      })
       .filter((c) => c.items.length > 0);
     if (cleaned.length === 0) {
       toast.error("Nenhum item encontrado no cardápio");
@@ -113,6 +121,8 @@ function ImportMenuPage() {
   };
   const updateCategoryName = (ci: number, name: string) =>
     setCategories((prev) => prev.map((c, i) => (i !== ci ? c : { ...c, name })));
+  const updateCategoryType = (ci: number, is_pizza: boolean) =>
+    setCategories((prev) => prev.map((c, i) => (i !== ci ? c : { ...c, is_pizza })));
   const appendItemsToCategory = (ci: number, items: ParsedItem[]) => {
     const cleaned = items
       .filter((i) => i?.name?.trim())

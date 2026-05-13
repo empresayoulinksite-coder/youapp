@@ -23,6 +23,7 @@ export interface ParsedItem {
 
 export interface ParsedCategory {
   name: string;
+  is_pizza?: boolean;
   items: ParsedItem[];
 }
 
