@@ -147,6 +147,8 @@ function AdminProducts({ presetStoreId, embedded = false }: { presetStoreId?: st
   const [editingCat, setEditingCat] = useState<Partial<Category> | null>(null);
   const [pizzaWizardOpen, setPizzaWizardOpen] = useState(false);
   const [pizzaWizardInitial, setPizzaWizardInitial] = useState<Category | null>(null);
+  const [catTypeChooserOpen, setCatTypeChooserOpen] = useState(false);
+  const [originalCatIsPizza, setOriginalCatIsPizza] = useState<boolean | null>(null);
   const [aiBulkOpen, setAiBulkOpen] = useState(false);
 
   const { data: stores = [] } = useQuery({
