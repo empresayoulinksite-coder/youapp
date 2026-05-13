@@ -423,8 +423,10 @@ export const previewBulkEdit = createServerFn({ method: "POST" })
         continue;
       }
 
+      const bestItemSizes = (sizePrices ?? []).filter((sp) => sp.menu_item_id === bestItem.id);
       const isPizza =
-        (bestItem as { menu_categories?: { is_pizza?: boolean } }).menu_categories?.is_pizza === true;
+        (bestItem as { menu_categories?: { is_pizza?: boolean } }).menu_categories?.is_pizza === true &&
+        bestItemSizes.length > 0;
 
       // Activate / deactivate / delete
       if (action === "activate" || action === "deactivate") {
