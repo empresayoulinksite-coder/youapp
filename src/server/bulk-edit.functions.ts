@@ -21,6 +21,8 @@ export interface ParsedEdit {
   adjust_amount?: number | null;
   // When user wants to apply to ALL products in scope (e.g. "aumente todos os preços em 10%")
   apply_to_all?: boolean;
+  // Per-size prices for pizza/portion categories (Inteira/Meia, Grande/Broto, etc.)
+  size_prices?: { size_name: string; price: number }[] | null;
 }
 
 export interface PreviewChange {
