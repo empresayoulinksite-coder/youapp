@@ -390,8 +390,13 @@ export function PizzaCategoryWizard({
               <div>
                 <h3 className="text-lg font-semibold">Borda</h3>
                 <p className="text-sm text-muted-foreground">
-                  Cadastre as bordas recheadas que o cliente pode escolher.
+                  Cadastre as bordas recheadas que o cliente pode escolher nesta categoria.
                 </p>
+                {!categoryId && (
+                  <p className="mt-2 rounded-md border border-dashed p-3 text-xs text-muted-foreground">
+                    Salve a categoria primeiro (botão <strong>Concluir</strong>) para poder cadastrar bordas exclusivas dela.
+                  </p>
+                )}
               </div>
 
               <div className="space-y-3">
