@@ -124,7 +124,7 @@ export function PizzaBuilderDialog({ open, onClose, storeId, categoryId, baseIte
       setSearchQuery("");
       setLoading(false);
     });
-  }, [open, storeId, baseItem.id]);
+  }, [open, storeId, categoryId, baseItem.id]);
 
   const selectedSize = sizes.find((s) => s.id === sizeId) ?? null;
   const maxFlavorsCombined = selectedSize?.max_flavors ?? 1;
