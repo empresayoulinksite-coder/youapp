@@ -49,6 +49,7 @@ type Store = { id: string; name: string; emoji: string; store_type: string };
 type PizzaSize = {
   id: string;
   store_id: string;
+  category_id: string;
   name: string;
   slices: number;
   max_flavors: number;
