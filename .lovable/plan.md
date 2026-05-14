@@ -1,69 +1,73 @@
-## Objetivo
 
-Integrar o **QZ Tray** para imprimir cupons de pedidos automaticamente, sem diálogo de impressão, em qualquer impressora instalada no PC (térmica, jato de tinta, laser).
+# Configurar QZ Tray com assinatura via backend
 
-QZ Tray é um app gratuito (qz.io) que roda como serviço local no PC e expõe uma API via WebSocket em `wss://localhost:8181`. O navegador conversa com ele e ele envia o trabalho para qualquer impressora do Windows/macOS/Linux — **sem mostrar diálogo nenhum**.
+Objetivo: eliminar de vez o prompt "Allow / Remember this decision" do QZ Tray, fazendo o site assinar cada pedido de impressão com um certificado digital. Resultado: impressão 100% silenciosa, sem nenhum diálogo.
 
-## Como vai funcionar para o lojista
+## Como vai funcionar
 
-1. Lojista baixa e instala o QZ Tray uma vez (link direto no painel).
-2. No painel → Configurações da impressora → clica **"Conectar QZ Tray"**.
-3. Aparece a lista de impressoras instaladas no PC dele → ele escolhe (ex: EPSON L4260, ou a térmica futuramente).
-4. Marca **"Imprimir automaticamente ao aceitar pedido"**.
-5. Pronto — todo pedido aceito imprime sozinho, sem nenhuma janela.
+```text
+┌─────────┐   1. pede assinatura    ┌──────────────┐
+│ Site    │ ──────────────────────► │ Backend      │
+│ (QZ.js) │ ◄────────────────────── │ (chave priv.)│
+└────┬────┘   2. devolve assinatura └──────────────┘
+     │
+     │ 3. envia pra impressora COM assinatura
+     ▼
+┌──────────┐
+│ QZ Tray  │ → reconhece certificado confiável → imprime sem prompt
+└──────────┘
+```
 
-Na primeira impressão o QZ Tray pede uma confirmação de segurança ("permitir este site?"), e o lojista marca **"Sempre permitir"**. Depois disso é silencioso para sempre.
+A chave privada **nunca** sai do servidor. O navegador só pede ao backend para assinar cada requisição.
 
-## Mudanças no código
+## Passo a passo do que vou fazer
 
-### 1. Dependência
-- `bun add qz-tray`
+### Etapa 1 — Você gera o certificado (uma vez, no seu Windows)
 
-### 2. `src/lib/qz-printer.ts` (novo)
-Wrapper fino sobre a lib `qz-tray`:
-- `qzConnect()` — conecta ao WebSocket local com retry. Configura modo "unsigned" (community), assinatura promiscua para evitar erro de cert (suficiente para uso local; QZ ainda mostra prompt na 1ª vez).
-- `qzListPrinters()` — retorna nomes das impressoras instaladas.
-- `qzPrintHTML(printerName, html)` — imprime HTML formatado em qualquer impressora.
-- `qzPrintRaw(printerName, bytes)` — imprime bytes ESC/POS direto (para térmicas).
-- `qzDisconnect()`.
+Vou te entregar um **comando único de PowerShell** para rodar no seu PC. Ele:
+- Gera `private-key.pem` (chave privada — você vai me passar via secret seguro)
+- Gera `digital-certificate.txt` (certificado público — vai no código)
+- Gera `override.crt` (vai no QZ Tray de cada PC da loja)
 
-### 3. `src/lib/thermal-printer.ts`
-- Adicionar `kind: "qz"` ao `PrinterKind`.
-- Adicionar campo `qzPrinterName: string | null` ao `PrinterPrefs`.
+Tempo: ~30 segundos.
 
-### 4. `src/components/painel/OrdersManager.tsx`
-- No diálogo de configuração, adicionar bloco em destaque **"Imprimir em qualquer impressora (recomendado)"**:
-  - Texto curto explicando o QZ Tray + link **"Baixar QZ Tray"** (https://qz.io/download/).
-  - Botão **"Conectar QZ Tray"** → conecta e lista impressoras.
-  - Após conectar, `<Select>` com as impressoras detectadas → ao escolher, salva `qzPrinterName` no prefs.
-  - Botão **"Imprimir teste"** usa o caminho QZ quando configurado.
-- Manter as opções WebUSB/Bluetooth/Serial abaixo, em uma seção **"Conexão direta (avançado)"** colapsada.
-- Atualizar `printOrder()`:
-  - Se `prefs.kind === "qz"` e tem nome de impressora → usar `qzPrintHTML(name, buildReceiptHTML(...))`.
-  - Senão, fluxo atual (BT/USB/Serial/fallback browser).
-- Auto-print no `useEffect` continua igual — só muda o caminho interno.
+### Etapa 2 — Configuração no projeto (eu faço)
 
-### 5. Carregamento da lib
-A `qz-tray` só funciona no browser. Importar dinamicamente dentro das funções (`await import("qz-tray")`) para não quebrar SSR.
+1. Crio um **server function** `signQzRequest` (`src/lib/qz-sign.functions.ts`) que recebe um payload do QZ e devolve a assinatura SHA512withRSA usando a chave privada armazenada como secret `QZ_PRIVATE_KEY`.
+2. Adiciono o certificado público em `src/lib/qz-certificate.ts` (constante exportada — pode ficar no código, é público).
+3. Atualizo `src/lib/qz-printer.ts` para registrar:
+   - `qz.security.setCertificatePromise` → retorna o certificado público
+   - `qz.security.setSignaturePromise` → chama o server function pra assinar
+4. Peço o secret `QZ_PRIVATE_KEY` via `add_secret` (você cola o conteúdo do `private-key.pem`).
 
-## Por que essa abordagem
+### Etapa 3 — Você configura cada PC da loja (uma vez por máquina)
 
-- **Funciona com a EPSON L4260 dela hoje** (jato de tinta) — imprime via driver normal do Windows.
-- **Funciona com impressora térmica no futuro** — basta o lojista escolher outra no Select.
-- **Sem diálogo de impressão** depois do "Sempre permitir" inicial.
-- **Sem precisar configurar atalho do Chrome** com flags.
-- **Multi-PC**: cada PC instala o QZ uma vez; a configuração de qual impressora usar fica salva por loja no `localStorage`.
+Te entrego um passo a passo curto:
+1. Copiar `override.crt` para a pasta de instalação do QZ Tray.
+2. Reiniciar o QZ Tray.
+3. Pronto — abre o painel, clica imprimir, **nunca mais aparece prompt**.
 
-## Validação
+## Detalhes técnicos
 
-1. Instalar QZ Tray no PC.
-2. Painel → Config → "Conectar QZ Tray" → escolher EPSON L4260.
-3. "Imprimir teste" → cupom sai sem diálogo (após permitir 1x).
-4. Aceitar pedido real → imprime automaticamente.
+**Arquivos novos:**
+- `src/lib/qz-sign.functions.ts` — server function que assina com `crypto.createSign('SHA512')`
+- `src/lib/qz-certificate.ts` — exporta o certificado público como string
 
-## Arquivos alterados
+**Arquivos editados:**
+- `src/lib/qz-printer.ts` — registra `setCertificatePromise` e `setSignaturePromise` antes de `qz.websocket.connect()`
 
-- `package.json` (nova dependência `qz-tray`)
-- `src/lib/qz-printer.ts` (novo)
-- `src/lib/thermal-printer.ts` (kind "qz" + campo de prefs)
-- `src/components/painel/OrdersManager.tsx` (UI + roteamento de impressão)
+**Secret novo:**
+- `QZ_PRIVATE_KEY` — conteúdo do `private-key.pem` (PEM com `-----BEGIN PRIVATE KEY-----`)
+
+**Algoritmo de assinatura:** SHA512withRSA (padrão do QZ Tray 2.1+).
+
+**Compatibilidade:** funciona com a versão atual do QZ Tray que você já instalou. Não precisa reinstalar nada.
+
+## O que você precisa fazer depois que eu implementar
+
+1. Rodar o comando PowerShell que vou mandar (gera os 3 arquivos).
+2. Colar o conteúdo do `private-key.pem` no formulário de secret.
+3. Copiar o `override.crt` pra pasta do QZ Tray e reiniciar o serviço.
+4. Testar — deve imprimir silencioso na primeira tentativa.
+
+Se aprovar o plano, vou implementar e em seguida te passar o comando exato do PowerShell pra você rodar.
