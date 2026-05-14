@@ -1025,6 +1025,84 @@ function SettingsDialog({
               </div>
             </div>
           </div>
+
+          <div className="rounded-lg border bg-muted/30 p-3">
+            <div className="mb-2 flex items-center gap-2">
+              <Printer className="h-4 w-4" />
+              <Label className="text-sm font-semibold">Impressora térmica</Label>
+            </div>
+            <p className="mb-3 text-xs text-muted-foreground">
+              Conecte sua impressora USB ou Bluetooth para imprimir os cupons automaticamente quando o pedido for aceito.
+            </p>
+
+            <div className="mb-3 flex items-center gap-2">
+              <Switch
+                id="auto-print"
+                checked={printerPrefs.autoPrint}
+                onCheckedChange={(v) => onPrinterPrefsChange({ autoPrint: v })}
+              />
+              <Label htmlFor="auto-print" className="text-xs">
+                Imprimir automaticamente ao aceitar pedido
+              </Label>
+            </div>
+
+            <div className="mb-2 text-xs">
+              <span className="font-medium">Status:</span>{" "}
+              {getActiveConnection() ? (
+                <span className="text-green-600">
+                  Conectada ({getActiveConnection()?.label})
+                </span>
+              ) : (
+                <span className="text-muted-foreground">Não conectada</span>
+              )}
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {hasBluetooth() && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      const c = await connectBluetooth();
+                      onPrinterPrefsChange({ kind: "bluetooth", deviceName: c.label });
+                      toast.success(`Conectada: ${c.label}`);
+                    } catch (e) {
+                      toast.error((e as Error).message);
+                    }
+                  }}
+                >
+                  Conectar Bluetooth
+                </Button>
+              )}
+              {hasSerial() && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      const c = await connectSerial();
+                      onPrinterPrefsChange({ kind: "serial", deviceName: c.label });
+                      toast.success(`Conectada: ${c.label}`);
+                    } catch (e) {
+                      toast.error((e as Error).message);
+                    }
+                  }}
+                >
+                  Conectar USB
+                </Button>
+              )}
+              <Button variant="outline" size="sm" onClick={onTestPrint}>
+                Imprimir teste
+              </Button>
+            </div>
+
+            {!hasBluetooth() && !hasSerial() && (
+              <p className="mt-2 text-xs text-amber-600">
+                Seu navegador não suporta conexão direta com impressora. Será usado o diálogo de impressão padrão (Chrome/Edge no desktop ou Android oferecem conexão direta).
+              </p>
+            )}
+          </div>
         </div>
 
         <DialogFooter>
