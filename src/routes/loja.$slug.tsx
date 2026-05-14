@@ -186,6 +186,7 @@ function StorePage() {
   const [orderMode, setOrderMode] = useState<"whole" | "half">("whole");
   const [secondHalfId, setSecondHalfId] = useState<string | null>(null);
   const [pizzaBuilderItem, setPizzaBuilderItem] = useState<MenuItem | null>(null);
+  const [selectedCategorySizeId, setSelectedCategorySizeId] = useState<string | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingInitialId, setBookingInitialId] = useState<string | null>(null);
   const [quoteService, setQuoteService] = useState<typeof services[number] | null>(null);
