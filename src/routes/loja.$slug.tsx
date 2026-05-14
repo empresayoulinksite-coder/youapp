@@ -352,7 +352,12 @@ function StorePage() {
   const open = !store.is_paused && withinHours;
   const nextOpen = !open && !store.is_paused ? nextOpeningLabel(hours, now) : null;
 
-  const tryAdd = async (storeId: string, menuItemId: string, size: string | null = null) => {
+  const tryAdd = async (
+    storeId: string,
+    menuItemId: string,
+    size: string | null = null,
+    unitPriceOverride: number | null = null,
+  ) => {
     if (!open) {
       const msg = store.is_paused
         ? "Loja temporariamente fechada pelo lojista."
@@ -363,14 +368,14 @@ function StorePage() {
       return;
     }
     try {
-      await addItem(storeId, menuItemId, size);
+      await addItem(storeId, menuItemId, size, unitPriceOverride);
     } catch (err) {
       if (err instanceof DifferentStoreError) {
         const ok = window.confirm(
           "Você só pode pedir de uma loja por vez (o pedido vai pelo WhatsApp). Limpar o carrinho atual e adicionar este item?",
         );
         if (ok) {
-          await switchStoreAndAdd(storeId, menuItemId, size);
+          await switchStoreAndAdd(storeId, menuItemId, size, unitPriceOverride);
         }
       } else {
         throw err;
