@@ -59,6 +59,13 @@ import {
   browserPrintHTML,
   type PrinterPrefs,
 } from "@/lib/thermal-printer";
+import {
+  qzConnect,
+  qzListPrinters,
+  qzGetDefaultPrinter,
+  qzPrintHTML,
+  qzIsConnected,
+} from "@/lib/qz-printer";
 import { buildReceiptBytes, buildReceiptHTML } from "@/lib/receipt-template";
 
 type OrderStatus = "em_analise" | "em_producao" | "pronto" | "entregue" | "cancelado";
