@@ -874,11 +874,11 @@ function StorePage() {
                             </div>
                             <div onClick={(e) => e.stopPropagation()}>
                               {user ? (
-                                cat.is_pizza ? (
+                                cat.is_pizza || sharedSizes ? (
                                   <button
                                     onClick={() => openItemModal(item)}
                                     className="text-brand bg-brand-soft rounded-full p-1.5"
-                                    aria-label="Montar pizza"
+                                    aria-label={cat.is_pizza ? "Montar pizza" : "Escolher tamanho"}
                                   >
                                     <Plus className="h-4 w-4" />
                                   </button>
