@@ -339,7 +339,14 @@ function StorePage() {
     setSelectedColor(null);
     setOrderMode("whole");
     setSecondHalfId(null);
-  }, [selectedItem?.id]);
+    if (selectedItem) {
+      const sizes = getCategorySizes(selectedItem.category_id);
+      setSelectedCategorySizeId(sizes[0]?.id ?? null);
+    } else {
+      setSelectedCategorySizeId(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedItem?.id, categorySizes.length]);
 
   const withinHours = isStoreOpen(hours, now);
   const open = !store.is_paused && withinHours;
