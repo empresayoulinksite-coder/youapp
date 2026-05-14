@@ -94,6 +94,7 @@ type Order = {
   ready_at: string | null;
   delivered_at: string | null;
   cancelled_at: string | null;
+  table_number: number | null;
   profiles?: { display_name: string | null; phone: string | null } | null;
   order_items?: OrderItem[];
 };
