@@ -239,7 +239,67 @@ function StorePage() {
     staleTime: 5 * 60_000,
   });
 
-  // refresh "now" every minute so the open/closed badge updates without a refresh
+  // Tamanhos compartilhados por categoria (reusa pizza_sizes para qualquer categoria).
+  const { data: categorySizes = [] } = useQuery({
+    queryKey: ["store-category-sizes", store.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pizza_sizes")
+        .select("id,name,position,category_id")
+        .eq("store_id", store.id)
+        .eq("is_active", true)
+        .order("position");
+      if (error) throw error;
+      return (data ?? []) as Array<{ id: string; name: string; position: number; category_id: string }>;
+    },
+    staleTime: 5 * 60_000,
+  });
+
+  const itemIdsForPrices = items.map((i) => i.id);
+  const { data: itemSizePrices = [] } = useQuery({
+    queryKey: ["store-item-size-prices", store.id, itemIdsForPrices.length],
+    enabled: itemIdsForPrices.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("menu_item_size_prices")
+        .select("menu_item_id,pizza_size_id,price,is_available")
+        .in("menu_item_id", itemIdsForPrices);
+      if (error) throw error;
+      return (data ?? []).map((r) => ({ ...r, price: Number(r.price) })) as Array<{
+        menu_item_id: string;
+        pizza_size_id: string;
+        price: number;
+        is_available: boolean;
+      }>;
+    },
+    staleTime: 5 * 60_000,
+  });
+
+  // Helpers
+  const getCategorySizes = (catId: string | undefined | null) => {
+    if (!catId) return [] as typeof categorySizes;
+    return categorySizes.filter((s) => s.category_id === catId);
+  };
+  const hasSharedSizes = (catId: string | undefined | null) => {
+    const cat = categories.find((c) => c.id === catId);
+    if (!cat || cat.is_pizza) return false;
+    return getCategorySizes(catId).length > 0;
+  };
+  const getItemSizePrice = (itemId: string, sizeId: string): number | null => {
+    const row = itemSizePrices.find(
+      (p) => p.menu_item_id === itemId && p.pizza_size_id === sizeId && p.is_available,
+    );
+    return row ? row.price : null;
+  };
+  const getItemMinPrice = (item: MenuItem): number => {
+    const sizes = getCategorySizes(item.category_id);
+    if (sizes.length === 0) return Number(item.price);
+    const prices = sizes
+      .map((s) => getItemSizePrice(item.id, s.id))
+      .filter((p): p is number => p !== null && p > 0);
+    if (prices.length === 0) return Number(item.price);
+    return Math.min(...prices);
+  };
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(t);
