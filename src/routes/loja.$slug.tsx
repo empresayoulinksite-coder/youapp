@@ -186,6 +186,7 @@ function StorePage() {
   const [orderMode, setOrderMode] = useState<"whole" | "half">("whole");
   const [secondHalfId, setSecondHalfId] = useState<string | null>(null);
   const [pizzaBuilderItem, setPizzaBuilderItem] = useState<MenuItem | null>(null);
+  const [selectedCategorySizeId, setSelectedCategorySizeId] = useState<string | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingInitialId, setBookingInitialId] = useState<string | null>(null);
   const [quoteService, setQuoteService] = useState<typeof services[number] | null>(null);
@@ -238,7 +239,67 @@ function StorePage() {
     staleTime: 5 * 60_000,
   });
 
-  // refresh "now" every minute so the open/closed badge updates without a refresh
+  // Tamanhos compartilhados por categoria (reusa pizza_sizes para qualquer categoria).
+  const { data: categorySizes = [] } = useQuery({
+    queryKey: ["store-category-sizes", store.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pizza_sizes")
+        .select("id,name,position,category_id")
+        .eq("store_id", store.id)
+        .eq("is_active", true)
+        .order("position");
+      if (error) throw error;
+      return (data ?? []) as Array<{ id: string; name: string; position: number; category_id: string }>;
+    },
+    staleTime: 5 * 60_000,
+  });
+
+  const itemIdsForPrices = items.map((i) => i.id);
+  const { data: itemSizePrices = [] } = useQuery({
+    queryKey: ["store-item-size-prices", store.id, itemIdsForPrices.length],
+    enabled: itemIdsForPrices.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("menu_item_size_prices")
+        .select("menu_item_id,pizza_size_id,price,is_available")
+        .in("menu_item_id", itemIdsForPrices);
+      if (error) throw error;
+      return (data ?? []).map((r) => ({ ...r, price: Number(r.price) })) as Array<{
+        menu_item_id: string;
+        pizza_size_id: string;
+        price: number;
+        is_available: boolean;
+      }>;
+    },
+    staleTime: 5 * 60_000,
+  });
+
+  // Helpers
+  const getCategorySizes = (catId: string | undefined | null) => {
+    if (!catId) return [] as typeof categorySizes;
+    return categorySizes.filter((s) => s.category_id === catId);
+  };
+  const hasSharedSizes = (catId: string | undefined | null) => {
+    const cat = categories.find((c) => c.id === catId);
+    if (!cat || cat.is_pizza) return false;
+    return getCategorySizes(catId).length > 0;
+  };
+  const getItemSizePrice = (itemId: string, sizeId: string): number | null => {
+    const row = itemSizePrices.find(
+      (p) => p.menu_item_id === itemId && p.pizza_size_id === sizeId && p.is_available,
+    );
+    return row ? row.price : null;
+  };
+  const getItemMinPrice = (item: MenuItem): number => {
+    const sizes = getCategorySizes(item.category_id);
+    if (sizes.length === 0) return Number(item.price);
+    const prices = sizes
+      .map((s) => getItemSizePrice(item.id, s.id))
+      .filter((p): p is number => p !== null && p > 0);
+    if (prices.length === 0) return Number(item.price);
+    return Math.min(...prices);
+  };
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(t);
@@ -278,13 +339,25 @@ function StorePage() {
     setSelectedColor(null);
     setOrderMode("whole");
     setSecondHalfId(null);
-  }, [selectedItem?.id]);
+    if (selectedItem) {
+      const sizes = getCategorySizes(selectedItem.category_id);
+      setSelectedCategorySizeId(sizes[0]?.id ?? null);
+    } else {
+      setSelectedCategorySizeId(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedItem?.id, categorySizes.length]);
 
   const withinHours = isStoreOpen(hours, now);
   const open = !store.is_paused && withinHours;
   const nextOpen = !open && !store.is_paused ? nextOpeningLabel(hours, now) : null;
 
-  const tryAdd = async (storeId: string, menuItemId: string, size: string | null = null) => {
+  const tryAdd = async (
+    storeId: string,
+    menuItemId: string,
+    size: string | null = null,
+    unitPriceOverride: number | null = null,
+  ) => {
     if (!open) {
       const msg = store.is_paused
         ? "Loja temporariamente fechada pelo lojista."
@@ -295,14 +368,14 @@ function StorePage() {
       return;
     }
     try {
-      await addItem(storeId, menuItemId, size);
+      await addItem(storeId, menuItemId, size, unitPriceOverride);
     } catch (err) {
       if (err instanceof DifferentStoreError) {
         const ok = window.confirm(
           "Você só pode pedir de uma loja por vez (o pedido vai pelo WhatsApp). Limpar o carrinho atual e adicionar este item?",
         );
         if (ok) {
-          await switchStoreAndAdd(storeId, menuItemId, size);
+          await switchStoreAndAdd(storeId, menuItemId, size, unitPriceOverride);
         }
       } else {
         throw err;
@@ -756,6 +829,8 @@ function StorePage() {
                   <div className="space-y-2">
                     {catItems.map((item) => {
                       const qty = itemQty(item.id);
+                      const sharedSizes = hasSharedSizes(item.category_id);
+                      const displayPrice = sharedSizes ? getItemMinPrice(item) : Number(item.price);
                       return (
                         <article
                           key={item.id}
@@ -773,8 +848,11 @@ function StorePage() {
                               <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{item.description}</p>
                             )}
                             <div className="flex items-center gap-2 mt-2">
-                              <span className="font-bold text-sm">R$ {item.price.toFixed(2).replace(".", ",")}</span>
-                              {item.original_price && (
+                              {sharedSizes && (
+                                <span className="text-[10px] text-muted-foreground">a partir de</span>
+                              )}
+                              <span className="font-bold text-sm">R$ {displayPrice.toFixed(2).replace(".", ",")}</span>
+                              {!sharedSizes && item.original_price && (
                                 <span className="text-xs text-muted-foreground line-through">R$ {item.original_price.toFixed(2).replace(".", ",")}</span>
                               )}
                             </div>
@@ -796,11 +874,11 @@ function StorePage() {
                             </div>
                             <div onClick={(e) => e.stopPropagation()}>
                               {user ? (
-                                cat.is_pizza ? (
+                                cat.is_pizza || sharedSizes ? (
                                   <button
                                     onClick={() => openItemModal(item)}
                                     className="text-brand bg-brand-soft rounded-full p-1.5"
-                                    aria-label="Montar pizza"
+                                    aria-label={cat.is_pizza ? "Montar pizza" : "Escolher tamanho"}
                                   >
                                     <Plus className="h-4 w-4" />
                                   </button>
@@ -1003,18 +1081,64 @@ function StorePage() {
               )}
             </div>
             <div className="p-5">
-              <h2 className="text-xl font-bold">{selectedItem.name}</h2>
-              {selectedItem.description && (
-                <p className="text-sm text-muted-foreground mt-2">{selectedItem.description}</p>
-              )}
-              <div className="flex items-baseline gap-2 mt-4">
-                <span className="text-2xl font-bold">R$ {selectedItem.price.toFixed(2).replace(".", ",")}</span>
-                {selectedItem.original_price && (
-                  <span className="text-sm text-muted-foreground line-through">
-                    R$ {selectedItem.original_price.toFixed(2).replace(".", ",")}
-                  </span>
-                )}
-              </div>
+              {(() => {
+                const sharedSizes = getCategorySizes(selectedItem.category_id);
+                const hasShared = sharedSizes.length > 0 && !categories.find((c) => c.id === selectedItem.category_id)?.is_pizza;
+                const sizePrice = hasShared && selectedCategorySizeId
+                  ? getItemSizePrice(selectedItem.id, selectedCategorySizeId)
+                  : null;
+                const effectivePrice = sizePrice ?? Number(selectedItem.price);
+                return (
+                  <>
+                    <h2 className="text-xl font-bold">{selectedItem.name}</h2>
+                    {selectedItem.description && (
+                      <p className="text-sm text-muted-foreground mt-2">{selectedItem.description}</p>
+                    )}
+                    <div className="flex items-baseline gap-2 mt-4">
+                      <span className="text-2xl font-bold">R$ {effectivePrice.toFixed(2).replace(".", ",")}</span>
+                      {!hasShared && selectedItem.original_price && (
+                        <span className="text-sm text-muted-foreground line-through">
+                          R$ {selectedItem.original_price.toFixed(2).replace(".", ",")}
+                        </span>
+                      )}
+                    </div>
+
+                    {hasShared && (
+                      <div className="mt-5">
+                        <p className="text-sm font-semibold mb-2">
+                          Escolha o tamanho <span className="text-destructive">*</span>
+                        </p>
+                        <div className="flex flex-col gap-2">
+                          {sharedSizes.map((s) => {
+                            const active = selectedCategorySizeId === s.id;
+                            const p = getItemSizePrice(selectedItem.id, s.id);
+                            return (
+                              <button
+                                key={s.id}
+                                type="button"
+                                onClick={() => setSelectedCategorySizeId(s.id)}
+                                className={
+                                  "flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-semibold transition-colors " +
+                                  (active
+                                    ? "border-brand bg-brand-soft"
+                                    : "border-border bg-card hover:border-brand")
+                                }
+                              >
+                                <span>{s.name}</span>
+                                <span className="text-foreground">
+                                  {p !== null
+                                    ? `R$ ${p.toFixed(2).replace(".", ",")}`
+                                    : `R$ ${Number(selectedItem.price).toFixed(2).replace(".", ",")}`}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
 
               {selectedItem.sizes && selectedItem.sizes.length > 0 && (
                 <div className="mt-5">
@@ -1138,8 +1262,14 @@ function StorePage() {
                 {user ? (
                   <button
                     onClick={async () => {
+                      const sharedSizes = getCategorySizes(selectedItem.category_id);
+                      const hasShared = sharedSizes.length > 0 && !categories.find((c) => c.id === selectedItem.category_id)?.is_pizza;
                       const needsSize = selectedItem.sizes && selectedItem.sizes.length > 0;
                       const needsColor = selectedItem.colors && selectedItem.colors.length > 0;
+                      if (hasShared && !selectedCategorySizeId) {
+                        toast.error("Escolha um tamanho antes de adicionar.");
+                        return;
+                      }
                       if (needsSize && !selectedSize) {
                         toast.error("Escolha um tamanho antes de adicionar.");
                         return;
@@ -1148,8 +1278,14 @@ function StorePage() {
                         toast.error("Escolha uma cor antes de adicionar.");
                         return;
                       }
+                      const sharedSize = hasShared
+                        ? sharedSizes.find((s) => s.id === selectedCategorySizeId) ?? null
+                        : null;
+                      const sharedPrice = sharedSize
+                        ? getItemSizePrice(selectedItem.id, sharedSize.id) ?? Number(selectedItem.price)
+                        : null;
                       const sizeParts = [
-                        selectedSize,
+                        sharedSize ? sharedSize.name : selectedSize,
                         selectedColor ? `Cor: ${selectedColor}` : null,
                       ].filter(Boolean) as string[];
                       const sizeForCart = sizeParts.length ? sizeParts.join(" · ") : null;
@@ -1161,7 +1297,7 @@ function StorePage() {
                         }
                         await tryAddHalfHalf(store.id, selectedItem, second, sizeForCart);
                       } else {
-                        await tryAdd(store.id, selectedItem.id, sizeForCart);
+                        await tryAdd(store.id, selectedItem.id, sizeForCart, sharedPrice);
                       }
                       setSelectedItem(null);
                     }}
