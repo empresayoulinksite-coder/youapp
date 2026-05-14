@@ -50,8 +50,85 @@ export function hasBluetooth(): boolean {
   return typeof navigator !== "undefined" && "bluetooth" in navigator;
 }
 
+export function hasUSB(): boolean {
+  return typeof navigator !== "undefined" && "usb" in navigator;
+}
+
 export function hasSerial(): boolean {
   return typeof navigator !== "undefined" && "serial" in navigator;
+}
+
+export async function connectUSB(): Promise<PrinterConnection> {
+  if (!hasUSB()) {
+    throw new Error(
+      "WebUSB não suportado. Use Chrome ou Edge no computador (ou Android).",
+    );
+  }
+  // @ts-expect-error - WebUSB types not in TS lib
+  const device = await navigator.usb.requestDevice({
+    filters: [{ classCode: 7 }], // USB Printer class
+  });
+
+  await device.open();
+  if (device.configuration === null) {
+    await device.selectConfiguration(1);
+  }
+
+  // Find printer interface (class 7) and its OUT endpoint
+  const config = device.configuration;
+  if (!config) throw new Error("Configuração USB não encontrada");
+
+  let interfaceNumber = -1;
+  let endpointNumber = -1;
+  for (const iface of config.interfaces) {
+    for (const alt of iface.alternates) {
+      if (alt.interfaceClass === 7) {
+        const out = alt.endpoints.find(
+          (e: { direction: string; endpointNumber: number }) =>
+            e.direction === "out",
+        );
+        if (out) {
+          interfaceNumber = iface.interfaceNumber;
+          endpointNumber = out.endpointNumber;
+          break;
+        }
+      }
+    }
+    if (interfaceNumber >= 0) break;
+  }
+
+  if (interfaceNumber < 0 || endpointNumber < 0) {
+    try {
+      await device.close();
+    } catch {
+      // ignore
+    }
+    throw new Error("Endpoint de impressora não encontrado neste dispositivo USB");
+  }
+
+  await device.claimInterface(interfaceNumber);
+
+  const conn: PrinterConnection = {
+    kind: "usb",
+    label: device.productName || "Impressora USB",
+    write: async (bytes) => {
+      const chunkSize = 64;
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        const slice = bytes.slice(i, i + chunkSize);
+        await device.transferOut(endpointNumber, slice);
+      }
+    },
+    disconnect: async () => {
+      try {
+        await device.releaseInterface(interfaceNumber);
+        await device.close();
+      } catch {
+        // ignore
+      }
+    },
+  };
+  activeConnection = conn;
+  return conn;
 }
 
 export async function connectBluetooth(): Promise<PrinterConnection> {
