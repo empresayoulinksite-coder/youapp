@@ -46,6 +46,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import {
+  loadPrefs,
+  savePrefs,
+  connectBluetooth,
+  connectSerial,
+  hasBluetooth,
+  hasSerial,
+  getActiveConnection,
+  browserPrintHTML,
+  type PrinterPrefs,
+} from "@/lib/thermal-printer";
+import { buildReceiptBytes, buildReceiptHTML } from "@/lib/receipt-template";
 
 type OrderStatus = "em_analise" | "em_producao" | "pronto" | "entregue" | "cancelado";
 
