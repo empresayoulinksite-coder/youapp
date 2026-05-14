@@ -167,6 +167,15 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
   const lastIdsRef = useRef<Set<string>>(new Set());
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const initRef = useRef(false);
+  const [printerPrefs, setPrinterPrefs] = useState<PrinterPrefs>(() => loadPrefs(storeId));
+  const lastStatusRef = useRef<Record<string, OrderStatus>>({});
+  const printedRef = useRef<Set<string>>(new Set());
+
+  function updatePrinterPrefs(next: Partial<PrinterPrefs>) {
+    const merged = { ...printerPrefs, ...next };
+    setPrinterPrefs(merged);
+    savePrefs(storeId, merged);
+  }
 
   useEffect(() => {
     const i = setInterval(() => setTick((t) => t + 1), 30000);
