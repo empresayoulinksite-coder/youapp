@@ -326,8 +326,16 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
     if (!store) return;
     const customer = getCustomerInfo(order, profilesMap[order.user_id]) ?? null;
     const storeInfo = { name: store.name, whatsapp: store.whatsapp };
-    const conn = getActiveConnection();
     try {
+      // Preferred path: QZ Tray (silent printing to any installed printer)
+      if (printerPrefs.kind === "qz" && printerPrefs.qzPrinterName) {
+        const html = buildReceiptHTML(storeInfo, order, customer);
+        await qzPrintHTML(printerPrefs.qzPrinterName, html);
+        if (!opts.silent) toast.success("Cupom enviado para impressora");
+        return;
+      }
+      // Direct connection (Bluetooth / WebUSB / Serial)
+      const conn = getActiveConnection();
       if (conn) {
         const bytes = buildReceiptBytes(storeInfo, order, customer);
         await conn.write(bytes);
