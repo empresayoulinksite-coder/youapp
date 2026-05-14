@@ -1,7 +1,7 @@
 // Thermal printer support (ESC/POS) via Web Bluetooth / Web Serial.
 // Falls back to native browser print dialog when neither is available.
 
-export type PrinterKind = "bluetooth" | "usb" | "serial" | "browser";
+export type PrinterKind = "qz" | "bluetooth" | "usb" | "serial" | "browser";
 
 export type PrinterConnection = {
   kind: PrinterKind;
@@ -16,15 +16,16 @@ export type PrinterPrefs = {
   autoPrint: boolean;
   kind: PrinterKind | null;
   deviceName: string | null;
+  qzPrinterName?: string | null;
 };
 
 export function loadPrefs(storeId: string): PrinterPrefs {
   try {
     const raw = localStorage.getItem(PREF_KEY_PREFIX + storeId);
-    if (!raw) return { autoPrint: false, kind: null, deviceName: null };
+    if (!raw) return { autoPrint: false, kind: null, deviceName: null, qzPrinterName: null };
     return JSON.parse(raw);
   } catch {
-    return { autoPrint: false, kind: null, deviceName: null };
+    return { autoPrint: false, kind: null, deviceName: null, qzPrinterName: null };
   }
 }
 
