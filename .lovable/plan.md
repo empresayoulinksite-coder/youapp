@@ -1,33 +1,78 @@
-## Problema
+# Impressão automática de pedidos
 
-Na categoria **Porções** (Produto), você cadastrou tamanhos (Inteira / Meia) com preços diferentes em cada produto, mas no app do cliente o modal abre direto com o preço base e o botão "Adicionar à sacola" — sem o seletor de tamanho. Isso acontece porque a vitrine só busca `pizza_sizes` / `menu_item_size_prices` quando a categoria tem `is_pizza = true`. O passo 3 do plano original (vitrine/sacola) não tinha sido implementado.
+## O que será feito
 
-## O que vamos fazer
+Quando um pedido mudar para **"Em produção"** (aceito manual ou pelo "Aceitar pedidos automaticamente"), o painel da loja imprime automaticamente um cupom térmico.
 
-Liberar o seletor de tamanho na vitrine para qualquer categoria (não só pizza) que tenha tamanhos compartilhados cadastrados, reaproveitando exatamente as mesmas tabelas e campos do carrinho que a pizza já usa.
+A impressão acontece **no navegador do painel** (computador/tablet do balcão), pois impressoras USB/Bluetooth só são acessíveis localmente.
 
-### 1. `src/routes/loja.$slug.tsx` — modal de produto comum
-- No `openItemModal`, detectar se a categoria do item tem registros em `pizza_sizes` (mesmo com `is_pizza = false`). Se sim, carregar os tamanhos da categoria + os preços por tamanho daquele item (`menu_item_size_prices`).
-- Dentro do modal "selectedItem" (o que está aparecendo na sua tela), adicionar — antes do botão "Adicionar à sacola" — um bloco **"Escolha o tamanho"** com botões para cada tamanho da categoria, mostrando o preço de cada um (fallback no preço base do item se não houver preço cadastrado para aquele tamanho).
-- O preço grande exibido no modal passa a refletir o tamanho selecionado.
-- Validação: se a categoria tem tamanhos, exigir seleção antes de adicionar.
-- Ao adicionar ao carrinho, gravar `pizza_size_id`, `pizza_size_name` e `unit_price_override` (campos que já existem em `cart_items`), igual ao fluxo de pizza.
+## Como funciona para o lojista
 
-### 2. `src/routes/produto.$id.tsx` — página individual do produto
-- Mesmo tratamento da loja: buscar tamanhos da categoria, renderizar seletor "Escolha o tamanho" e gravar `pizza_size_id` / `unit_price_override` ao adicionar.
+1. Em **Painel → Pedidos**, aparece um novo botão **"Configurar impressora"**.
+2. Ao clicar, o navegador pede para conectar a impressora (USB ou Bluetooth). A escolha fica salva no aparelho.
+3. Um switch **"Imprimir automaticamente ao aceitar"** liga/desliga o comportamento.
+4. Botão **"Imprimir cupom"** em cada card de pedido para reimpressão manual.
+5. Botão **"Imprimir teste"** nas configurações para validar.
 
-### 3. Vitrine listando preço "a partir de"
-- Nos cards da listagem (loja, busca, vitrine pública), quando a categoria tem tamanhos compartilhados, mostrar o preço como "a partir de R$ X" usando o menor `menu_item_size_prices.price` do item, em vez do `price` base. Sem alteração se não houver tamanhos cadastrados.
+## Layout do cupom (58mm/80mm térmico)
 
-### 4. Sem mudanças necessárias em
-- `PizzaBuilderDialog` (continua exclusivo das categorias pizza com sabores/bordas).
-- Schema do banco — `cart_items.pizza_size_id` e `unit_price_override` já existem.
-- RLS — políticas atuais já permitem leitura pública de `pizza_sizes` / `menu_item_size_prices`.
-- Bulk edit / importação — já tratam o caso na lógica anterior.
+```
+========================================
+        NOME DA LOJA
+        Pedido #123
+        14/05/2026 19:42
+        Mesa 5  /  Delivery
+----------------------------------------
+CLIENTE: João Silva
+Tel: (11) 99999-9999
+End: Rua X, 100 - Bairro
+----------------------------------------
+ITENS
+2x Pizza Calabresa (Grande)
+   Borda: Catupiry
+   Obs: sem cebola
+1x Refrigerante 2L
+----------------------------------------
+Subtotal:           R$ 89,90
+Entrega:            R$  5,00
+Desconto:          -R$  4,00
+TOTAL:              R$ 90,90
+
+Pagamento: Dinheiro
+Troco para: R$ 100,00 (R$ 9,10)
+========================================
+```
+
+## Disparo automático
+
+- O `OrdersManager` já escuta mudanças em `orders` via realtime.
+- Adicionamos um listener: quando um pedido muda para `em_producao` (e o switch está ligado), envia o cupom para a impressora conectada.
+- Funciona tanto para aceite manual quanto para o trigger `apply_auto_accept_on_order` que já existe.
+
+## Detalhes técnicos
+
+**Sem mudança de schema.** Toda a lógica é frontend:
+
+- Nova lib `src/lib/thermal-printer.ts`:
+  - `connectPrinter()` — usa **Web Bluetooth** (`navigator.bluetooth.requestDevice`) ou **Web Serial** (`navigator.serial.requestPort`) para impressoras USB. Faz fallback para imprimir via diálogo nativo do navegador (`window.print()` em iframe oculto) quando a API não estiver disponível (ex.: iOS).
+  - `printOrder(order, items)` — gera comandos **ESC/POS** (CP858, corte de papel, alinhamento) e envia para a impressora.
+  - Persiste o `deviceId` em `localStorage` para reconectar.
+- Nova lib `src/lib/receipt-template.ts` — monta o conteúdo (texto + comandos ESC/POS) a partir de `orders` + `order_items` + `profiles`.
+- Atualização em `src/components/painel/OrdersManager.tsx`:
+  - Botões "Configurar impressora", "Imprimir teste", switch "Imprimir automaticamente".
+  - Preferências (auto-print on/off, deviceId) salvas em `localStorage` por `store_id`.
+  - No `onUpdate` do realtime, se `old.status !== 'em_producao' && new.status === 'em_producao'` e auto-print ligado → busca itens + cliente e chama `printOrder`.
+  - Botão "Imprimir cupom" em cada card.
+
+**Compatibilidade:**
+- Web Bluetooth funciona em **Chrome/Edge desktop e Android**.
+- Web Serial (USB) funciona em **Chrome/Edge desktop**.
+- iOS/Safari não suportam — nesses casos cai para o diálogo de impressão nativa (cupom em HTML formatado para 58/80mm).
 
 ## Verificação
 
-1. Abrir a loja Rei do Litoral → Porções → "Frango à parmegiana": modal mostra "Escolha o tamanho" com Inteira e Meia + preços; o preço grande muda ao trocar; "Adicionar à sacola" só funciona com tamanho escolhido.
-2. Carrinho mostra o tamanho escolhido junto do nome do produto.
-3. Card da listagem mostra "a partir de R$ ..." (menor preço por tamanho).
-4. Pizza continua funcionando exatamente como antes (modal completo com sabores/bordas).
+1. Abrir Painel → Pedidos → Configurar impressora → conectar.
+2. Clicar "Imprimir teste" → cupom sai.
+3. Ligar "Imprimir automaticamente".
+4. Fazer um pedido como cliente → aceitar no painel → cupom imprime sozinho.
+5. Repetir com "Aceitar pedidos automaticamente" ligado → cupom imprime ao chegar pedido novo.

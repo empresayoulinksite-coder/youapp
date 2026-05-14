@@ -46,6 +46,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import {
+  loadPrefs,
+  savePrefs,
+  connectBluetooth,
+  connectSerial,
+  hasBluetooth,
+  hasSerial,
+  getActiveConnection,
+  browserPrintHTML,
+  type PrinterPrefs,
+} from "@/lib/thermal-printer";
+import { buildReceiptBytes, buildReceiptHTML } from "@/lib/receipt-template";
 
 type OrderStatus = "em_analise" | "em_producao" | "pronto" | "entregue" | "cancelado";
 
@@ -82,6 +94,7 @@ type Order = {
   ready_at: string | null;
   delivered_at: string | null;
   cancelled_at: string | null;
+  table_number: number | null;
   profiles?: { display_name: string | null; phone: string | null } | null;
   order_items?: OrderItem[];
 };
@@ -154,6 +167,15 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
   const lastIdsRef = useRef<Set<string>>(new Set());
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const initRef = useRef(false);
+  const [printerPrefs, setPrinterPrefs] = useState<PrinterPrefs>(() => loadPrefs(storeId));
+  const lastStatusRef = useRef<Record<string, OrderStatus>>({});
+  const printedRef = useRef<Set<string>>(new Set());
+
+  function updatePrinterPrefs(next: Partial<PrinterPrefs>) {
+    const merged = { ...printerPrefs, ...next };
+    setPrinterPrefs(merged);
+    savePrefs(storeId, merged);
+  }
 
   useEffect(() => {
     const i = setInterval(() => setTick((t) => t + 1), 30000);
@@ -214,7 +236,7 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
         .select(
           `id, order_number, status, total, delivery_fee, discount, payment_method,
            delivery_address, delivery_type, customer_notes, store_id, user_id, created_at,
-           accepted_at, ready_at, delivered_at, cancelled_at,
+           accepted_at, ready_at, delivered_at, cancelled_at, table_number,
            order_items(id, name, quantity, unit_price, notes, emoji, selected_size,
              pizza_size_name, pizza_crust_name, pizza_flavors, pizza_addons, half_two_name)`,
         )
@@ -290,6 +312,45 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
     }
     lastIdsRef.current = ids;
   }, [orders]);
+
+  async function printOrder(order: Order, opts: { silent?: boolean } = {}) {
+    if (!store) return;
+    const customer = getCustomerInfo(order, profilesMap[order.user_id]) ?? null;
+    const storeInfo = { name: store.name, whatsapp: store.whatsapp };
+    const conn = getActiveConnection();
+    try {
+      if (conn) {
+        const bytes = buildReceiptBytes(storeInfo, order, customer);
+        await conn.write(bytes);
+        if (!opts.silent) toast.success("Cupom enviado para impressora");
+      } else {
+        const html = buildReceiptHTML(storeInfo, order, customer);
+        browserPrintHTML(html);
+      }
+    } catch (e) {
+      toast.error(`Falha ao imprimir: ${(e as Error).message}`);
+    }
+  }
+
+  // Auto-print when an order transitions to em_producao
+  useEffect(() => {
+    const prev = lastStatusRef.current;
+    const next: Record<string, OrderStatus> = {};
+    for (const o of orders) {
+      next[o.id] = o.status;
+      const prevStatus = prev[o.id];
+      if (
+        printerPrefs.autoPrint &&
+        o.status === "em_producao" &&
+        prevStatus !== "em_producao" &&
+        !printedRef.current.has(o.id)
+      ) {
+        printedRef.current.add(o.id);
+        void printOrder(o, { silent: true });
+      }
+    }
+    lastStatusRef.current = next;
+  }, [orders, printerPrefs.autoPrint, store, profilesMap]);
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: OrderStatus }) => {
@@ -487,6 +548,48 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
         store={store ?? null}
+        printerPrefs={printerPrefs}
+        onPrinterPrefsChange={updatePrinterPrefs}
+        onTestPrint={async () => {
+          // Build a fake test order
+          const testOrder: Order = {
+            id: "test",
+            order_number: 0,
+            status: "em_producao",
+            total: 1,
+            delivery_fee: 0,
+            discount: 0,
+            payment_method: "Teste",
+            delivery_address: null,
+            delivery_type: "pickup",
+            customer_notes: "Cupom de teste",
+            store_id: storeId,
+            user_id: "",
+            created_at: new Date().toISOString(),
+            accepted_at: null,
+            ready_at: null,
+            delivered_at: null,
+            cancelled_at: null,
+            table_number: null,
+            order_items: [
+              {
+                id: "1",
+                name: "Item de teste",
+                quantity: 1,
+                unit_price: 1,
+                notes: null,
+                emoji: null,
+                selected_size: null,
+                pizza_size_name: null,
+                pizza_crust_name: null,
+                pizza_flavors: null,
+                pizza_addons: null,
+                half_two_name: null,
+              },
+            ],
+          };
+          await printOrder(testOrder);
+        }}
         onSaved={() => qc.invalidateQueries({ queryKey: ["orders-manager-store", storeId] })}
       />
 
@@ -835,11 +938,17 @@ function SettingsDialog({
   onOpenChange,
   store,
   onSaved,
+  printerPrefs,
+  onPrinterPrefsChange,
+  onTestPrint,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   store: StoreSettings | null;
   onSaved: () => void;
+  printerPrefs: PrinterPrefs;
+  onPrinterPrefsChange: (next: Partial<PrinterPrefs>) => void;
+  onTestPrint: () => Promise<void>;
 }) {
   const [bMin, setBMin] = useState(0);
   const [bMax, setBMax] = useState(0);
@@ -915,6 +1024,84 @@ function SettingsDialog({
                 <Input type="number" min={0} value={dMax} onChange={(e) => setDMax(+e.target.value)} />
               </div>
             </div>
+          </div>
+
+          <div className="rounded-lg border bg-muted/30 p-3">
+            <div className="mb-2 flex items-center gap-2">
+              <Printer className="h-4 w-4" />
+              <Label className="text-sm font-semibold">Impressora térmica</Label>
+            </div>
+            <p className="mb-3 text-xs text-muted-foreground">
+              Conecte sua impressora USB ou Bluetooth para imprimir os cupons automaticamente quando o pedido for aceito.
+            </p>
+
+            <div className="mb-3 flex items-center gap-2">
+              <Switch
+                id="auto-print"
+                checked={printerPrefs.autoPrint}
+                onCheckedChange={(v) => onPrinterPrefsChange({ autoPrint: v })}
+              />
+              <Label htmlFor="auto-print" className="text-xs">
+                Imprimir automaticamente ao aceitar pedido
+              </Label>
+            </div>
+
+            <div className="mb-2 text-xs">
+              <span className="font-medium">Status:</span>{" "}
+              {getActiveConnection() ? (
+                <span className="text-green-600">
+                  Conectada ({getActiveConnection()?.label})
+                </span>
+              ) : (
+                <span className="text-muted-foreground">Não conectada</span>
+              )}
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {hasBluetooth() && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      const c = await connectBluetooth();
+                      onPrinterPrefsChange({ kind: "bluetooth", deviceName: c.label });
+                      toast.success(`Conectada: ${c.label}`);
+                    } catch (e) {
+                      toast.error((e as Error).message);
+                    }
+                  }}
+                >
+                  Conectar Bluetooth
+                </Button>
+              )}
+              {hasSerial() && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      const c = await connectSerial();
+                      onPrinterPrefsChange({ kind: "serial", deviceName: c.label });
+                      toast.success(`Conectada: ${c.label}`);
+                    } catch (e) {
+                      toast.error((e as Error).message);
+                    }
+                  }}
+                >
+                  Conectar USB
+                </Button>
+              )}
+              <Button variant="outline" size="sm" onClick={onTestPrint}>
+                Imprimir teste
+              </Button>
+            </div>
+
+            {!hasBluetooth() && !hasSerial() && (
+              <p className="mt-2 text-xs text-amber-600">
+                Seu navegador não suporta conexão direta com impressora. Será usado o diálogo de impressão padrão (Chrome/Edge no desktop ou Android oferecem conexão direta).
+              </p>
+            )}
           </div>
         </div>
 
