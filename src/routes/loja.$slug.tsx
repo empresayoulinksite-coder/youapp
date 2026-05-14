@@ -1081,18 +1081,64 @@ function StorePage() {
               )}
             </div>
             <div className="p-5">
-              <h2 className="text-xl font-bold">{selectedItem.name}</h2>
-              {selectedItem.description && (
-                <p className="text-sm text-muted-foreground mt-2">{selectedItem.description}</p>
-              )}
-              <div className="flex items-baseline gap-2 mt-4">
-                <span className="text-2xl font-bold">R$ {selectedItem.price.toFixed(2).replace(".", ",")}</span>
-                {selectedItem.original_price && (
-                  <span className="text-sm text-muted-foreground line-through">
-                    R$ {selectedItem.original_price.toFixed(2).replace(".", ",")}
-                  </span>
-                )}
-              </div>
+              {(() => {
+                const sharedSizes = getCategorySizes(selectedItem.category_id);
+                const hasShared = sharedSizes.length > 0 && !categories.find((c) => c.id === selectedItem.category_id)?.is_pizza;
+                const sizePrice = hasShared && selectedCategorySizeId
+                  ? getItemSizePrice(selectedItem.id, selectedCategorySizeId)
+                  : null;
+                const effectivePrice = sizePrice ?? Number(selectedItem.price);
+                return (
+                  <>
+                    <h2 className="text-xl font-bold">{selectedItem.name}</h2>
+                    {selectedItem.description && (
+                      <p className="text-sm text-muted-foreground mt-2">{selectedItem.description}</p>
+                    )}
+                    <div className="flex items-baseline gap-2 mt-4">
+                      <span className="text-2xl font-bold">R$ {effectivePrice.toFixed(2).replace(".", ",")}</span>
+                      {!hasShared && selectedItem.original_price && (
+                        <span className="text-sm text-muted-foreground line-through">
+                          R$ {selectedItem.original_price.toFixed(2).replace(".", ",")}
+                        </span>
+                      )}
+                    </div>
+
+                    {hasShared && (
+                      <div className="mt-5">
+                        <p className="text-sm font-semibold mb-2">
+                          Escolha o tamanho <span className="text-destructive">*</span>
+                        </p>
+                        <div className="flex flex-col gap-2">
+                          {sharedSizes.map((s) => {
+                            const active = selectedCategorySizeId === s.id;
+                            const p = getItemSizePrice(selectedItem.id, s.id);
+                            return (
+                              <button
+                                key={s.id}
+                                type="button"
+                                onClick={() => setSelectedCategorySizeId(s.id)}
+                                className={
+                                  "flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-semibold transition-colors " +
+                                  (active
+                                    ? "border-brand bg-brand-soft"
+                                    : "border-border bg-card hover:border-brand")
+                                }
+                              >
+                                <span>{s.name}</span>
+                                <span className="text-foreground">
+                                  {p !== null
+                                    ? `R$ ${p.toFixed(2).replace(".", ",")}`
+                                    : `R$ ${Number(selectedItem.price).toFixed(2).replace(".", ",")}`}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
 
               {selectedItem.sizes && selectedItem.sizes.length > 0 && (
                 <div className="mt-5">
