@@ -1,7 +1,7 @@
 // Thermal printer support (ESC/POS) via Web Bluetooth / Web Serial.
 // Falls back to native browser print dialog when neither is available.
 
-export type PrinterKind = "bluetooth" | "serial" | "browser";
+export type PrinterKind = "bluetooth" | "usb" | "serial" | "browser";
 
 export type PrinterConnection = {
   kind: PrinterKind;
