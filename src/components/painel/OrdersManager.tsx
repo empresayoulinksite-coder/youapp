@@ -50,8 +50,10 @@ import {
   loadPrefs,
   savePrefs,
   connectBluetooth,
+  connectUSB,
   connectSerial,
   hasBluetooth,
+  hasUSB,
   hasSerial,
   getActiveConnection,
   browserPrintHTML,
@@ -1075,9 +1077,33 @@ function SettingsDialog({
                   Conectar Bluetooth
                 </Button>
               )}
-              {hasSerial() && (
+              {hasUSB() && (
                 <Button
                   variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      const c = await connectUSB();
+                      onPrinterPrefsChange({ kind: "usb", deviceName: c.label });
+                      toast.success(`Conectada: ${c.label}`);
+                    } catch (e) {
+                      const msg = (e as Error).message || "";
+                      if (msg.includes("No device selected") || msg.includes("cancel")) {
+                        return;
+                      }
+                      toast.error(
+                        msg ||
+                          "Não foi possível conectar. Verifique se a impressora está ligada e se nenhum outro programa está usando-a.",
+                      );
+                    }
+                  }}
+                >
+                  Conectar USB
+                </Button>
+              )}
+              {hasSerial() && (
+                <Button
+                  variant="ghost"
                   size="sm"
                   onClick={async () => {
                     try {
@@ -1085,11 +1111,15 @@ function SettingsDialog({
                       onPrinterPrefsChange({ kind: "serial", deviceName: c.label });
                       toast.success(`Conectada: ${c.label}`);
                     } catch (e) {
-                      toast.error((e as Error).message);
+                      const msg = (e as Error).message || "";
+                      if (msg.includes("No port selected") || msg.includes("cancel")) {
+                        return;
+                      }
+                      toast.error(msg);
                     }
                   }}
                 >
-                  Conectar USB
+                  Porta serial (COM)
                 </Button>
               )}
               <Button variant="outline" size="sm" onClick={onTestPrint}>
@@ -1097,9 +1127,13 @@ function SettingsDialog({
               </Button>
             </div>
 
-            {!hasBluetooth() && !hasSerial() && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              USB e Bluetooth funcionam em Chrome ou Edge no computador (e Android para Bluetooth). Se a USB não aparecer, feche outros programas que possam estar usando a impressora.
+            </p>
+
+            {!hasBluetooth() && !hasUSB() && !hasSerial() && (
               <p className="mt-2 text-xs text-amber-600">
-                Seu navegador não suporta conexão direta com impressora. Será usado o diálogo de impressão padrão (Chrome/Edge no desktop ou Android oferecem conexão direta).
+                Seu navegador não suporta conexão direta com impressora. Será usado o diálogo de impressão padrão. Recomendado: Chrome ou Edge.
               </p>
             )}
           </div>
