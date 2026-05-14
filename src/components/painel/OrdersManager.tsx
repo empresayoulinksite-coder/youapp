@@ -548,6 +548,48 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
         store={store ?? null}
+        printerPrefs={printerPrefs}
+        onPrinterPrefsChange={updatePrinterPrefs}
+        onTestPrint={async () => {
+          // Build a fake test order
+          const testOrder: Order = {
+            id: "test",
+            order_number: 0,
+            status: "em_producao",
+            total: 1,
+            delivery_fee: 0,
+            discount: 0,
+            payment_method: "Teste",
+            delivery_address: null,
+            delivery_type: "pickup",
+            customer_notes: "Cupom de teste",
+            store_id: storeId,
+            user_id: "",
+            created_at: new Date().toISOString(),
+            accepted_at: null,
+            ready_at: null,
+            delivered_at: null,
+            cancelled_at: null,
+            table_number: null,
+            order_items: [
+              {
+                id: "1",
+                name: "Item de teste",
+                quantity: 1,
+                unit_price: 1,
+                notes: null,
+                emoji: null,
+                selected_size: null,
+                pizza_size_name: null,
+                pizza_crust_name: null,
+                pizza_flavors: null,
+                pizza_addons: null,
+                half_two_name: null,
+              },
+            ],
+          };
+          await printOrder(testOrder);
+        }}
         onSaved={() => qc.invalidateQueries({ queryKey: ["orders-manager-store", storeId] })}
       />
 
