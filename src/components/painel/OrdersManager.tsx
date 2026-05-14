@@ -1066,3 +1066,225 @@ function SettingsDialog({
 
 void Plus;
 void Pencil;
+
+function PrinterSettingsBlock({
+  printerPrefs,
+  onPrinterPrefsChange,
+  onTestPrint,
+}: {
+  printerPrefs: PrinterPrefs;
+  onPrinterPrefsChange: (next: Partial<PrinterPrefs>) => void;
+  onTestPrint: () => Promise<void>;
+}) {
+  const [qzConnected, setQzConnected] = useState(false);
+  const [qzPrinters, setQzPrinters] = useState<string[]>([]);
+  const [qzBusy, setQzBusy] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // Try to detect existing QZ connection on mount
+  useEffect(() => {
+    void qzIsConnected().then(setQzConnected);
+  }, []);
+
+  async function handleConnectQz() {
+    setQzBusy(true);
+    try {
+      await qzConnect();
+      const printers = await qzListPrinters();
+      setQzPrinters(printers);
+      setQzConnected(true);
+      // If nothing selected yet, default to system default
+      if (!printerPrefs.qzPrinterName) {
+        const def = await qzGetDefaultPrinter();
+        if (def) onPrinterPrefsChange({ kind: "qz", qzPrinterName: def });
+      } else {
+        onPrinterPrefsChange({ kind: "qz" });
+      }
+      toast.success(`QZ Tray conectado (${printers.length} impressoras encontradas)`);
+    } catch (e) {
+      const msg = (e as Error).message || "";
+      toast.error(
+        "Não foi possível conectar ao QZ Tray. Verifique se ele está instalado e em execução no seu computador. " +
+          msg,
+      );
+    } finally {
+      setQzBusy(false);
+    }
+  }
+
+  return (
+    <div className="rounded-lg border bg-muted/30 p-3">
+      <div className="mb-2 flex items-center gap-2">
+        <Printer className="h-4 w-4" />
+        <Label className="text-sm font-semibold">Impressão automática de cupons</Label>
+      </div>
+      <p className="mb-3 text-xs text-muted-foreground">
+        Imprime o cupom em qualquer impressora do seu computador (térmica, jato de tinta ou laser), sem mostrar o diálogo de impressão.
+      </p>
+
+      <div className="mb-3 flex items-center gap-2">
+        <Switch
+          id="auto-print"
+          checked={printerPrefs.autoPrint}
+          onCheckedChange={(v) => onPrinterPrefsChange({ autoPrint: v })}
+        />
+        <Label htmlFor="auto-print" className="text-xs">
+          Imprimir automaticamente ao aceitar pedido
+        </Label>
+      </div>
+
+      {/* QZ Tray (recommended) */}
+      <div className="rounded-md border border-primary/40 bg-background p-3">
+        <div className="mb-1 flex items-center justify-between">
+          <span className="text-sm font-semibold">QZ Tray (recomendado)</span>
+          <span className="text-xs">
+            {qzConnected ? (
+              <span className="text-green-600">● Conectado</span>
+            ) : (
+              <span className="text-muted-foreground">○ Desconectado</span>
+            )}
+          </span>
+        </div>
+        <p className="mb-2 text-xs text-muted-foreground">
+          Programa gratuito que roda no seu computador e permite impressão silenciosa.{" "}
+          <a
+            href="https://qz.io/download/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
+            Baixar QZ Tray
+          </a>
+          .
+        </p>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleConnectQz}
+            disabled={qzBusy}
+          >
+            {qzBusy && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+            {qzConnected ? "Atualizar impressoras" : "Conectar QZ Tray"}
+          </Button>
+
+          {qzConnected && qzPrinters.length > 0 && (
+            <select
+              className="rounded-md border bg-background px-2 py-1 text-xs"
+              value={printerPrefs.qzPrinterName ?? ""}
+              onChange={(e) =>
+                onPrinterPrefsChange({ kind: "qz", qzPrinterName: e.target.value })
+              }
+            >
+              <option value="">— escolha a impressora —</option>
+              {qzPrinters.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          )}
+
+          <Button variant="outline" size="sm" onClick={onTestPrint}>
+            Imprimir teste
+          </Button>
+        </div>
+
+        {printerPrefs.kind === "qz" && printerPrefs.qzPrinterName && (
+          <p className="mt-2 text-xs text-green-700">
+            Usando: <strong>{printerPrefs.qzPrinterName}</strong>
+          </p>
+        )}
+
+        <p className="mt-2 text-xs text-muted-foreground">
+          Na primeira impressão, o QZ Tray pede uma confirmação de segurança. Marque <strong>"Sempre permitir"</strong> e não aparecerá mais.
+        </p>
+      </div>
+
+      {/* Advanced: direct connection */}
+      <button
+        type="button"
+        className="mt-3 text-xs text-muted-foreground underline"
+        onClick={() => setShowAdvanced((v) => !v)}
+      >
+        {showAdvanced ? "Ocultar" : "Mostrar"} conexão direta (avançado)
+      </button>
+
+      {showAdvanced && (
+        <div className="mt-2 rounded-md border bg-background p-3">
+          <p className="mb-2 text-xs text-muted-foreground">
+            Para impressoras térmicas USB/Bluetooth de cupom (ESC/POS), sem precisar do QZ Tray.
+          </p>
+          <div className="mb-2 text-xs">
+            <span className="font-medium">Status:</span>{" "}
+            {getActiveConnection() ? (
+              <span className="text-green-600">
+                Conectada ({getActiveConnection()?.label})
+              </span>
+            ) : (
+              <span className="text-muted-foreground">Não conectada</span>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {hasBluetooth() && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  try {
+                    const c = await connectBluetooth();
+                    onPrinterPrefsChange({ kind: "bluetooth", deviceName: c.label });
+                    toast.success(`Conectada: ${c.label}`);
+                  } catch (e) {
+                    toast.error((e as Error).message);
+                  }
+                }}
+              >
+                Conectar Bluetooth
+              </Button>
+            )}
+            {hasUSB() && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  try {
+                    const c = await connectUSB();
+                    onPrinterPrefsChange({ kind: "usb", deviceName: c.label });
+                    toast.success(`Conectada: ${c.label}`);
+                  } catch (e) {
+                    const msg = (e as Error).message || "";
+                    if (msg.includes("No device selected") || msg.includes("cancel")) return;
+                    toast.error(msg);
+                  }
+                }}
+              >
+                Conectar USB direto
+              </Button>
+            )}
+            {hasSerial() && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={async () => {
+                  try {
+                    const c = await connectSerial();
+                    onPrinterPrefsChange({ kind: "serial", deviceName: c.label });
+                    toast.success(`Conectada: ${c.label}`);
+                  } catch (e) {
+                    const msg = (e as Error).message || "";
+                    if (msg.includes("No port selected") || msg.includes("cancel")) return;
+                    toast.error(msg);
+                  }
+                }}
+              >
+                Porta serial (COM)
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
