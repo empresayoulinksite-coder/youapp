@@ -1262,8 +1262,14 @@ function StorePage() {
                 {user ? (
                   <button
                     onClick={async () => {
+                      const sharedSizes = getCategorySizes(selectedItem.category_id);
+                      const hasShared = sharedSizes.length > 0 && !categories.find((c) => c.id === selectedItem.category_id)?.is_pizza;
                       const needsSize = selectedItem.sizes && selectedItem.sizes.length > 0;
                       const needsColor = selectedItem.colors && selectedItem.colors.length > 0;
+                      if (hasShared && !selectedCategorySizeId) {
+                        toast.error("Escolha um tamanho antes de adicionar.");
+                        return;
+                      }
                       if (needsSize && !selectedSize) {
                         toast.error("Escolha um tamanho antes de adicionar.");
                         return;
@@ -1272,8 +1278,14 @@ function StorePage() {
                         toast.error("Escolha uma cor antes de adicionar.");
                         return;
                       }
+                      const sharedSize = hasShared
+                        ? sharedSizes.find((s) => s.id === selectedCategorySizeId) ?? null
+                        : null;
+                      const sharedPrice = sharedSize
+                        ? getItemSizePrice(selectedItem.id, sharedSize.id) ?? Number(selectedItem.price)
+                        : null;
                       const sizeParts = [
-                        selectedSize,
+                        sharedSize ? sharedSize.name : selectedSize,
                         selectedColor ? `Cor: ${selectedColor}` : null,
                       ].filter(Boolean) as string[];
                       const sizeForCart = sizeParts.length ? sizeParts.join(" · ") : null;
@@ -1285,7 +1297,7 @@ function StorePage() {
                         }
                         await tryAddHalfHalf(store.id, selectedItem, second, sizeForCart);
                       } else {
-                        await tryAdd(store.id, selectedItem.id, sizeForCart);
+                        await tryAdd(store.id, selectedItem.id, sizeForCart, sharedPrice);
                       }
                       setSelectedItem(null);
                     }}
