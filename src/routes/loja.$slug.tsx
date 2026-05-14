@@ -829,6 +829,8 @@ function StorePage() {
                   <div className="space-y-2">
                     {catItems.map((item) => {
                       const qty = itemQty(item.id);
+                      const sharedSizes = hasSharedSizes(item.category_id);
+                      const displayPrice = sharedSizes ? getItemMinPrice(item) : Number(item.price);
                       return (
                         <article
                           key={item.id}
@@ -846,8 +848,11 @@ function StorePage() {
                               <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{item.description}</p>
                             )}
                             <div className="flex items-center gap-2 mt-2">
-                              <span className="font-bold text-sm">R$ {item.price.toFixed(2).replace(".", ",")}</span>
-                              {item.original_price && (
+                              {sharedSizes && (
+                                <span className="text-[10px] text-muted-foreground">a partir de</span>
+                              )}
+                              <span className="font-bold text-sm">R$ {displayPrice.toFixed(2).replace(".", ",")}</span>
+                              {!sharedSizes && item.original_price && (
                                 <span className="text-xs text-muted-foreground line-through">R$ {item.original_price.toFixed(2).replace(".", ",")}</span>
                               )}
                             </div>
