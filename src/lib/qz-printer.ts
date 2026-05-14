@@ -1,5 +1,7 @@
 // QZ Tray integration - silent printing to any installed printer.
 // Requires QZ Tray (https://qz.io/download/) running on the user's PC.
+import { QZ_CERTIFICATE } from "./qz-certificate";
+import { signQzRequest } from "./qz-sign.functions";
 
 let qzModulePromise: Promise<any> | null = null;
 
@@ -12,11 +14,20 @@ async function getQz(): Promise<any> {
   }
   const qz = await qzModulePromise;
 
-  // Configure unsigned (community) mode — promiscuous signature.
-  // QZ Tray will show a one-time security prompt; user clicks "Always allow".
+  // Configure signed mode — backend assina cada requisição com SHA512withRSA.
+  // Com o certificado importado como override.crt no QZ Tray do PC, NUNCA aparece prompt.
   if (!qz.security.__configured) {
-    qz.security.setCertificatePromise((resolve: (v: string) => void) => resolve(""));
-    qz.security.setSignaturePromise(() => (resolve: (v: string) => void) => resolve(""));
+    qz.security.setCertificatePromise((resolve: (v: string) => void) => {
+      resolve(QZ_CERTIFICATE);
+    });
+    qz.security.setSignatureAlgorithm?.("SHA512");
+    qz.security.setSignaturePromise((toSign: string) => {
+      return (resolve: (v: string) => void, reject: (e: unknown) => void) => {
+        signQzRequest({ data: { request: toSign } })
+          .then((res) => resolve(res.signature))
+          .catch(reject);
+      };
+    });
     qz.security.__configured = true;
   }
   return qz;
