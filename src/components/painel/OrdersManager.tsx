@@ -313,6 +313,45 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
     lastIdsRef.current = ids;
   }, [orders]);
 
+  async function printOrder(order: Order, opts: { silent?: boolean } = {}) {
+    if (!store) return;
+    const customer = getCustomerInfo(order, profilesMap[order.user_id]) ?? null;
+    const storeInfo = { name: store.name, whatsapp: store.whatsapp };
+    const conn = getActiveConnection();
+    try {
+      if (conn) {
+        const bytes = buildReceiptBytes(storeInfo, order, customer);
+        await conn.write(bytes);
+        if (!opts.silent) toast.success("Cupom enviado para impressora");
+      } else {
+        const html = buildReceiptHTML(storeInfo, order, customer);
+        browserPrintHTML(html);
+      }
+    } catch (e) {
+      toast.error(`Falha ao imprimir: ${(e as Error).message}`);
+    }
+  }
+
+  // Auto-print when an order transitions to em_producao
+  useEffect(() => {
+    const prev = lastStatusRef.current;
+    const next: Record<string, OrderStatus> = {};
+    for (const o of orders) {
+      next[o.id] = o.status;
+      const prevStatus = prev[o.id];
+      if (
+        printerPrefs.autoPrint &&
+        o.status === "em_producao" &&
+        prevStatus !== "em_producao" &&
+        !printedRef.current.has(o.id)
+      ) {
+        printedRef.current.add(o.id);
+        void printOrder(o, { silent: true });
+      }
+    }
+    lastStatusRef.current = next;
+  }, [orders, printerPrefs.autoPrint, store, profilesMap]);
+
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: OrderStatus }) => {
       const { error } = await supabase.from("orders").update({ status }).eq("id", id);
