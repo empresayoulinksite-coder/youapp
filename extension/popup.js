@@ -83,6 +83,29 @@ $("refresh-btn").addEventListener("click", async () => {
   await send({ type: "refreshStores" });
   await refresh();
 });
+$("forgot-btn").addEventListener("click", async () => {
+  const email = $("email").value.trim();
+  const msgEl = $("forgot-msg");
+  if (!email) {
+    msgEl.textContent = "Digite seu email acima primeiro.";
+    msgEl.style.color = "#b91c1c";
+    return;
+  }
+  msgEl.style.color = "";
+  msgEl.textContent = "Enviando…";
+  const res = await send({
+    type: "forgotPassword",
+    email,
+    redirectTo: "https://youapp.lovable.app/reset-password",
+  });
+  if (res?.ok) {
+    msgEl.style.color = "#166534";
+    msgEl.textContent = "Email enviado! Verifique sua caixa de entrada.";
+  } else {
+    msgEl.style.color = "#b91c1c";
+    msgEl.textContent = res?.error ?? "Falha ao enviar email.";
+  }
+});
 $("test-btn").addEventListener("click", async () => {
   await send({ type: "testPrint" });
 });
