@@ -142,6 +142,8 @@ async function connectRealtime() {
       );
       subscribedStores.add(storeId);
     }
+    // Catch-up: imprime pedidos recentes ainda não impressos (últimos 10 min)
+    void catchUpRecentOrders(enabled, session.access_token);
     // Heartbeat
     if (heartbeatTimer) clearInterval(heartbeatTimer);
     heartbeatTimer = setInterval(() => {
