@@ -28,9 +28,12 @@ async function getQz(): Promise<any> {
   // Configure signed mode — backend assina cada requisição com SHA512withRSA.
   // Com o override.crt importado no QZ Tray do PC, NUNCA aparece prompt.
   if (!qz.security.__configured) {
-    qz.security.setCertificatePromise((resolve: (v: string) => void, reject: (e: unknown) => void) => {
-      fetchPublicCert().then(resolve).catch(reject);
-    });
+    qz.security.setCertificatePromise(
+      (resolve: (v: string) => void, reject: (e: unknown) => void) => {
+        fetchPublicCert().then(resolve).catch(reject);
+      },
+      { rejectOnFailure: true },
+    );
     qz.security.setSignatureAlgorithm?.("SHA512");
     qz.security.setSignaturePromise((toSign: string) => {
       return (resolve: (v: string) => void, reject: (e: unknown) => void) => {

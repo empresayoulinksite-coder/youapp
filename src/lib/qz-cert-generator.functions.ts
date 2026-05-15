@@ -121,3 +121,19 @@ export const getQzOverrideCrt = createServerFn({ method: "POST" })
 
     return { overrideCrt: data?.override_crt ?? null };
   });
+
+/**
+ * Status do certificado QZ — usado pela página de setup para mostrar
+ * se já foi gerado e quando.
+ */
+export const getQzCertificateStatus = createServerFn({ method: "GET" }).handler(async () => {
+  const { data } = await supabaseAdmin
+    .from("qz_certificates")
+    .select("id, created_at")
+    .eq("id", 1)
+    .maybeSingle();
+  return {
+    exists: !!data,
+    createdAt: data?.created_at ?? null,
+  };
+});

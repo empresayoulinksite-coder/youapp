@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useIsAdmin } from "@/hooks/use-admin";
 import { Button } from "@/components/ui/button";
@@ -8,8 +9,9 @@ import { toast } from "sonner";
 import {
   generateQzCertificate,
   getQzOverrideCrt,
+  getQzCertificateStatus,
 } from "@/lib/qz-cert-generator.functions";
-import { Download, Loader2, ShieldCheck, ArrowLeft } from "lucide-react";
+import { Download, Loader2, ShieldCheck, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
 
 export const Route = createFileRoute("/admin/qz-setup")({
   component: QzSetupPage,
@@ -32,8 +34,16 @@ function QzSetupPage() {
   const navigate = useNavigate();
   const generateFn = useServerFn(generateQzCertificate);
   const getOverrideFn = useServerFn(getQzOverrideCrt);
+  const getStatusFn = useServerFn(getQzCertificateStatus);
   const [generating, setGenerating] = useState(false);
   const [downloading, setDownloading] = useState(false);
+
+  const status = useQuery({
+    queryKey: ["qz-cert-status"],
+    queryFn: () => getStatusFn(),
+    enabled: isAdmin,
+    staleTime: 0,
+  });
 
   if (loading) {
     return (
@@ -67,6 +77,7 @@ function QzSetupPage() {
       const res = await generateFn();
       downloadFile("override.crt", res.overrideCrt);
       toast.success("Certificado gerado! Arquivo override.crt baixado.");
+      status.refetch();
     } catch (err) {
       toast.error(`Erro: ${err instanceof Error ? err.message : "desconhecido"}`);
     } finally {
@@ -106,6 +117,39 @@ function QzSetupPage() {
           </p>
         </div>
       </div>
+
+      {/* Status atual */}
+      <Card className={status.data?.exists ? "border-emerald-500/40" : "border-amber-500/40"}>
+        <CardContent className="pt-6 flex items-start gap-3">
+          {status.isLoading ? (
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          ) : status.data?.exists ? (
+            <>
+              <CheckCircle2 className="h-5 w-5 text-emerald-500 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-medium">Certificado gerado e salvo no servidor.</p>
+                <p className="text-muted-foreground text-xs">
+                  Criado em:{" "}
+                  {status.data.createdAt
+                    ? new Date(status.data.createdAt).toLocaleString("pt-BR")
+                    : "—"}
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-medium">Nenhum certificado gerado ainda.</p>
+                <p className="text-muted-foreground text-xs">
+                  Sem isso, o QZ Tray mostra "Invalid Certificate / anonymous request".
+                  Clique em <strong>Gerar certificado</strong> abaixo.
+                </p>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
