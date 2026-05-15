@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 /**
- * Gera par de chaves RSA 2048 + certificado X.509 auto-assinado válido por 10 anos
+ * Gera uma CA local + certificado final RSA 2048 válido por 10 anos
  * e salva no banco. Apenas admins podem chamar.
  *
  * Retorna o conteúdo do `override.crt` que o usuário deve copiar para a pasta do
@@ -27,46 +27,59 @@ export const generateQzCertificate = createServerFn({ method: "POST" })
       throw new Error("Apenas administradores podem gerar o certificado QZ");
     }
 
-    // 1. Gera par RSA 2048
-    const keys = forge.pki.rsa.generateKeyPair({ bits: 2048, e: 0x10001 });
+    // 1. Gera uma CA local (vai no override.crt) e um certificado final (vai para o navegador)
+    const rootKeys = forge.pki.rsa.generateKeyPair({ bits: 2048, e: 0x10001 });
+    const leafKeys = forge.pki.rsa.generateKeyPair({ bits: 2048, e: 0x10001 });
+    const notBefore = new Date();
+    notBefore.setDate(notBefore.getDate() - 1);
+    const notAfter = new Date(notBefore);
+    notAfter.setFullYear(notBefore.getFullYear() + 10);
 
-    // 2. Monta certificado X.509 auto-assinado válido por 10 anos
-    const cert = forge.pki.createCertificate();
-    cert.publicKey = keys.publicKey;
-    cert.serialNumber = String(Date.now());
-    cert.validity.notBefore = new Date();
-    cert.validity.notAfter = new Date();
-    cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 10);
-
-    const attrs = [
-      { name: "commonName", value: "QZ Tray Cert" },
-      { name: "organizationName", value: "Lovable App" },
+    const rootAttrs = [
+      { name: "commonName", value: "YouLink QZ Root CA" },
+      { name: "organizationName", value: "YouLink" },
+      { name: "organizationalUnitName", value: "Silent Printing Root" },
+    ];
+    const leafAttrs = [
+      { name: "commonName", value: "YouLink QZ Tray Cert" },
+      { name: "organizationName", value: "YouLink" },
       { name: "organizationalUnitName", value: "Silent Printing" },
     ];
-    cert.setSubject(attrs);
-    cert.setIssuer(attrs);
-    cert.setExtensions([
-      { name: "basicConstraints", cA: true },
-      {
-        name: "keyUsage",
-        keyCertSign: true,
-        digitalSignature: true,
-        nonRepudiation: true,
-        keyEncipherment: true,
-        dataEncipherment: true,
-      },
-      { name: "extKeyUsage", serverAuth: true, clientAuth: true, codeSigning: true, emailProtection: true },
+
+    const rootCert = forge.pki.createCertificate();
+    rootCert.publicKey = rootKeys.publicKey;
+    rootCert.serialNumber = `${Date.now()}01`;
+    rootCert.validity.notBefore = notBefore;
+    rootCert.validity.notAfter = notAfter;
+    rootCert.setSubject(rootAttrs);
+    rootCert.setIssuer(rootAttrs);
+    rootCert.setExtensions([
+      { name: "basicConstraints", critical: true, cA: true },
+      { name: "keyUsage", critical: true, keyCertSign: true, cRLSign: true, digitalSignature: true },
       { name: "subjectKeyIdentifier" },
     ]);
+    rootCert.sign(rootKeys.privateKey, forge.md.sha256.create());
 
-    // Auto-assina com SHA-256
-    cert.sign(keys.privateKey, forge.md.sha256.create());
+    const leafCert = forge.pki.createCertificate();
+    leafCert.publicKey = leafKeys.publicKey;
+    leafCert.serialNumber = `${Date.now()}02`;
+    leafCert.validity.notBefore = notBefore;
+    leafCert.validity.notAfter = notAfter;
+    leafCert.setSubject(leafAttrs);
+    leafCert.setIssuer(rootAttrs);
+    leafCert.setExtensions([
+      { name: "basicConstraints", critical: true, cA: false },
+      { name: "keyUsage", critical: true, digitalSignature: true, nonRepudiation: true, keyEncipherment: true },
+      { name: "extKeyUsage", clientAuth: true, codeSigning: true },
+      { name: "subjectAltName", altNames: [{ type: 6, value: "https://youlinkapp.site" }] },
+      { name: "subjectKeyIdentifier" },
+    ]);
+    leafCert.sign(rootKeys.privateKey, forge.md.sha256.create());
 
-    // 3. Serializa em PEM
-    const privateKeyPem = forge.pki.privateKeyToPem(keys.privateKey);
-    const publicCertPem = forge.pki.certificateToPem(cert);
-    // override.crt do QZ Tray é o mesmo certificado público em formato PEM
-    const overrideCrt = publicCertPem;
+    // 2. Serializa em PEM: QZ recebe o certificado final; o Windows instala a CA no override.crt.
+    const privateKeyPem = forge.pki.privateKeyToPem(leafKeys.privateKey);
+    const publicCertPem = forge.pki.certificateToPem(leafCert);
+    const overrideCrt = forge.pki.certificateToPem(rootCert);
 
     // 4. Persiste (upsert no singleton id=1)
     const { error } = await supabaseAdmin
@@ -76,6 +89,7 @@ export const generateQzCertificate = createServerFn({ method: "POST" })
         private_key: privateKeyPem,
         public_cert: publicCertPem,
         override_crt: overrideCrt,
+        created_at: new Date().toISOString(),
       });
 
     if (error) throw new Error(`Erro ao salvar certificado: ${error.message}`);
