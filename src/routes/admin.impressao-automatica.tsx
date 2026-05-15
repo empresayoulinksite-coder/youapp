@@ -1,8 +1,9 @@
 import { createFileRoute, redirect, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer, Monitor, FileText, ExternalLink } from "lucide-react";
+import { ArrowLeft, Printer, Monitor, FileText, ExternalLink, Copy, Check, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/admin/impressao-automatica")({
   component: ImpressaoAutomaticaPage,
@@ -13,6 +14,44 @@ export const Route = createFileRoute("/admin/impressao-automatica")({
     }
   },
 });
+
+function buildShortcut(origin: string, storeId: string) {
+  // --user-data-dir: perfil dedicado, garante que o login fica salvo e o Chrome
+  //   não abre uma janela "anônima" sem sessão.
+  // --kiosk-printing: imprime sem mostrar o diálogo.
+  // --kiosk: tela cheia.
+  // --no-first-run / --no-default-browser-check: pula telas iniciais do Chrome.
+  return `"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --user-data-dir="C:\\YouappPrint" --kiosk-printing --kiosk --no-first-run --no-default-browser-check ${origin}/pedidos-loja/${storeId}/impressao`;
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <Button
+      size="sm"
+      variant="outline"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        } catch {
+          // ignore
+        }
+      }}
+    >
+      {copied ? (
+        <>
+          <Check className="mr-1 h-3 w-3" /> Copiado
+        </>
+      ) : (
+        <>
+          <Copy className="mr-1 h-3 w-3" /> Copiar comando
+        </>
+      )}
+    </Button>
+  );
+}
 
 function ImpressaoAutomaticaPage() {
   const { data: stores = [] } = useQuery({
@@ -73,6 +112,19 @@ function ImpressaoAutomaticaPage() {
           </p>
         </section>
 
+        <section className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+          <div className="mb-1 flex items-center gap-2 font-semibold">
+            <AlertTriangle className="h-4 w-4" />
+            Importante: feche todas as janelas do Chrome antes de abrir o atalho
+          </div>
+          <p>
+            O comando abaixo cria um <strong>perfil dedicado</strong> só para a impressão (pasta
+            {" "}<code className="rounded bg-amber-100 px-1 dark:bg-amber-900/40">C:\YouappPrint</code>).
+            Se já houver outro Chrome aberto com outro perfil, o modo quiosque não ativa direito e
+            a janela "Imprimir" aparece — foi exatamente isso que aconteceu no seu teste.
+          </p>
+        </section>
+
         <section className="rounded-xl border bg-card p-5">
           <h2 className="mb-3 flex items-center gap-2 text-base font-semibold">
             <Monitor className="h-4 w-4" />
@@ -88,61 +140,85 @@ function ImpressaoAutomaticaPage() {
         <section className="rounded-xl border bg-card p-5">
           <h2 className="mb-3 flex items-center gap-2 text-base font-semibold">
             <FileText className="h-4 w-4" />
-            Passo 2 — Crie o atalho do Chrome em modo quiosque
+            Passo 2 — Crie o atalho do Chrome (perfil dedicado + modo quiosque)
           </h2>
           <ol className="list-inside list-decimal space-y-2 text-sm text-muted-foreground">
             <li>Na área de trabalho, clique com o botão direito → <strong>Novo → Atalho</strong>.</li>
             <li>
-              No campo de localização, cole exatamente:
-              <pre className="mt-2 overflow-x-auto rounded-md bg-muted p-3 text-xs text-foreground">
-{`"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --kiosk-printing --kiosk ${origin}/pedidos-loja/SEU_STORE_ID/impressao`}
-              </pre>
-            </li>
-            <li>
-              Substitua <code className="rounded bg-muted px-1">SEU_STORE_ID</code> pelo link de uma das suas lojas abaixo.
+              No campo de localização, cole o comando da sua loja (botão "Copiar comando" abaixo).
             </li>
             <li>Clique <strong>Avançar</strong>, dê um nome (ex: "Imprimir Pedidos") e <strong>Concluir</strong>.</li>
           </ol>
 
-          {stores.length > 0 && (
-            <div className="mt-4 rounded-lg border bg-muted/30 p-3">
-              <p className="mb-2 text-xs font-semibold text-muted-foreground">Suas lojas:</p>
-              <div className="space-y-2">
-                {stores.map((s) => {
-                  const url = `${origin}/pedidos-loja/${s.id}/impressao`;
-                  return (
-                    <div key={s.id} className="rounded-md border bg-background p-2">
-                      <div className="mb-1 flex items-center gap-2 text-sm font-semibold">
-                        <span>{s.emoji ?? "🏪"}</span>
-                        {s.name}
-                      </div>
-                      <code className="block break-all text-[10px] text-muted-foreground">
-                        {url}
-                      </code>
-                      <Button asChild size="sm" variant="outline" className="mt-2">
+          {stores.length === 0 ? (
+            <div className="mt-4 rounded-lg border bg-muted/30 p-3 text-sm text-muted-foreground">
+              Nenhuma loja vinculada à sua conta.
+            </div>
+          ) : (
+            <div className="mt-4 space-y-3">
+              {stores.map((s) => {
+                const url = `${origin}/pedidos-loja/${s.id}/impressao`;
+                const cmd = buildShortcut(origin, s.id);
+                return (
+                  <div key={s.id} className="rounded-lg border bg-muted/20 p-3">
+                    <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
+                      <span>{s.emoji ?? "🏪"}</span>
+                      {s.name}
+                    </div>
+                    <pre className="mb-2 max-h-40 overflow-auto rounded-md bg-background p-2 text-[11px] leading-relaxed text-foreground">
+{cmd}
+                    </pre>
+                    <div className="flex flex-wrap gap-2">
+                      <CopyButton text={cmd} />
+                      <Button asChild size="sm" variant="ghost">
                         <a href={url} target="_blank" rel="noopener noreferrer">
                           <ExternalLink className="mr-1 h-3 w-3" />
-                          Abrir agora
+                          Abrir no navegador
                         </a>
                       </Button>
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </section>
 
         <section className="rounded-xl border bg-card p-5">
-          <h2 className="mb-3 text-base font-semibold">Passo 3 — Teste</h2>
+          <h2 className="mb-3 text-base font-semibold">Passo 3 — Faça login uma vez no perfil de impressão</h2>
           <ol className="list-inside list-decimal space-y-1 text-sm text-muted-foreground">
+            <li><strong>Feche todas as janelas do Chrome</strong> que estão abertas.</li>
             <li>Clique duas vezes no atalho que você criou.</li>
-            <li>O Chrome abre em tela cheia direto na página de impressão.</li>
+            <li>
+              O Chrome abre em tela cheia. Como é um perfil novo, vai pedir login do Youapp.
+              Faça login com a conta da loja e marque "continuar conectado".
+            </li>
+            <li>
+              Depois do login, a tela mostra <strong>"Conectado · aguardando pedidos"</strong>.
+              Pronto — pode deixar aberto.
+            </li>
+          </ol>
+          <p className="mt-3 rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
+            Da próxima vez que abrir esse atalho, o login já fica salvo nesse perfil
+            (<code className="rounded bg-background px-1">C:\YouappPrint</code>) e o Chrome
+            vai direto para a tela de impressão.
+          </p>
+          <p className="mt-2 rounded-md bg-amber-50 p-3 text-xs text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+            💡 Para sair do modo quiosque, pressione <kbd>Alt</kbd> + <kbd>F4</kbd>.
+          </p>
+        </section>
+
+        <section className="rounded-xl border bg-card p-5">
+          <h2 className="mb-3 text-base font-semibold">Passo 4 — Teste</h2>
+          <ol className="list-inside list-decimal space-y-1 text-sm text-muted-foreground">
             <li>Faça um pedido teste no app.</li>
-            <li>O cupom sai na impressora automaticamente.</li>
+            <li>O cupom sai na impressora automaticamente, sem mostrar a janela "Imprimir".</li>
           </ol>
           <p className="mt-3 rounded-md bg-amber-50 p-3 text-xs text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
-            💡 <strong>Para sair do modo quiosque</strong>, pressione <kbd>Alt</kbd> + <kbd>F4</kbd>.
+            Se a janela "Imprimir" continuar aparecendo, normalmente é porque:
+            <br />• Outro Chrome estava aberto quando o atalho rodou (feche tudo e tente de novo).
+            <br />• O atalho foi criado sem o trecho <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/40">--kiosk-printing</code> (recopie o comando acima).
+            <br />• A página foi aberta clicando em "Abrir no navegador" em vez do atalho — esse modo é só para teste.
           </p>
         </section>
 

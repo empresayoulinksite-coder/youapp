@@ -1,28 +1,19 @@
-Diagnóstico: a loja Rei do Litoral está correta e o admin tem permissão no banco. O problema está no fluxo da rota: ao abrir o link direto, a checagem de login roda cedo demais e pode mandar para `/auth`; como a tela de login redireciona usuário já logado para `/`, parece que o link “volta para o início”.
+Pelo print, o pedido está sendo gerado e o `window.print()` está disparando, mas o Chrome está abrindo a janela de impressão. Isso indica que o atalho não está usando o Chrome com `--kiosk-printing` corretamente, ou que a página está sendo aberta em uma sessão/janela diferente da do atalho.
 
-Plano de correção:
+Plano:
 
-1. Ajustar a rota `/pedidos-loja/$storeId/impressao`
-   - Remover o redirecionamento imediato do `beforeLoad` dessa página.
-   - Fazer a checagem de sessão dentro da própria tela, aguardando o login carregar corretamente.
-   - Se não estiver logado, mostrar um botão “Entrar para ativar impressão” levando para `/auth`.
-   - Se estiver logado mas sem permissão, mostrar mensagem clara em vez de redirecionar silenciosamente.
-   - Se tiver permissão, mostrar “Conectado — aguardando pedidos”.
+1. Atualizar as instruções da página `/admin/impressao-automatica`
+   - Trocar o comando do atalho para usar um perfil dedicado do Chrome com sessão persistente.
+   - Incluir `--user-data-dir` para o modo quiosque não abrir um Chrome “limpo” sem login.
+   - Colocar o link real de cada loja já pronto para copiar, em vez de depender de substituir `SEU_STORE_ID` manualmente.
 
-2. Preservar o link após login
-   - Atualizar `/auth` para aceitar um parâmetro de retorno, por exemplo:
+2. Adicionar uma orientação clara de uso correto
+   - Fechar todas as janelas do Chrome antes de abrir o atalho.
+   - Fazer login uma vez usando o próprio atalho/perfil dedicado.
+   - Depois disso, manter esse atalho aberto para impressão automática.
 
-```text
-/auth?redirect=/pedidos-loja/6d08cbcc-5ec8-4b8a-9587-b5822483cbc0/impressao
-```
+3. Opcionalmente melhorar a página de impressão automática
+   - Mostrar um aviso quando a página detectar que não está em modo quiosque, explicando que aparecerá a janela “Imprimir”.
+   - Manter a impressão atual funcionando como fallback, mas deixar claro que para não aparecer a janela precisa abrir pelo atalho com `--kiosk-printing`.
 
-   - Depois de entrar, voltar automaticamente para a página de impressão em vez de ir para a tela inicial.
-
-3. Melhorar mensagens para instalação em modo quiosque
-   - Se o Chrome abrir o link sem sessão salva, a página deve orientar o usuário a fazer login uma vez no navegador normal.
-   - Depois disso, o atalho com `--kiosk-printing` deve abrir direto na tela de impressão.
-
-4. Verificação final
-   - Testar o fluxo do link direto logado.
-   - Testar o fluxo deslogado → login → retorno para impressão.
-   - Confirmar que admins e donos de loja conseguem acessar a página.
+Resultado esperado: o usuário copiará um comando mais confiável, com perfil dedicado, e o Chrome imprimirá direto na impressora padrão sem mostrar essa tela de impressão.
