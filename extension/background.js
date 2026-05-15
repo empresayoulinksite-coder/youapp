@@ -154,6 +154,12 @@ async function connectRealtime() {
                   table: "orders",
                   filter: `store_id=eq.${storeId}`,
                 },
+                {
+                  event: "UPDATE",
+                  schema: "public",
+                  table: "orders",
+                  filter: `store_id=eq.${storeId}`,
+                },
               ],
             },
             access_token: session.access_token,
@@ -178,9 +184,9 @@ async function connectRealtime() {
       const msg = JSON.parse(event.data);
       if (msg.event === "postgres_changes") {
         const payload = msg.payload?.data;
-        if (payload?.type === "INSERT" && payload.table === "orders") {
+        if ((payload?.type === "INSERT" || payload?.type === "UPDATE") && payload.table === "orders") {
           const newRow = payload.record;
-          if (newRow?.id) handleNewOrder(newRow.id);
+          if (newRow?.id && ["em_analise", "em_producao"].includes(newRow.status)) handleNewOrder(newRow.id);
         }
       }
     } catch (e) {
@@ -206,6 +212,7 @@ async function connectRealtime() {
 function disconnectRealtime() {
   if (heartbeatTimer) clearInterval(heartbeatTimer);
   if (reconnectTimer) clearTimeout(reconnectTimer);
+  if (pollTimer) clearInterval(pollTimer);
   if (ws) {
     try { ws.close(); } catch {}
     ws = null;
