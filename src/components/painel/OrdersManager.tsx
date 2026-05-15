@@ -59,13 +59,6 @@ import {
   browserPrintHTML,
   type PrinterPrefs,
 } from "@/lib/thermal-printer";
-import {
-  qzConnect,
-  qzListPrinters,
-  qzGetDefaultPrinter,
-  qzPrintHTML,
-  qzIsConnected,
-} from "@/lib/qz-printer";
 import { buildReceiptBytes, buildReceiptHTML } from "@/lib/receipt-template";
 
 type OrderStatus = "em_analise" | "em_producao" | "pronto" | "entregue" | "cancelado";
@@ -327,13 +320,6 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
     const customer = getCustomerInfo(order, profilesMap[order.user_id]) ?? null;
     const storeInfo = { name: store.name, whatsapp: store.whatsapp };
     try {
-      // Preferred path: QZ Tray (silent printing to any installed printer)
-      if (printerPrefs.kind === "qz" && printerPrefs.qzPrinterName) {
-        const html = buildReceiptHTML(storeInfo, order, customer);
-        await qzPrintHTML(printerPrefs.qzPrinterName, html);
-        if (!opts.silent) toast.success("Cupom enviado para impressora");
-        return;
-      }
       // Direct connection (Bluetooth / WebUSB / Serial)
       const conn = getActiveConnection();
       if (conn) {
