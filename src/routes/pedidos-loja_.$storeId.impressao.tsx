@@ -135,6 +135,10 @@ function AutoPrintPage() {
       }
       await new Promise((r) => setTimeout(r, 500));
     }
+    if (items.length === 0) {
+      setBusy(false);
+      throw new Error(`Itens do pedido ${orderId} ainda não chegaram`);
+    }
     const { data: profile } = await supabase
       .from("profiles")
       .select("display_name, phone")
