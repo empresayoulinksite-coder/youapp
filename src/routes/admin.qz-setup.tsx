@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useIsAdmin } from "@/hooks/use-admin";
 import { Button } from "@/components/ui/button";
@@ -8,8 +9,9 @@ import { toast } from "sonner";
 import {
   generateQzCertificate,
   getQzOverrideCrt,
+  getQzCertificateStatus,
 } from "@/lib/qz-cert-generator.functions";
-import { Download, Loader2, ShieldCheck, ArrowLeft } from "lucide-react";
+import { Download, Loader2, ShieldCheck, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
 
 export const Route = createFileRoute("/admin/qz-setup")({
   component: QzSetupPage,
