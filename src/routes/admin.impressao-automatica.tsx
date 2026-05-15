@@ -203,6 +203,42 @@ function ImpressaoAutomaticaPage() {
               <Download className="mr-1 h-4 w-4" />
               Baixar extensão (.zip)
             </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const content = [
+                  `@echo off`,
+                  `REM Abre o Chrome em modo normal com impressao silenciosa ativada.`,
+                  `REM Use junto com a extensao YouApp Print.`,
+                  ``,
+                  `set "PROFILE=C:\\YouappPrint"`,
+                  `set "ARGS=--user-data-dir=%PROFILE% --kiosk-printing --no-first-run --no-default-browser-check"`,
+                  ``,
+                  `set "CHROME1=C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"`,
+                  `set "CHROME2=C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe"`,
+                  ``,
+                  `if exist "%CHROME1%" ( start "" "%CHROME1%" %ARGS% & exit /b )`,
+                  `if exist "%CHROME2%" ( start "" "%CHROME2%" %ARGS% & exit /b )`,
+                  ``,
+                  `echo Chrome nao encontrado. Instale em https://www.google.com/chrome/`,
+                  `pause`,
+                  ``,
+                ].join("\r\n");
+                const blob = new Blob([content], { type: "application/bat" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "Abrir-Chrome-Silencioso.bat";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+              }}
+            >
+              <Download className="mr-1 h-4 w-4" />
+              Baixar atalho do Chrome silencioso
+            </Button>
           </div>
           <details className="mt-3">
             <summary className="cursor-pointer text-sm font-semibold">
