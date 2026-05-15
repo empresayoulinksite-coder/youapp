@@ -34,8 +34,16 @@ function QzSetupPage() {
   const navigate = useNavigate();
   const generateFn = useServerFn(generateQzCertificate);
   const getOverrideFn = useServerFn(getQzOverrideCrt);
+  const getStatusFn = useServerFn(getQzCertificateStatus);
   const [generating, setGenerating] = useState(false);
   const [downloading, setDownloading] = useState(false);
+
+  const status = useQuery({
+    queryKey: ["qz-cert-status"],
+    queryFn: () => getStatusFn(),
+    enabled: isAdmin,
+    staleTime: 0,
+  });
 
   if (loading) {
     return (
@@ -69,6 +77,7 @@ function QzSetupPage() {
       const res = await generateFn();
       downloadFile("override.crt", res.overrideCrt);
       toast.success("Certificado gerado! Arquivo override.crt baixado.");
+      status.refetch();
     } catch (err) {
       toast.error(`Erro: ${err instanceof Error ? err.message : "desconhecido"}`);
     } finally {
