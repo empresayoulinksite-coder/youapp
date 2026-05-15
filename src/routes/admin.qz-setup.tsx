@@ -118,6 +118,39 @@ function QzSetupPage() {
         </div>
       </div>
 
+      {/* Status atual */}
+      <Card className={status.data?.exists ? "border-emerald-500/40" : "border-amber-500/40"}>
+        <CardContent className="pt-6 flex items-start gap-3">
+          {status.isLoading ? (
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          ) : status.data?.exists ? (
+            <>
+              <CheckCircle2 className="h-5 w-5 text-emerald-500 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-medium">Certificado gerado e salvo no servidor.</p>
+                <p className="text-muted-foreground text-xs">
+                  Criado em:{" "}
+                  {status.data.createdAt
+                    ? new Date(status.data.createdAt).toLocaleString("pt-BR")
+                    : "—"}
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-medium">Nenhum certificado gerado ainda.</p>
+                <p className="text-muted-foreground text-xs">
+                  Sem isso, o QZ Tray mostra "Invalid Certificate / anonymous request".
+                  Clique em <strong>Gerar certificado</strong> abaixo.
+                </p>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Passo 1 — Gerar o certificado</CardTitle>
