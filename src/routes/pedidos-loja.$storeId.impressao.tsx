@@ -253,6 +253,69 @@ function AutoPrintPage() {
     setCount(0);
   }
 
+  if (permState === "checking") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span className="text-sm">Verificando acesso...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (permState === "anon") {
+    const redirectTo = `/pedidos-loja/${storeId}/impressao`;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background p-6">
+        <div className="max-w-sm rounded-xl border bg-card p-6 text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+            <LogIn className="h-6 w-6 text-primary" />
+          </div>
+          <h1 className="text-lg font-bold">Entrar para ativar</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Faça login com a conta da loja para ativar a impressão automática neste computador.
+          </p>
+          <Button asChild className="mt-4 w-full">
+            <a href={`/auth?redirect=${encodeURIComponent(redirectTo)}`}>Fazer login</a>
+          </Button>
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            Dica: marque "continuar conectado" para que o atalho do Chrome em modo quiosque funcione sem pedir login novamente.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (permState === "denied") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background p-6">
+        <div className="max-w-sm rounded-xl border bg-card p-6 text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+            <ShieldAlert className="h-6 w-6 text-destructive" />
+          </div>
+          <h1 className="text-lg font-bold">Sem permissão</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Esta conta ({user?.email}) não tem acesso aos pedidos desta loja. Entre com a conta do dono ou de um operador autorizado.
+          </p>
+          <div className="mt-4 flex flex-col gap-2">
+            <Button asChild variant="outline">
+              <Link to="/admin/impressao-automatica">Ver minhas lojas</Link>
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={async () => {
+                await supabase.auth.signOut();
+              }}
+            >
+              Sair desta conta
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="mx-auto max-w-2xl space-y-6">
