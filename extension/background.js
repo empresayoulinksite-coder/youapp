@@ -455,14 +455,17 @@ chrome.alarms.onAlarm.addListener(async (a) => {
 // Boot
 (async () => {
   await loadStats();
+  await loadPrintedOrders();
   await connectRealtime();
 })();
 
 chrome.runtime.onStartup?.addListener(async () => {
   await loadStats();
+  await loadPrintedOrders();
   await connectRealtime();
 });
 chrome.runtime.onInstalled.addListener(async () => {
   await loadStats();
+  await loadPrintedOrders();
   await connectRealtime();
 });
