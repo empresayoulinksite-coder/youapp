@@ -211,7 +211,7 @@ function AutoPrintPage() {
     void processQueue();
   }
 
-  // Realtime subscription for new orders
+  // Realtime subscription for new orders + catch-up
   useEffect(() => {
     const channel = supabase
       .channel(`auto-print-${storeId}`)
@@ -228,8 +228,23 @@ function AutoPrintPage() {
           if (id) enqueue(id);
         },
       )
-      .subscribe((status) => {
-        setConnected(status === "SUBSCRIBED");
+      .subscribe(async (status) => {
+        const isConnected = status === "SUBSCRIBED";
+        setConnected(isConnected);
+        if (isConnected) {
+          // Catch-up: imprime pedidos recentes (últimos 10 min) ainda não impressos
+          const sinceIso = new Date(Date.now() - 10 * 60_000).toISOString();
+          const { data } = await supabase
+            .from("orders")
+            .select("id")
+            .eq("store_id", storeId)
+            .in("status", ["em_analise", "em_producao"])
+            .gte("created_at", sinceIso)
+            .order("created_at", { ascending: true });
+          for (const r of data ?? []) {
+            if (r?.id) enqueue(r.id);
+          }
+        }
       });
     return () => {
       supabase.removeChannel(channel);
