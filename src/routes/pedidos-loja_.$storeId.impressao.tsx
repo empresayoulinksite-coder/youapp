@@ -122,17 +122,24 @@ function AutoPrintPage() {
     }
     const o = order as OrderRow;
 
-    const [{ data: items }, { data: profile }] = await Promise.all([
-      supabase
+    // Espera os itens aparecerem (pedido + itens chegam em chamadas separadas)
+    let items: any[] = [];
+    for (let i = 0; i < 6; i++) {
+      const { data } = await supabase
         .from("order_items")
         .select("*")
-        .eq("order_id", orderId),
-      supabase
-        .from("profiles")
-        .select("display_name, phone")
-        .eq("user_id", o.user_id)
-        .maybeSingle(),
-    ]);
+        .eq("order_id", orderId);
+      if (data && data.length > 0) {
+        items = data;
+        break;
+      }
+      await new Promise((r) => setTimeout(r, 500));
+    }
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name, phone")
+      .eq("user_id", o.user_id)
+      .maybeSingle();
 
     const html = buildReceiptHTML(
       { name: storeName || "Pedido", whatsapp: storeWhatsapp },
@@ -204,7 +211,7 @@ function AutoPrintPage() {
     void processQueue();
   }
 
-  // Realtime subscription for new orders
+  // Realtime subscription for new orders + catch-up
   useEffect(() => {
     const channel = supabase
       .channel(`auto-print-${storeId}`)
@@ -221,8 +228,23 @@ function AutoPrintPage() {
           if (id) enqueue(id);
         },
       )
-      .subscribe((status) => {
-        setConnected(status === "SUBSCRIBED");
+      .subscribe(async (status) => {
+        const isConnected = status === "SUBSCRIBED";
+        setConnected(isConnected);
+        if (isConnected) {
+          // Catch-up: imprime pedidos recentes (últimos 10 min) ainda não impressos
+          const sinceIso = new Date(Date.now() - 10 * 60_000).toISOString();
+          const { data } = await supabase
+            .from("orders")
+            .select("id")
+            .eq("store_id", storeId)
+            .in("status", ["em_analise", "em_producao"])
+            .gte("created_at", sinceIso)
+            .order("created_at", { ascending: true });
+          for (const r of data ?? []) {
+            if (r?.id) enqueue(r.id);
+          }
+        }
       });
     return () => {
       supabase.removeChannel(channel);
