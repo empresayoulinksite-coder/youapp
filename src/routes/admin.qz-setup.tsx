@@ -183,8 +183,8 @@ function QzSetupPage() {
             </Button>
           </div>
           <p className="text-xs text-amber-600 dark:text-amber-500">
-            ⚠️ Atenção: gerar de novo invalida o certificado antigo. Você terá que reinstalar o{" "}
-            <code>override.crt</code> em todos os PCs da loja.
+            ⚠️ Atenção: para corrigir o prompt atual, gere um certificado novo e substitua o{" "}
+            <code>override.crt</code> antigo em todos os PCs da loja.
           </p>
         </CardContent>
       </Card>
@@ -196,7 +196,7 @@ function QzSetupPage() {
         <CardContent className="space-y-3 text-sm">
           <ol className="list-decimal pl-5 space-y-2">
             <li>
-              Copie o arquivo <code>override.crt</code> que você baixou para a pasta de
+              Feche o QZ Tray primeiro. Depois copie o arquivo <code>override.crt</code> que você baixou para a pasta de
               instalação do QZ Tray:
               <br />
               <code className="bg-muted px-2 py-1 rounded">C:\Program Files\QZ Tray\</code>
@@ -206,12 +206,10 @@ function QzSetupPage() {
               </span>
             </li>
             <li>
-              Abra a <strong>bandeja do sistema</strong> (cantinho inferior direito do Windows,
-              perto do relógio), clique com o botão direito no ícone do{" "}
-              <strong>QZ Tray</strong> → <strong>Sair (Exit)</strong>.
+              Se o Windows perguntar, confirme para <strong>substituir</strong> o arquivo antigo.
             </li>
             <li>
-              Abra o QZ Tray de novo pelo menu Iniciar (ele vai recarregar com o certificado).
+              Abra o QZ Tray de novo pelo menu Iniciar (ele vai recarregar o certificado novo).
             </li>
             <li>
               Volte ao painel, clique em imprimir um pedido —{" "}
