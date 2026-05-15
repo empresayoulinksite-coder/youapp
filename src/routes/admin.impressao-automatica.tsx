@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer, Monitor, FileText, ExternalLink, Copy, Check, AlertTriangle, Download } from "lucide-react";
+import { ArrowLeft, Printer, Monitor, FileText, ExternalLink, Copy, Check, AlertTriangle, Download, Zap, Puzzle } from "lucide-react";
 
 function slugify(s: string) {
   return s
@@ -167,15 +167,76 @@ function ImpressaoAutomaticaPage() {
       </header>
 
       <main className="mx-auto max-w-3xl space-y-6 p-6">
+        <section className="rounded-xl border-2 border-primary bg-primary/5 p-5">
+          <div className="mb-2 flex items-center gap-2">
+            <Zap className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-semibold">Modo recomendado: Extensão do Chrome</h2>
+            <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase text-primary-foreground">Novo</span>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Instale a extensão e os pedidos sairem da impressora <strong>em segundo plano</strong>,
+            do mesmo jeito que o app do iFood faz. Você pode <strong>fechar a aba de impressão</strong>,
+            <strong> mexer na sua loja normalmente</strong> e até minimizar o Chrome — só precisa manter
+            o Chrome aberto.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              onClick={() => {
+                fetch("/youapp-print.zip")
+                  .then((res) => {
+                    if (!res.ok) throw new Error(`Falha no download: ${res.status}`);
+                    return res.blob();
+                  })
+                  .then((blob) => {
+                    const a = document.createElement("a");
+                    a.href = URL.createObjectURL(blob);
+                    a.download = "youapp-print.zip";
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+                  })
+                  .catch((err) => alert(err.message));
+              }}
+            >
+              <Download className="mr-1 h-4 w-4" />
+              Baixar extensão (.zip)
+            </Button>
+          </div>
+          <details className="mt-3">
+            <summary className="cursor-pointer text-sm font-semibold">
+              <Puzzle className="mr-1 inline h-4 w-4" />
+              Como instalar (1 vez só)
+            </summary>
+            <ol className="mt-2 list-inside list-decimal space-y-1 text-sm text-muted-foreground">
+              <li>Baixe o <code>.zip</code> acima e <strong>descompacte</strong> em uma pasta (ex.: <code>C:\YouappPrint</code>).</li>
+              <li>Abra o Chrome e digite <code>chrome://extensions</code> na barra de endereço.</li>
+              <li>No canto superior direito, ative o <strong>Modo desenvolvedor</strong>.</li>
+              <li>Clique em <strong>Carregar sem compactação</strong> e selecione a pasta descompactada.</li>
+              <li>Clique no ícone 🧩 do Chrome → fixe o ícone <strong>YouApp Print</strong> na barra.</li>
+              <li>Clique no ícone, faça <strong>login com a conta da loja</strong> (e-mail e senha) e marque as lojas que essa máquina vai imprimir.</li>
+              <li>
+                <strong>Importante:</strong> para imprimir sem o diálogo aparecer, abra o Chrome usando o
+                {" "}<strong>atalho .bat</strong> (botão abaixo) — ele liga o modo silencioso
+                {" "}(<code>--kiosk-printing</code>) sem ativar o modo tela cheia. Pronto, navegue à vontade.
+              </li>
+            </ol>
+            <p className="mt-3 rounded-md bg-amber-50 p-3 text-xs text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+              ⚠️ Funciona em Chrome, Edge, Brave e Opera (qualquer Chromium). Não funciona no Firefox/Safari.
+              Se você fechar o Chrome, a impressão para — minimizar pode (recomendamos PC dedicado no caixa).
+            </p>
+          </details>
+        </section>
+
         <section className="rounded-xl border bg-card p-5">
           <div className="mb-2 flex items-center gap-2">
             <Printer className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-semibold">Como funciona</h2>
+            <h2 className="text-lg font-semibold">Modo simples (sem instalar nada)</h2>
           </div>
           <p className="text-sm text-muted-foreground">
-            Um computador da loja fica com o Chrome aberto na página de impressão automática.
-            Quando chega um pedido novo, o cupom é impresso sozinho na impressora padrão do Windows
-            — <strong>sem instalar programa nenhum</strong> e <strong>sem mostrar o diálogo de impressão</strong>.
+            Alternativa: deixe um Chrome dedicado aberto na página de impressão. Não pode mexer
+            nessa janela, mas funciona sem instalar a extensão. Use o passo a passo abaixo.
           </p>
         </section>
 
