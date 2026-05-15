@@ -12,10 +12,13 @@ const AUTH_URL = `${SUPABASE_URL}/auth/v1`;
 let ws = null;
 let heartbeatTimer = null;
 let reconnectTimer = null;
+let pollTimer = null;
 let refCounter = 0;
 const subscribedStores = new Set();
 const printedOrders = new Set(); // session-level dedupe
 let stats = { printedToday: 0, lastPrintedAt: null, lastOrderNumber: null, connected: false };
+const PRINTED_HISTORY_KEY = "printedOrderHistory";
+const PRINTED_TTL_MS = 24 * 60 * 60 * 1000;
 
 // ------------- Storage helpers -------------
 async function getSession() {
@@ -51,6 +54,23 @@ async function loadStats() {
 async function saveStats() {
   await chrome.storage.local.set({ stats });
   chrome.runtime.sendMessage({ type: "stats", stats }).catch(() => {});
+}
+async function loadPrintedOrders() {
+  const { [PRINTED_HISTORY_KEY]: history } = await chrome.storage.local.get(PRINTED_HISTORY_KEY);
+  const now = Date.now();
+  printedOrders.clear();
+  for (const entry of Array.isArray(history) ? history : []) {
+    if (entry?.id && now - Number(entry.t || 0) < PRINTED_TTL_MS) {
+      printedOrders.add(entry.id);
+    }
+  }
+  await savePrintedOrders();
+}
+async function savePrintedOrders() {
+  const now = Date.now();
+  await chrome.storage.local.set({
+    [PRINTED_HISTORY_KEY]: Array.from(printedOrders).map((id) => ({ id, t: now })),
+  });
 }
 
 // ------------- Auth -------------
@@ -134,6 +154,12 @@ async function connectRealtime() {
                   table: "orders",
                   filter: `store_id=eq.${storeId}`,
                 },
+                {
+                  event: "UPDATE",
+                  schema: "public",
+                  table: "orders",
+                  filter: `store_id=eq.${storeId}`,
+                },
               ],
             },
             access_token: session.access_token,
@@ -142,8 +168,16 @@ async function connectRealtime() {
       );
       subscribedStores.add(storeId);
     }
-    // Catch-up: imprime pedidos recentes ainda não impressos (últimos 10 min)
+    // Catch-up + polling: garante impressão mesmo se o Realtime falhar ou o service worker dormir
     void catchUpRecentOrders(enabled, session.access_token);
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(async () => {
+      const freshSession = await refreshIfNeeded();
+      const freshEnabled = await getEnabledStoreIds();
+      if (freshSession && freshEnabled.length > 0) {
+        void catchUpRecentOrders(freshEnabled, freshSession.access_token);
+      }
+    }, 15_000);
     // Heartbeat
     if (heartbeatTimer) clearInterval(heartbeatTimer);
     heartbeatTimer = setInterval(() => {
@@ -158,9 +192,9 @@ async function connectRealtime() {
       const msg = JSON.parse(event.data);
       if (msg.event === "postgres_changes") {
         const payload = msg.payload?.data;
-        if (payload?.type === "INSERT" && payload.table === "orders") {
+        if ((payload?.type === "INSERT" || payload?.type === "UPDATE") && payload.table === "orders") {
           const newRow = payload.record;
-          if (newRow?.id) handleNewOrder(newRow.id);
+          if (newRow?.id && ["em_analise", "em_producao"].includes(newRow.status)) handleNewOrder(newRow.id);
         }
       }
     } catch (e) {
@@ -186,6 +220,7 @@ async function connectRealtime() {
 function disconnectRealtime() {
   if (heartbeatTimer) clearInterval(heartbeatTimer);
   if (reconnectTimer) clearTimeout(reconnectTimer);
+  if (pollTimer) clearInterval(pollTimer);
   if (ws) {
     try { ws.close(); } catch {}
     ws = null;
@@ -201,13 +236,12 @@ async function fetchOrderItems(orderId, token, { retries = 6, delayMs = 500 } = 
     if (Array.isArray(items) && items.length > 0) return items;
     await new Promise((r) => setTimeout(r, delayMs));
   }
-  // Devolve vazio se ainda não chegaram (imprime mesmo assim)
-  return [];
+  throw new Error(`Itens do pedido ${orderId} ainda não chegaram`);
 }
 
 async function catchUpRecentOrders(storeIds, token) {
   try {
-    const sinceIso = new Date(Date.now() - 10 * 60_000).toISOString();
+    const sinceIso = new Date(Date.now() - 30 * 60_000).toISOString();
     for (const storeId of storeIds) {
       const path = `orders?store_id=eq.${storeId}&created_at=gte.${encodeURIComponent(
         sinceIso,
@@ -248,6 +282,7 @@ async function handleNewOrder(orderId) {
     const customer = profileArr?.[0] ?? null;
 
     await openPrintTab({ store, order, items: items ?? [], customer });
+    await savePrintedOrders();
 
     stats.printedToday += 1;
     stats.lastOrderNumber = order.order_number ?? null;
@@ -273,8 +308,8 @@ async function openPrintTab(payload) {
     type: "popup",
     width: 420,
     height: 600,
-    focused: false,
-    state: "minimized",
+    focused: true,
+    state: "normal",
   });
 }
 
@@ -419,14 +454,17 @@ chrome.alarms.onAlarm.addListener(async (a) => {
 // Boot
 (async () => {
   await loadStats();
+  await loadPrintedOrders();
   await connectRealtime();
 })();
 
 chrome.runtime.onStartup?.addListener(async () => {
   await loadStats();
+  await loadPrintedOrders();
   await connectRealtime();
 });
 chrome.runtime.onInstalled.addListener(async () => {
   await loadStats();
+  await loadPrintedOrders();
   await connectRealtime();
 });
