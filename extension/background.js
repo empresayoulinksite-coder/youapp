@@ -282,6 +282,23 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         connectRealtime();
         return;
       }
+      if (msg.type === "forgotPassword") {
+        const res = await fetch(`${AUTH_URL}/recover`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY },
+          body: JSON.stringify({
+            email: msg.email,
+            options: { redirectTo: msg.redirectTo },
+          }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          sendResponse({ ok: false, error: err.error_description || err.msg || "Falha ao enviar email" });
+          return;
+        }
+        sendResponse({ ok: true });
+        return;
+      }
       if (msg.type === "signOut") {
         disconnectRealtime();
         await chrome.storage.local.clear();
