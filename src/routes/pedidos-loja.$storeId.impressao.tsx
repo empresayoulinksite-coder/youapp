@@ -1,9 +1,10 @@
-import { createFileRoute, redirect, Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { buildReceiptHTML } from "@/lib/receipt-template";
-import { CheckCircle2, Printer, Loader2, ArrowLeft } from "lucide-react";
+import { CheckCircle2, Printer, Loader2, ArrowLeft, LogIn, ShieldAlert } from "lucide-react";
 
 type OrderRow = {
   id: string;
@@ -48,23 +49,34 @@ function savePrinted(storeId: string, ids: Set<string>) {
 
 export const Route = createFileRoute("/pedidos-loja/$storeId/impressao")({
   component: AutoPrintPage,
-  beforeLoad: async ({ params }) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      throw redirect({ to: "/auth" });
-    }
-    const { data: canManage } = await supabase.rpc("can_manage_store_orders", {
-      _user_id: session.user.id,
-      _store_id: params.storeId,
-    });
-    if (!canManage) {
-      throw redirect({ to: "/pedidos-loja/$storeId", params: { storeId: params.storeId } });
-    }
-  },
 });
 
 function AutoPrintPage() {
   const { storeId } = Route.useParams();
+  const { user, loading: authLoading } = useAuth();
+  const [permState, setPermState] = useState<"checking" | "allowed" | "denied" | "anon">("checking");
+
+  useEffect(() => {
+    if (authLoading) {
+      setPermState("checking");
+      return;
+    }
+    if (!user) {
+      setPermState("anon");
+      return;
+    }
+    let cancelled = false;
+    setPermState("checking");
+    supabase
+      .rpc("can_manage_store_orders", { _user_id: user.id, _store_id: storeId })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        setPermState(!error && data ? "allowed" : "denied");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user, authLoading, storeId]);
   const [storeName, setStoreName] = useState<string>("");
   const [storeWhatsapp, setStoreWhatsapp] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
