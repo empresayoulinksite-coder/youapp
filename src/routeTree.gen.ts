@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SacolaRouteImport } from './routes/sacola'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as PedidosRouteImport } from './routes/pedidos'
 import { Route as PainelRouteImport } from './routes/painel'
@@ -52,6 +53,11 @@ import { Route as AdminAcademiaStoreIdRouteImport } from './routes/admin.academi
 const SacolaRoute = SacolaRouteImport.update({
   id: '/sacola',
   path: '/sacola',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PerfilRoute = PerfilRouteImport.update({
@@ -262,6 +268,7 @@ export interface FileRoutesByFullPath {
   '/painel': typeof PainelRoute
   '/pedidos': typeof PedidosRoute
   '/perfil': typeof PerfilRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sacola': typeof SacolaRoute
   '/admin/agendamentos': typeof AdminAgendamentosRoute
   '/admin/categorias-ecommerce': typeof AdminCategoriasEcommerceRoute
@@ -302,6 +309,7 @@ export interface FileRoutesByTo {
   '/painel': typeof PainelRoute
   '/pedidos': typeof PedidosRoute
   '/perfil': typeof PerfilRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sacola': typeof SacolaRoute
   '/admin/agendamentos': typeof AdminAgendamentosRoute
   '/admin/categorias-ecommerce': typeof AdminCategoriasEcommerceRoute
@@ -344,6 +352,7 @@ export interface FileRoutesById {
   '/painel': typeof PainelRoute
   '/pedidos': typeof PedidosRoute
   '/perfil': typeof PerfilRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sacola': typeof SacolaRoute
   '/admin/agendamentos': typeof AdminAgendamentosRoute
   '/admin/categorias-ecommerce': typeof AdminCategoriasEcommerceRoute
@@ -387,6 +396,7 @@ export interface FileRouteTypes {
     | '/painel'
     | '/pedidos'
     | '/perfil'
+    | '/reset-password'
     | '/sacola'
     | '/admin/agendamentos'
     | '/admin/categorias-ecommerce'
@@ -427,6 +437,7 @@ export interface FileRouteTypes {
     | '/painel'
     | '/pedidos'
     | '/perfil'
+    | '/reset-password'
     | '/sacola'
     | '/admin/agendamentos'
     | '/admin/categorias-ecommerce'
@@ -468,6 +479,7 @@ export interface FileRouteTypes {
     | '/painel'
     | '/pedidos'
     | '/perfil'
+    | '/reset-password'
     | '/sacola'
     | '/admin/agendamentos'
     | '/admin/categorias-ecommerce'
@@ -510,6 +522,7 @@ export interface RootRouteChildren {
   PainelRoute: typeof PainelRoute
   PedidosRoute: typeof PedidosRoute
   PerfilRoute: typeof PerfilRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SacolaRoute: typeof SacolaRoute
   CategoriaSlugRoute: typeof CategoriaSlugRoute
   LojaSlugRoute: typeof LojaSlugRoute
@@ -526,6 +539,13 @@ declare module '@tanstack/react-router' {
       path: '/sacola'
       fullPath: '/sacola'
       preLoaderRoute: typeof SacolaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/perfil': {
@@ -867,6 +887,7 @@ const rootRouteChildren: RootRouteChildren = {
   PainelRoute: PainelRoute,
   PedidosRoute: PedidosRoute,
   PerfilRoute: PerfilRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SacolaRoute: SacolaRoute,
   CategoriaSlugRoute: CategoriaSlugRoute,
   LojaSlugRoute: LojaSlugRoute,
