@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Store, LogOut, Home, Tags, LayoutGrid, Users, Upload, Sparkles, Truck, ChevronDown, UserPlus, FileText, MapPin } from "lucide-react";
+import { Store, LogOut, Home, Tags, LayoutGrid, Users, Upload, Sparkles, Truck, ChevronDown, UserPlus, FileText, MapPin, Printer } from "lucide-react";
 import { useIsAdmin } from "@/hooks/use-admin";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,7 @@ const NAV = [
   { to: "/admin/categorias-ecommerce", label: "Categorias E-com", icon: Tags },
   { to: "/admin/importar-cardapio", label: "Importar cardápio", icon: Upload },
   { to: "/admin/modal-boas-vindas", label: "Modal boas-vindas", icon: Sparkles },
+  { to: "/admin/impressao-automatica", label: "Impressão automática", icon: Printer },
 ];
 
 const ENTREGAS_SUB = [
