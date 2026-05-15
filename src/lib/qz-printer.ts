@@ -1,9 +1,20 @@
 // QZ Tray integration - silent printing to any installed printer.
 // Requires QZ Tray (https://qz.io/download/) running on the user's PC.
-import { QZ_CERTIFICATE } from "./qz-certificate";
 import { signQzRequest } from "./qz-sign.functions";
+import { getQzPublicCertificate } from "./qz-cert-generator.functions";
 
 let qzModulePromise: Promise<any> | null = null;
+let publicCertCache: string | null = null;
+
+async function fetchPublicCert(): Promise<string> {
+  if (publicCertCache) return publicCertCache;
+  const { publicCert } = await getQzPublicCertificate();
+  if (!publicCert) {
+    throw new Error("Certificado QZ não foi gerado ainda. Acesse /admin/qz-setup");
+  }
+  publicCertCache = publicCert;
+  return publicCert;
+}
 
 async function getQz(): Promise<any> {
   if (typeof window === "undefined") {
@@ -15,10 +26,10 @@ async function getQz(): Promise<any> {
   const qz = await qzModulePromise;
 
   // Configure signed mode — backend assina cada requisição com SHA512withRSA.
-  // Com o certificado importado como override.crt no QZ Tray do PC, NUNCA aparece prompt.
+  // Com o override.crt importado no QZ Tray do PC, NUNCA aparece prompt.
   if (!qz.security.__configured) {
-    qz.security.setCertificatePromise((resolve: (v: string) => void) => {
-      resolve(QZ_CERTIFICATE);
+    qz.security.setCertificatePromise((resolve: (v: string) => void, reject: (e: unknown) => void) => {
+      fetchPublicCert().then(resolve).catch(reject);
     });
     qz.security.setSignatureAlgorithm?.("SHA512");
     qz.security.setSignaturePromise((toSign: string) => {
