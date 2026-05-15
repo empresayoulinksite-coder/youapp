@@ -1204,30 +1204,6 @@ export type Database = {
         }
         Relationships: []
       }
-      qz_certificates: {
-        Row: {
-          created_at: string
-          id: number
-          override_crt: string
-          private_key: string
-          public_cert: string
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          override_crt: string
-          private_key: string
-          public_cert: string
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          override_crt?: string
-          private_key?: string
-          public_cert?: string
-        }
-        Relationships: []
-      }
       services: {
         Row: {
           created_at: string

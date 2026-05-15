@@ -31,10 +31,10 @@ import { Route as LojaSlugRouteImport } from './routes/loja.$slug'
 import { Route as CategoriaSlugRouteImport } from './routes/categoria.$slug'
 import { Route as AdminStoriesRouteImport } from './routes/admin.stories'
 import { Route as AdminServicosRouteImport } from './routes/admin.servicos'
-import { Route as AdminQzSetupRouteImport } from './routes/admin.qz-setup'
 import { Route as AdminProdutosRouteImport } from './routes/admin.produtos'
 import { Route as AdminPizzasRouteImport } from './routes/admin.pizzas'
 import { Route as AdminModalBoasVindasRouteImport } from './routes/admin.modal-boas-vindas'
+import { Route as AdminImpressaoAutomaticaRouteImport } from './routes/admin.impressao-automatica'
 import { Route as AdminImportarCardapioRouteImport } from './routes/admin.importar-cardapio'
 import { Route as AdminEntregasRouteImport } from './routes/admin.entregas'
 import { Route as AdminDonosRouteImport } from './routes/admin.donos'
@@ -42,6 +42,7 @@ import { Route as AdminCuponsRouteImport } from './routes/admin.cupons'
 import { Route as AdminCategoriasHomeRouteImport } from './routes/admin.categorias-home'
 import { Route as AdminCategoriasEcommerceRouteImport } from './routes/admin.categorias-ecommerce'
 import { Route as AdminAgendamentosRouteImport } from './routes/admin.agendamentos'
+import { Route as PedidosLojaStoreIdImpressaoRouteImport } from './routes/pedidos-loja.$storeId.impressao'
 import { Route as AdminLojaStoreIdRouteImport } from './routes/admin.loja.$storeId'
 import { Route as AdminEntregasRelatorioRouteImport } from './routes/admin.entregas.relatorio'
 import { Route as AdminEntregasCadastroRouteImport } from './routes/admin.entregas.cadastro'
@@ -158,11 +159,6 @@ const AdminServicosRoute = AdminServicosRouteImport.update({
   path: '/servicos',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminQzSetupRoute = AdminQzSetupRouteImport.update({
-  id: '/qz-setup',
-  path: '/qz-setup',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminProdutosRoute = AdminProdutosRouteImport.update({
   id: '/produtos',
   path: '/produtos',
@@ -178,6 +174,12 @@ const AdminModalBoasVindasRoute = AdminModalBoasVindasRouteImport.update({
   path: '/modal-boas-vindas',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminImpressaoAutomaticaRoute =
+  AdminImpressaoAutomaticaRouteImport.update({
+    id: '/impressao-automatica',
+    path: '/impressao-automatica',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminImportarCardapioRoute = AdminImportarCardapioRouteImport.update({
   id: '/importar-cardapio',
   path: '/importar-cardapio',
@@ -214,6 +216,12 @@ const AdminAgendamentosRoute = AdminAgendamentosRouteImport.update({
   path: '/agendamentos',
   getParentRoute: () => AdminRoute,
 } as any)
+const PedidosLojaStoreIdImpressaoRoute =
+  PedidosLojaStoreIdImpressaoRouteImport.update({
+    id: '/impressao',
+    path: '/impressao',
+    getParentRoute: () => PedidosLojaStoreIdRoute,
+  } as any)
 const AdminLojaStoreIdRoute = AdminLojaStoreIdRouteImport.update({
   id: '/loja/$storeId',
   path: '/loja/$storeId',
@@ -262,15 +270,15 @@ export interface FileRoutesByFullPath {
   '/admin/donos': typeof AdminDonosRoute
   '/admin/entregas': typeof AdminEntregasRouteWithChildren
   '/admin/importar-cardapio': typeof AdminImportarCardapioRoute
+  '/admin/impressao-automatica': typeof AdminImpressaoAutomaticaRoute
   '/admin/modal-boas-vindas': typeof AdminModalBoasVindasRoute
   '/admin/pizzas': typeof AdminPizzasRoute
   '/admin/produtos': typeof AdminProdutosRoute
-  '/admin/qz-setup': typeof AdminQzSetupRoute
   '/admin/servicos': typeof AdminServicosRoute
   '/admin/stories': typeof AdminStoriesRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/loja/$slug': typeof LojaSlugRoute
-  '/pedidos-loja/$storeId': typeof PedidosLojaStoreIdRoute
+  '/pedidos-loja/$storeId': typeof PedidosLojaStoreIdRouteWithChildren
   '/produto/$id': typeof ProdutoIdRoute
   '/vitrine/$slug': typeof VitrineSlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -279,6 +287,7 @@ export interface FileRoutesByFullPath {
   '/admin/entregas/cadastro': typeof AdminEntregasCadastroRoute
   '/admin/entregas/relatorio': typeof AdminEntregasRelatorioRoute
   '/admin/loja/$storeId': typeof AdminLojaStoreIdRoute
+  '/pedidos-loja/$storeId/impressao': typeof PedidosLojaStoreIdImpressaoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -301,15 +310,15 @@ export interface FileRoutesByTo {
   '/admin/donos': typeof AdminDonosRoute
   '/admin/entregas': typeof AdminEntregasRouteWithChildren
   '/admin/importar-cardapio': typeof AdminImportarCardapioRoute
+  '/admin/impressao-automatica': typeof AdminImpressaoAutomaticaRoute
   '/admin/modal-boas-vindas': typeof AdminModalBoasVindasRoute
   '/admin/pizzas': typeof AdminPizzasRoute
   '/admin/produtos': typeof AdminProdutosRoute
-  '/admin/qz-setup': typeof AdminQzSetupRoute
   '/admin/servicos': typeof AdminServicosRoute
   '/admin/stories': typeof AdminStoriesRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/loja/$slug': typeof LojaSlugRoute
-  '/pedidos-loja/$storeId': typeof PedidosLojaStoreIdRoute
+  '/pedidos-loja/$storeId': typeof PedidosLojaStoreIdRouteWithChildren
   '/produto/$id': typeof ProdutoIdRoute
   '/vitrine/$slug': typeof VitrineSlugRoute
   '/admin': typeof AdminIndexRoute
@@ -318,6 +327,7 @@ export interface FileRoutesByTo {
   '/admin/entregas/cadastro': typeof AdminEntregasCadastroRoute
   '/admin/entregas/relatorio': typeof AdminEntregasRelatorioRoute
   '/admin/loja/$storeId': typeof AdminLojaStoreIdRoute
+  '/pedidos-loja/$storeId/impressao': typeof PedidosLojaStoreIdImpressaoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -342,15 +352,15 @@ export interface FileRoutesById {
   '/admin/donos': typeof AdminDonosRoute
   '/admin/entregas': typeof AdminEntregasRouteWithChildren
   '/admin/importar-cardapio': typeof AdminImportarCardapioRoute
+  '/admin/impressao-automatica': typeof AdminImpressaoAutomaticaRoute
   '/admin/modal-boas-vindas': typeof AdminModalBoasVindasRoute
   '/admin/pizzas': typeof AdminPizzasRoute
   '/admin/produtos': typeof AdminProdutosRoute
-  '/admin/qz-setup': typeof AdminQzSetupRoute
   '/admin/servicos': typeof AdminServicosRoute
   '/admin/stories': typeof AdminStoriesRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/loja/$slug': typeof LojaSlugRoute
-  '/pedidos-loja/$storeId': typeof PedidosLojaStoreIdRoute
+  '/pedidos-loja/$storeId': typeof PedidosLojaStoreIdRouteWithChildren
   '/produto/$id': typeof ProdutoIdRoute
   '/vitrine/$slug': typeof VitrineSlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -359,6 +369,7 @@ export interface FileRoutesById {
   '/admin/entregas/cadastro': typeof AdminEntregasCadastroRoute
   '/admin/entregas/relatorio': typeof AdminEntregasRelatorioRoute
   '/admin/loja/$storeId': typeof AdminLojaStoreIdRoute
+  '/pedidos-loja/$storeId/impressao': typeof PedidosLojaStoreIdImpressaoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -384,10 +395,10 @@ export interface FileRouteTypes {
     | '/admin/donos'
     | '/admin/entregas'
     | '/admin/importar-cardapio'
+    | '/admin/impressao-automatica'
     | '/admin/modal-boas-vindas'
     | '/admin/pizzas'
     | '/admin/produtos'
-    | '/admin/qz-setup'
     | '/admin/servicos'
     | '/admin/stories'
     | '/categoria/$slug'
@@ -401,6 +412,7 @@ export interface FileRouteTypes {
     | '/admin/entregas/cadastro'
     | '/admin/entregas/relatorio'
     | '/admin/loja/$storeId'
+    | '/pedidos-loja/$storeId/impressao'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -423,10 +435,10 @@ export interface FileRouteTypes {
     | '/admin/donos'
     | '/admin/entregas'
     | '/admin/importar-cardapio'
+    | '/admin/impressao-automatica'
     | '/admin/modal-boas-vindas'
     | '/admin/pizzas'
     | '/admin/produtos'
-    | '/admin/qz-setup'
     | '/admin/servicos'
     | '/admin/stories'
     | '/categoria/$slug'
@@ -440,6 +452,7 @@ export interface FileRouteTypes {
     | '/admin/entregas/cadastro'
     | '/admin/entregas/relatorio'
     | '/admin/loja/$storeId'
+    | '/pedidos-loja/$storeId/impressao'
   id:
     | '__root__'
     | '/'
@@ -463,10 +476,10 @@ export interface FileRouteTypes {
     | '/admin/donos'
     | '/admin/entregas'
     | '/admin/importar-cardapio'
+    | '/admin/impressao-automatica'
     | '/admin/modal-boas-vindas'
     | '/admin/pizzas'
     | '/admin/produtos'
-    | '/admin/qz-setup'
     | '/admin/servicos'
     | '/admin/stories'
     | '/categoria/$slug'
@@ -480,6 +493,7 @@ export interface FileRouteTypes {
     | '/admin/entregas/cadastro'
     | '/admin/entregas/relatorio'
     | '/admin/loja/$storeId'
+    | '/pedidos-loja/$storeId/impressao'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -499,7 +513,7 @@ export interface RootRouteChildren {
   SacolaRoute: typeof SacolaRoute
   CategoriaSlugRoute: typeof CategoriaSlugRoute
   LojaSlugRoute: typeof LojaSlugRoute
-  PedidosLojaStoreIdRoute: typeof PedidosLojaStoreIdRoute
+  PedidosLojaStoreIdRoute: typeof PedidosLojaStoreIdRouteWithChildren
   ProdutoIdRoute: typeof ProdutoIdRoute
   VitrineSlugRoute: typeof VitrineSlugRoute
 }
@@ -660,13 +674,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminServicosRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/qz-setup': {
-      id: '/admin/qz-setup'
-      path: '/qz-setup'
-      fullPath: '/admin/qz-setup'
-      preLoaderRoute: typeof AdminQzSetupRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/produtos': {
       id: '/admin/produtos'
       path: '/produtos'
@@ -686,6 +693,13 @@ declare module '@tanstack/react-router' {
       path: '/modal-boas-vindas'
       fullPath: '/admin/modal-boas-vindas'
       preLoaderRoute: typeof AdminModalBoasVindasRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/impressao-automatica': {
+      id: '/admin/impressao-automatica'
+      path: '/impressao-automatica'
+      fullPath: '/admin/impressao-automatica'
+      preLoaderRoute: typeof AdminImpressaoAutomaticaRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/importar-cardapio': {
@@ -736,6 +750,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/agendamentos'
       preLoaderRoute: typeof AdminAgendamentosRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/pedidos-loja/$storeId/impressao': {
+      id: '/pedidos-loja/$storeId/impressao'
+      path: '/impressao'
+      fullPath: '/pedidos-loja/$storeId/impressao'
+      preLoaderRoute: typeof PedidosLojaStoreIdImpressaoRouteImport
+      parentRoute: typeof PedidosLojaStoreIdRoute
     }
     '/admin/loja/$storeId': {
       id: '/admin/loja/$storeId'
@@ -799,10 +820,10 @@ interface AdminRouteChildren {
   AdminDonosRoute: typeof AdminDonosRoute
   AdminEntregasRoute: typeof AdminEntregasRouteWithChildren
   AdminImportarCardapioRoute: typeof AdminImportarCardapioRoute
+  AdminImpressaoAutomaticaRoute: typeof AdminImpressaoAutomaticaRoute
   AdminModalBoasVindasRoute: typeof AdminModalBoasVindasRoute
   AdminPizzasRoute: typeof AdminPizzasRoute
   AdminProdutosRoute: typeof AdminProdutosRoute
-  AdminQzSetupRoute: typeof AdminQzSetupRoute
   AdminServicosRoute: typeof AdminServicosRoute
   AdminStoriesRoute: typeof AdminStoriesRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -818,10 +839,10 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminDonosRoute: AdminDonosRoute,
   AdminEntregasRoute: AdminEntregasRouteWithChildren,
   AdminImportarCardapioRoute: AdminImportarCardapioRoute,
+  AdminImpressaoAutomaticaRoute: AdminImpressaoAutomaticaRoute,
   AdminModalBoasVindasRoute: AdminModalBoasVindasRoute,
   AdminPizzasRoute: AdminPizzasRoute,
   AdminProdutosRoute: AdminProdutosRoute,
-  AdminQzSetupRoute: AdminQzSetupRoute,
   AdminServicosRoute: AdminServicosRoute,
   AdminStoriesRoute: AdminStoriesRoute,
   AdminIndexRoute: AdminIndexRoute,
@@ -830,6 +851,17 @@ const AdminRouteChildren: AdminRouteChildren = {
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface PedidosLojaStoreIdRouteChildren {
+  PedidosLojaStoreIdImpressaoRoute: typeof PedidosLojaStoreIdImpressaoRoute
+}
+
+const PedidosLojaStoreIdRouteChildren: PedidosLojaStoreIdRouteChildren = {
+  PedidosLojaStoreIdImpressaoRoute: PedidosLojaStoreIdImpressaoRoute,
+}
+
+const PedidosLojaStoreIdRouteWithChildren =
+  PedidosLojaStoreIdRoute._addFileChildren(PedidosLojaStoreIdRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -848,7 +880,7 @@ const rootRouteChildren: RootRouteChildren = {
   SacolaRoute: SacolaRoute,
   CategoriaSlugRoute: CategoriaSlugRoute,
   LojaSlugRoute: LojaSlugRoute,
-  PedidosLojaStoreIdRoute: PedidosLojaStoreIdRoute,
+  PedidosLojaStoreIdRoute: PedidosLojaStoreIdRouteWithChildren,
   ProdutoIdRoute: ProdutoIdRoute,
   VitrineSlugRoute: VitrineSlugRoute,
 }
