@@ -34,7 +34,9 @@ async function getQz(): Promise<any> {
       },
       { rejectOnFailure: true },
     );
-    qz.security.setSignatureAlgorithm?.("SHA512");
+    // SHA1 é aceito por versões antigas e atuais do QZ Tray; evita o caso em que
+    // "Remember this decision" desativa o Allow por incompatibilidade de assinatura.
+    qz.security.setSignatureAlgorithm?.("SHA1");
     qz.security.setSignaturePromise((toSign: string) => {
       return (resolve: (v: string) => void, reject: (e: unknown) => void) => {
         signQzRequest({ data: { request: toSign } })
