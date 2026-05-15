@@ -3,7 +3,74 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer, Monitor, FileText, ExternalLink, Copy, Check, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Printer, Monitor, FileText, ExternalLink, Copy, Check, AlertTriangle, Download } from "lucide-react";
+
+function slugify(s: string) {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase() || "loja";
+}
+
+function buildBatFile(origin: string, storeId: string, storeName: string) {
+  const url = `${origin}/pedidos-loja/${storeId}/impressao`;
+  // .bat usa CRLF; vamos montar com \r\n
+  const lines = [
+    `@echo off`,
+    `REM ===========================================`,
+    `REM  Impressao automatica - ${storeName}`,
+    `REM  Gerado pelo Youapp`,
+    `REM ===========================================`,
+    ``,
+    `set "URL=${url}"`,
+    `set "PROFILE=C:\\YouappPrint"`,
+    `set "ARGS=--user-data-dir=%PROFILE% --kiosk-printing --kiosk --no-first-run --no-default-browser-check %URL%"`,
+    ``,
+    `set "CHROME1=C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"`,
+    `set "CHROME2=C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe"`,
+    ``,
+    `if exist "%CHROME1%" (`,
+    `  start "" "%CHROME1%" %ARGS%`,
+    `  exit /b`,
+    `)`,
+    `if exist "%CHROME2%" (`,
+    `  start "" "%CHROME2%" %ARGS%`,
+    `  exit /b`,
+    `)`,
+    ``,
+    `echo.`,
+    `echo Google Chrome nao foi encontrado nos caminhos padrao.`,
+    `echo Instale o Chrome em https://www.google.com/chrome/ e rode novamente.`,
+    `pause`,
+    ``,
+  ];
+  return lines.join("\r\n");
+}
+
+function DownloadBatButton({ origin, storeId, storeName }: { origin: string; storeId: string; storeName: string }) {
+  return (
+    <Button
+      size="sm"
+      onClick={() => {
+        const content = buildBatFile(origin, storeId, storeName);
+        const blob = new Blob([content], { type: "application/bat" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Imprimir-${slugify(storeName)}.bat`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }}
+    >
+      <Download className="mr-1 h-3 w-3" />
+      Baixar .bat
+    </Button>
+  );
+}
 
 export const Route = createFileRoute("/admin/impressao-automatica")({
   component: ImpressaoAutomaticaPage,
@@ -140,15 +207,13 @@ function ImpressaoAutomaticaPage() {
         <section className="rounded-xl border bg-card p-5">
           <h2 className="mb-3 flex items-center gap-2 text-base font-semibold">
             <FileText className="h-4 w-4" />
-            Passo 2 — Crie o atalho do Chrome (perfil dedicado + modo quiosque)
+            Passo 2 — Baixe o atalho da sua loja
           </h2>
-          <ol className="list-inside list-decimal space-y-2 text-sm text-muted-foreground">
-            <li>Na área de trabalho, clique com o botão direito → <strong>Novo → Atalho</strong>.</li>
-            <li>
-              No campo de localização, cole o comando da sua loja (botão "Copiar comando" abaixo).
-            </li>
-            <li>Clique <strong>Avançar</strong>, dê um nome (ex: "Imprimir Pedidos") e <strong>Concluir</strong>.</li>
-          </ol>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Clique em <strong>"Baixar .bat"</strong> da sua loja, salve o arquivo na <strong>área de trabalho</strong>{" "}
+            e dê <strong>dois cliques</strong>. Pronto — o Chrome abre direto no modo de impressão automática,
+            sem precisar criar atalho na mão.
+          </p>
 
           {stores.length === 0 ? (
             <div className="mt-4 rounded-lg border bg-muted/30 p-3 text-sm text-muted-foreground">
@@ -165,11 +230,8 @@ function ImpressaoAutomaticaPage() {
                       <span>{s.emoji ?? "🏪"}</span>
                       {s.name}
                     </div>
-                    <pre className="mb-2 max-h-40 overflow-auto rounded-md bg-background p-2 text-[11px] leading-relaxed text-foreground">
-{cmd}
-                    </pre>
-                    <div className="flex flex-wrap gap-2">
-                      <CopyButton text={cmd} />
+                    <div className="mb-2 flex flex-wrap gap-2">
+                      <DownloadBatButton origin={origin} storeId={s.id} storeName={s.name} />
                       <Button asChild size="sm" variant="ghost">
                         <a href={url} target="_blank" rel="noopener noreferrer">
                           <ExternalLink className="mr-1 h-3 w-3" />
@@ -177,6 +239,17 @@ function ImpressaoAutomaticaPage() {
                         </a>
                       </Button>
                     </div>
+                    <details className="mt-2">
+                      <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
+                        Avançado: criar atalho manualmente (copiar comando)
+                      </summary>
+                      <pre className="mt-2 max-h-40 overflow-auto rounded-md bg-background p-2 text-[11px] leading-relaxed text-foreground">
+{cmd}
+                      </pre>
+                      <div className="mt-2">
+                        <CopyButton text={cmd} />
+                      </div>
+                    </details>
                   </div>
                 );
               })}

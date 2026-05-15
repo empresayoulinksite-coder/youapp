@@ -1,19 +1,36 @@
-Pelo print, o pedido está sendo gerado e o `window.print()` está disparando, mas o Chrome está abrindo a janela de impressão. Isso indica que o atalho não está usando o Chrome com `--kiosk-printing` corretamente, ou que a página está sendo aberta em uma sessão/janela diferente da do atalho.
+## Objetivo
+Adicionar, para cada loja na página `/admin/impressao-automatica`, um botão **"Baixar .bat"** que gera e baixa um arquivo pronto que abre o Chrome no modo correto de impressão automática — sem o usuário precisar criar atalho manualmente.
 
-Plano:
+## O que muda
 
-1. Atualizar as instruções da página `/admin/impressao-automatica`
-   - Trocar o comando do atalho para usar um perfil dedicado do Chrome com sessão persistente.
-   - Incluir `--user-data-dir` para o modo quiosque não abrir um Chrome “limpo” sem login.
-   - Colocar o link real de cada loja já pronto para copiar, em vez de depender de substituir `SEU_STORE_ID` manualmente.
+**Arquivo:** `src/routes/admin.impressao-automatica.tsx`
 
-2. Adicionar uma orientação clara de uso correto
-   - Fechar todas as janelas do Chrome antes de abrir o atalho.
-   - Fazer login uma vez usando o próprio atalho/perfil dedicado.
-   - Depois disso, manter esse atalho aberto para impressão automática.
+1. Adicionar função `buildBatFile(origin, storeId, storeName)` que retorna o conteúdo de um `.bat` assim:
+   ```bat
+   @echo off
+   REM Impressao automatica - <nome da loja>
+   REM Fecha Chromes abertos no perfil de impressao (opcional, evita conflito)
+   start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" ^
+     --user-data-dir="C:\YouappPrint" ^
+     --kiosk-printing ^
+     --kiosk ^
+     --no-first-run ^
+     --no-default-browser-check ^
+     "<origin>/pedidos-loja/<storeId>/impressao"
+   ```
+   Com fallback para `C:\Program Files (x86)\...` caso o primeiro caminho não exista.
 
-3. Opcionalmente melhorar a página de impressão automática
-   - Mostrar um aviso quando a página detectar que não está em modo quiosque, explicando que aparecerá a janela “Imprimir”.
-   - Manter a impressão atual funcionando como fallback, mas deixar claro que para não aparecer a janela precisa abrir pelo atalho com `--kiosk-printing`.
+2. Adicionar componente `DownloadBatButton` que cria um `Blob` (`type: "application/bat"`), gera URL com `URL.createObjectURL`, dispara download via `<a download="Imprimir-<slug>.bat">` e revoga a URL.
 
-Resultado esperado: o usuário copiará um comando mais confiável, com perfil dedicado, e o Chrome imprimirá direto na impressora padrão sem mostrar essa tela de impressão.
+3. Em cada card de loja, adicionar o botão **"Baixar .bat"** ao lado dos botões "Copiar comando" e "Abrir no navegador".
+
+4. Atualizar o Passo 2 para: **"Baixe o arquivo .bat da sua loja, salve na área de trabalho e dê dois cliques. Pronto."** Manter o "Copiar comando" como alternativa avançada para quem prefere criar o atalho manual.
+
+## Detalhes técnicos
+- Conteúdo do `.bat` é gerado 100% no cliente (sem backend).
+- Nome do arquivo: `Imprimir-<store-name-slugificado>.bat`.
+- O `.bat` testa os dois caminhos padrão do Chrome (`Program Files` e `Program Files (x86)`) com `if exist`, e mostra um aviso amigável caso o Chrome não seja encontrado.
+- Mantém todo o resto da página (instruções, FAQ, alertas) como está.
+
+## Resultado esperado
+O usuário entra em `/admin/impressao-automatica`, clica em "Baixar .bat" da loja, salva o arquivo e dá dois cliques — o Chrome abre direto em modo quiosque na página de impressão automática, sem precisar criar atalho manual nem editar parâmetros.
