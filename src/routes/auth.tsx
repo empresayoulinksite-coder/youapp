@@ -6,6 +6,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    redirect: typeof search.redirect === "string" ? search.redirect : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Entrar — Youapp" },
@@ -18,6 +21,7 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { redirect: redirectTo } = Route.useSearch();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,9 +29,18 @@ function AuthPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const goAfterAuth = () => {
+    if (redirectTo && redirectTo.startsWith("/")) {
+      window.location.assign(redirectTo);
+    } else {
+      navigate({ to: "/" });
+    }
+  };
+
   useEffect(() => {
-    if (user) navigate({ to: "/" });
-  }, [user, navigate]);
+    if (user) goAfterAuth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -38,16 +51,16 @@ function AuthPage() {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
+          emailRedirectTo: `${window.location.origin}${redirectTo ?? "/"}`,
           data: { display_name: name },
         },
       });
       if (err) setError(err.message);
-      else navigate({ to: "/" });
+      else goAfterAuth();
     } else {
       const { error: err } = await supabase.auth.signInWithPassword({ email, password });
       if (err) setError(err.message);
-      else navigate({ to: "/" });
+      else goAfterAuth();
     }
     setLoading(false);
   };
@@ -74,7 +87,7 @@ function AuthPage() {
           onClick={async () => {
             setError(null);
             const result = await lovable.auth.signInWithOAuth("google", {
-              redirect_uri: window.location.origin,
+              redirect_uri: `${window.location.origin}${redirectTo ?? "/"}`,
             });
             if (result.redirected) return;
             if (result.error) setError(result.error.message ?? "Falha ao entrar com Google");
