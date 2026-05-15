@@ -3,7 +3,74 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer, Monitor, FileText, ExternalLink, Copy, Check, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Printer, Monitor, FileText, ExternalLink, Copy, Check, AlertTriangle, Download } from "lucide-react";
+
+function slugify(s: string) {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase() || "loja";
+}
+
+function buildBatFile(origin: string, storeId: string, storeName: string) {
+  const url = `${origin}/pedidos-loja/${storeId}/impressao`;
+  // .bat usa CRLF; vamos montar com \r\n
+  const lines = [
+    `@echo off`,
+    `REM ===========================================`,
+    `REM  Impressao automatica - ${storeName}`,
+    `REM  Gerado pelo Youapp`,
+    `REM ===========================================`,
+    ``,
+    `set "URL=${url}"`,
+    `set "PROFILE=C:\\YouappPrint"`,
+    `set "ARGS=--user-data-dir=%PROFILE% --kiosk-printing --kiosk --no-first-run --no-default-browser-check %URL%"`,
+    ``,
+    `set "CHROME1=C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"`,
+    `set "CHROME2=C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe"`,
+    ``,
+    `if exist "%CHROME1%" (`,
+    `  start "" "%CHROME1%" %ARGS%`,
+    `  exit /b`,
+    `)`,
+    `if exist "%CHROME2%" (`,
+    `  start "" "%CHROME2%" %ARGS%`,
+    `  exit /b`,
+    `)`,
+    ``,
+    `echo.`,
+    `echo Google Chrome nao foi encontrado nos caminhos padrao.`,
+    `echo Instale o Chrome em https://www.google.com/chrome/ e rode novamente.`,
+    `pause`,
+    ``,
+  ];
+  return lines.join("\r\n");
+}
+
+function DownloadBatButton({ origin, storeId, storeName }: { origin: string; storeId: string; storeName: string }) {
+  return (
+    <Button
+      size="sm"
+      onClick={() => {
+        const content = buildBatFile(origin, storeId, storeName);
+        const blob = new Blob([content], { type: "application/bat" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Imprimir-${slugify(storeName)}.bat`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }}
+    >
+      <Download className="mr-1 h-3 w-3" />
+      Baixar .bat
+    </Button>
+  );
+}
 
 export const Route = createFileRoute("/admin/impressao-automatica")({
   component: ImpressaoAutomaticaPage,
