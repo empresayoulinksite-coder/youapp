@@ -236,8 +236,7 @@ async function fetchOrderItems(orderId, token, { retries = 6, delayMs = 500 } = 
     if (Array.isArray(items) && items.length > 0) return items;
     await new Promise((r) => setTimeout(r, delayMs));
   }
-  // Devolve vazio se ainda não chegaram (imprime mesmo assim)
-  return [];
+  throw new Error(`Itens do pedido ${orderId} ainda não chegaram`);
 }
 
 async function catchUpRecentOrders(storeIds, token) {
@@ -309,8 +308,8 @@ async function openPrintTab(payload) {
     type: "popup",
     width: 420,
     height: 600,
-    focused: false,
-    state: "minimized",
+    focused: true,
+    state: "normal",
   });
 }
 
