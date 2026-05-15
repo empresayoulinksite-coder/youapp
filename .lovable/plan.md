@@ -1,71 +1,38 @@
-# Gerar o certificado QZ Tray automaticamente (sem PowerShell, sem site externo)
+## Diagnóstico
 
-## A ideia
+Pelo print, o QZ Tray está mostrando:
 
-Em vez de você gerar o certificado no Windows, **eu crio um endpoint temporário** no próprio backend do app que:
-1. Gera o par de chaves RSA 2048 + certificado auto-assinado válido por 10 anos
-2. Salva a chave privada automaticamente como secret `QZ_PRIVATE_KEY`
-3. Salva o certificado público automaticamente em `src/lib/qz-certificate.ts`
-4. Te devolve **apenas o arquivo `override.crt`** pra você baixar
+- `Organization: Unknown`
+- `Common Name: An anonymous request`
+- `Validity: Invalid Certificate`
+- `Trusted: Untrusted website`
 
-Você só precisa:
-- Clicar num botão "Gerar certificado QZ" (vou colocar uma página `/admin/qz-setup` temporária)
-- Baixar o `override.crt`
-- Copiar pra pasta do QZ Tray em cada PC da loja
-- Reiniciar o QZ Tray
+Isso indica que o navegador/QZ Tray não está recebendo o certificado público gerado pelo sistema. No banco também não há nenhum certificado salvo ainda (`qz_certificates` está vazio), então a conexão cai como requisição anônima.
 
-Pronto. Sem PowerShell, sem site externo, sem copiar/colar chave.
+## Plano de correção
 
-## Passo a passo do que vou fazer
+1. **Corrigir o carregamento do certificado no QZ Tray**
+   - Fazer o `setCertificatePromise` falhar de forma explícita quando não houver certificado, em vez de deixar o QZ continuar como “anonymous request”.
+   - Garantir que o certificado público seja entregue antes da conexão WebSocket com o QZ Tray.
 
-### 1. Criar a página `/admin/qz-setup`
-Página simples com um botão "Gerar certificado". Só admin acessa.
+2. **Corrigir a página `/admin/qz-setup` para confirmar o estado real**
+   - Mostrar se já existe certificado gerado no backend.
+   - Depois de clicar em “Gerar certificado”, confirmar na tela que ele foi salvo.
+   - Se ainda não existir certificado, exibir aviso claro antes do usuário tentar imprimir.
 
-### 2. Criar o server function `generateQzCertificate`
-Usa o módulo `crypto` nativo do Node pra:
-- Gerar par RSA 2048
-- Criar certificado X.509 auto-assinado (CN: "QZ Tray Cert", validade 10 anos)
-- Retornar 3 strings: `privateKey`, `publicCert`, `overrideCrt` (no formato que o QZ Tray espera)
+3. **Adicionar um teste interno de assinatura/certificado**
+   - Criar uma função de verificação admin-only que confere se há certificado salvo e se a chave privada consegue assinar corretamente.
+   - Mostrar o resultado na página de setup para evitar instalar um `override.crt` vazio/antigo.
 
-### 3. Salvar automaticamente os artefatos
-- Chave privada → secret `QZ_PRIVATE_KEY` (via API de secrets do projeto)
-- Certificado público → escreve em `src/lib/qz-certificate.ts`
-- `override.crt` → disponibiliza pra download direto no navegador
+4. **Ajustar as instruções para Windows/QZ Tray**
+   - Explicar que depois de gerar o certificado é obrigatório copiar o `override.crt` baixado para:
+     ```text
+     C:\Program Files\QZ Tray\override.crt
+     ```
+   - Orientar a fechar o QZ Tray completamente e abrir novamente.
+   - Avisar que, se gerar um certificado novo, precisa substituir o `override.crt` em todos os computadores.
 
-### 4. Configuração final do PC da loja (uma vez por PC)
-Te mando passo a passo curto com prints/caminhos:
-- Onde fica a pasta do QZ Tray no Windows (`C:\Program Files\QZ Tray\`)
-- Onde colocar o `override.crt`
-- Como reiniciar o serviço
-
-## O que muda em relação ao plano anterior
-
-| Antes | Agora |
-|-------|-------|
-| Você roda PowerShell | Eu gero tudo no backend |
-| Você cola chave privada manualmente no formulário de secret | Salvo automaticamente |
-| Você edita `qz-certificate.ts` | Salvo automaticamente |
-| Você só baixa `override.crt` |  Igual |
-
-## Detalhes técnicos
-
-**Novo:**
-- `src/lib/qz-cert-generator.functions.ts` — server function que gera o par usando `crypto.generateKeyPairSync('rsa', { modulusLength: 2048 })` + monta certificado X.509 com `node-forge` (lib pure-JS, compatível com Cloudflare Workers)
-- `src/routes/admin.qz-setup.tsx` — página admin com botão "Gerar" e link de download do `override.crt`
-
-**Dependência nova:**
-- `node-forge` — necessário porque o módulo `crypto` nativo do Node não cria certificados X.509, só chaves. `node-forge` é pure-JS e funciona no runtime do Cloudflare Workers.
-
-**Mantido do plano anterior:**
-- `src/lib/qz-sign.functions.ts` (assinatura SHA512withRSA)
-- `src/lib/qz-printer.ts` (registra `setCertificatePromise` + `setSignaturePromise`)
-- `src/lib/qz-certificate.ts` (mas agora preenchido automaticamente)
-
-## Resultado final
-
-1. Você abre `/admin/qz-setup`, clica "Gerar"
-2. Baixa `override.crt`
-3. Copia pra pasta do QZ Tray de cada PC da loja
-4. Imprime sem nenhum prompt — pra sempre
-
-Se aprovar, eu implemento e te mando o link da página `/admin/qz-setup` pra você clicar.
+5. **Verificação**
+   - Conferir que o certificado foi salvo no backend.
+   - Conferir que a página de setup abre e mostra o status correto.
+   - Conferir que a integração QZ não segue mais silenciosamente como requisição anônima quando o certificado não existir.
