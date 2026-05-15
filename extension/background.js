@@ -168,8 +168,16 @@ async function connectRealtime() {
       );
       subscribedStores.add(storeId);
     }
-    // Catch-up: imprime pedidos recentes ainda não impressos (últimos 10 min)
+    // Catch-up + polling: garante impressão mesmo se o Realtime falhar ou o service worker dormir
     void catchUpRecentOrders(enabled, session.access_token);
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(async () => {
+      const freshSession = await refreshIfNeeded();
+      const freshEnabled = await getEnabledStoreIds();
+      if (freshSession && freshEnabled.length > 0) {
+        void catchUpRecentOrders(freshEnabled, freshSession.access_token);
+      }
+    }, 15_000);
     // Heartbeat
     if (heartbeatTimer) clearInterval(heartbeatTimer);
     heartbeatTimer = setInterval(() => {
@@ -234,7 +242,7 @@ async function fetchOrderItems(orderId, token, { retries = 6, delayMs = 500 } = 
 
 async function catchUpRecentOrders(storeIds, token) {
   try {
-    const sinceIso = new Date(Date.now() - 10 * 60_000).toISOString();
+    const sinceIso = new Date(Date.now() - 30 * 60_000).toISOString();
     for (const storeId of storeIds) {
       const path = `orders?store_id=eq.${storeId}&created_at=gte.${encodeURIComponent(
         sinceIso,
@@ -275,6 +283,7 @@ async function handleNewOrder(orderId) {
     const customer = profileArr?.[0] ?? null;
 
     await openPrintTab({ store, order, items: items ?? [], customer });
+    await savePrintedOrders();
 
     stats.printedToday += 1;
     stats.lastOrderNumber = order.order_number ?? null;
