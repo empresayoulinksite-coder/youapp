@@ -1030,7 +1030,7 @@ function SettingsDialog({
           </div>
 
           <PrinterSettingsBlock
-            storeId={storeId}
+            storeId={store?.id ?? ""}
             printerPrefs={printerPrefs}
             onPrinterPrefsChange={onPrinterPrefsChange}
             onTestPrint={onTestPrint}
