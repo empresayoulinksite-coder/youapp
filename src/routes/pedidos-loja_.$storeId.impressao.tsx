@@ -122,17 +122,24 @@ function AutoPrintPage() {
     }
     const o = order as OrderRow;
 
-    const [{ data: items }, { data: profile }] = await Promise.all([
-      supabase
+    // Espera os itens aparecerem (pedido + itens chegam em chamadas separadas)
+    let items: any[] = [];
+    for (let i = 0; i < 6; i++) {
+      const { data } = await supabase
         .from("order_items")
         .select("*")
-        .eq("order_id", orderId),
-      supabase
-        .from("profiles")
-        .select("display_name, phone")
-        .eq("user_id", o.user_id)
-        .maybeSingle(),
-    ]);
+        .eq("order_id", orderId);
+      if (data && data.length > 0) {
+        items = data;
+        break;
+      }
+      await new Promise((r) => setTimeout(r, 500));
+    }
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name, phone")
+      .eq("user_id", o.user_id)
+      .maybeSingle();
 
     const html = buildReceiptHTML(
       { name: storeName || "Pedido", whatsapp: storeWhatsapp },
