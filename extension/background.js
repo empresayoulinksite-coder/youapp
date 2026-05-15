@@ -195,6 +195,35 @@ function disconnectRealtime() {
 }
 
 // ------------- Order print pipeline -------------
+async function fetchOrderItems(orderId, token, { retries = 6, delayMs = 500 } = {}) {
+  for (let i = 0; i < retries; i++) {
+    const items = await restGet(`order_items?order_id=eq.${orderId}&select=*`, token);
+    if (Array.isArray(items) && items.length > 0) return items;
+    await new Promise((r) => setTimeout(r, delayMs));
+  }
+  // Devolve vazio se ainda não chegaram (imprime mesmo assim)
+  return [];
+}
+
+async function catchUpRecentOrders(storeIds, token) {
+  try {
+    const sinceIso = new Date(Date.now() - 10 * 60_000).toISOString();
+    for (const storeId of storeIds) {
+      const path = `orders?store_id=eq.${storeId}&created_at=gte.${encodeURIComponent(
+        sinceIso,
+      )}&status=in.(em_analise,em_producao)&select=id&order=created_at.asc`;
+      const recent = await restGet(path, token);
+      for (const r of recent ?? []) {
+        if (r?.id && !printedOrders.has(r.id)) {
+          handleNewOrder(r.id);
+        }
+      }
+    }
+  } catch (e) {
+    console.error("[YouApp Print] catchUpRecentOrders error", e);
+  }
+}
+
 async function handleNewOrder(orderId) {
   if (printedOrders.has(orderId)) return;
   printedOrders.add(orderId);
@@ -204,12 +233,12 @@ async function handleNewOrder(orderId) {
     if (!session) return;
     const token = session.access_token;
 
-    const [orders, items] = await Promise.all([
-      restGet(`orders?id=eq.${orderId}&select=*`, token),
-      restGet(`order_items?order_id=eq.${orderId}&select=*`, token),
-    ]);
+    const orders = await restGet(`orders?id=eq.${orderId}&select=*`, token);
     const order = orders?.[0];
     if (!order) return;
+
+    // Espera os itens aparecerem (pedido + itens são inseridos em chamadas separadas)
+    const items = await fetchOrderItems(orderId, token);
 
     const [storeArr, profileArr] = await Promise.all([
       restGet(`stores?id=eq.${order.store_id}&select=name,whatsapp`, token),
