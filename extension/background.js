@@ -12,10 +12,13 @@ const AUTH_URL = `${SUPABASE_URL}/auth/v1`;
 let ws = null;
 let heartbeatTimer = null;
 let reconnectTimer = null;
+let pollTimer = null;
 let refCounter = 0;
 const subscribedStores = new Set();
 const printedOrders = new Set(); // session-level dedupe
 let stats = { printedToday: 0, lastPrintedAt: null, lastOrderNumber: null, connected: false };
+const PRINTED_HISTORY_KEY = "printedOrderHistory";
+const PRINTED_TTL_MS = 24 * 60 * 60 * 1000;
 
 // ------------- Storage helpers -------------
 async function getSession() {
@@ -51,6 +54,23 @@ async function loadStats() {
 async function saveStats() {
   await chrome.storage.local.set({ stats });
   chrome.runtime.sendMessage({ type: "stats", stats }).catch(() => {});
+}
+async function loadPrintedOrders() {
+  const { [PRINTED_HISTORY_KEY]: history } = await chrome.storage.local.get(PRINTED_HISTORY_KEY);
+  const now = Date.now();
+  printedOrders.clear();
+  for (const entry of Array.isArray(history) ? history : []) {
+    if (entry?.id && now - Number(entry.t || 0) < PRINTED_TTL_MS) {
+      printedOrders.add(entry.id);
+    }
+  }
+  await savePrintedOrders();
+}
+async function savePrintedOrders() {
+  const now = Date.now();
+  await chrome.storage.local.set({
+    [PRINTED_HISTORY_KEY]: Array.from(printedOrders).map((id) => ({ id, t: now })),
+  });
 }
 
 // ------------- Auth -------------
