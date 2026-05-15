@@ -1,61 +1,28 @@
-## Objetivo
+Diagnóstico: a loja Rei do Litoral está correta e o admin tem permissão no banco. O problema está no fluxo da rota: ao abrir o link direto, a checagem de login roda cedo demais e pode mandar para `/auth`; como a tela de login redireciona usuário já logado para `/`, parece que o link “volta para o início”.
 
-Remover toda a complexidade do QZ Tray e implementar impressão automática de pedidos usando o **Modo Quiosque do Chrome** (`--kiosk-printing`). Solução 100% gratuita, sem certificado, sem instalação extra.
+Plano de correção:
 
-## Como vai funcionar
+1. Ajustar a rota `/pedidos-loja/$storeId/impressao`
+   - Remover o redirecionamento imediato do `beforeLoad` dessa página.
+   - Fazer a checagem de sessão dentro da própria tela, aguardando o login carregar corretamente.
+   - Se não estiver logado, mostrar um botão “Entrar para ativar impressão” levando para `/auth`.
+   - Se estiver logado mas sem permissão, mostrar mensagem clara em vez de redirecionar silenciosamente.
+   - Se tiver permissão, mostrar “Conectado — aguardando pedidos”.
 
-1. No PC da loja, cria-se um atalho do Chrome com a flag `--kiosk-printing`
-2. Esse Chrome fica aberto numa nova página: **`/pedidos-loja/$storeId/impressao`**
-3. A página escuta novos pedidos em tempo real (Supabase Realtime)
-4. Quando chega pedido novo → renderiza o cupom e dispara `window.print()` automaticamente
-5. Chrome envia direto para a impressora padrão, **sem mostrar diálogo**
+2. Preservar o link após login
+   - Atualizar `/auth` para aceitar um parâmetro de retorno, por exemplo:
 
-## O que vou fazer
+```text
+/auth?redirect=/pedidos-loja/6d08cbcc-5ec8-4b8a-9587-b5822483cbc0/impressao
+```
 
-### 1. Limpeza do QZ Tray
-- Remover `src/lib/qz-printer.ts`, `src/lib/qz-sign.functions.ts`, `src/lib/qz-cert-generator.functions.ts`
-- Remover rota `/admin/qz-setup`
-- Remover tabela `qz_certificates` (migração)
-- Remover dependências `qz-tray` e `node-forge` do `package.json`
-- Remover botões/chamadas de impressão QZ que existem hoje na tela de pedidos da loja
+   - Depois de entrar, voltar automaticamente para a página de impressão em vez de ir para a tela inicial.
 
-### 2. Nova página de impressão automática
-- Rota: **`/pedidos-loja/$storeId/impressao`** (protegida, só dono/staff da loja)
-- Componente:
-  - Subscreve via Supabase Realtime na tabela `orders` filtrando por `store_id`
-  - Ao receber `INSERT` de pedido novo: busca itens, monta o cupom, e chama `window.print()`
-  - Mantém uma fila para evitar sobreposição de impressões
-  - Marca o pedido como “impresso” em memória (localStorage) para não reimprimir em refresh
-  - Mostra na tela: status “Aguardando pedidos…”, último pedido impresso, botão “Reimprimir”
+3. Melhorar mensagens para instalação em modo quiosque
+   - Se o Chrome abrir o link sem sessão salva, a página deve orientar o usuário a fazer login uma vez no navegador normal.
+   - Depois disso, o atalho com `--kiosk-printing` deve abrir direto na tela de impressão.
 
-### 3. Layout do cupom térmico (80mm)
-- Componente `OrderReceipt` otimizado para 80mm:
-  - Nome da loja, número do pedido, data/hora
-  - Cliente, telefone, endereço/retirada
-  - Itens (qtd × nome, observações, adicionais), subtotal, taxa, total
-  - Forma de pagamento, troco
-- CSS `@media print` com `@page { size: 80mm auto; margin: 0 }`
-
-### 4. Realtime
-- Migration: `ALTER PUBLICATION supabase_realtime ADD TABLE public.orders;` (se ainda não estiver)
-
-### 5. Tela de instruções
-- Nova rota `/admin/impressao-automatica` com passo a passo:
-  - Como criar o atalho do Chrome no Windows com `--kiosk-printing`
-  - Como definir a impressora térmica como padrão
-  - Link para abrir `/pedidos-loja/{store}/impressao`
-  - Teste de impressão
-
-## Detalhes técnicos
-
-- **Realtime channel** por loja: `orders:store_id=eq.{storeId}` no evento `INSERT`
-- **window.print()** dentro de `useEffect` após render do cupom; usa `setTimeout(0)` para garantir paint
-- **Anti-duplicata**: `Set<orderId>` + `localStorage` (TTL 24h)
-- **Atalho Windows** (instrução ao usuário):
-  ```
-  "C:\Program Files\Google\Chrome\Application\chrome.exe" --kiosk-printing --kiosk https://SEU-APP/pedidos-loja/STORE_ID/impressao
-  ```
-
-## Fora do escopo
-- App mobile / impressão a partir de celular (kiosk só funciona em desktop com Chrome)
-- Múltiplas impressoras seletivas (sempre usa a impressora padrão do PC)
+4. Verificação final
+   - Testar o fluxo do link direto logado.
+   - Testar o fluxo deslogado → login → retorno para impressão.
+   - Confirmar que admins e donos de loja conseguem acessar a página.
