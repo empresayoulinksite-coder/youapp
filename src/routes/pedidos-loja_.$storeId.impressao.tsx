@@ -228,12 +228,25 @@ function AutoPrintPage() {
           if (id) enqueue(id);
         },
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "orders",
+          filter: `store_id=eq.${storeId}`,
+        },
+        (payload) => {
+          const row = payload.new as { id?: string; status?: string };
+          if (row?.id && ["em_analise", "em_producao"].includes(row.status ?? "")) enqueue(row.id);
+        },
+      )
       .subscribe(async (status) => {
         const isConnected = status === "SUBSCRIBED";
         setConnected(isConnected);
         if (isConnected) {
-          // Catch-up: imprime pedidos recentes (últimos 10 min) ainda não impressos
-          const sinceIso = new Date(Date.now() - 10 * 60_000).toISOString();
+          // Catch-up: imprime pedidos recentes (últimos 30 min) ainda não impressos
+          const sinceIso = new Date(Date.now() - 30 * 60_000).toISOString();
           const { data } = await supabase
             .from("orders")
             .select("id")
@@ -250,6 +263,24 @@ function AutoPrintPage() {
       supabase.removeChannel(channel);
     };
   }, [storeId, storeName]);
+
+  // Polling de segurança: se o navegador perder um evento realtime, a página ainda encontra o pedido.
+  useEffect(() => {
+    const timer = window.setInterval(async () => {
+      const sinceIso = new Date(Date.now() - 30 * 60_000).toISOString();
+      const { data } = await supabase
+        .from("orders")
+        .select("id")
+        .eq("store_id", storeId)
+        .in("status", ["em_analise", "em_producao"])
+        .gte("created_at", sinceIso)
+        .order("created_at", { ascending: true });
+      for (const r of data ?? []) {
+        if (r?.id) enqueue(r.id);
+      }
+    }, 15_000);
+    return () => window.clearInterval(timer);
+  }, [storeId]);
 
   function handleReprintLast() {
     if (!lastPrinted) return;
