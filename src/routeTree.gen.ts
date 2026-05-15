@@ -31,6 +31,7 @@ import { Route as LojaSlugRouteImport } from './routes/loja.$slug'
 import { Route as CategoriaSlugRouteImport } from './routes/categoria.$slug'
 import { Route as AdminStoriesRouteImport } from './routes/admin.stories'
 import { Route as AdminServicosRouteImport } from './routes/admin.servicos'
+import { Route as AdminQzSetupRouteImport } from './routes/admin.qz-setup'
 import { Route as AdminProdutosRouteImport } from './routes/admin.produtos'
 import { Route as AdminPizzasRouteImport } from './routes/admin.pizzas'
 import { Route as AdminModalBoasVindasRouteImport } from './routes/admin.modal-boas-vindas'
@@ -157,6 +158,11 @@ const AdminServicosRoute = AdminServicosRouteImport.update({
   path: '/servicos',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminQzSetupRoute = AdminQzSetupRouteImport.update({
+  id: '/qz-setup',
+  path: '/qz-setup',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminProdutosRoute = AdminProdutosRouteImport.update({
   id: '/produtos',
   path: '/produtos',
@@ -259,6 +265,7 @@ export interface FileRoutesByFullPath {
   '/admin/modal-boas-vindas': typeof AdminModalBoasVindasRoute
   '/admin/pizzas': typeof AdminPizzasRoute
   '/admin/produtos': typeof AdminProdutosRoute
+  '/admin/qz-setup': typeof AdminQzSetupRoute
   '/admin/servicos': typeof AdminServicosRoute
   '/admin/stories': typeof AdminStoriesRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
@@ -297,6 +304,7 @@ export interface FileRoutesByTo {
   '/admin/modal-boas-vindas': typeof AdminModalBoasVindasRoute
   '/admin/pizzas': typeof AdminPizzasRoute
   '/admin/produtos': typeof AdminProdutosRoute
+  '/admin/qz-setup': typeof AdminQzSetupRoute
   '/admin/servicos': typeof AdminServicosRoute
   '/admin/stories': typeof AdminStoriesRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
@@ -337,6 +345,7 @@ export interface FileRoutesById {
   '/admin/modal-boas-vindas': typeof AdminModalBoasVindasRoute
   '/admin/pizzas': typeof AdminPizzasRoute
   '/admin/produtos': typeof AdminProdutosRoute
+  '/admin/qz-setup': typeof AdminQzSetupRoute
   '/admin/servicos': typeof AdminServicosRoute
   '/admin/stories': typeof AdminStoriesRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
@@ -378,6 +387,7 @@ export interface FileRouteTypes {
     | '/admin/modal-boas-vindas'
     | '/admin/pizzas'
     | '/admin/produtos'
+    | '/admin/qz-setup'
     | '/admin/servicos'
     | '/admin/stories'
     | '/categoria/$slug'
@@ -416,6 +426,7 @@ export interface FileRouteTypes {
     | '/admin/modal-boas-vindas'
     | '/admin/pizzas'
     | '/admin/produtos'
+    | '/admin/qz-setup'
     | '/admin/servicos'
     | '/admin/stories'
     | '/categoria/$slug'
@@ -455,6 +466,7 @@ export interface FileRouteTypes {
     | '/admin/modal-boas-vindas'
     | '/admin/pizzas'
     | '/admin/produtos'
+    | '/admin/qz-setup'
     | '/admin/servicos'
     | '/admin/stories'
     | '/categoria/$slug'
@@ -648,6 +660,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminServicosRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/qz-setup': {
+      id: '/admin/qz-setup'
+      path: '/qz-setup'
+      fullPath: '/admin/qz-setup'
+      preLoaderRoute: typeof AdminQzSetupRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/produtos': {
       id: '/admin/produtos'
       path: '/produtos'
@@ -783,6 +802,7 @@ interface AdminRouteChildren {
   AdminModalBoasVindasRoute: typeof AdminModalBoasVindasRoute
   AdminPizzasRoute: typeof AdminPizzasRoute
   AdminProdutosRoute: typeof AdminProdutosRoute
+  AdminQzSetupRoute: typeof AdminQzSetupRoute
   AdminServicosRoute: typeof AdminServicosRoute
   AdminStoriesRoute: typeof AdminStoriesRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -801,6 +821,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminModalBoasVindasRoute: AdminModalBoasVindasRoute,
   AdminPizzasRoute: AdminPizzasRoute,
   AdminProdutosRoute: AdminProdutosRoute,
+  AdminQzSetupRoute: AdminQzSetupRoute,
   AdminServicosRoute: AdminServicosRoute,
   AdminStoriesRoute: AdminStoriesRoute,
   AdminIndexRoute: AdminIndexRoute,
