@@ -207,15 +207,13 @@ function ImpressaoAutomaticaPage() {
         <section className="rounded-xl border bg-card p-5">
           <h2 className="mb-3 flex items-center gap-2 text-base font-semibold">
             <FileText className="h-4 w-4" />
-            Passo 2 — Crie o atalho do Chrome (perfil dedicado + modo quiosque)
+            Passo 2 — Baixe o atalho da sua loja
           </h2>
-          <ol className="list-inside list-decimal space-y-2 text-sm text-muted-foreground">
-            <li>Na área de trabalho, clique com o botão direito → <strong>Novo → Atalho</strong>.</li>
-            <li>
-              No campo de localização, cole o comando da sua loja (botão "Copiar comando" abaixo).
-            </li>
-            <li>Clique <strong>Avançar</strong>, dê um nome (ex: "Imprimir Pedidos") e <strong>Concluir</strong>.</li>
-          </ol>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Clique em <strong>"Baixar .bat"</strong> da sua loja, salve o arquivo na <strong>área de trabalho</strong>{" "}
+            e dê <strong>dois cliques</strong>. Pronto — o Chrome abre direto no modo de impressão automática,
+            sem precisar criar atalho na mão.
+          </p>
 
           {stores.length === 0 ? (
             <div className="mt-4 rounded-lg border bg-muted/30 p-3 text-sm text-muted-foreground">
@@ -232,11 +230,8 @@ function ImpressaoAutomaticaPage() {
                       <span>{s.emoji ?? "🏪"}</span>
                       {s.name}
                     </div>
-                    <pre className="mb-2 max-h-40 overflow-auto rounded-md bg-background p-2 text-[11px] leading-relaxed text-foreground">
-{cmd}
-                    </pre>
-                    <div className="flex flex-wrap gap-2">
-                      <CopyButton text={cmd} />
+                    <div className="mb-2 flex flex-wrap gap-2">
+                      <DownloadBatButton origin={origin} storeId={s.id} storeName={s.name} />
                       <Button asChild size="sm" variant="ghost">
                         <a href={url} target="_blank" rel="noopener noreferrer">
                           <ExternalLink className="mr-1 h-3 w-3" />
@@ -244,6 +239,17 @@ function ImpressaoAutomaticaPage() {
                         </a>
                       </Button>
                     </div>
+                    <details className="mt-2">
+                      <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
+                        Avançado: criar atalho manualmente (copiar comando)
+                      </summary>
+                      <pre className="mt-2 max-h-40 overflow-auto rounded-md bg-background p-2 text-[11px] leading-relaxed text-foreground">
+{cmd}
+                      </pre>
+                      <div className="mt-2">
+                        <CopyButton text={cmd} />
+                      </div>
+                    </details>
                   </div>
                 );
               })}
