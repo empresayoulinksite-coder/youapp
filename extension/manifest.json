@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "YouApp Print",
+  "version": "1.0.0",
+  "description": "Imprime pedidos do YouApp automaticamente em segundo plano.",
+  "permissions": ["storage", "tabs", "alarms", "notifications"],
+  "host_permissions": [
+    "https://ugfsatbvbiwxqsnxeakp.supabase.co/*",
+    "wss://ugfsatbvbiwxqsnxeakp.supabase.co/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "48": "icon.png",
+      "128": "icon.png"
+    },
+    "default_title": "YouApp Print"
+  },
+  "icons": {
+    "48": "icon.png",
+    "128": "icon.png"
+  }
+}

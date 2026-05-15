@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>YouApp Print</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header>
+    <div class="logo">🖨️ YouApp Print</div>
+    <div id="status" class="status">…</div>
+  </header>
+
+  <section id="login-view" class="view hidden">
+    <h2>Entrar</h2>
+    <p class="muted">Use a mesma conta da loja no YouApp.</p>
+    <input id="email" type="email" placeholder="seu@email.com" autocomplete="email" />
+    <input id="password" type="password" placeholder="senha" autocomplete="current-password" />
+    <button id="signin-btn" class="primary">Entrar</button>
+    <div id="login-error" class="error"></div>
+  </section>
+
+  <section id="main-view" class="view hidden">
+    <div class="row">
+      <div class="muted small" id="user-email"></div>
+      <button id="signout-btn" class="link">Sair</button>
+    </div>
+
+    <div class="stats">
+      <div><strong id="stat-count">0</strong><span>impressos hoje</span></div>
+      <div><strong id="stat-last">—</strong><span>último pedido</span></div>
+    </div>
+
+    <h3>Lojas monitoradas</h3>
+    <div id="stores"></div>
+
+    <div class="actions">
+      <button id="test-btn">Imprimir teste</button>
+      <button id="refresh-btn" class="link">Atualizar lista</button>
+    </div>
+
+    <p class="muted small">
+      Mantenha o Chrome aberto (pode estar minimizado). Para imprimir sem
+      diálogo, abra o Chrome pelo atalho .bat com <code>--kiosk-printing</code>.
+    </p>
+  </section>
+
+  <script src="popup.js"></script>
+</body>
+</html>
