@@ -42,7 +42,7 @@ import { Route as AdminCuponsRouteImport } from './routes/admin.cupons'
 import { Route as AdminCategoriasHomeRouteImport } from './routes/admin.categorias-home'
 import { Route as AdminCategoriasEcommerceRouteImport } from './routes/admin.categorias-ecommerce'
 import { Route as AdminAgendamentosRouteImport } from './routes/admin.agendamentos'
-import { Route as PedidosLojaStoreIdImpressaoRouteImport } from './routes/pedidos-loja.$storeId.impressao'
+import { Route as PedidosLojaStoreIdImpressaoRouteImport } from './routes/pedidos-loja_.$storeId.impressao'
 import { Route as AdminLojaStoreIdRouteImport } from './routes/admin.loja.$storeId'
 import { Route as AdminEntregasRelatorioRouteImport } from './routes/admin.entregas.relatorio'
 import { Route as AdminEntregasCadastroRouteImport } from './routes/admin.entregas.cadastro'
@@ -218,9 +218,9 @@ const AdminAgendamentosRoute = AdminAgendamentosRouteImport.update({
 } as any)
 const PedidosLojaStoreIdImpressaoRoute =
   PedidosLojaStoreIdImpressaoRouteImport.update({
-    id: '/impressao',
-    path: '/impressao',
-    getParentRoute: () => PedidosLojaStoreIdRoute,
+    id: '/pedidos-loja_/$storeId/impressao',
+    path: '/pedidos-loja/$storeId/impressao',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const AdminLojaStoreIdRoute = AdminLojaStoreIdRouteImport.update({
   id: '/loja/$storeId',
@@ -278,7 +278,7 @@ export interface FileRoutesByFullPath {
   '/admin/stories': typeof AdminStoriesRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/loja/$slug': typeof LojaSlugRoute
-  '/pedidos-loja/$storeId': typeof PedidosLojaStoreIdRouteWithChildren
+  '/pedidos-loja/$storeId': typeof PedidosLojaStoreIdRoute
   '/produto/$id': typeof ProdutoIdRoute
   '/vitrine/$slug': typeof VitrineSlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -318,7 +318,7 @@ export interface FileRoutesByTo {
   '/admin/stories': typeof AdminStoriesRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/loja/$slug': typeof LojaSlugRoute
-  '/pedidos-loja/$storeId': typeof PedidosLojaStoreIdRouteWithChildren
+  '/pedidos-loja/$storeId': typeof PedidosLojaStoreIdRoute
   '/produto/$id': typeof ProdutoIdRoute
   '/vitrine/$slug': typeof VitrineSlugRoute
   '/admin': typeof AdminIndexRoute
@@ -360,7 +360,7 @@ export interface FileRoutesById {
   '/admin/stories': typeof AdminStoriesRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/loja/$slug': typeof LojaSlugRoute
-  '/pedidos-loja/$storeId': typeof PedidosLojaStoreIdRouteWithChildren
+  '/pedidos-loja/$storeId': typeof PedidosLojaStoreIdRoute
   '/produto/$id': typeof ProdutoIdRoute
   '/vitrine/$slug': typeof VitrineSlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -369,7 +369,7 @@ export interface FileRoutesById {
   '/admin/entregas/cadastro': typeof AdminEntregasCadastroRoute
   '/admin/entregas/relatorio': typeof AdminEntregasRelatorioRoute
   '/admin/loja/$storeId': typeof AdminLojaStoreIdRoute
-  '/pedidos-loja/$storeId/impressao': typeof PedidosLojaStoreIdImpressaoRoute
+  '/pedidos-loja_/$storeId/impressao': typeof PedidosLojaStoreIdImpressaoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -493,7 +493,7 @@ export interface FileRouteTypes {
     | '/admin/entregas/cadastro'
     | '/admin/entregas/relatorio'
     | '/admin/loja/$storeId'
-    | '/pedidos-loja/$storeId/impressao'
+    | '/pedidos-loja_/$storeId/impressao'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -513,9 +513,10 @@ export interface RootRouteChildren {
   SacolaRoute: typeof SacolaRoute
   CategoriaSlugRoute: typeof CategoriaSlugRoute
   LojaSlugRoute: typeof LojaSlugRoute
-  PedidosLojaStoreIdRoute: typeof PedidosLojaStoreIdRouteWithChildren
+  PedidosLojaStoreIdRoute: typeof PedidosLojaStoreIdRoute
   ProdutoIdRoute: typeof ProdutoIdRoute
   VitrineSlugRoute: typeof VitrineSlugRoute
+  PedidosLojaStoreIdImpressaoRoute: typeof PedidosLojaStoreIdImpressaoRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -751,12 +752,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAgendamentosRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/pedidos-loja/$storeId/impressao': {
-      id: '/pedidos-loja/$storeId/impressao'
-      path: '/impressao'
+    '/pedidos-loja_/$storeId/impressao': {
+      id: '/pedidos-loja_/$storeId/impressao'
+      path: '/pedidos-loja/$storeId/impressao'
       fullPath: '/pedidos-loja/$storeId/impressao'
       preLoaderRoute: typeof PedidosLojaStoreIdImpressaoRouteImport
-      parentRoute: typeof PedidosLojaStoreIdRoute
+      parentRoute: typeof rootRouteImport
     }
     '/admin/loja/$storeId': {
       id: '/admin/loja/$storeId'
@@ -852,17 +853,6 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
-interface PedidosLojaStoreIdRouteChildren {
-  PedidosLojaStoreIdImpressaoRoute: typeof PedidosLojaStoreIdImpressaoRoute
-}
-
-const PedidosLojaStoreIdRouteChildren: PedidosLojaStoreIdRouteChildren = {
-  PedidosLojaStoreIdImpressaoRoute: PedidosLojaStoreIdImpressaoRoute,
-}
-
-const PedidosLojaStoreIdRouteWithChildren =
-  PedidosLojaStoreIdRoute._addFileChildren(PedidosLojaStoreIdRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
@@ -880,10 +870,21 @@ const rootRouteChildren: RootRouteChildren = {
   SacolaRoute: SacolaRoute,
   CategoriaSlugRoute: CategoriaSlugRoute,
   LojaSlugRoute: LojaSlugRoute,
-  PedidosLojaStoreIdRoute: PedidosLojaStoreIdRouteWithChildren,
+  PedidosLojaStoreIdRoute: PedidosLojaStoreIdRoute,
   ProdutoIdRoute: ProdutoIdRoute,
   VitrineSlugRoute: VitrineSlugRoute,
+  PedidosLojaStoreIdImpressaoRoute: PedidosLojaStoreIdImpressaoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
