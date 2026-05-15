@@ -1,73 +1,71 @@
+# Gerar o certificado QZ Tray automaticamente (sem PowerShell, sem site externo)
 
-# Configurar QZ Tray com assinatura via backend
+## A ideia
 
-Objetivo: eliminar de vez o prompt "Allow / Remember this decision" do QZ Tray, fazendo o site assinar cada pedido de impressão com um certificado digital. Resultado: impressão 100% silenciosa, sem nenhum diálogo.
+Em vez de você gerar o certificado no Windows, **eu crio um endpoint temporário** no próprio backend do app que:
+1. Gera o par de chaves RSA 2048 + certificado auto-assinado válido por 10 anos
+2. Salva a chave privada automaticamente como secret `QZ_PRIVATE_KEY`
+3. Salva o certificado público automaticamente em `src/lib/qz-certificate.ts`
+4. Te devolve **apenas o arquivo `override.crt`** pra você baixar
 
-## Como vai funcionar
+Você só precisa:
+- Clicar num botão "Gerar certificado QZ" (vou colocar uma página `/admin/qz-setup` temporária)
+- Baixar o `override.crt`
+- Copiar pra pasta do QZ Tray em cada PC da loja
+- Reiniciar o QZ Tray
 
-```text
-┌─────────┐   1. pede assinatura    ┌──────────────┐
-│ Site    │ ──────────────────────► │ Backend      │
-│ (QZ.js) │ ◄────────────────────── │ (chave priv.)│
-└────┬────┘   2. devolve assinatura └──────────────┘
-     │
-     │ 3. envia pra impressora COM assinatura
-     ▼
-┌──────────┐
-│ QZ Tray  │ → reconhece certificado confiável → imprime sem prompt
-└──────────┘
-```
-
-A chave privada **nunca** sai do servidor. O navegador só pede ao backend para assinar cada requisição.
+Pronto. Sem PowerShell, sem site externo, sem copiar/colar chave.
 
 ## Passo a passo do que vou fazer
 
-### Etapa 1 — Você gera o certificado (uma vez, no seu Windows)
+### 1. Criar a página `/admin/qz-setup`
+Página simples com um botão "Gerar certificado". Só admin acessa.
 
-Vou te entregar um **comando único de PowerShell** para rodar no seu PC. Ele:
-- Gera `private-key.pem` (chave privada — você vai me passar via secret seguro)
-- Gera `digital-certificate.txt` (certificado público — vai no código)
-- Gera `override.crt` (vai no QZ Tray de cada PC da loja)
+### 2. Criar o server function `generateQzCertificate`
+Usa o módulo `crypto` nativo do Node pra:
+- Gerar par RSA 2048
+- Criar certificado X.509 auto-assinado (CN: "QZ Tray Cert", validade 10 anos)
+- Retornar 3 strings: `privateKey`, `publicCert`, `overrideCrt` (no formato que o QZ Tray espera)
 
-Tempo: ~30 segundos.
+### 3. Salvar automaticamente os artefatos
+- Chave privada → secret `QZ_PRIVATE_KEY` (via API de secrets do projeto)
+- Certificado público → escreve em `src/lib/qz-certificate.ts`
+- `override.crt` → disponibiliza pra download direto no navegador
 
-### Etapa 2 — Configuração no projeto (eu faço)
+### 4. Configuração final do PC da loja (uma vez por PC)
+Te mando passo a passo curto com prints/caminhos:
+- Onde fica a pasta do QZ Tray no Windows (`C:\Program Files\QZ Tray\`)
+- Onde colocar o `override.crt`
+- Como reiniciar o serviço
 
-1. Crio um **server function** `signQzRequest` (`src/lib/qz-sign.functions.ts`) que recebe um payload do QZ e devolve a assinatura SHA512withRSA usando a chave privada armazenada como secret `QZ_PRIVATE_KEY`.
-2. Adiciono o certificado público em `src/lib/qz-certificate.ts` (constante exportada — pode ficar no código, é público).
-3. Atualizo `src/lib/qz-printer.ts` para registrar:
-   - `qz.security.setCertificatePromise` → retorna o certificado público
-   - `qz.security.setSignaturePromise` → chama o server function pra assinar
-4. Peço o secret `QZ_PRIVATE_KEY` via `add_secret` (você cola o conteúdo do `private-key.pem`).
+## O que muda em relação ao plano anterior
 
-### Etapa 3 — Você configura cada PC da loja (uma vez por máquina)
-
-Te entrego um passo a passo curto:
-1. Copiar `override.crt` para a pasta de instalação do QZ Tray.
-2. Reiniciar o QZ Tray.
-3. Pronto — abre o painel, clica imprimir, **nunca mais aparece prompt**.
+| Antes | Agora |
+|-------|-------|
+| Você roda PowerShell | Eu gero tudo no backend |
+| Você cola chave privada manualmente no formulário de secret | Salvo automaticamente |
+| Você edita `qz-certificate.ts` | Salvo automaticamente |
+| Você só baixa `override.crt` |  Igual |
 
 ## Detalhes técnicos
 
-**Arquivos novos:**
-- `src/lib/qz-sign.functions.ts` — server function que assina com `crypto.createSign('SHA512')`
-- `src/lib/qz-certificate.ts` — exporta o certificado público como string
+**Novo:**
+- `src/lib/qz-cert-generator.functions.ts` — server function que gera o par usando `crypto.generateKeyPairSync('rsa', { modulusLength: 2048 })` + monta certificado X.509 com `node-forge` (lib pure-JS, compatível com Cloudflare Workers)
+- `src/routes/admin.qz-setup.tsx` — página admin com botão "Gerar" e link de download do `override.crt`
 
-**Arquivos editados:**
-- `src/lib/qz-printer.ts` — registra `setCertificatePromise` e `setSignaturePromise` antes de `qz.websocket.connect()`
+**Dependência nova:**
+- `node-forge` — necessário porque o módulo `crypto` nativo do Node não cria certificados X.509, só chaves. `node-forge` é pure-JS e funciona no runtime do Cloudflare Workers.
 
-**Secret novo:**
-- `QZ_PRIVATE_KEY` — conteúdo do `private-key.pem` (PEM com `-----BEGIN PRIVATE KEY-----`)
+**Mantido do plano anterior:**
+- `src/lib/qz-sign.functions.ts` (assinatura SHA512withRSA)
+- `src/lib/qz-printer.ts` (registra `setCertificatePromise` + `setSignaturePromise`)
+- `src/lib/qz-certificate.ts` (mas agora preenchido automaticamente)
 
-**Algoritmo de assinatura:** SHA512withRSA (padrão do QZ Tray 2.1+).
+## Resultado final
 
-**Compatibilidade:** funciona com a versão atual do QZ Tray que você já instalou. Não precisa reinstalar nada.
+1. Você abre `/admin/qz-setup`, clica "Gerar"
+2. Baixa `override.crt`
+3. Copia pra pasta do QZ Tray de cada PC da loja
+4. Imprime sem nenhum prompt — pra sempre
 
-## O que você precisa fazer depois que eu implementar
-
-1. Rodar o comando PowerShell que vou mandar (gera os 3 arquivos).
-2. Colar o conteúdo do `private-key.pem` no formulário de secret.
-3. Copiar o `override.crt` pra pasta do QZ Tray e reiniciar o serviço.
-4. Testar — deve imprimir silencioso na primeira tentativa.
-
-Se aprovar o plano, vou implementar e em seguida te passar o comando exato do PowerShell pra você rodar.
+Se aprovar, eu implemento e te mando o link da página `/admin/qz-setup` pra você clicar.
