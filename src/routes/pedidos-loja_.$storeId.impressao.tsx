@@ -47,7 +47,7 @@ function savePrinted(storeId: string, ids: Set<string>) {
   }
 }
 
-export const Route = createFileRoute("/pedidos-loja/$storeId/impressao")({
+export const Route = createFileRoute("/pedidos-loja_/$storeId/impressao")({
   component: AutoPrintPage,
 });
 
