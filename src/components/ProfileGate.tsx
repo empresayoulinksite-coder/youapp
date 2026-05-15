@@ -7,6 +7,13 @@ import youlinkLogo from "@/assets/youlink-splash.png";
 // Rotas onde NÃO devemos forçar o redirect
 const ALLOWED_INCOMPLETE = ["/completar-cadastro", "/auth"];
 
+function isAllowedIncompletePath(pathname: string) {
+  return (
+    ALLOWED_INCOMPLETE.includes(pathname) ||
+    /^\/pedidos-loja\/[^/]+\/impressao$/.test(pathname)
+  );
+}
+
 // Cache em memória por sessão: evita refetch a cada navegação
 const completedCache = new Map<string, boolean>();
 
@@ -22,7 +29,7 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
       setChecked(true);
       return;
     }
-    if (ALLOWED_INCOMPLETE.includes(location.pathname)) {
+    if (isAllowedIncompletePath(location.pathname)) {
       setChecked(true);
       return;
     }
@@ -57,7 +64,7 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
     };
   }, [user, loading, location.pathname, navigate]);
 
-  if (loading || (!checked && user && !ALLOWED_INCOMPLETE.includes(location.pathname))) {
+  if (loading || (!checked && user && !isAllowedIncompletePath(location.pathname))) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30">
         <div className="flex flex-col items-center gap-6 animate-in fade-in duration-500">
