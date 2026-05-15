@@ -1,36 +1,46 @@
-## Objetivo
-Adicionar, para cada loja na página `/admin/impressao-automatica`, um botão **"Baixar .bat"** que gera e baixa um arquivo pronto que abre o Chrome no modo correto de impressão automática — sem o usuário precisar criar atalho manualmente.
+## Diagnóstico
 
-## O que muda
+Verifiquei os logs de autenticação da Lovable Cloud na última hora e **nenhuma chamada para `/recover` foi registrada**. Isso indica que a requisição da extensão nem chegou ao servidor — ou porque a extensão instalada ainda é a versão antiga (sem o botão funcional), ou porque o formato do body está incorreto.
 
-**Arquivo:** `src/routes/admin.impressao-automatica.tsx`
+Encontrei **2 problemas** no código atual:
 
-1. Adicionar função `buildBatFile(origin, storeId, storeName)` que retorna o conteúdo de um `.bat` assim:
-   ```bat
-   @echo off
-   REM Impressao automatica - <nome da loja>
-   REM Fecha Chromes abertos no perfil de impressao (opcional, evita conflito)
-   start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" ^
-     --user-data-dir="C:\YouappPrint" ^
-     --kiosk-printing ^
-     --kiosk ^
-     --no-first-run ^
-     --no-default-browser-check ^
-     "<origin>/pedidos-loja/<storeId>/impressao"
+### Problema 1 — Formato errado do body
+Em `extension/background.js`, a chamada está assim:
+```js
+body: JSON.stringify({ email, options: { redirectTo } })
+```
+A API REST do GoTrue (Supabase Auth) **não aceita** `options.redirectTo` — esse formato é só do SDK JS. A API espera `redirect_to` como **query param** na URL:
+```
+POST /auth/v1/recover?redirect_to=<url>
+{ "email": "..." }
+```
+Sem isso, mesmo se a request chegasse, o redirect cairia no padrão (raiz do site) e perderia o `#type=recovery`.
+
+### Problema 2 — A extensão instalada está desatualizada
+O usuário instalou o `.zip` antes de termos adicionado o botão "definir uma senha" funcionar. O `popup.html` mostra o botão, mas o `background.js` velho não tem o handler `forgotPassword` — então o `sendResponse` nunca volta `{ok:true}` e nada é enviado. (Isso explica por que não há nenhum log no servidor.)
+
+## Plano de correção
+
+1. **Corrigir `extension/background.js`** — mover `redirect_to` para query string e remover `options`:
+   ```js
+   const url = `${AUTH_URL}/recover?redirect_to=${encodeURIComponent(msg.redirectTo)}`;
+   const res = await fetch(url, {
+     method: "POST",
+     headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY },
+     body: JSON.stringify({ email: msg.email }),
+   });
    ```
-   Com fallback para `C:\Program Files (x86)\...` caso o primeiro caminho não exista.
 
-2. Adicionar componente `DownloadBatButton` que cria um `Blob` (`type: "application/bat"`), gera URL com `URL.createObjectURL`, dispara download via `<a download="Imprimir-<slug>.bat">` e revoga a URL.
+2. **Reempacotar `public/youapp-print.zip`** com a nova versão do `background.js`.
 
-3. Em cada card de loja, adicionar o botão **"Baixar .bat"** ao lado dos botões "Copiar comando" e "Abrir no navegador".
+3. **Instruir o usuário** a:
+   - Baixar o `.zip` atualizado novamente em Admin → Impressão Automática
+   - Em `chrome://extensions`, clicar no botão **"Recarregar"** (🔄) da extensão YouApp Print **OU** remover e instalar de novo a partir da pasta extraída
+   - Abrir o popup, digitar o email, clicar em "definir uma senha"
+   - Verificar a caixa de entrada (e a pasta de **spam**) do Gmail
 
-4. Atualizar o Passo 2 para: **"Baixe o arquivo .bat da sua loja, salve na área de trabalho e dê dois cliques. Pronto."** Manter o "Copiar comando" como alternativa avançada para quem prefere criar o atalho manual.
+4. **Validação** — depois que o usuário tentar de novo, eu consulto os logs de auth para confirmar que a chamada `/recover` chegou com status 200.
 
-## Detalhes técnicos
-- Conteúdo do `.bat` é gerado 100% no cliente (sem backend).
-- Nome do arquivo: `Imprimir-<store-name-slugificado>.bat`.
-- O `.bat` testa os dois caminhos padrão do Chrome (`Program Files` e `Program Files (x86)`) com `if exist`, e mostra um aviso amigável caso o Chrome não seja encontrado.
-- Mantém todo o resto da página (instruções, FAQ, alertas) como está.
+## Observação (opcional, para depois)
 
-## Resultado esperado
-O usuário entra em `/admin/impressao-automatica`, clica em "Baixar .bat" da loja, salva o arquivo e dá dois cliques — o Chrome abre direto em modo quiosque na página de impressão automática, sem precisar criar atalho manual nem editar parâmetros.
+Se o email continuar não chegando mesmo após a correção, pode ser que o template de "Reset Password" da Cloud esteja desabilitado ou que o domínio de envio não esteja configurado. Nesse caso, o próximo passo seria configurar um domínio de envio em **Cloud → Emails** para garantir entregabilidade. Mas vamos tentar a correção acima primeiro — em 90% dos casos resolve.

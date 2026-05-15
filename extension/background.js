@@ -283,13 +283,11 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         return;
       }
       if (msg.type === "forgotPassword") {
-        const res = await fetch(`${AUTH_URL}/recover`, {
+        const url = `${AUTH_URL}/recover?redirect_to=${encodeURIComponent(msg.redirectTo)}`;
+        const res = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY },
-          body: JSON.stringify({
-            email: msg.email,
-            options: { redirectTo: msg.redirectTo },
-          }),
+          body: JSON.stringify({ email: msg.email }),
         });
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
