@@ -26,6 +26,23 @@ type OrderRow = {
 const PRINTED_KEY_PREFIX = "auto-print:printed:";
 const TTL_MS = 24 * 60 * 60 * 1000;
 
+type ElectronPrintResult = boolean | { success?: boolean; error?: string } | void;
+type ElectronPrintBridge = {
+  print: (html: string) => Promise<ElectronPrintResult> | ElectronPrintResult;
+};
+
+function getElectronPrintBridge(): ElectronPrintBridge | null {
+  if (typeof window === "undefined") return null;
+  const bridge = (window as unknown as { electronPrint?: Partial<ElectronPrintBridge> }).electronPrint;
+  return typeof bridge?.print === "function" ? (bridge as ElectronPrintBridge) : null;
+}
+
+function wasElectronPrintSuccessful(result: ElectronPrintResult) {
+  if (result === false) return false;
+  if (result && typeof result === "object" && "success" in result) return result.success !== false;
+  return true;
+}
+
 function loadPrinted(storeId: string): Set<string> {
   try {
     const raw = localStorage.getItem(PRINTED_KEY_PREFIX + storeId);
@@ -84,14 +101,13 @@ function AutoPrintPage() {
   const [count, setCount] = useState(0);
   const [busy, setBusy] = useState(false);
   const [electronReady, setElectronReady] = useState(false);
+  const [printError, setPrintError] = useState<string | null>(null);
   const printedRef = useRef<Set<string>>(new Set());
   const queueRef = useRef<string[]>([]);
   const processingRef = useRef(false);
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
   useEffect(() => {
-    const w = window as unknown as { electronPrint?: { print: unknown } };
-    setElectronReady(!!w.electronPrint?.print);
+    setElectronReady(!!getElectronPrintBridge());
   }, []);
 
   // Load store info + previously printed
@@ -111,10 +127,10 @@ function AutoPrintPage() {
       });
   }, [storeId]);
 
-  // Print one order via hidden iframe
+  // Print one order via Electron silent bridge
   async function printOrder(orderId: string) {
-    if (!iframeRef.current) return;
     setBusy(true);
+    setPrintError(null);
 
     // Fetch order + items + customer
     const { data: order } = await supabase
@@ -169,51 +185,33 @@ function AutoPrintPage() {
       profile ? { display_name: profile.display_name, phone: profile.phone } : null,
     );
 
-    // Strip the auto window.print() / close from the template (we'll trigger here)
+    // Remove any embedded script so Electron receives only the receipt markup.
     const cleanHtml = html.replace(
       /<script>[\s\S]*?<\/script>/g,
       "",
     );
 
-    // Electron silent printing (no dialog)
-    const electronPrint = (window as unknown as {
-      electronPrint?: { print: (html: string) => Promise<{ success: boolean; error?: string }> };
-    }).electronPrint;
-    if (electronPrint?.print) {
-      try {
-        const res = await electronPrint.print(cleanHtml);
-        if (res?.success) {
-          printedRef.current.add(orderId);
-          savePrinted(storeId, printedRef.current);
-          setLastPrinted({ number: o.order_number, at: new Date() });
-          setCount(printedRef.current.size);
-          setBusy(false);
-          return;
-        }
-        console.error("Electron silent print failed:", res?.error);
-      } catch (e) {
-        console.error("Electron print bridge error:", e);
-      }
-      // fall through to iframe fallback
+    const electronPrint = getElectronPrintBridge();
+    if (!electronPrint) {
+      setElectronReady(false);
+      setPrintError("Abra esta tela pelo app Electron para imprimir automaticamente sem popup.");
+      setBusy(false);
+      return;
     }
 
-    const iframe = iframeRef.current;
-    await new Promise<void>((resolve) => {
-      const onLoad = () => {
-        iframe.removeEventListener("load", onLoad);
-        try {
-          iframe.contentWindow?.focus();
-          iframe.contentWindow?.print();
-        } catch (e) {
-          console.error("print error", e);
-        }
-        // Give the print dialog/kiosk a moment to dispatch
-        setTimeout(resolve, 1500);
-      };
-      iframe.addEventListener("load", onLoad);
-      // Use srcdoc for clean reload
-      iframe.srcdoc = cleanHtml;
-    });
+    try {
+      const res = await electronPrint.print(cleanHtml);
+      if (!wasElectronPrintSuccessful(res)) {
+        const error = typeof res === "object" && res?.error ? res.error : "Falha na impressão silenciosa.";
+        throw new Error(error);
+      }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Falha na comunicação com o Electron.";
+      console.error("Electron silent print failed:", e);
+      setPrintError(message);
+      setBusy(false);
+      return;
+    }
 
     printedRef.current.add(orderId);
     savePrinted(storeId, printedRef.current);
