@@ -1,62 +1,25 @@
-## Objetivo
+Vou ajustar o frontend para que todos os fluxos automáticos de impressão de pedidos usem exclusivamente `window.electronPrint.print(html)`.
 
-Quando a loja está com **"aceitar pedidos automaticamente"** ligado, o pedido já nasce como `em_producao`. Quero que, ao mesmo tempo, o **app Electron imprima o cupom automaticamente na impressora padrão, sem mostrar a caixa de diálogo "Imprimir"**.
+Plano:
 
-Hoje a página `/pedidos-loja/{id}/impressao` já detecta pedidos novos e auto-aceitos, mas usa `iframe.print()`, que no navegador comum abre o diálogo. No Electron, dá pra imprimir silencioso via `webContents.print({ silent: true })`.
+1. Centralizar a regra no helper de impressão
+   - Manter `browserPrintHTML(html, { silent: true })` como caminho obrigatório de impressão silenciosa.
+   - Garantir que, quando `silent: true`, nunca exista fallback para `window.open()`, `window.print()` ou impressão do navegador.
+   - Deixar o fallback com `window.print()` disponível apenas para impressão manual fora do Electron, se necessário.
 
-## Como vai funcionar
+2. Corrigir o auto-print do painel de pedidos
+   - Revisar o fluxo que imprime quando o pedido muda para `em_producao`.
+   - Forçar esse fluxo a chamar somente o caminho silencioso Electron.
+   - Evitar qualquer impressão por conexão/fallback do navegador quando a ação for automática.
 
-1. O app Electron expõe `window.electronPrint` para a página web via `preload.js`.
-2. A página de impressão detecta:
-   - **Electron presente** → manda o HTML do cupom e o Electron imprime silenciosamente na impressora padrão do Windows.
-   - **Navegador comum** → mantém o fluxo atual (iframe + diálogo).
-3. A lógica de auto-aceite + fila de impressão já existente continua igual — só troca o "como" imprimir.
+3. Corrigir a página `/pedidos-loja/{storeId}/impressao`
+   - Garantir que realtime, polling e catch-up chamem apenas `window.electronPrint.print(html)`.
+   - Se o Electron não estiver disponível, registrar erro e não abrir popup.
 
-## Mudanças no projeto Lovable (o que eu vou alterar)
+4. Remover/neutralizar textos e instruções antigas que indicam Chrome quiosque como caminho de impressão automática principal
+   - Atualizar a orientação da tela para refletir o app Electron como fluxo correto.
+   - Não mexer na extensão/manual de QR code, exceto se estiver dentro do fluxo automático de pedidos.
 
-**`src/routes/pedidos-loja_.$storeId.impressao.tsx`**
-- Adicionar helper `printViaElectron(html): Promise<boolean>`.
-- No `printOrder`, antes do iframe, tentar Electron primeiro; só cair no iframe se não estiver no Electron.
-- Adicionar badge no topo: "🖨️ Modo Electron — impressão silenciosa ativa" quando detectado, ajuda você a confirmar que está funcionando.
-- Garantir que a página continue funcionando 100% no navegador (PDV/web).
-
-## Arquivos que você cola no SEU projeto Electron
-
-Não dá pra eu mexer no seu projeto Electron daqui, então no chat eu vou te entregar prontos:
-
-**`preload.js`** (novo arquivo)
-```js
-const { contextBridge, ipcRenderer } = require('electron');
-contextBridge.exposeInMainWorld('electronPrint', {
-  print: (html) => ipcRenderer.invoke('silent-print', html),
-});
-```
-
-**Ajustes no `main.js` / `main.cjs`** do seu Electron:
-- `BrowserWindow` carregando `https://youapp.lovable.app` com:
-  ```js
-  webPreferences: {
-    preload: path.join(__dirname, 'preload.js'),
-    contextIsolation: true,
-  }
-  ```
-- Handler IPC `silent-print` que:
-  1. Cria um `BrowserWindow` oculto (`show: false`).
-  2. Carrega o HTML do cupom (`loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html))`).
-  3. Chama `win.webContents.print({ silent: true, printBackground: true, margins: { marginType: 'none' } }, cb)` na impressora padrão.
-  4. Fecha a janela após imprimir.
-
-Você cola, rebuilda o `.exe` e está pronto.
-
-## Pontos técnicos
-
-- Detecção: `typeof window !== 'undefined' && !!window.electronPrint`.
-- `silent: true` usa a impressora marcada como **padrão** no Windows — então basta o usuário marcar a térmica como padrão uma vez.
-- A extensão Chrome continua existindo para quem não usa o Electron — não vou tocar nela.
-- O fluxo de auto-aceite no banco (`apply_auto_accept_on_order`) já funciona; o pedido entra como `em_producao` e a página de impressão já enfileira via realtime + polling.
-
-## Fora do escopo
-
-- Não vou empacotar Electron nem mexer na extensão Chrome.
-- Não vou alterar a regra de auto-aceite (já funciona).
-- Seleção de impressora dentro do app (fica pra depois se quiser).
+5. Validar por busca no código
+   - Confirmar que não sobrou `window.print()` em nenhum fluxo automático de pedidos.
+   - Qualquer `window.print()` restante deve estar limitado a fluxos manuais ou arquivos da extensão, não ao auto-print de pedidos.
