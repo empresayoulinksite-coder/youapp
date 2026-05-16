@@ -321,21 +321,14 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
     const customer = getCustomerInfo(order, profilesMap[order.user_id]) ?? null;
     const storeInfo = { name: store.name, whatsapp: store.whatsapp };
     try {
-      // Auto-print (silent) SEMPRE via Electron — nunca usar conexão direta
-      // (Bluetooth/USB/Serial) nem fallback de navegador no fluxo automático.
-      if (opts.silent) {
-        const html = buildReceiptHTML(storeInfo, order, customer);
-        await browserPrintHTML(html, { silent: true });
-        return;
-      }
-
-      // Impressão manual: tenta conexão direta (térmica ESC/POS) primeiro,
-      // depois Electron, e por último o diálogo do navegador.
+      // Usa EXATAMENTE o mesmo fluxo do botão manual "Imprimir":
+      // conexão direta (ESC/POS) se houver, senão Electron (silent print)
+      // via browserPrintHTML. Auto-print e manual compartilham o mesmo caminho.
       const conn = getActiveConnection();
       if (conn) {
         const bytes = buildReceiptBytes(storeInfo, order, customer);
         await conn.write(bytes);
-        toast.success("Cupom enviado para impressora");
+        if (!opts.silent) toast.success("Cupom enviado para impressora");
       } else {
         const html = buildReceiptHTML(storeInfo, order, customer);
         await browserPrintHTML(html);
