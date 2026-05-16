@@ -18,6 +18,23 @@ export type PrinterPrefs = {
   deviceName: string | null;
 };
 
+type ElectronPrintResult = boolean | { success?: boolean; error?: string } | void;
+type ElectronPrintBridge = {
+  print: (html: string) => Promise<ElectronPrintResult> | ElectronPrintResult;
+};
+
+function getElectronPrintBridge(): ElectronPrintBridge | null {
+  if (typeof window === "undefined") return null;
+  const bridge = (window as unknown as { electronPrint?: Partial<ElectronPrintBridge> }).electronPrint;
+  return typeof bridge?.print === "function" ? (bridge as ElectronPrintBridge) : null;
+}
+
+function wasElectronPrintSuccessful(result: ElectronPrintResult) {
+  if (result === false) return false;
+  if (result && typeof result === "object" && "success" in result) return result.success !== false;
+  return true;
+}
+
 export function loadPrefs(storeId: string): PrinterPrefs {
   try {
     const raw = localStorage.getItem(PREF_KEY_PREFIX + storeId);
@@ -192,13 +209,23 @@ export async function connectSerial(): Promise<PrinterConnection> {
   return conn;
 }
 
-// Fallback: open a window with the receipt HTML and trigger print dialog.
-export function browserPrintHTML(html: string) {
+// Prefer Electron silent printing; fallback opens browser print UI only outside Electron.
+export async function browserPrintHTML(html: string) {
+  const electronPrint = getElectronPrintBridge();
+  if (electronPrint) {
+    const result = await electronPrint.print(html);
+    if (!wasElectronPrintSuccessful(result)) {
+      const error = typeof result === "object" && result?.error ? result.error : "Falha na impressão silenciosa";
+      throw new Error(error);
+    }
+    return;
+  }
+
   const w = window.open("", "_blank", "width=380,height=600");
   if (!w) {
     throw new Error("Permita pop-ups para imprimir");
   }
-  w.document.write(html);
+  w.document.write(`${html}<script>window.print();setTimeout(()=>window.close(),400);</script>`);
   w.document.close();
 }
 
