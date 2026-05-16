@@ -83,10 +83,16 @@ function AutoPrintPage() {
   const [lastPrinted, setLastPrinted] = useState<{ number: number | null; at: Date } | null>(null);
   const [count, setCount] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [electronReady, setElectronReady] = useState(false);
   const printedRef = useRef<Set<string>>(new Set());
   const queueRef = useRef<string[]>([]);
   const processingRef = useRef(false);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+
+  useEffect(() => {
+    const w = window as unknown as { electronPrint?: { print: unknown } };
+    setElectronReady(!!w.electronPrint?.print);
+  }, []);
 
   // Load store info + previously printed
   useEffect(() => {
@@ -168,6 +174,28 @@ function AutoPrintPage() {
       /<script>[\s\S]*?<\/script>/g,
       "",
     );
+
+    // Electron silent printing (no dialog)
+    const electronPrint = (window as unknown as {
+      electronPrint?: { print: (html: string) => Promise<{ success: boolean; error?: string }> };
+    }).electronPrint;
+    if (electronPrint?.print) {
+      try {
+        const res = await electronPrint.print(cleanHtml);
+        if (res?.success) {
+          printedRef.current.add(orderId);
+          savePrinted(storeId, printedRef.current);
+          setLastPrinted({ number: o.order_number, at: new Date() });
+          setCount(printedRef.current.size);
+          setBusy(false);
+          return;
+        }
+        console.error("Electron silent print failed:", res?.error);
+      } catch (e) {
+        console.error("Electron print bridge error:", e);
+      }
+      // fall through to iframe fallback
+    }
 
     const iframe = iframeRef.current;
     await new Promise<void>((resolve) => {
@@ -415,6 +443,12 @@ function AutoPrintPage() {
             <div className="mt-3 flex items-center justify-center gap-2 text-sm text-primary">
               <Loader2 className="h-4 w-4 animate-spin" />
               Imprimindo...
+            </div>
+          )}
+
+          {electronReady && (
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800 dark:bg-green-950/40 dark:text-green-300">
+              🖨️ Modo Electron · impressão silenciosa ativa
             </div>
           )}
         </div>
