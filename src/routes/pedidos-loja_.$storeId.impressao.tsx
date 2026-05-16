@@ -449,6 +449,12 @@ function AutoPrintPage() {
               🖨️ Modo Electron · impressão silenciosa ativa
             </div>
           )}
+
+          {printError && (
+            <div className="mt-3 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+              {printError}
+            </div>
+          )}
         </div>
 
         <div className="rounded-xl border bg-card p-4">
@@ -480,11 +486,7 @@ function AutoPrintPage() {
 
         <div className="rounded-xl border bg-amber-50 p-4 text-xs text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
           <strong>⚠️ Mantenha esta página aberta</strong> no computador conectado à impressora.
-          Para impressão sem mostrar o diálogo, abra o Chrome com a flag{" "}
-          <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/40">
-            --kiosk-printing
-          </code>
-          .{" "}
+          Para imprimir sem popup, abra pelo app Electron com a impressora térmica marcada como padrão no Windows. {" "}
           <Link
             to="/admin/impressao-automatica"
             className="underline underline-offset-2"
@@ -493,21 +495,6 @@ function AutoPrintPage() {
           </Link>
           .
         </div>
-
-        {/* Hidden iframe for printing */}
-        <iframe
-          ref={iframeRef}
-          title="print-frame"
-          style={{
-            position: "fixed",
-            right: 0,
-            bottom: 0,
-            width: 0,
-            height: 0,
-            border: 0,
-            visibility: "hidden",
-          }}
-        />
       </div>
     </div>
   );
