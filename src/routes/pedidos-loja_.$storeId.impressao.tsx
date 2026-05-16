@@ -169,6 +169,28 @@ function AutoPrintPage() {
       "",
     );
 
+    // Electron silent printing (no dialog)
+    const electronPrint = (window as unknown as {
+      electronPrint?: { print: (html: string) => Promise<{ success: boolean; error?: string }> };
+    }).electronPrint;
+    if (electronPrint?.print) {
+      try {
+        const res = await electronPrint.print(cleanHtml);
+        if (res?.success) {
+          printedRef.current.add(orderId);
+          savePrinted(storeId, printedRef.current);
+          setLastPrinted({ number: o.order_number, at: new Date() });
+          setCount(printedRef.current.size);
+          setBusy(false);
+          return;
+        }
+        console.error("Electron silent print failed:", res?.error);
+      } catch (e) {
+        console.error("Electron print bridge error:", e);
+      }
+      // fall through to iframe fallback
+    }
+
     const iframe = iframeRef.current;
     await new Promise<void>((resolve) => {
       const onLoad = () => {
