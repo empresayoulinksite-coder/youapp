@@ -329,10 +329,14 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
         if (!opts.silent) toast.success("Cupom enviado para impressora");
       } else {
         const html = buildReceiptHTML(storeInfo, order, customer);
-        await browserPrintHTML(html);
+        await browserPrintHTML(html, { silent: opts.silent });
       }
     } catch (e) {
-      toast.error(`Falha ao imprimir: ${(e as Error).message}`);
+      if (opts.silent) {
+        console.error("Auto-print failed:", e);
+      } else {
+        toast.error(`Falha ao imprimir: ${(e as Error).message}`);
+      }
     }
   }
 
