@@ -254,6 +254,5 @@ ${order.discount ? `<div class="row"><span>Desconto:</span><span>-${brl(order.di
 ${order.payment_method ? `<div style="margin-top:6px">Pagamento: ${order.payment_method}</div>` : ""}
 ${order.customer_notes ? `<hr><h2>Observações</h2><div>${order.customer_notes}</div>` : ""}
 <div class="center" style="margin-top:10px">Obrigado!</div>
-<script>window.print();setTimeout(()=>window.close(),400);</script>
 </body></html>`;
 }
