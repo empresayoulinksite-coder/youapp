@@ -83,10 +83,16 @@ function AutoPrintPage() {
   const [lastPrinted, setLastPrinted] = useState<{ number: number | null; at: Date } | null>(null);
   const [count, setCount] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [electronReady, setElectronReady] = useState(false);
   const printedRef = useRef<Set<string>>(new Set());
   const queueRef = useRef<string[]>([]);
   const processingRef = useRef(false);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+
+  useEffect(() => {
+    const w = window as unknown as { electronPrint?: { print: unknown } };
+    setElectronReady(!!w.electronPrint?.print);
+  }, []);
 
   // Load store info + previously printed
   useEffect(() => {
