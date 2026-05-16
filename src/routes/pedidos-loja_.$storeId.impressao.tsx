@@ -445,6 +445,12 @@ function AutoPrintPage() {
               Imprimindo...
             </div>
           )}
+
+          {electronReady && (
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800 dark:bg-green-950/40 dark:text-green-300">
+              🖨️ Modo Electron · impressão silenciosa ativa
+            </div>
+          )}
         </div>
 
         <div className="rounded-xl border bg-card p-4">
