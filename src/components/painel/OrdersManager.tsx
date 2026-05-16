@@ -329,7 +329,7 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
         if (!opts.silent) toast.success("Cupom enviado para impressora");
       } else {
         const html = buildReceiptHTML(storeInfo, order, customer);
-        browserPrintHTML(html);
+        await browserPrintHTML(html);
       }
     } catch (e) {
       toast.error(`Falha ao imprimir: ${(e as Error).message}`);
@@ -804,18 +804,15 @@ function OrderDetailDialog({
       <div><strong>Total: ${formatCurrency(order!.total)}</strong></div>
       <div>Pagamento: ${order!.payment_method ?? "—"}</div>
       ${order!.customer_notes ? `<hr><div><strong>Obs:</strong> ${order!.customer_notes}</div>` : ""}
-      <script>window.print();setTimeout(()=>window.close(),300);</script>
       </body></html>`;
   }
 
-  function handlePrint() {
-    const w = window.open("", "_blank", "width=380,height=600");
-    if (!w) {
-      toast.error("Permita pop-ups para imprimir");
-      return;
+  async function handlePrint() {
+    try {
+      await browserPrintHTML(buildPrintHTML());
+    } catch (e) {
+      toast.error(`Falha ao imprimir: ${(e as Error).message}`);
     }
-    w.document.write(buildPrintHTML());
-    w.document.close();
   }
 
   function handleWhatsapp() {
