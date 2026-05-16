@@ -209,8 +209,9 @@ export async function connectSerial(): Promise<PrinterConnection> {
   return conn;
 }
 
-// Prefer Electron silent printing; fallback opens browser print UI only outside Electron.
-export async function browserPrintHTML(html: string) {
+// Prefer Electron silent printing. When `silent` is true, never fall back to the
+// browser print dialog — auto-accepted orders must print silently or fail loudly.
+export async function browserPrintHTML(html: string, opts: { silent?: boolean } = {}) {
   const electronPrint = getElectronPrintBridge();
   if (electronPrint) {
     const result = await electronPrint.print(html);
@@ -219,6 +220,12 @@ export async function browserPrintHTML(html: string) {
       throw new Error(error);
     }
     return;
+  }
+
+  if (opts.silent) {
+    throw new Error(
+      "Impressão silenciosa indisponível: abra esta tela pelo app Electron com a impressora térmica como padrão do Windows.",
+    );
   }
 
   const w = window.open("", "_blank", "width=380,height=600");
