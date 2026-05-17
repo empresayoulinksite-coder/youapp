@@ -18,21 +18,43 @@ export type PrinterPrefs = {
   deviceName: string | null;
 };
 
-type ElectronPrintResult = boolean | { success?: boolean; error?: string } | void;
-type ElectronPrintBridge = {
-  print: (html: string) => Promise<ElectronPrintResult> | ElectronPrintResult;
+type LegacyPrintResult = boolean | { success?: boolean; error?: string } | void;
+type LegacyBridge = {
+  print: (html: string) => Promise<LegacyPrintResult> | LegacyPrintResult;
 };
 
-function getElectronPrintBridge(): ElectronPrintBridge | null {
+function getElectronAPI(): ElectronAPI | null {
   if (typeof window === "undefined") return null;
-  const bridge = (window as unknown as { electronPrint?: Partial<ElectronPrintBridge> }).electronPrint;
-  return typeof bridge?.print === "function" ? (bridge as ElectronPrintBridge) : null;
+  const api = window.electronAPI;
+  return api && typeof api.print === "function" ? api : null;
 }
 
-function wasElectronPrintSuccessful(result: ElectronPrintResult) {
+function getLegacyBridge(): LegacyBridge | null {
+  if (typeof window === "undefined") return null;
+  const bridge = (window as unknown as { electronPrint?: Partial<LegacyBridge> }).electronPrint;
+  return typeof bridge?.print === "function" ? (bridge as LegacyBridge) : null;
+}
+
+function wasLegacySuccessful(result: LegacyPrintResult) {
   if (result === false) return false;
   if (result && typeof result === "object" && "success" in result) return result.success !== false;
   return true;
+}
+
+export function hasElectronPrint(): boolean {
+  return getElectronAPI() !== null || getLegacyBridge() !== null;
+}
+
+export async function listElectronPrinters(): Promise<string[]> {
+  const api = getElectronAPI();
+  if (!api || typeof api.getPrinters !== "function") return [];
+  try {
+    const list = await api.getPrinters();
+    return Array.isArray(list) ? list.filter((p): p is string => typeof p === "string" && p.length > 0) : [];
+  } catch (e) {
+    console.error("listElectronPrinters failed:", e);
+    return [];
+  }
 }
 
 export function loadPrefs(storeId: string): PrinterPrefs {
