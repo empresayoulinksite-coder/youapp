@@ -1338,6 +1338,38 @@ function PrinterRoutingBlock({
     ...(printerSettings ?? {}),
   }));
 
+  const manualKey = `manual_printers_${storeId}`;
+  const [manualPrinters, setManualPrinters] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem(manualKey);
+      return raw ? (JSON.parse(raw) as string[]) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [manualName, setManualName] = useState("");
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(manualKey, JSON.stringify(manualPrinters));
+    } catch {}
+  }, [manualPrinters, manualKey]);
+
+  function addManualPrinter() {
+    const name = manualName.trim();
+    if (!name) {
+      toast.error("Digite o nome exato da impressora");
+      return;
+    }
+    setManualPrinters((prev) => (prev.includes(name) ? prev : [...prev, name]));
+    setManualName("");
+    toast.success(`Impressora "${name}" cadastrada`);
+  }
+
+  function removeManualPrinter(name: string) {
+    setManualPrinters((prev) => prev.filter((p) => p !== name));
+  }
+
   useEffect(() => {
     if (printerSettings) setForm({ ...printerSettings, store_id: storeId });
   }, [printerSettings, storeId]);
@@ -1362,7 +1394,7 @@ function PrinterRoutingBlock({
       setPrinters(list);
       if (list.length === 0) {
         if (hasElectronPrint()) {
-          toast.info("Nenhuma impressora encontrada no Windows. Verifique se há impressoras instaladas em Configurações → Bluetooth e dispositivos → Impressoras.");
+          toast.info("Nenhuma impressora foi detectada automaticamente. Se ela está instalada no Windows, cadastre pelo nome exato e teste a impressão.");
         } else {
           toast.info("Este app desktop está sem suporte nativo a impressoras. Instale a nova versão do app para liberar a detecção.");
         }
@@ -1423,12 +1455,12 @@ function PrinterRoutingBlock({
   }
 
   const printerOptions = useMemo(() => {
-    const all = new Set(printers);
+    const all = new Set<string>([...printers, ...manualPrinters]);
     [form.printer_orders, form.printer_kitchen, form.printer_drinks, form.printer_cashier]
       .filter((p): p is string => !!p)
       .forEach((p) => all.add(p));
     return Array.from(all);
-  }, [printers, form]);
+  }, [printers, manualPrinters, form]);
 
   const PrinterSelect = ({
     label,
@@ -1491,6 +1523,51 @@ function PrinterRoutingBlock({
           Este instalador ainda não tem suporte nativo a impressoras. Gere e instale a nova versão do app desktop para liberar a detecção.
         </p>
       )}
+
+      <div className="mb-3 rounded-md border bg-background p-2">
+        <Label className="text-xs font-semibold">Cadastrar impressora manualmente</Label>
+        <p className="mb-2 text-[11px] text-muted-foreground">
+          Use o nome <strong>exato</strong> que aparece no Windows em Configurações → Bluetooth e dispositivos → Impressoras e scanners.
+        </p>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={manualName}
+            onChange={(e) => setManualName(e.target.value)}
+            placeholder="Ex.: EPSON TM-T20X Receipt"
+            className="flex-1 rounded-md border bg-background px-2 py-1.5 text-sm"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addManualPrinter();
+              }
+            }}
+          />
+          <Button type="button" variant="outline" size="sm" onClick={addManualPrinter}>
+            Adicionar
+          </Button>
+        </div>
+        {manualPrinters.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {manualPrinters.map((p) => (
+              <span
+                key={p}
+                className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px]"
+              >
+                {p}
+                <button
+                  type="button"
+                  onClick={() => removeManualPrinter(p)}
+                  className="text-muted-foreground hover:text-destructive"
+                  aria-label={`Remover ${p}`}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className="mb-3 flex items-center gap-2">
         <Switch

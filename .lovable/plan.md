@@ -1,22 +1,32 @@
-## Plano
+Sim — podemos adicionar um botão de cadastro manual de impressora. Isso não força o Windows a listar a impressora, mas pode resolver quando a detecção falha, porque o Electron consegue imprimir usando o `deviceName` se o nome digitado for exatamente igual ao nome da impressora no Windows.
 
-1. **Adicionar o bridge real do Electron**
-   - Criar a estrutura `electron/` com `main.cjs` e `preload.cjs`.
-   - Expor `window.electronAPI.getPrinters()` no preload usando IPC seguro.
-   - No processo principal, buscar impressoras com `webContents.getPrintersAsync()` e retornar os nomes para a tela.
+Plano:
 
-2. **Adicionar impressão direcionada por impressora**
-   - Implementar `window.electronAPI.print({ html, printerName })` para imprimir silenciosamente na impressora selecionada.
-   - Manter compatibilidade com o formato que o app já usa hoje em `thermal-printer.ts`.
+1. **Adicionar botão “Cadastrar manualmente”**
+   - Dentro do bloco “Impressoras múltiplas”, ao lado de “Detectar”.
+   - Abrirá um campo para digitar o nome exato da impressora instalada no Windows.
 
-3. **Configurar o pacote desktop**
-   - Atualizar `package.json` para apontar o app Electron para `electron/main.cjs`.
-   - Ajustar `vite.config.ts` com `base: './'` para o `.EXE` carregar os arquivos corretamente quando empacotado.
+2. **Salvar impressoras manuais na lista da tela**
+   - A impressora cadastrada manualmente aparecerá nos selects de:
+     - Pedidos
+     - Cozinha
+     - Bebidas
+     - Caixa
+   - Assim você poderá selecionar mesmo que o botão “Detectar” não encontre nada.
 
-4. **Melhorar a mensagem da tela**
-   - Trocar “Abra pelo app desktop” por uma mensagem mais precisa quando o app desktop estiver sem bridge de impressão, por exemplo: “Este instalador ainda não tem suporte nativo a impressoras. Gere/instale a nova versão do app desktop.”
-   - Assim fica claro que o problema não é você ter aberto o navegador errado, mas sim o `.EXE` atual não estar expondo a API de impressoras.
+3. **Permitir testar a impressora cadastrada**
+   - O botão “Testar” continuará enviando uma impressão para o nome selecionado.
+   - Se o nome estiver correto, deve imprimir.
+   - Se estiver errado, o app mostrará erro de impressão.
 
-## Detalhes técnicos
+4. **Melhorar a mensagem de erro**
+   - Trocar a mensagem atual por algo mais útil:
+     - “Nenhuma impressora foi detectada automaticamente. Se ela está instalada no Windows, cadastre pelo nome exato e teste a impressão.”
 
-O código da tela já chama `window.electronAPI.getPrinters()`, mas o projeto não tem os arquivos do Electron/preload que criam essa API. Por isso, mesmo no `.EXE`, a tela não consegue listar as impressoras do Windows. A correção é implementar esse bridge nativo e depois gerar uma nova versão do desktop.
+5. **Manter a detecção automática**
+   - Não removeremos o botão “Detectar”.
+   - Ele continuará funcionando quando o Windows/Electron conseguir listar as impressoras.
+
+Detalhe importante:
+- O nome precisa ser exatamente o mesmo que aparece no Windows em **Configurações → Bluetooth e dispositivos → Impressoras e scanners**.
+- Exemplo: se no Windows aparece `EPSON TM-T20X Receipt`, precisa cadastrar exatamente esse texto.
