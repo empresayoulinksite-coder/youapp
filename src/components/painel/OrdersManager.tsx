@@ -58,9 +58,32 @@ import {
   hasSerial,
   getActiveConnection,
   browserPrintHTML,
+  listElectronPrinters,
+  hasElectronPrint,
   type PrinterPrefs,
 } from "@/lib/thermal-printer";
 import { buildReceiptBytes, buildReceiptHTML } from "@/lib/receipt-template";
+
+type PrinterSettings = {
+  store_id: string;
+  printer_orders: string | null;
+  printer_kitchen: string | null;
+  printer_drinks: string | null;
+  printer_cashier: string | null;
+  kitchen_category_ids: string[];
+  drinks_category_ids: string[];
+  auto_print: boolean;
+};
+
+const EMPTY_PRINTER_SETTINGS: Omit<PrinterSettings, "store_id"> = {
+  printer_orders: null,
+  printer_kitchen: null,
+  printer_drinks: null,
+  printer_cashier: null,
+  kitchen_category_ids: [],
+  drinks_category_ids: [],
+  auto_print: false,
+};
 
 type OrderStatus = "em_analise" | "em_producao" | "pronto" | "entregue" | "cancelado";
 
