@@ -298,6 +298,35 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
     },
   });
 
+  // Configuração de impressoras (múltiplas) da loja
+  const { data: printerSettings, refetch: refetchPrinterSettings } = useQuery({
+    queryKey: ["orders-manager-printers", storeId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("store_printer_settings" as never)
+        .select("*")
+        .eq("store_id", storeId)
+        .maybeSingle();
+      if (error && error.code !== "PGRST116") throw error;
+      const row = (data ?? null) as PrinterSettings | null;
+      return row ?? ({ store_id: storeId, ...EMPTY_PRINTER_SETTINGS } as PrinterSettings);
+    },
+  });
+
+  // Mapa menu_item_id -> category_id (para roteamento por categoria)
+  const { data: itemCategoryMap = {} } = useQuery({
+    queryKey: ["orders-manager-menu-cats", storeId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("menu_items")
+        .select("id, category_id")
+        .eq("store_id", storeId);
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      for (const it of data ?? []) map[it.id] = it.category_id;
+      return map;
+    },
+  });
   useEffect(() => {
     const channel = supabase
       .channel(`orders-${storeId}`)
