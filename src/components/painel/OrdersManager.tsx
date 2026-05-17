@@ -1109,7 +1109,7 @@ function SettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="flex max-h-[90vh] flex-col">
         <DialogHeader>
           <DialogTitle>Tempos de produção</DialogTitle>
           <DialogDescription>
@@ -1117,7 +1117,7 @@ function SettingsDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="-mr-2 flex-1 space-y-4 overflow-y-auto pr-2">
           <div>
             <Label className="mb-2 block text-sm font-semibold">Balcão (retirada)</Label>
             <div className="grid grid-cols-2 gap-2">
