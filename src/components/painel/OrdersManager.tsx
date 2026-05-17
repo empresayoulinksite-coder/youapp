@@ -264,7 +264,7 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
           `id, order_number, status, total, delivery_fee, discount, payment_method,
            delivery_address, delivery_type, customer_notes, store_id, user_id, created_at,
            accepted_at, ready_at, delivered_at, cancelled_at, table_number,
-           order_items(id, name, quantity, unit_price, notes, emoji, selected_size,
+           order_items(id, name, quantity, unit_price, notes, emoji, selected_size, menu_item_id,
              pizza_size_name, pizza_crust_name, pizza_flavors, pizza_addons, half_two_name)`,
         )
         .eq("store_id", storeId)
