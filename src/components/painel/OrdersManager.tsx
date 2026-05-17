@@ -454,7 +454,7 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
       next[o.id] = o.status;
       const prevStatus = prev[o.id];
       if (
-        printerPrefs.autoPrint &&
+        (printerSettings?.auto_print || printerPrefs.autoPrint) &&
         o.status === "em_producao" &&
         prevStatus !== "em_producao" &&
         !printedRef.current.has(o.id)
