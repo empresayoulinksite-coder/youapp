@@ -662,8 +662,11 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
         store={store ?? null}
+        storeId={storeId}
         printerPrefs={printerPrefs}
         onPrinterPrefsChange={updatePrinterPrefs}
+        printerSettings={printerSettings ?? null}
+        onPrinterSettingsSaved={() => refetchPrinterSettings()}
         onTestPrint={async () => {
           // Build a fake test order
           const testOrder: Order = {
