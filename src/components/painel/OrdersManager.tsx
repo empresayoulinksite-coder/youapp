@@ -464,7 +464,7 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
       }
     }
     lastStatusRef.current = next;
-  }, [orders, printerPrefs.autoPrint, store, profilesMap]);
+  }, [orders, printerPrefs.autoPrint, printerSettings, store, profilesMap]);
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: OrderStatus }) => {
