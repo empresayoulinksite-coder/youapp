@@ -100,6 +100,7 @@ type OrderItem = {
   pizza_flavors: unknown;
   pizza_addons: unknown;
   half_two_name: string | null;
+  menu_item_id?: string | null;
 };
 
 type Order = {
