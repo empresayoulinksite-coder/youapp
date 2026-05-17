@@ -1488,7 +1488,7 @@ function PrinterRoutingBlock({
 
       {!hasElectronPrint() && (
         <p className="mb-2 rounded-md bg-yellow-50 p-2 text-xs text-yellow-800">
-          Abra esta tela pelo app desktop (Electron) para detectar e selecionar impressoras do Windows.
+          Este instalador ainda não tem suporte nativo a impressoras. Gere e instale a nova versão do app desktop para liberar a detecção.
         </p>
       )}
 
