@@ -1,28 +1,27 @@
-## Sempre imprimir cupom completo na cozinha
+## Problema
 
-Adicionar um toggle no diálogo de "Tempos de produção" que força a impressora da cozinha a sempre imprimir o **cupom completo** do pedido — mesmo que nenhum item esteja nas categorias da cozinha.
+Quando você fez um pedido pelo PDV, ao voltar para a aba de Pedidos a impressora soltou **todos** os pedidos que já estavam "Em produção", não só o novo.
 
-### O que muda
+## Causa
 
-1. **Novo toggle** no bloco de impressoras múltiplas, logo abaixo do select "Cozinha":
-   - Label: **"Sempre imprimir cupom completo na cozinha"**
-   - Descrição: "Imprime o pedido inteiro na cozinha, ignorando as categorias selecionadas."
+No `OrdersManager.tsx`, o auto-print compara o status atual de cada pedido com o status anterior guardado em `lastStatusRef`. O problema:
 
-2. **Comportamento da impressão**:
-   - Toggle **desligado** (padrão): comportamento atual — só imprime na cozinha os itens cujas categorias estão marcadas.
-   - Toggle **ligado**: a cozinha sempre recebe o cupom completo, igual à via de Pedidos. Útil para usar Pedidos = via do cliente / Cozinha = via da produção, na mesma impressora ou em impressoras separadas.
+- `lastStatusRef.current` é inicializado como `{}` (vazio).
+- Quando o componente monta pela primeira vez (ex.: você estava no PDV e voltou para Pedidos), o "status anterior" de **todos** os pedidos é `undefined`.
+- A condição `o.status === "em_producao" && prevStatus !== "em_producao"` passa para todos os pedidos que já estavam em produção.
+- Resultado: imprime todos de uma vez.
 
-3. **Persistência**: salvo junto com as outras preferências de impressora (mesmo registro, mesma ação de salvar). Campo novo: `kitchen_always_full: boolean`, default `false`.
+## Correção
 
-4. **Pequena pausa entre jobs na mesma impressora** (300 ms): quando dois jobs consecutivos vão para a mesma `printerName` (caso de Pedidos + Cozinha na mesma EPSON), espera um pouco para o driver do Windows não agrupar os dois em um só job.
+Na primeira carga dos pedidos, **semear** `lastStatusRef` e `printedRef` com o estado atual, sem disparar impressão. Só pedidos que **transicionarem** depois disso devem imprimir.
 
-### Arquivos afetados
+### Mudanças em `src/components/painel/OrdersManager.tsx`
 
-- `src/components/painel/OrdersManager.tsx`
-  - Tipo `PrinterSettings`: adicionar `kitchen_always_full?: boolean`.
-  - Função `printOrder` (~linha 411): se `ps.printer_kitchen` existir e `kitchen_always_full` estiver ligado, criar o job de cozinha como `fullOrder: true` com todos os itens.
-  - Loop de jobs (~linha 436): adicionar `await sleep(300)` antes do próximo job quando a impressora é a mesma do job anterior.
-  - UI do diálogo de tempos de produção (~linha 1579+): adicionar o `Switch` novo abaixo do select da cozinha.
-  - `handleSave` (~linha 1422): incluir `kitchen_always_full` no payload salvo.
+1. Adicionar um `useRef<boolean>(false)` chamado `didSeedRef`.
+2. No `useEffect` de auto-print (linha ~462):
+   - Se `didSeedRef.current === false`: preencher `lastStatusRef.current` com o status atual de cada pedido, adicionar todos os pedidos `em_producao` em `printedRef` (para nunca imprimi-los), marcar `didSeedRef.current = true` e sair sem imprimir.
+   - Nas execuções seguintes: lógica atual (imprimir só transições novas para `em_producao`).
 
-Nenhuma migração de banco necessária — o campo entra no mesmo objeto JSON de preferências já persistido.
+Isso garante que o auto-print só dispare para pedidos que **realmente mudaram** de status enquanto a aba está aberta — exatamente o novo pedido criado no PDV.
+
+Sem migração, sem mudança de UI, sem efeito colateral no fluxo de pedido manual (esse continua chamando `printOrder` direto via `updateStatus` + handler).
