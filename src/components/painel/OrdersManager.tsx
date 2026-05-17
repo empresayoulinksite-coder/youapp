@@ -1326,3 +1326,261 @@ function PrinterSettingsBlock({
     </div>
   );
 }
+
+function PrinterRoutingBlock({
+  storeId,
+  printerSettings,
+  onSaved,
+}: {
+  storeId: string;
+  printerSettings: PrinterSettings | null;
+  onSaved: () => void;
+}) {
+  const [printers, setPrinters] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState<PrinterSettings>(() => ({
+    store_id: storeId,
+    ...EMPTY_PRINTER_SETTINGS,
+    ...(printerSettings ?? {}),
+  }));
+
+  useEffect(() => {
+    if (printerSettings) setForm({ ...printerSettings, store_id: storeId });
+  }, [printerSettings, storeId]);
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["orders-manager-menu-categories", storeId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("menu_categories")
+        .select("id, name")
+        .eq("store_id", storeId)
+        .order("position");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  async function detect() {
+    setLoading(true);
+    try {
+      const list = await listElectronPrinters();
+      setPrinters(list);
+      if (list.length === 0) {
+        toast.info("Nenhuma impressora detectada. Abra pelo app desktop.");
+      } else {
+        toast.success(`${list.length} impressora(s) encontrada(s)`);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (hasElectronPrint()) void detect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function save() {
+    setSaving(true);
+    const payload = {
+      store_id: storeId,
+      printer_orders: form.printer_orders || null,
+      printer_kitchen: form.printer_kitchen || null,
+      printer_drinks: form.printer_drinks || null,
+      printer_cashier: form.printer_cashier || null,
+      kitchen_category_ids: form.kitchen_category_ids ?? [],
+      drinks_category_ids: form.drinks_category_ids ?? [],
+      auto_print: !!form.auto_print,
+    };
+    const { error } = await supabase
+      .from("store_printer_settings" as never)
+      .upsert(payload as never, { onConflict: "store_id" });
+    setSaving(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Impressoras salvas");
+    onSaved();
+  }
+
+  async function testPrint(printerName: string | null, label: string) {
+    if (!printerName) {
+      toast.error("Selecione uma impressora primeiro");
+      return;
+    }
+    try {
+      const html = `<!doctype html><html><body style="font-family:monospace;padding:8px">
+        <h3>Teste de impressão</h3>
+        <p>${label}</p>
+        <p>Impressora: ${printerName}</p>
+        <p>${new Date().toLocaleString("pt-BR")}</p>
+      </body></html>`;
+      await browserPrintHTML(html, { printerName, silent: true });
+      toast.success(`Teste enviado para ${label}`);
+    } catch (e) {
+      toast.error(`Falha: ${(e as Error).message}`);
+    }
+  }
+
+  const printerOptions = useMemo(() => {
+    const all = new Set(printers);
+    [form.printer_orders, form.printer_kitchen, form.printer_drinks, form.printer_cashier]
+      .filter((p): p is string => !!p)
+      .forEach((p) => all.add(p));
+    return Array.from(all);
+  }, [printers, form]);
+
+  const PrinterSelect = ({
+    label,
+    value,
+    onChange,
+  }: {
+    label: string;
+    value: string | null;
+    onChange: (v: string | null) => void;
+  }) => (
+    <div className="flex flex-col gap-1">
+      <Label className="text-xs">{label}</Label>
+      <div className="flex gap-2">
+        <select
+          className="flex-1 rounded-md border bg-background px-2 py-1.5 text-sm"
+          value={value ?? ""}
+          onChange={(e) => onChange(e.target.value || null)}
+        >
+          <option value="">— Não usar —</option>
+          {printerOptions.map((p) => (
+            <option key={p} value={p}>{p}</option>
+          ))}
+        </select>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => testPrint(value, label)}
+        >
+          Testar
+        </Button>
+      </div>
+    </div>
+  );
+
+  function toggleCat(field: "kitchen_category_ids" | "drinks_category_ids", id: string) {
+    setForm((f) => {
+      const set = new Set(f[field] ?? []);
+      if (set.has(id)) set.delete(id);
+      else set.add(id);
+      return { ...f, [field]: Array.from(set) };
+    });
+  }
+
+  return (
+    <div className="rounded-lg border bg-muted/30 p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Printer className="h-4 w-4" />
+          <Label className="text-sm font-semibold">Impressoras múltiplas (Electron)</Label>
+        </div>
+        <Button variant="outline" size="sm" onClick={detect} disabled={loading}>
+          {loading && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+          Detectar
+        </Button>
+      </div>
+
+      {!hasElectronPrint() && (
+        <p className="mb-2 rounded-md bg-yellow-50 p-2 text-xs text-yellow-800">
+          Abra esta tela pelo app desktop (Electron) para detectar e selecionar impressoras do Windows.
+        </p>
+      )}
+
+      <div className="mb-3 flex items-center gap-2">
+        <Switch
+          id="auto-print-db"
+          checked={!!form.auto_print}
+          onCheckedChange={(v) => setForm((f) => ({ ...f, auto_print: v }))}
+        />
+        <Label htmlFor="auto-print-db" className="text-xs">
+          Imprimir automaticamente ao aceitar pedido
+        </Label>
+      </div>
+
+      <div className="grid gap-2">
+        <PrinterSelect
+          label="Pedidos (cupom completo)"
+          value={form.printer_orders}
+          onChange={(v) => setForm((f) => ({ ...f, printer_orders: v }))}
+        />
+        <PrinterSelect
+          label="Cozinha"
+          value={form.printer_kitchen}
+          onChange={(v) => setForm((f) => ({ ...f, printer_kitchen: v }))}
+        />
+        {form.printer_kitchen && categories.length > 0 && (
+          <div className="rounded border bg-background p-2">
+            <div className="mb-1 text-xs font-medium">Categorias da cozinha:</div>
+            <div className="flex flex-wrap gap-1">
+              {categories.map((c) => {
+                const active = (form.kitchen_category_ids ?? []).includes(c.id);
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => toggleCat("kitchen_category_ids", c.id)}
+                    className={cn(
+                      "rounded-full border px-2 py-0.5 text-[11px]",
+                      active ? "border-primary bg-primary text-primary-foreground" : "bg-muted",
+                    )}
+                  >
+                    {c.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        <PrinterSelect
+          label="Bebidas"
+          value={form.printer_drinks}
+          onChange={(v) => setForm((f) => ({ ...f, printer_drinks: v }))}
+        />
+        {form.printer_drinks && categories.length > 0 && (
+          <div className="rounded border bg-background p-2">
+            <div className="mb-1 text-xs font-medium">Categorias de bebidas:</div>
+            <div className="flex flex-wrap gap-1">
+              {categories.map((c) => {
+                const active = (form.drinks_category_ids ?? []).includes(c.id);
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => toggleCat("drinks_category_ids", c.id)}
+                    className={cn(
+                      "rounded-full border px-2 py-0.5 text-[11px]",
+                      active ? "border-primary bg-primary text-primary-foreground" : "bg-muted",
+                    )}
+                  >
+                    {c.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        <PrinterSelect
+          label="Caixa (2ª via)"
+          value={form.printer_cashier}
+          onChange={(v) => setForm((f) => ({ ...f, printer_cashier: v }))}
+        />
+      </div>
+
+      <div className="mt-3 flex justify-end">
+        <Button size="sm" onClick={save} disabled={saving}>
+          {saving && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+          Salvar impressoras
+        </Button>
+      </div>
+    </div>
+  );
+}
