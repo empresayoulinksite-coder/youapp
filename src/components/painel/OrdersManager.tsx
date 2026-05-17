@@ -73,6 +73,7 @@ type PrinterSettings = {
   kitchen_category_ids: string[];
   drinks_category_ids: string[];
   auto_print: boolean;
+  kitchen_always_full: boolean;
 };
 
 const EMPTY_PRINTER_SETTINGS: Omit<PrinterSettings, "store_id"> = {
@@ -83,6 +84,7 @@ const EMPTY_PRINTER_SETTINGS: Omit<PrinterSettings, "store_id"> = {
   kitchen_category_ids: [],
   drinks_category_ids: [],
   auto_print: false,
+  kitchen_always_full: false,
 };
 
 type OrderStatus = "em_analise" | "em_producao" | "pronto" | "entregue" | "cancelado";
@@ -416,8 +418,12 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
     if (ps?.printer_orders) {
       jobs.push({ label: "Pedidos", printerName: ps.printer_orders, items: allItems, fullOrder: true });
     }
-    if (ps?.printer_kitchen && kitchen.length > 0) {
-      jobs.push({ label: "Cozinha", printerName: ps.printer_kitchen, items: kitchen });
+    if (ps?.printer_kitchen) {
+      if (ps.kitchen_always_full) {
+        jobs.push({ label: "Cozinha", printerName: ps.printer_kitchen, items: allItems, fullOrder: true });
+      } else if (kitchen.length > 0) {
+        jobs.push({ label: "Cozinha", printerName: ps.printer_kitchen, items: kitchen });
+      }
     }
     if (ps?.printer_drinks && drinks.length > 0) {
       jobs.push({ label: "Bebidas", printerName: ps.printer_drinks, items: drinks });
@@ -433,8 +439,13 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
       void other;
     }
 
+    let prevPrinter: string | null | undefined = undefined;
     for (const job of jobs) {
       try {
+        // Pausa entre jobs na mesma impressora para evitar que o driver agrupe.
+        if (prevPrinter !== undefined && prevPrinter === job.printerName) {
+          await new Promise((r) => setTimeout(r, 300));
+        }
         const subsetOrder = job.fullOrder ? order : { ...order, order_items: job.items };
         const html = buildReceiptHTML(storeInfo, subsetOrder, customer);
         await browserPrintHTML(html, { silent: opts.silent, printerName: job.printerName });
@@ -443,6 +454,7 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
         if (opts.silent) console.error(`Auto-print (${job.label}) failed:`, e);
         else toast.error(`Falha ao imprimir (${job.label}): ${(e as Error).message}`);
       }
+      prevPrinter = job.printerName;
     }
   }
 
@@ -1422,6 +1434,7 @@ function PrinterRoutingBlock({
       kitchen_category_ids: form.kitchen_category_ids ?? [],
       drinks_category_ids: form.drinks_category_ids ?? [],
       auto_print: !!form.auto_print,
+      kitchen_always_full: !!form.kitchen_always_full,
     };
     const { error } = await supabase
       .from("store_printer_settings" as never)
@@ -1591,7 +1604,24 @@ function PrinterRoutingBlock({
           value={form.printer_kitchen}
           onChange={(v) => setForm((f) => ({ ...f, printer_kitchen: v }))}
         />
-        {form.printer_kitchen && categories.length > 0 && (
+        {form.printer_kitchen && (
+          <div className="flex items-start gap-2 rounded border bg-background p-2">
+            <Switch
+              id="kitchen-always-full"
+              checked={!!form.kitchen_always_full}
+              onCheckedChange={(v) => setForm((f) => ({ ...f, kitchen_always_full: v }))}
+            />
+            <div className="flex-1">
+              <Label htmlFor="kitchen-always-full" className="text-xs font-medium">
+                Sempre imprimir cupom completo na cozinha
+              </Label>
+              <p className="text-[11px] text-muted-foreground">
+                Imprime o pedido inteiro na cozinha, ignorando as categorias selecionadas abaixo.
+              </p>
+            </div>
+          </div>
+        )}
+        {form.printer_kitchen && !form.kitchen_always_full && categories.length > 0 && (
           <div className="rounded border bg-background p-2">
             <div className="mb-1 text-xs font-medium">Categorias da cozinha:</div>
             <div className="flex flex-wrap gap-1">
