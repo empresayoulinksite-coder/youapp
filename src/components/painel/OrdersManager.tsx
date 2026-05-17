@@ -1524,6 +1524,51 @@ function PrinterRoutingBlock({
         </p>
       )}
 
+      <div className="mb-3 rounded-md border bg-background p-2">
+        <Label className="text-xs font-semibold">Cadastrar impressora manualmente</Label>
+        <p className="mb-2 text-[11px] text-muted-foreground">
+          Use o nome <strong>exato</strong> que aparece no Windows em Configurações → Bluetooth e dispositivos → Impressoras e scanners.
+        </p>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={manualName}
+            onChange={(e) => setManualName(e.target.value)}
+            placeholder="Ex.: EPSON TM-T20X Receipt"
+            className="flex-1 rounded-md border bg-background px-2 py-1.5 text-sm"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addManualPrinter();
+              }
+            }}
+          />
+          <Button type="button" variant="outline" size="sm" onClick={addManualPrinter}>
+            Adicionar
+          </Button>
+        </div>
+        {manualPrinters.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {manualPrinters.map((p) => (
+              <span
+                key={p}
+                className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px]"
+              >
+                {p}
+                <button
+                  type="button"
+                  onClick={() => removeManualPrinter(p)}
+                  className="text-muted-foreground hover:text-destructive"
+                  aria-label={`Remover ${p}`}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className="mb-3 flex items-center gap-2">
         <Switch
           id="auto-print-db"
