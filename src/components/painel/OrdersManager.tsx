@@ -1051,18 +1051,24 @@ function SettingsDialog({
   open,
   onOpenChange,
   store,
+  storeId,
   onSaved,
   printerPrefs,
   onPrinterPrefsChange,
   onTestPrint,
+  printerSettings,
+  onPrinterSettingsSaved,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   store: StoreSettings | null;
+  storeId: string;
   onSaved: () => void;
   printerPrefs: PrinterPrefs;
   onPrinterPrefsChange: (next: Partial<PrinterPrefs>) => void;
   onTestPrint: () => Promise<void>;
+  printerSettings: PrinterSettings | null;
+  onPrinterSettingsSaved: () => void;
 }) {
   const [bMin, setBMin] = useState(0);
   const [bMax, setBMax] = useState(0);
