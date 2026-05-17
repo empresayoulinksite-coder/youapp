@@ -1361,7 +1361,11 @@ function PrinterRoutingBlock({
       const list = await listElectronPrinters();
       setPrinters(list);
       if (list.length === 0) {
-        toast.info("Nenhuma impressora detectada. Abra pelo app desktop.");
+        if (hasElectronPrint()) {
+          toast.info("Nenhuma impressora encontrada no Windows. Verifique se há impressoras instaladas em Configurações → Bluetooth e dispositivos → Impressoras.");
+        } else {
+          toast.info("Este app desktop está sem suporte nativo a impressoras. Instale a nova versão do app para liberar a detecção.");
+        }
       } else {
         toast.success(`${list.length} impressora(s) encontrada(s)`);
       }
