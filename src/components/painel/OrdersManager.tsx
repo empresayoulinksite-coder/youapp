@@ -58,9 +58,32 @@ import {
   hasSerial,
   getActiveConnection,
   browserPrintHTML,
+  listElectronPrinters,
+  hasElectronPrint,
   type PrinterPrefs,
 } from "@/lib/thermal-printer";
 import { buildReceiptBytes, buildReceiptHTML } from "@/lib/receipt-template";
+
+type PrinterSettings = {
+  store_id: string;
+  printer_orders: string | null;
+  printer_kitchen: string | null;
+  printer_drinks: string | null;
+  printer_cashier: string | null;
+  kitchen_category_ids: string[];
+  drinks_category_ids: string[];
+  auto_print: boolean;
+};
+
+const EMPTY_PRINTER_SETTINGS: Omit<PrinterSettings, "store_id"> = {
+  printer_orders: null,
+  printer_kitchen: null,
+  printer_drinks: null,
+  printer_cashier: null,
+  kitchen_category_ids: [],
+  drinks_category_ids: [],
+  auto_print: false,
+};
 
 type OrderStatus = "em_analise" | "em_producao" | "pronto" | "entregue" | "cancelado";
 
@@ -77,6 +100,7 @@ type OrderItem = {
   pizza_flavors: unknown;
   pizza_addons: unknown;
   half_two_name: string | null;
+  menu_item_id?: string | null;
 };
 
 type Order = {
@@ -240,7 +264,7 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
           `id, order_number, status, total, delivery_fee, discount, payment_method,
            delivery_address, delivery_type, customer_notes, store_id, user_id, created_at,
            accepted_at, ready_at, delivered_at, cancelled_at, table_number,
-           order_items(id, name, quantity, unit_price, notes, emoji, selected_size,
+           order_items(id, name, quantity, unit_price, notes, emoji, selected_size, menu_item_id,
              pizza_size_name, pizza_crust_name, pizza_flavors, pizza_addons, half_two_name)`,
         )
         .eq("store_id", storeId)
@@ -274,6 +298,35 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
     },
   });
 
+  // Configuração de impressoras (múltiplas) da loja
+  const { data: printerSettings, refetch: refetchPrinterSettings } = useQuery({
+    queryKey: ["orders-manager-printers", storeId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("store_printer_settings" as never)
+        .select("*")
+        .eq("store_id", storeId)
+        .maybeSingle();
+      if (error && error.code !== "PGRST116") throw error;
+      const row = (data ?? null) as PrinterSettings | null;
+      return row ?? ({ store_id: storeId, ...EMPTY_PRINTER_SETTINGS } as PrinterSettings);
+    },
+  });
+
+  // Mapa menu_item_id -> category_id (para roteamento por categoria)
+  const { data: itemCategoryMap = {} } = useQuery({
+    queryKey: ["orders-manager-menu-cats", storeId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("menu_items")
+        .select("id, category_id")
+        .eq("store_id", storeId);
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      for (const it of data ?? []) map[it.id] = it.category_id;
+      return map;
+    },
+  });
   useEffect(() => {
     const channel = supabase
       .channel(`orders-${storeId}`)
@@ -316,28 +369,79 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
     lastIdsRef.current = ids;
   }, [orders]);
 
+  function routeItems(items: OrderItem[]) {
+    const kitchenIds = new Set(printerSettings?.kitchen_category_ids ?? []);
+    const drinksIds = new Set(printerSettings?.drinks_category_ids ?? []);
+    const kitchen: OrderItem[] = [];
+    const drinks: OrderItem[] = [];
+    const other: OrderItem[] = [];
+    for (const it of items) {
+      const cat = it.menu_item_id ? itemCategoryMap[it.menu_item_id] : undefined;
+      if (cat && kitchenIds.has(cat)) kitchen.push(it);
+      else if (cat && drinksIds.has(cat)) drinks.push(it);
+      else other.push(it);
+    }
+    return { kitchen, drinks, other };
+  }
+
   async function printOrder(order: Order, opts: { silent?: boolean } = {}) {
     if (!store) return;
     const customer = getCustomerInfo(order, profilesMap[order.user_id]) ?? null;
     const storeInfo = { name: store.name, whatsapp: store.whatsapp };
-    try {
-      // Usa EXATAMENTE o mesmo fluxo do botão manual "Imprimir":
-      // conexão direta (ESC/POS) se houver, senão Electron (silent print)
-      // via browserPrintHTML. Auto-print e manual compartilham o mesmo caminho.
-      const conn = getActiveConnection();
-      if (conn) {
+
+    // Conexão ESC/POS direta (Bluetooth/USB/Serial) tem prioridade quando disponível.
+    const conn = getActiveConnection();
+    if (conn) {
+      try {
         const bytes = buildReceiptBytes(storeInfo, order, customer);
         await conn.write(bytes);
         if (!opts.silent) toast.success("Cupom enviado para impressora");
-      } else {
-        const html = buildReceiptHTML(storeInfo, order, customer);
-        await browserPrintHTML(html);
+      } catch (e) {
+        if (opts.silent) console.error("Auto-print (ESC/POS) failed:", e);
+        else toast.error(`Falha ao imprimir: ${(e as Error).message}`);
       }
-    } catch (e) {
-      if (opts.silent) {
-        console.error("Auto-print failed:", e);
-      } else {
-        toast.error(`Falha ao imprimir: ${(e as Error).message}`);
+      return;
+    }
+
+    // Roteamento por impressora via Electron (window.electronAPI.print)
+    const ps = printerSettings;
+    const allItems = order.order_items ?? [];
+    const { kitchen, drinks, other } = routeItems(allItems);
+
+    type Job = { label: string; printerName: string | null; items: OrderItem[]; fullOrder?: boolean };
+    const jobs: Job[] = [];
+
+    // Cupom completo (pedidos) — sempre, se houver impressora configurada,
+    // ou como única via quando não há roteamento por categoria.
+    if (ps?.printer_orders) {
+      jobs.push({ label: "Pedidos", printerName: ps.printer_orders, items: allItems, fullOrder: true });
+    }
+    if (ps?.printer_kitchen && kitchen.length > 0) {
+      jobs.push({ label: "Cozinha", printerName: ps.printer_kitchen, items: kitchen });
+    }
+    if (ps?.printer_drinks && drinks.length > 0) {
+      jobs.push({ label: "Bebidas", printerName: ps.printer_drinks, items: drinks });
+    }
+    if (ps?.printer_cashier) {
+      jobs.push({ label: "Caixa", printerName: ps.printer_cashier, items: allItems, fullOrder: true });
+    }
+
+    // Nenhuma impressora configurada: usa impressora padrão do sistema com cupom completo.
+    if (jobs.length === 0) {
+      jobs.push({ label: "Padrão", printerName: null, items: allItems, fullOrder: true });
+      // Aviso opcional sobre itens "outros" não roteados — irrelevante quando não há ps.
+      void other;
+    }
+
+    for (const job of jobs) {
+      try {
+        const subsetOrder = job.fullOrder ? order : { ...order, order_items: job.items };
+        const html = buildReceiptHTML(storeInfo, subsetOrder, customer);
+        await browserPrintHTML(html, { silent: opts.silent, printerName: job.printerName });
+        if (!opts.silent) toast.success(`Cupom enviado para impressora (${job.label})`);
+      } catch (e) {
+        if (opts.silent) console.error(`Auto-print (${job.label}) failed:`, e);
+        else toast.error(`Falha ao imprimir (${job.label}): ${(e as Error).message}`);
       }
     }
   }
@@ -350,7 +454,7 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
       next[o.id] = o.status;
       const prevStatus = prev[o.id];
       if (
-        printerPrefs.autoPrint &&
+        (printerSettings?.auto_print || printerPrefs.autoPrint) &&
         o.status === "em_producao" &&
         prevStatus !== "em_producao" &&
         !printedRef.current.has(o.id)
@@ -360,7 +464,7 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
       }
     }
     lastStatusRef.current = next;
-  }, [orders, printerPrefs.autoPrint, store, profilesMap]);
+  }, [orders, printerPrefs.autoPrint, printerSettings, store, profilesMap]);
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: OrderStatus }) => {
@@ -558,8 +662,11 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
         store={store ?? null}
+        storeId={storeId}
         printerPrefs={printerPrefs}
         onPrinterPrefsChange={updatePrinterPrefs}
+        printerSettings={printerSettings ?? null}
+        onPrinterSettingsSaved={() => refetchPrinterSettings()}
         onTestPrint={async () => {
           // Build a fake test order
           const testOrder: Order = {
@@ -944,18 +1051,24 @@ function SettingsDialog({
   open,
   onOpenChange,
   store,
+  storeId,
   onSaved,
   printerPrefs,
   onPrinterPrefsChange,
   onTestPrint,
+  printerSettings,
+  onPrinterSettingsSaved,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   store: StoreSettings | null;
+  storeId: string;
   onSaved: () => void;
   printerPrefs: PrinterPrefs;
   onPrinterPrefsChange: (next: Partial<PrinterPrefs>) => void;
   onTestPrint: () => Promise<void>;
+  printerSettings: PrinterSettings | null;
+  onPrinterSettingsSaved: () => void;
 }) {
   const [bMin, setBMin] = useState(0);
   const [bMax, setBMax] = useState(0);
@@ -1038,6 +1151,12 @@ function SettingsDialog({
             printerPrefs={printerPrefs}
             onPrinterPrefsChange={onPrinterPrefsChange}
             onTestPrint={onTestPrint}
+          />
+
+          <PrinterRoutingBlock
+            storeId={storeId}
+            printerSettings={printerSettings}
+            onSaved={onPrinterSettingsSaved}
           />
         </div>
 
@@ -1204,6 +1323,264 @@ function PrinterSettingsBlock({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function PrinterRoutingBlock({
+  storeId,
+  printerSettings,
+  onSaved,
+}: {
+  storeId: string;
+  printerSettings: PrinterSettings | null;
+  onSaved: () => void;
+}) {
+  const [printers, setPrinters] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState<PrinterSettings>(() => ({
+    store_id: storeId,
+    ...EMPTY_PRINTER_SETTINGS,
+    ...(printerSettings ?? {}),
+  }));
+
+  useEffect(() => {
+    if (printerSettings) setForm({ ...printerSettings, store_id: storeId });
+  }, [printerSettings, storeId]);
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["orders-manager-menu-categories", storeId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("menu_categories")
+        .select("id, name")
+        .eq("store_id", storeId)
+        .order("position");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  async function detect() {
+    setLoading(true);
+    try {
+      const list = await listElectronPrinters();
+      setPrinters(list);
+      if (list.length === 0) {
+        toast.info("Nenhuma impressora detectada. Abra pelo app desktop.");
+      } else {
+        toast.success(`${list.length} impressora(s) encontrada(s)`);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (hasElectronPrint()) void detect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function save() {
+    setSaving(true);
+    const payload = {
+      store_id: storeId,
+      printer_orders: form.printer_orders || null,
+      printer_kitchen: form.printer_kitchen || null,
+      printer_drinks: form.printer_drinks || null,
+      printer_cashier: form.printer_cashier || null,
+      kitchen_category_ids: form.kitchen_category_ids ?? [],
+      drinks_category_ids: form.drinks_category_ids ?? [],
+      auto_print: !!form.auto_print,
+    };
+    const { error } = await supabase
+      .from("store_printer_settings" as never)
+      .upsert(payload as never, { onConflict: "store_id" });
+    setSaving(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Impressoras salvas");
+    onSaved();
+  }
+
+  async function testPrint(printerName: string | null, label: string) {
+    if (!printerName) {
+      toast.error("Selecione uma impressora primeiro");
+      return;
+    }
+    try {
+      const html = `<!doctype html><html><body style="font-family:monospace;padding:8px">
+        <h3>Teste de impressão</h3>
+        <p>${label}</p>
+        <p>Impressora: ${printerName}</p>
+        <p>${new Date().toLocaleString("pt-BR")}</p>
+      </body></html>`;
+      await browserPrintHTML(html, { printerName, silent: true });
+      toast.success(`Teste enviado para ${label}`);
+    } catch (e) {
+      toast.error(`Falha: ${(e as Error).message}`);
+    }
+  }
+
+  const printerOptions = useMemo(() => {
+    const all = new Set(printers);
+    [form.printer_orders, form.printer_kitchen, form.printer_drinks, form.printer_cashier]
+      .filter((p): p is string => !!p)
+      .forEach((p) => all.add(p));
+    return Array.from(all);
+  }, [printers, form]);
+
+  const PrinterSelect = ({
+    label,
+    value,
+    onChange,
+  }: {
+    label: string;
+    value: string | null;
+    onChange: (v: string | null) => void;
+  }) => (
+    <div className="flex flex-col gap-1">
+      <Label className="text-xs">{label}</Label>
+      <div className="flex gap-2">
+        <select
+          className="flex-1 rounded-md border bg-background px-2 py-1.5 text-sm"
+          value={value ?? ""}
+          onChange={(e) => onChange(e.target.value || null)}
+        >
+          <option value="">— Não usar —</option>
+          {printerOptions.map((p) => (
+            <option key={p} value={p}>{p}</option>
+          ))}
+        </select>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => testPrint(value, label)}
+        >
+          Testar
+        </Button>
+      </div>
+    </div>
+  );
+
+  function toggleCat(field: "kitchen_category_ids" | "drinks_category_ids", id: string) {
+    setForm((f) => {
+      const set = new Set(f[field] ?? []);
+      if (set.has(id)) set.delete(id);
+      else set.add(id);
+      return { ...f, [field]: Array.from(set) };
+    });
+  }
+
+  return (
+    <div className="rounded-lg border bg-muted/30 p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Printer className="h-4 w-4" />
+          <Label className="text-sm font-semibold">Impressoras múltiplas (Electron)</Label>
+        </div>
+        <Button variant="outline" size="sm" onClick={detect} disabled={loading}>
+          {loading && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+          Detectar
+        </Button>
+      </div>
+
+      {!hasElectronPrint() && (
+        <p className="mb-2 rounded-md bg-yellow-50 p-2 text-xs text-yellow-800">
+          Abra esta tela pelo app desktop (Electron) para detectar e selecionar impressoras do Windows.
+        </p>
+      )}
+
+      <div className="mb-3 flex items-center gap-2">
+        <Switch
+          id="auto-print-db"
+          checked={!!form.auto_print}
+          onCheckedChange={(v) => setForm((f) => ({ ...f, auto_print: v }))}
+        />
+        <Label htmlFor="auto-print-db" className="text-xs">
+          Imprimir automaticamente ao aceitar pedido
+        </Label>
+      </div>
+
+      <div className="grid gap-2">
+        <PrinterSelect
+          label="Pedidos (cupom completo)"
+          value={form.printer_orders}
+          onChange={(v) => setForm((f) => ({ ...f, printer_orders: v }))}
+        />
+        <PrinterSelect
+          label="Cozinha"
+          value={form.printer_kitchen}
+          onChange={(v) => setForm((f) => ({ ...f, printer_kitchen: v }))}
+        />
+        {form.printer_kitchen && categories.length > 0 && (
+          <div className="rounded border bg-background p-2">
+            <div className="mb-1 text-xs font-medium">Categorias da cozinha:</div>
+            <div className="flex flex-wrap gap-1">
+              {categories.map((c) => {
+                const active = (form.kitchen_category_ids ?? []).includes(c.id);
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => toggleCat("kitchen_category_ids", c.id)}
+                    className={cn(
+                      "rounded-full border px-2 py-0.5 text-[11px]",
+                      active ? "border-primary bg-primary text-primary-foreground" : "bg-muted",
+                    )}
+                  >
+                    {c.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        <PrinterSelect
+          label="Bebidas"
+          value={form.printer_drinks}
+          onChange={(v) => setForm((f) => ({ ...f, printer_drinks: v }))}
+        />
+        {form.printer_drinks && categories.length > 0 && (
+          <div className="rounded border bg-background p-2">
+            <div className="mb-1 text-xs font-medium">Categorias de bebidas:</div>
+            <div className="flex flex-wrap gap-1">
+              {categories.map((c) => {
+                const active = (form.drinks_category_ids ?? []).includes(c.id);
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => toggleCat("drinks_category_ids", c.id)}
+                    className={cn(
+                      "rounded-full border px-2 py-0.5 text-[11px]",
+                      active ? "border-primary bg-primary text-primary-foreground" : "bg-muted",
+                    )}
+                  >
+                    {c.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        <PrinterSelect
+          label="Caixa (2ª via)"
+          value={form.printer_cashier}
+          onChange={(v) => setForm((f) => ({ ...f, printer_cashier: v }))}
+        />
+      </div>
+
+      <div className="mt-3 flex justify-end">
+        <Button size="sm" onClick={save} disabled={saving}>
+          {saving && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+          Salvar impressoras
+        </Button>
+      </div>
     </div>
   );
 }

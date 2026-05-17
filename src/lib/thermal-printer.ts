@@ -18,21 +18,43 @@ export type PrinterPrefs = {
   deviceName: string | null;
 };
 
-type ElectronPrintResult = boolean | { success?: boolean; error?: string } | void;
-type ElectronPrintBridge = {
-  print: (html: string) => Promise<ElectronPrintResult> | ElectronPrintResult;
+type LegacyPrintResult = boolean | { success?: boolean; error?: string } | void;
+type LegacyBridge = {
+  print: (html: string) => Promise<LegacyPrintResult> | LegacyPrintResult;
 };
 
-function getElectronPrintBridge(): ElectronPrintBridge | null {
+function getElectronAPI(): ElectronAPI | null {
   if (typeof window === "undefined") return null;
-  const bridge = (window as unknown as { electronPrint?: Partial<ElectronPrintBridge> }).electronPrint;
-  return typeof bridge?.print === "function" ? (bridge as ElectronPrintBridge) : null;
+  const api = window.electronAPI;
+  return api && typeof api.print === "function" ? api : null;
 }
 
-function wasElectronPrintSuccessful(result: ElectronPrintResult) {
+function getLegacyBridge(): LegacyBridge | null {
+  if (typeof window === "undefined") return null;
+  const bridge = (window as unknown as { electronPrint?: Partial<LegacyBridge> }).electronPrint;
+  return typeof bridge?.print === "function" ? (bridge as LegacyBridge) : null;
+}
+
+function wasLegacySuccessful(result: LegacyPrintResult) {
   if (result === false) return false;
   if (result && typeof result === "object" && "success" in result) return result.success !== false;
   return true;
+}
+
+export function hasElectronPrint(): boolean {
+  return getElectronAPI() !== null || getLegacyBridge() !== null;
+}
+
+export async function listElectronPrinters(): Promise<string[]> {
+  const api = getElectronAPI();
+  if (!api || typeof api.getPrinters !== "function") return [];
+  try {
+    const list = await api.getPrinters();
+    return Array.isArray(list) ? list.filter((p): p is string => typeof p === "string" && p.length > 0) : [];
+  } catch (e) {
+    console.error("listElectronPrinters failed:", e);
+    return [];
+  }
 }
 
 export function loadPrefs(storeId: string): PrinterPrefs {
@@ -211,23 +233,42 @@ export async function connectSerial(): Promise<PrinterConnection> {
 
 // Prefer Electron silent printing. When `silent` is true, never fall back to the
 // browser print dialog — auto-accepted orders must print silently or fail loudly.
-export async function browserPrintHTML(html: string, opts: { silent?: boolean } = {}) {
-  const electronPrint = getElectronPrintBridge();
-  if (electronPrint) {
-    const result = await electronPrint.print(html);
-    if (!wasElectronPrintSuccessful(result)) {
-      const error = typeof result === "object" && result?.error ? result.error : "Falha na impressão silenciosa";
+export async function browserPrintHTML(
+  html: string,
+  opts: { silent?: boolean; printerName?: string | null } = {},
+) {
+  // 1) Novo bridge com seleção de impressora
+  const api = getElectronAPI();
+  if (api) {
+    const result = await api.print({ html, printerName: opts.printerName ?? null });
+    if (!result || result.success === false) {
+      const error = result?.error || "Falha na impressão silenciosa";
       throw new Error(error);
     }
     return;
   }
 
+  // 2) Bridge legado (sem seleção de impressora — usa a padrão do Windows)
+  const legacy = getLegacyBridge();
+  if (legacy) {
+    const result = await legacy.print(html);
+    if (!wasLegacySuccessful(result)) {
+      const error = typeof result === "object" && result && "error" in result && result.error
+        ? result.error
+        : "Falha na impressão silenciosa";
+      throw new Error(error);
+    }
+    return;
+  }
+
+  // 3) Sem Electron e modo silencioso: falha sem popup
   if (opts.silent) {
     throw new Error(
-      "Impressão silenciosa indisponível: abra esta tela pelo app Electron com a impressora térmica como padrão do Windows.",
+      "Impressão silenciosa indisponível: abra esta tela pelo app desktop com a impressora térmica configurada.",
     );
   }
 
+  // 4) Fallback do navegador (apenas uso manual fora do Electron)
   const w = window.open("", "_blank", "width=380,height=600");
   if (!w) {
     throw new Error("Permita pop-ups para imprimir");

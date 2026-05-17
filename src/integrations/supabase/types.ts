@@ -1572,6 +1572,45 @@ export type Database = {
           },
         ]
       }
+      store_printer_settings: {
+        Row: {
+          auto_print: boolean
+          created_at: string
+          drinks_category_ids: string[]
+          kitchen_category_ids: string[]
+          printer_cashier: string | null
+          printer_drinks: string | null
+          printer_kitchen: string | null
+          printer_orders: string | null
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          auto_print?: boolean
+          created_at?: string
+          drinks_category_ids?: string[]
+          kitchen_category_ids?: string[]
+          printer_cashier?: string | null
+          printer_drinks?: string | null
+          printer_kitchen?: string | null
+          printer_orders?: string | null
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          auto_print?: boolean
+          created_at?: string
+          drinks_category_ids?: string[]
+          kitchen_category_ids?: string[]
+          printer_cashier?: string | null
+          printer_drinks?: string | null
+          printer_kitchen?: string | null
+          printer_orders?: string | null
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       store_reels: {
         Row: {
           created_at: string
