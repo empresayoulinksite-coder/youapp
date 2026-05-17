@@ -199,6 +199,7 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
   const [printerPrefs, setPrinterPrefs] = useState<PrinterPrefs>(() => loadPrefs(storeId));
   const lastStatusRef = useRef<Record<string, OrderStatus>>({});
   const printedRef = useRef<Set<string>>(new Set());
+  const didSeedRef = useRef(false);
 
   function updatePrinterPrefs(next: Partial<PrinterPrefs>) {
     const merged = { ...printerPrefs, ...next };
@@ -460,6 +461,19 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
 
   // Auto-print when an order transitions to em_producao
   useEffect(() => {
+    if (!orders.length && !didSeedRef.current) return;
+    // First load: seed refs with current state so we don't reprint
+    // every order already in production when the component mounts.
+    if (!didSeedRef.current) {
+      const seed: Record<string, OrderStatus> = {};
+      for (const o of orders) {
+        seed[o.id] = o.status;
+        if (o.status === "em_producao") printedRef.current.add(o.id);
+      }
+      lastStatusRef.current = seed;
+      didSeedRef.current = true;
+      return;
+    }
     const prev = lastStatusRef.current;
     const next: Record<string, OrderStatus> = {};
     for (const o of orders) {
