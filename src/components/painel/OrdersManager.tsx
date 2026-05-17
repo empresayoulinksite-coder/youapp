@@ -1338,6 +1338,38 @@ function PrinterRoutingBlock({
     ...(printerSettings ?? {}),
   }));
 
+  const manualKey = `manual_printers_${storeId}`;
+  const [manualPrinters, setManualPrinters] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem(manualKey);
+      return raw ? (JSON.parse(raw) as string[]) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [manualName, setManualName] = useState("");
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(manualKey, JSON.stringify(manualPrinters));
+    } catch {}
+  }, [manualPrinters, manualKey]);
+
+  function addManualPrinter() {
+    const name = manualName.trim();
+    if (!name) {
+      toast.error("Digite o nome exato da impressora");
+      return;
+    }
+    setManualPrinters((prev) => (prev.includes(name) ? prev : [...prev, name]));
+    setManualName("");
+    toast.success(`Impressora "${name}" cadastrada`);
+  }
+
+  function removeManualPrinter(name: string) {
+    setManualPrinters((prev) => prev.filter((p) => p !== name));
+  }
+
   useEffect(() => {
     if (printerSettings) setForm({ ...printerSettings, store_id: storeId });
   }, [printerSettings, storeId]);
