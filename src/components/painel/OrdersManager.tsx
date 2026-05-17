@@ -1455,12 +1455,12 @@ function PrinterRoutingBlock({
   }
 
   const printerOptions = useMemo(() => {
-    const all = new Set(printers);
+    const all = new Set<string>([...printers, ...manualPrinters]);
     [form.printer_orders, form.printer_kitchen, form.printer_drinks, form.printer_cashier]
       .filter((p): p is string => !!p)
       .forEach((p) => all.add(p));
     return Array.from(all);
-  }, [printers, form]);
+  }, [printers, manualPrinters, form]);
 
   const PrinterSelect = ({
     label,
