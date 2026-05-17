@@ -1152,6 +1152,12 @@ function SettingsDialog({
             onPrinterPrefsChange={onPrinterPrefsChange}
             onTestPrint={onTestPrint}
           />
+
+          <PrinterRoutingBlock
+            storeId={storeId}
+            printerSettings={printerSettings}
+            onSaved={onPrinterSettingsSaved}
+          />
         </div>
 
         <DialogFooter>
