@@ -1,0 +1,1 @@
+ALTER TABLE public.store_printer_settings ADD COLUMN IF NOT EXISTS kitchen_always_full boolean NOT NULL DEFAULT false;

@@ -1577,6 +1577,7 @@ export type Database = {
           auto_print: boolean
           created_at: string
           drinks_category_ids: string[]
+          kitchen_always_full: boolean
           kitchen_category_ids: string[]
           printer_cashier: string | null
           printer_drinks: string | null
@@ -1589,6 +1590,7 @@ export type Database = {
           auto_print?: boolean
           created_at?: string
           drinks_category_ids?: string[]
+          kitchen_always_full?: boolean
           kitchen_category_ids?: string[]
           printer_cashier?: string | null
           printer_drinks?: string | null
@@ -1601,6 +1603,7 @@ export type Database = {
           auto_print?: boolean
           created_at?: string
           drinks_category_ids?: string[]
+          kitchen_always_full?: boolean
           kitchen_category_ids?: string[]
           printer_cashier?: string | null
           printer_drinks?: string | null

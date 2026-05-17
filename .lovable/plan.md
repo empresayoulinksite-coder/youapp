@@ -1,32 +1,28 @@
-Sim — podemos adicionar um botão de cadastro manual de impressora. Isso não força o Windows a listar a impressora, mas pode resolver quando a detecção falha, porque o Electron consegue imprimir usando o `deviceName` se o nome digitado for exatamente igual ao nome da impressora no Windows.
+## Sempre imprimir cupom completo na cozinha
 
-Plano:
+Adicionar um toggle no diálogo de "Tempos de produção" que força a impressora da cozinha a sempre imprimir o **cupom completo** do pedido — mesmo que nenhum item esteja nas categorias da cozinha.
 
-1. **Adicionar botão “Cadastrar manualmente”**
-   - Dentro do bloco “Impressoras múltiplas”, ao lado de “Detectar”.
-   - Abrirá um campo para digitar o nome exato da impressora instalada no Windows.
+### O que muda
 
-2. **Salvar impressoras manuais na lista da tela**
-   - A impressora cadastrada manualmente aparecerá nos selects de:
-     - Pedidos
-     - Cozinha
-     - Bebidas
-     - Caixa
-   - Assim você poderá selecionar mesmo que o botão “Detectar” não encontre nada.
+1. **Novo toggle** no bloco de impressoras múltiplas, logo abaixo do select "Cozinha":
+   - Label: **"Sempre imprimir cupom completo na cozinha"**
+   - Descrição: "Imprime o pedido inteiro na cozinha, ignorando as categorias selecionadas."
 
-3. **Permitir testar a impressora cadastrada**
-   - O botão “Testar” continuará enviando uma impressão para o nome selecionado.
-   - Se o nome estiver correto, deve imprimir.
-   - Se estiver errado, o app mostrará erro de impressão.
+2. **Comportamento da impressão**:
+   - Toggle **desligado** (padrão): comportamento atual — só imprime na cozinha os itens cujas categorias estão marcadas.
+   - Toggle **ligado**: a cozinha sempre recebe o cupom completo, igual à via de Pedidos. Útil para usar Pedidos = via do cliente / Cozinha = via da produção, na mesma impressora ou em impressoras separadas.
 
-4. **Melhorar a mensagem de erro**
-   - Trocar a mensagem atual por algo mais útil:
-     - “Nenhuma impressora foi detectada automaticamente. Se ela está instalada no Windows, cadastre pelo nome exato e teste a impressão.”
+3. **Persistência**: salvo junto com as outras preferências de impressora (mesmo registro, mesma ação de salvar). Campo novo: `kitchen_always_full: boolean`, default `false`.
 
-5. **Manter a detecção automática**
-   - Não removeremos o botão “Detectar”.
-   - Ele continuará funcionando quando o Windows/Electron conseguir listar as impressoras.
+4. **Pequena pausa entre jobs na mesma impressora** (300 ms): quando dois jobs consecutivos vão para a mesma `printerName` (caso de Pedidos + Cozinha na mesma EPSON), espera um pouco para o driver do Windows não agrupar os dois em um só job.
 
-Detalhe importante:
-- O nome precisa ser exatamente o mesmo que aparece no Windows em **Configurações → Bluetooth e dispositivos → Impressoras e scanners**.
-- Exemplo: se no Windows aparece `EPSON TM-T20X Receipt`, precisa cadastrar exatamente esse texto.
+### Arquivos afetados
+
+- `src/components/painel/OrdersManager.tsx`
+  - Tipo `PrinterSettings`: adicionar `kitchen_always_full?: boolean`.
+  - Função `printOrder` (~linha 411): se `ps.printer_kitchen` existir e `kitchen_always_full` estiver ligado, criar o job de cozinha como `fullOrder: true` com todos os itens.
+  - Loop de jobs (~linha 436): adicionar `await sleep(300)` antes do próximo job quando a impressora é a mesma do job anterior.
+  - UI do diálogo de tempos de produção (~linha 1579+): adicionar o `Switch` novo abaixo do select da cozinha.
+  - `handleSave` (~linha 1422): incluir `kitchen_always_full` no payload salvo.
+
+Nenhuma migração de banco necessária — o campo entra no mesmo objeto JSON de preferências já persistido.
