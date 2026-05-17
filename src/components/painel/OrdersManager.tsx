@@ -369,28 +369,79 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
     lastIdsRef.current = ids;
   }, [orders]);
 
+  function routeItems(items: OrderItem[]) {
+    const kitchenIds = new Set(printerSettings?.kitchen_category_ids ?? []);
+    const drinksIds = new Set(printerSettings?.drinks_category_ids ?? []);
+    const kitchen: OrderItem[] = [];
+    const drinks: OrderItem[] = [];
+    const other: OrderItem[] = [];
+    for (const it of items) {
+      const cat = it.menu_item_id ? itemCategoryMap[it.menu_item_id] : undefined;
+      if (cat && kitchenIds.has(cat)) kitchen.push(it);
+      else if (cat && drinksIds.has(cat)) drinks.push(it);
+      else other.push(it);
+    }
+    return { kitchen, drinks, other };
+  }
+
   async function printOrder(order: Order, opts: { silent?: boolean } = {}) {
     if (!store) return;
     const customer = getCustomerInfo(order, profilesMap[order.user_id]) ?? null;
     const storeInfo = { name: store.name, whatsapp: store.whatsapp };
-    try {
-      // Usa EXATAMENTE o mesmo fluxo do botão manual "Imprimir":
-      // conexão direta (ESC/POS) se houver, senão Electron (silent print)
-      // via browserPrintHTML. Auto-print e manual compartilham o mesmo caminho.
-      const conn = getActiveConnection();
-      if (conn) {
+
+    // Conexão ESC/POS direta (Bluetooth/USB/Serial) tem prioridade quando disponível.
+    const conn = getActiveConnection();
+    if (conn) {
+      try {
         const bytes = buildReceiptBytes(storeInfo, order, customer);
         await conn.write(bytes);
         if (!opts.silent) toast.success("Cupom enviado para impressora");
-      } else {
-        const html = buildReceiptHTML(storeInfo, order, customer);
-        await browserPrintHTML(html);
+      } catch (e) {
+        if (opts.silent) console.error("Auto-print (ESC/POS) failed:", e);
+        else toast.error(`Falha ao imprimir: ${(e as Error).message}`);
       }
-    } catch (e) {
-      if (opts.silent) {
-        console.error("Auto-print failed:", e);
-      } else {
-        toast.error(`Falha ao imprimir: ${(e as Error).message}`);
+      return;
+    }
+
+    // Roteamento por impressora via Electron (window.electronAPI.print)
+    const ps = printerSettings;
+    const allItems = order.order_items ?? [];
+    const { kitchen, drinks, other } = routeItems(allItems);
+
+    type Job = { label: string; printerName: string | null; items: OrderItem[]; fullOrder?: boolean };
+    const jobs: Job[] = [];
+
+    // Cupom completo (pedidos) — sempre, se houver impressora configurada,
+    // ou como única via quando não há roteamento por categoria.
+    if (ps?.printer_orders) {
+      jobs.push({ label: "Pedidos", printerName: ps.printer_orders, items: allItems, fullOrder: true });
+    }
+    if (ps?.printer_kitchen && kitchen.length > 0) {
+      jobs.push({ label: "Cozinha", printerName: ps.printer_kitchen, items: kitchen });
+    }
+    if (ps?.printer_drinks && drinks.length > 0) {
+      jobs.push({ label: "Bebidas", printerName: ps.printer_drinks, items: drinks });
+    }
+    if (ps?.printer_cashier) {
+      jobs.push({ label: "Caixa", printerName: ps.printer_cashier, items: allItems, fullOrder: true });
+    }
+
+    // Nenhuma impressora configurada: usa impressora padrão do sistema com cupom completo.
+    if (jobs.length === 0) {
+      jobs.push({ label: "Padrão", printerName: null, items: allItems, fullOrder: true });
+      // Aviso opcional sobre itens "outros" não roteados — irrelevante quando não há ps.
+      void other;
+    }
+
+    for (const job of jobs) {
+      try {
+        const subsetOrder = job.fullOrder ? order : { ...order, order_items: job.items };
+        const html = buildReceiptHTML(storeInfo, subsetOrder, customer);
+        await browserPrintHTML(html, { silent: opts.silent, printerName: job.printerName });
+        if (!opts.silent) toast.success(`Cupom enviado para impressora (${job.label})`);
+      } catch (e) {
+        if (opts.silent) console.error(`Auto-print (${job.label}) failed:`, e);
+        else toast.error(`Falha ao imprimir (${job.label}): ${(e as Error).message}`);
       }
     }
   }
