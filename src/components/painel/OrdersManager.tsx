@@ -199,6 +199,7 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
   const [printerPrefs, setPrinterPrefs] = useState<PrinterPrefs>(() => loadPrefs(storeId));
   const lastStatusRef = useRef<Record<string, OrderStatus>>({});
   const printedRef = useRef<Set<string>>(new Set());
+  const didSeedRef = useRef(false);
 
   function updatePrinterPrefs(next: Partial<PrinterPrefs>) {
     const merged = { ...printerPrefs, ...next };
