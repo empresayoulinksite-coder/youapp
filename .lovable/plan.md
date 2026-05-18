@@ -1,30 +1,39 @@
 ## Objetivo
-Pedir o CPF do cliente no checkout (opcional) e mostrar na nota impressa da comanda.
 
-## Mudanças
+Hoje a página `/admin` só abre para quem tem `role = admin`. Quero que um **dono de loja** (registro em `store_owners`) também entre nessa mesma página — porém vendo só as **lojas dele** e a seção **Entregas** restrita às lojas dele. Tudo que é global (Donos, Categorias Home/E-com, Importar cardápio, Modal boas-vindas, Impressão automática) fica oculto para ele.
 
-### 1. Banco (migration)
-- Adicionar coluna `customer_cpf text` em `public.orders` (nullable).
+## O que muda
 
-### 2. Checkout (`src/routes/sacola.tsx`)
-- Novo campo "CPF na nota (opcional)" próximo aos campos de nome/telefone do cliente.
-- Máscara `000.000.000-00` e validação de dígitos verificadores (reaproveitando a lógica de `completar-cadastro.tsx`).
-- Pré-preencher com `profiles.cpf` quando já existir.
-- Se preenchido e válido:
-  - Persistir no `profiles.cpf` do usuário (igual já é feito com nome/telefone).
-  - Salvar dígitos puros em `orders.customer_cpf`.
-  - Adicionar linha `🧾 CPF: 000.000.000-00` na mensagem de WhatsApp.
-- Se inválido: bloquear envio com mensagem de erro.
+### 1. Liberar acesso a `/admin` para donos de loja
+- Em `src/routes/admin.tsx`, trocar o gate `useIsAdmin` por um novo hook `useAdminAccess` que retorna `{ isAdmin, isOwner, ownedStoreIds, loading, user }`.
+- Permite entrar se `isAdmin || isOwner`. Mantém a tela de "Acesso restrito" se não for nenhum dos dois.
+- Cabeçalho da sidebar mostra "Admin" se admin, "Minhas lojas" se dono.
 
-### 3. Impressão (`src/lib/receipt-template.ts` + `extension/print.js`)
-- Estender `ReceiptOrder` com `customer_cpf?: string | null`.
-- No bloco "CLIENTE" (ESC/POS e HTML), imprimir `CPF: 000.000.000-00` quando existir.
-- Replicar a mesma linha em `extension/print.js` (impressão via extensão).
+### 2. Sidebar dinâmica por perfil
+- **Admin** (sem mudança): Lojas, Donos de loja, Categorias Home, Categorias E-com, Importar cardápio, Modal boas-vindas, Impressão automática + Entregas (Cadastro, Relatório, Áreas).
+- **Dono de loja**: apenas **Lojas** + **Entregas** (Cadastro entregadores, Relatório, Áreas).
+- O mobile top-nav segue a mesma regra.
 
-### 4. Consultas de impressão
-- Conferir os pontos que carregam o pedido para impressão (ex.: `OrdersManager.tsx`, `pedidos-loja_.$storeId.impressao.tsx`) e incluir `customer_cpf` no `.select(...)` antes de passar para o template.
+### 3. Listas escopadas para o dono
+Quando `!isAdmin && isOwner`, filtrar as queries pelos IDs em `store_owners` do usuário logado:
+- `admin.index.tsx` (Lojas): `from("stores").select(...).in("id", ownedStoreIds)`.
+- `admin.entregas.areas.tsx`, `admin.entregas.cadastro.tsx`, `admin.entregas.relatorio.tsx`: mesma filtragem de lojas.
+- `admin.loja.$storeId.tsx`: adicionar `beforeLoad` que aceita admin **ou** `is_store_owner(uid, storeId)`; se não, redireciona para `/admin`.
 
-## Fora do escopo
-- Tornar CPF obrigatório.
-- Emissão fiscal / NFC-e.
-- Validar CPF no servidor (mantém validação só no cliente, já que o campo é informativo).
+### 4. Sem mudança no fluxo de cadastro de donos
+O cadastro continua acontecendo em `/admin/donos` (só admin acessa). Assim que o admin associa um usuário a uma loja em `store_owners`, esse usuário, ao entrar em `/admin`, já passa pelo novo gate.
+
+## Segurança
+
+- **RLS já cobre o servidor**: `is_store_owner`/`can_manage_store_orders` impedem dono de ler/editar dados de outras lojas mesmo se chamar a API direto. As mudanças acima são de UX (esconder o que não é dele).
+- **Tabela `stores`**: hoje é leitura pública, então o filtro no front é suficiente para limitar a lista exibida; edição segue protegida por policies.
+- Donos **não** ganham acesso a Donos de loja, Categorias Home/E-com, Modal boas-vindas e Impressão automática — itens removidos da sidebar e protegidos no `beforeLoad` de cada rota desses (redirect para `/admin` se não-admin).
+
+## Arquivos afetados
+
+- `src/hooks/use-admin.ts` — adicionar `useAdminAccess`
+- `src/routes/admin.tsx` — novo gate + sidebar dinâmica
+- `src/routes/admin.index.tsx` — filtrar por `ownedStoreIds`
+- `src/routes/admin.entregas.areas.tsx`, `admin.entregas.cadastro.tsx`, `admin.entregas.relatorio.tsx` — filtrar lojas
+- `src/routes/admin.loja.$storeId.tsx` — `beforeLoad` aceita admin OU dono
+- `src/routes/admin.donos.tsx`, `admin.categorias-home.tsx`, `admin.categorias-ecommerce.tsx`, `admin.importar-cardapio.tsx`, `admin.modal-boas-vindas.tsx`, `admin.impressao-automatica.tsx` — `beforeLoad` redirect se não-admin
