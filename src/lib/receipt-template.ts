@@ -227,6 +227,7 @@ export function buildReceiptHTML(
 
   const subtotal = order.total - (order.delivery_fee ?? 0) + (order.discount ?? 0);
   const pickup = isPickup(order);
+  const cpfFormatted = fmtCpf(order.customer_cpf);
 
   return `<!doctype html><html><head><meta charset="utf-8">
 <title>Pedido #${order.order_number ?? ""}</title>
@@ -247,10 +248,11 @@ export function buildReceiptHTML(
 <div class="center">${fmtTime(order.created_at)}</div>
 <div class="center">${order.table_number ? `Mesa ${order.table_number}` : pickup ? "RETIRADA" : "DELIVERY"}</div>
 <hr>
-${customer?.display_name || customer?.phone ? `
+${customer?.display_name || customer?.phone || cpfFormatted ? `
   <h2>Cliente</h2>
-  ${customer.display_name ? `<div>${customer.display_name}</div>` : ""}
-  ${customer.phone ? `<div>Tel: ${customer.phone}</div>` : ""}
+  ${customer?.display_name ? `<div>${customer.display_name}</div>` : ""}
+  ${customer?.phone ? `<div>Tel: ${customer.phone}</div>` : ""}
+  ${cpfFormatted ? `<div>CPF: ${cpfFormatted}</div>` : ""}
   ${!pickup && order.delivery_address ? `<div>End: ${order.delivery_address}</div>` : ""}
   <hr>
 ` : (!pickup && order.delivery_address ? `<h2>Endereço</h2><div>${order.delivery_address}</div><hr>` : "")}
