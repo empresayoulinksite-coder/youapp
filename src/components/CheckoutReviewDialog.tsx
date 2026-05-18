@@ -87,6 +87,10 @@ export function CheckoutReviewDialog({
   storeAddress,
   tableNumber,
   submitting,
+  deliveryAreas = [],
+  selectedNeighborhood,
+  selectedDeliveryFee,
+  onSelectNeighborhood,
   onConfirm,
 }: Props) {
   const isPickup = deliveryMode === "pickup";
@@ -97,6 +101,7 @@ export function CheckoutReviewDialog({
   const [complement, setComplement] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [neighborhoodSheetOpen, setNeighborhoodSheetOpen] = useState(false);
 
   // Sempre que o endereço ativo mudar (ou abrir), pré-preenche número/complemento
   useEffect(() => {
@@ -126,9 +131,23 @@ export function CheckoutReviewDialog({
   const hasName = name.trim().length > 0;
   const phoneDigits = phone.replace(/\D/g, "");
   const hasPhone = phoneDigits.length >= 10;
+  const hasAreas = deliveryAreas.length > 0;
+  const needsNeighborhood = !isPickup && !isMesa && hasAreas;
+  const neighborhoodOk = !needsNeighborhood || !!selectedNeighborhood;
   const addressOk = isPickup || isMesa ? true : !!addressText && hasNumber;
   const canConfirm =
-    (isMesa || !!paymentMethod) && addressOk && hasName && hasPhone && !submitting;
+    (isMesa || !!paymentMethod) &&
+    addressOk &&
+    neighborhoodOk &&
+    hasName &&
+    hasPhone &&
+    !submitting;
+  const feeLabel =
+    selectedDeliveryFee != null && selectedDeliveryFee > 0
+      ? `R$ ${selectedDeliveryFee.toFixed(2).replace(".", ",")}`
+      : selectedNeighborhood
+        ? "Grátis"
+        : "";
 
   return (
     <div
