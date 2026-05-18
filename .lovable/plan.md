@@ -1,56 +1,38 @@
 ## Objetivo
 
-Adicionar um botão "Selecionar bairro" no checkout (estilo Anota AI). Ao tocar, abre uma lista com os bairros cadastrados pela loja em `store_delivery_areas`. Ao escolher, o bairro é aplicado ao pedido e a taxa de entrega aparece imediatamente.
+Transformar `/admin/entregas/areas` (hoje vazia) em uma página real, no estilo do Anota AI, para o admin cadastrar bairros e taxas de entrega de cada loja.
 
-Hoje a taxa só aparece se o `neighborhood` do endereço salvo bater **exatamente** com algum bairro cadastrado pela loja. Quando não bate (acentuação diferente, bairro escrito errado, ou usuário sem endereço com bairro), a taxa cai para R$ 0 silenciosamente. O botão resolve isso deixando o cliente escolher na lista oficial da loja.
+## Fluxo
 
-## Onde aparece
+1. Ao entrar em **Entregas → Áreas de entrega**, mostra a lista de todas as lojas cadastradas (cards com foto/emoji, nome, categoria e contagem de bairros já cadastrados).
+2. Campo de busca no topo para filtrar lojas por nome/categoria/bairro.
+3. Ao clicar em **Gerenciar áreas** num card, abre a tela de bairros daquela loja (mesma página, estado interno — botão "← Voltar para lojas").
+4. A tela da loja replica o visual do print do Anota AI:
+   - Cabeçalho: nome da loja + subtítulo "Adicione pelo menos uma região de atendimento".
+   - Busca + botão **+ Bairro** (azul).
+   - "Total de N registros".
+   - Tabela com colunas: **Status** (toggle azul ativo/inativo), **Bairro**, **Valor** (R$), ações (editar ✏️ / excluir 🗑️).
+   - Linhas alternadas em tom claro/cinza.
+   - Formulário inline (ou modal) para criar/editar com campos Bairro e Taxa (R$).
 
-Dentro do `CheckoutReviewDialog`, na seção "Endereço de entrega", apenas quando `deliveryMode === "delivery"`. Logo abaixo do endereço/linha de número e complemento, um bloco novo:
+## Implementação
 
-```text
-🛵 BAIRRO PARA ENTREGA
-┌─────────────────────────────────────────┐
-│ Castelo                  Taxa R$ 5,00  >│   ← botão (abre lista)
-└─────────────────────────────────────────┘
-```
+- Substituir `src/routes/admin.entregas.areas.tsx`:
+  - `useQuery(['admin-stores-areas'])` busca `stores` + agregado de contagem de `store_delivery_areas` por loja.
+  - Estado `selectedStoreId`. Quando nulo → render da grade de lojas. Quando preenchido → render do gerenciador.
+  - Para o gerenciador, **reaproveitar** `StoreDeliveryAreasEditor` (já existe e cobre exatamente todas as ações: listar, buscar, total, adicionar, editar, ativar/desativar, excluir). Wrappear com cabeçalho (nome da loja + botão voltar).
+  - Pequeno ajuste visual em `StoreDeliveryAreasEditor` para deixar a tabela mais parecida com o print (linhas zebradas, toggles azuis maiores, valores à direita) — sem mudar a lógica.
 
-Se ainda não selecionado: "Selecione seu bairro" com aviso de que a taxa depende disso.
-Se a loja não tem bairros cadastrados: o bloco não aparece (mantém comportamento atual).
+## Banco de dados
 
-## Como funciona a seleção
+Nenhuma mudança. A tabela `store_delivery_areas` (store_id, neighborhood, fee, is_active) já existe e tem RLS adequada (admins gerenciam tudo).
 
-Ao tocar no botão, abre um sheet (bottom sheet no mobile, dialog no desktop) com:
-- Campo de busca "Pesquise pelo seu bairro"
-- Lista dos bairros ativos da loja, com taxa ao lado (ex: "Castelo — R$ 5,00" / "Grátis")
-- Radio à direita, igual ao mock enviado
-- Ordenado alfabeticamente
+## Arquivos afetados
 
-Ao escolher, fecha o sheet e o bairro selecionado vira a base do cálculo de frete. A taxa some/aparece no resumo da sacola em tempo real.
+- `src/routes/admin.entregas.areas.tsx` — reescrito (lista de lojas + container do gerenciador).
+- `src/components/StoreDeliveryAreasEditor.tsx` — pequenos ajustes visuais (opcional, só para ficar igual ao print).
 
-## Pré-seleção
+## Fora do escopo
 
-- Se o `neighborhood` do endereço ativo bater (com normalização — minúsculas, sem acento, sem espaço extra) com um bairro da loja, esse fica pré-selecionado.
-- Senão, fica em branco e o botão de confirmar muda para "Selecione seu bairro" enquanto não houver escolha.
-
-## Validação
-
-Para `deliveryMode === "delivery"`, agora também é obrigatório ter um bairro selecionado quando a loja tem áreas cadastradas. O botão final reflete isso:
-
-- Sem bairro: "Selecione seu bairro" (desabilitado)
-- Resto da validação (nome, telefone, número) continua igual
-
-Para `pickup` e `mesa` nada muda.
-
-## Detalhes técnicos
-
-- `CheckoutReviewDialog` ganha 3 props novas: `deliveryAreas` (lista `{id, neighborhood, fee}`), `selectedNeighborhood` e `onSelectNeighborhood(neighborhood, fee)`.
-- `src/routes/sacola.tsx` passa a buscar `store_delivery_areas` uma vez (já busca, hoje dentro do `useEffect` de cálculo) e expor a lista filtrada por `is_active`. O cálculo do `deliveryFeeValue`/`deliveryFeeLabel` passa a depender do bairro selecionado (estado novo `selectedDeliveryNeighborhood`), com fallback no `active.neighborhood` para manter compatibilidade.
-- Novo componente `NeighborhoodPickerSheet` em `src/components/NeighborhoodPickerSheet.tsx` para o sheet de seleção (busca + lista + radio), seguindo o mesmo padrão visual do dialog atual.
-- Sem migração de banco. Sem mudança em RLS. Sem mudança em pedidos finalizados (o pedido continua salvando `delivery_address`, `delivery_fee` e bairro já vai no endereço/observação como hoje).
-
-## Fora de escopo
-
-- Não cria/edita bairros (isso já existe em `StoreDeliveryAreasEditor`).
-- Não muda o fluxo de cadastro de endereço no perfil.
-- Não troca o bairro do endereço salvo do usuário — só usa o escolhido para esse pedido.
+- Não vou mexer em "Cadastro entregadores" nem "Relatório entregadores".
+- Não vou criar abas "Bairro/Raio" do print agora (o sistema hoje só tem bairros). Posso adicionar depois se você pedir.
