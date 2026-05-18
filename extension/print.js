@@ -12,6 +12,12 @@ function isPickup(o) {
   const t = (o.delivery_type ?? "").toLowerCase();
   return t.includes("retir") || t === "pickup" || !o.delivery_address;
 }
+function fmtCpf(raw) {
+  if (!raw) return null;
+  const d = String(raw).replace(/\D/g, "");
+  if (d.length !== 11) return raw;
+  return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`;
+}
 
 function buildHTML({ store, order, items, customer }) {
   const itemsHTML = (items ?? [])
