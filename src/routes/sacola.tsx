@@ -53,6 +53,10 @@ function CartPage() {
   const [submitting, setSubmitting] = useState(false);
   const [deliveryFeeValue, setDeliveryFeeValue] = useState<number>(0);
   const [deliveryFeeLabel, setDeliveryFeeLabel] = useState<string>("Grátis");
+  const [deliveryAreas, setDeliveryAreas] = useState<
+    { id: string; neighborhood: string; fee: number }[]
+  >([]);
+  const [selectedNeighborhood, setSelectedNeighborhood] = useState<string | null>(null);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [trackingOrderId, setTrackingOrderId] = useState<string | null>(null);
   const [trackingOrderNumber, setTrackingOrderNumber] = useState<number | null>(null);
