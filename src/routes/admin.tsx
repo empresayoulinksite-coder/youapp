@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Store, LogOut, Home, Tags, LayoutGrid, Users, Upload, Sparkles, Truck, ChevronDown, UserPlus, FileText, MapPin, Printer } from "lucide-react";
-import { useIsAdmin } from "@/hooks/use-admin";
+import { useAdminAccess } from "@/hooks/use-admin";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
@@ -9,8 +9,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminLayout,
 });
 
-const NAV = [
-  { to: "/admin", label: "Lojas", icon: Store, exact: true },
+const ADMIN_ONLY_NAV = [
   { to: "/admin/donos", label: "Donos de loja", icon: Users },
   { to: "/admin/categorias-home", label: "Categorias Home", icon: LayoutGrid },
   { to: "/admin/categorias-ecommerce", label: "Categorias E-com", icon: Tags },
@@ -19,6 +18,8 @@ const NAV = [
   { to: "/admin/impressao-automatica", label: "Impressão automática", icon: Printer },
 ];
 
+const STORES_NAV = { to: "/admin", label: "Lojas", icon: Store, exact: true };
+
 const ENTREGAS_SUB = [
   { to: "/admin/entregas/cadastro", label: "Cadastro entregadores", icon: UserPlus },
   { to: "/admin/entregas/relatorio", label: "Relatório entregadores", icon: FileText },
@@ -26,10 +27,15 @@ const ENTREGAS_SUB = [
 ];
 
 function AdminLayout() {
-  const { isAdmin, loading, user } = useIsAdmin();
+  const { isAdmin, isOwner, hasAccess, loading, user } = useAdminAccess();
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const NAV = useMemo(
+    () => (isAdmin ? [STORES_NAV, ...ADMIN_ONLY_NAV] : [STORES_NAV]),
+    [isAdmin],
+  );
 
   const isEntregasActive = location.pathname.startsWith("/admin/entregas");
   const [entregasOpen, setEntregasOpen] = useState(isEntregasActive);
@@ -50,7 +56,7 @@ function AdminLayout() {
     );
   }
 
-  if (!isAdmin) {
+  if (!hasAccess) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
         <div className="max-w-sm text-center">
@@ -65,6 +71,9 @@ function AdminLayout() {
       </div>
     );
   }
+
+  const headerLabel = isAdmin ? "Admin" : "Minhas lojas";
+
 
   return (
     <div className="flex min-h-screen bg-muted/30">
