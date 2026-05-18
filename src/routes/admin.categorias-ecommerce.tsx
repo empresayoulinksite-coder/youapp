@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { requireAdminOnly } from "@/lib/admin-guards";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, ArrowUp, ArrowDown, Pause, Play } from "lucide-react";
@@ -23,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/admin/categorias-ecommerce")({
+  beforeLoad: () => requireAdminOnly(),
   component: AdminEcommerceCategories,
 });
 

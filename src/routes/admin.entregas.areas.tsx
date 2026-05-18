@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { StoreDeliveryAreasEditor } from "@/components/StoreDeliveryAreasEditor";
+import { useAdminAccess } from "@/hooks/use-admin";
 
 export const Route = createFileRoute("/admin/entregas/areas")({
   component: AreasEntrega,
@@ -24,16 +25,17 @@ const norm = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
 function AreasEntrega() {
+  const { isAdmin, ownedStoreIds, loading: accessLoading } = useAdminAccess();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
   const { data: stores = [], isLoading } = useQuery({
-    queryKey: ["admin-areas-stores"],
+    queryKey: ["admin-areas-stores", isAdmin ? "all" : ownedStoreIds.slice().sort().join(",")],
+    enabled: !accessLoading && (isAdmin || ownedStoreIds.length > 0),
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("stores")
-        .select("id, name, emoji, image_url, category, city")
-        .order("name");
+      let q = supabase.from("stores").select("id, name, emoji, image_url, category, city").order("name");
+      if (!isAdmin) q = q.in("id", ownedStoreIds);
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as StoreRow[];
     },

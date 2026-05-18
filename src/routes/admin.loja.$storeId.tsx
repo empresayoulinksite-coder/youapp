@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { requireAdminOrStoreOwner } from "@/lib/admin-guards";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -41,6 +42,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/admin/loja/$storeId")({
+  beforeLoad: ({ params }) => requireAdminOrStoreOwner(params.storeId),
   validateSearch: (search: Record<string, unknown>) => ({
     tab: (search.tab as string) || "info",
   }),

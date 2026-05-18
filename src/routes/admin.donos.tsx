@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { requireAdminOnly } from "@/lib/admin-guards";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Trash2, UserPlus } from "lucide-react";
@@ -16,6 +17,7 @@ import {
 } from "@/components/ui/select";
 
 export const Route = createFileRoute("/admin/donos")({
+  beforeLoad: () => requireAdminOnly(),
   component: AdminOwners,
 });
 
