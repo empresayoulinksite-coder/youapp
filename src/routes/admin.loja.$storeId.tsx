@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { requireAdminOrStoreOwner } from "@/lib/admin-guards";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
