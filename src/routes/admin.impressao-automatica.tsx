@@ -1,4 +1,4 @@
-import { createFileRoute, redirect, Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { requireAdminOnly } from "@/lib/admin-guards";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
