@@ -284,6 +284,35 @@ export function CheckoutReviewDialog({
                       Informe o número da casa/apartamento
                     </p>
                   )}
+                  {hasAreas && (
+                    <div>
+                      <p className="text-[11px] font-semibold text-muted-foreground uppercase mb-1.5">
+                        🛵 Bairro para entrega
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setNeighborhoodSheetOpen(true)}
+                        className={cn(
+                          "w-full flex items-center justify-between gap-2 rounded-xl border p-3 text-left transition-colors",
+                          selectedNeighborhood
+                            ? "border-brand bg-brand-soft"
+                            : "border-border bg-background hover:border-brand/50",
+                        )}
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold truncate">
+                            {selectedNeighborhood ?? "Selecione seu bairro"}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {selectedNeighborhood
+                              ? `Taxa ${feeLabel}`
+                              : "A taxa depende do bairro"}
+                          </p>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3">
