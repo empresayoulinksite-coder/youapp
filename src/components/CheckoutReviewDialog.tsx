@@ -467,6 +467,7 @@ export function CheckoutReviewDialog({
                 complement: complement.trim(),
                 customerName: name.trim(),
                 customerPhone: phoneDigits,
+                customerCpf: cpfDigits,
               });
             }}
             disabled={!canConfirm}
