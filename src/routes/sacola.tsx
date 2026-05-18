@@ -566,18 +566,33 @@ function CartPage() {
                   : customerPhone;
             lines.push(`📱 Contato: ${formatted}`);
           }
+          if (customerCpf) {
+            const d = customerCpf.replace(/\D/g, "");
+            const formattedCpf =
+              d.length === 11
+                ? `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`
+                : customerCpf;
+            lines.push(`🧾 CPF: ${formattedCpf}`);
+          }
 
           // Persiste alterações no perfil para próximas compras
-          if (authUser && (customerName !== (profileName ?? "") || customerPhone !== (profilePhone ?? ""))) {
+          if (
+            authUser &&
+            (customerName !== (profileName ?? "") ||
+              customerPhone !== (profilePhone ?? "") ||
+              customerCpf !== (profileCpf ?? ""))
+          ) {
             await supabase
               .from("profiles")
               .update({
                 display_name: customerName || null,
                 phone: customerPhone || null,
+                cpf: customerCpf || null,
               })
               .eq("user_id", authUser.id);
             setProfileName(customerName || null);
             setProfilePhone(customerPhone || null);
+            setProfileCpf(customerCpf || null);
           }
           let deliveryAddress: string | null = null;
           if (deliveryMode === "mesa" && tableNumber) {
