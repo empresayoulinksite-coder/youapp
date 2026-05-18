@@ -930,6 +930,7 @@ export type Database = {
           accepted_at: string | null
           cancelled_at: string | null
           created_at: string
+          customer_cpf: string | null
           customer_notes: string | null
           delivered_at: string | null
           delivery_address: string | null
@@ -957,6 +958,7 @@ export type Database = {
           accepted_at?: string | null
           cancelled_at?: string | null
           created_at?: string
+          customer_cpf?: string | null
           customer_notes?: string | null
           delivered_at?: string | null
           delivery_address?: string | null
@@ -984,6 +986,7 @@ export type Database = {
           accepted_at?: string | null
           cancelled_at?: string | null
           created_at?: string
+          customer_cpf?: string | null
           customer_notes?: string | null
           delivered_at?: string | null
           delivery_address?: string | null
