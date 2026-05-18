@@ -86,7 +86,7 @@ function AdminLayout() {
     <div className="flex min-h-screen bg-muted/30">
       <aside className="hidden w-64 flex-col border-r bg-background md:flex">
         <div className="border-b p-4">
-          <h1 className="text-lg font-bold">Admin</h1>
+          <h1 className="text-lg font-bold">{headerLabel}</h1>
           <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
         </div>
         <nav className="flex-1 space-y-1 p-3">
@@ -178,7 +178,7 @@ function AdminLayout() {
       {/* Mobile top nav */}
       <div className="flex flex-1 flex-col">
         <header className="flex items-center justify-between border-b bg-background p-3 md:hidden">
-          <h1 className="text-base font-bold">Admin</h1>
+          <h1 className="text-base font-bold">{headerLabel}</h1>
           <Link to="/" className="text-xs text-primary">App</Link>
         </header>
         <nav className="flex gap-1 overflow-x-auto border-b bg-background p-2 md:hidden">
