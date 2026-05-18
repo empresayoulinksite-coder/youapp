@@ -707,6 +707,7 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
             delivery_address: null,
             delivery_type: "pickup",
             customer_notes: "Cupom de teste",
+            customer_cpf: null,
             store_id: storeId,
             user_id: "",
             created_at: new Date().toISOString(),
