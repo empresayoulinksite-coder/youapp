@@ -2,7 +2,7 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { ArrowLeft, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute("/pedidos-loja/$storeId/entregas/relatorio")({
+export const Route = createFileRoute("/pedidos-loja_/$storeId/entregas/relatorio")({
   beforeLoad: async ({ params }) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw redirect({ to: "/auth" });
