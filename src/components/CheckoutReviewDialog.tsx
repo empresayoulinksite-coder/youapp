@@ -240,7 +240,7 @@ export function CheckoutReviewDialog({
               </div>
               <div>
                 <label className="text-[11px] font-semibold text-muted-foreground uppercase">
-                  CPF na nota (opcional)
+                  CPF na nota *
                 </label>
                 <Input
                   value={cpf}
