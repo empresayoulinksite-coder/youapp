@@ -1771,6 +1771,66 @@ export type Database = {
         }
         Relationships: []
       }
+      store_waiter_permissions: {
+        Row: {
+          auto_print_orders: boolean
+          can_cancel_orders: boolean
+          can_edit_orders: boolean
+          created_at: string
+          id: string
+          updated_at: string
+          waiter_id: string
+        }
+        Insert: {
+          auto_print_orders?: boolean
+          can_cancel_orders?: boolean
+          can_edit_orders?: boolean
+          created_at?: string
+          id?: string
+          updated_at?: string
+          waiter_id: string
+        }
+        Update: {
+          auto_print_orders?: boolean
+          can_cancel_orders?: boolean
+          can_edit_orders?: boolean
+          created_at?: string
+          id?: string
+          updated_at?: string
+          waiter_id?: string
+        }
+        Relationships: []
+      }
+      store_waiters: {
+        Row: {
+          created_at: string
+          full_name: string
+          id: string
+          is_active: boolean
+          pin: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          full_name: string
+          id?: string
+          is_active?: boolean
+          pin: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          pin?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       stores: {
         Row: {
           about: string | null
@@ -2185,6 +2245,16 @@ export type Database = {
       is_store_staff: {
         Args: { _store_id: string; _user_id: string }
         Returns: boolean
+      }
+      verify_waiter_pin: {
+        Args: { _full_name: string; _pin: string; _store_id: string }
+        Returns: {
+          auto_print_orders: boolean
+          can_cancel_orders: boolean
+          can_edit_orders: boolean
+          full_name: string
+          waiter_id: string
+        }[]
       }
     }
     Enums: {
