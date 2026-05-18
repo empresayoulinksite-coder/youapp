@@ -30,6 +30,10 @@ interface Props {
   storeAddress?: string | null;
   tableNumber?: number | null;
   submitting: boolean;
+  deliveryAreas?: DeliveryArea[];
+  selectedNeighborhood?: string | null;
+  selectedDeliveryFee?: number;
+  onSelectNeighborhood?: (area: DeliveryArea) => void;
   onConfirm: (data: {
     paymentMethod: PaymentMethod;
     notes: string;
