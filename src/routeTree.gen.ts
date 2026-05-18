@@ -49,6 +49,9 @@ import { Route as AdminEntregasRelatorioRouteImport } from './routes/admin.entre
 import { Route as AdminEntregasCadastroRouteImport } from './routes/admin.entregas.cadastro'
 import { Route as AdminEntregasAreasRouteImport } from './routes/admin.entregas.areas'
 import { Route as AdminAcademiaStoreIdRouteImport } from './routes/admin.academia.$storeId'
+import { Route as PedidosLojaStoreIdEntregasRelatorioRouteImport } from './routes/pedidos-loja.$storeId.entregas.relatorio'
+import { Route as PedidosLojaStoreIdEntregasCadastroRouteImport } from './routes/pedidos-loja.$storeId.entregas.cadastro'
+import { Route as PedidosLojaStoreIdEntregasAreasRouteImport } from './routes/pedidos-loja.$storeId.entregas.areas'
 
 const SacolaRoute = SacolaRouteImport.update({
   id: '/sacola',
@@ -253,6 +256,24 @@ const AdminAcademiaStoreIdRoute = AdminAcademiaStoreIdRouteImport.update({
   path: '/academia/$storeId',
   getParentRoute: () => AdminRoute,
 } as any)
+const PedidosLojaStoreIdEntregasRelatorioRoute =
+  PedidosLojaStoreIdEntregasRelatorioRouteImport.update({
+    id: '/entregas/relatorio',
+    path: '/entregas/relatorio',
+    getParentRoute: () => PedidosLojaStoreIdRoute,
+  } as any)
+const PedidosLojaStoreIdEntregasCadastroRoute =
+  PedidosLojaStoreIdEntregasCadastroRouteImport.update({
+    id: '/entregas/cadastro',
+    path: '/entregas/cadastro',
+    getParentRoute: () => PedidosLojaStoreIdRoute,
+  } as any)
+const PedidosLojaStoreIdEntregasAreasRoute =
+  PedidosLojaStoreIdEntregasAreasRouteImport.update({
+    id: '/entregas/areas',
+    path: '/entregas/areas',
+    getParentRoute: () => PedidosLojaStoreIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -285,7 +306,7 @@ export interface FileRoutesByFullPath {
   '/admin/stories': typeof AdminStoriesRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/loja/$slug': typeof LojaSlugRoute
-  '/pedidos-loja/$storeId': typeof PedidosLojaStoreIdRoute
+  '/pedidos-loja/$storeId': typeof PedidosLojaStoreIdRouteWithChildren
   '/produto/$id': typeof ProdutoIdRoute
   '/vitrine/$slug': typeof VitrineSlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -295,6 +316,9 @@ export interface FileRoutesByFullPath {
   '/admin/entregas/relatorio': typeof AdminEntregasRelatorioRoute
   '/admin/loja/$storeId': typeof AdminLojaStoreIdRoute
   '/pedidos-loja/$storeId/impressao': typeof PedidosLojaStoreIdImpressaoRoute
+  '/pedidos-loja/$storeId/entregas/areas': typeof PedidosLojaStoreIdEntregasAreasRoute
+  '/pedidos-loja/$storeId/entregas/cadastro': typeof PedidosLojaStoreIdEntregasCadastroRoute
+  '/pedidos-loja/$storeId/entregas/relatorio': typeof PedidosLojaStoreIdEntregasRelatorioRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -326,7 +350,7 @@ export interface FileRoutesByTo {
   '/admin/stories': typeof AdminStoriesRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/loja/$slug': typeof LojaSlugRoute
-  '/pedidos-loja/$storeId': typeof PedidosLojaStoreIdRoute
+  '/pedidos-loja/$storeId': typeof PedidosLojaStoreIdRouteWithChildren
   '/produto/$id': typeof ProdutoIdRoute
   '/vitrine/$slug': typeof VitrineSlugRoute
   '/admin': typeof AdminIndexRoute
@@ -336,6 +360,9 @@ export interface FileRoutesByTo {
   '/admin/entregas/relatorio': typeof AdminEntregasRelatorioRoute
   '/admin/loja/$storeId': typeof AdminLojaStoreIdRoute
   '/pedidos-loja/$storeId/impressao': typeof PedidosLojaStoreIdImpressaoRoute
+  '/pedidos-loja/$storeId/entregas/areas': typeof PedidosLojaStoreIdEntregasAreasRoute
+  '/pedidos-loja/$storeId/entregas/cadastro': typeof PedidosLojaStoreIdEntregasCadastroRoute
+  '/pedidos-loja/$storeId/entregas/relatorio': typeof PedidosLojaStoreIdEntregasRelatorioRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -369,7 +396,7 @@ export interface FileRoutesById {
   '/admin/stories': typeof AdminStoriesRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
   '/loja/$slug': typeof LojaSlugRoute
-  '/pedidos-loja/$storeId': typeof PedidosLojaStoreIdRoute
+  '/pedidos-loja/$storeId': typeof PedidosLojaStoreIdRouteWithChildren
   '/produto/$id': typeof ProdutoIdRoute
   '/vitrine/$slug': typeof VitrineSlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -379,6 +406,9 @@ export interface FileRoutesById {
   '/admin/entregas/relatorio': typeof AdminEntregasRelatorioRoute
   '/admin/loja/$storeId': typeof AdminLojaStoreIdRoute
   '/pedidos-loja_/$storeId/impressao': typeof PedidosLojaStoreIdImpressaoRoute
+  '/pedidos-loja/$storeId/entregas/areas': typeof PedidosLojaStoreIdEntregasAreasRoute
+  '/pedidos-loja/$storeId/entregas/cadastro': typeof PedidosLojaStoreIdEntregasCadastroRoute
+  '/pedidos-loja/$storeId/entregas/relatorio': typeof PedidosLojaStoreIdEntregasRelatorioRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -423,6 +453,9 @@ export interface FileRouteTypes {
     | '/admin/entregas/relatorio'
     | '/admin/loja/$storeId'
     | '/pedidos-loja/$storeId/impressao'
+    | '/pedidos-loja/$storeId/entregas/areas'
+    | '/pedidos-loja/$storeId/entregas/cadastro'
+    | '/pedidos-loja/$storeId/entregas/relatorio'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -464,6 +497,9 @@ export interface FileRouteTypes {
     | '/admin/entregas/relatorio'
     | '/admin/loja/$storeId'
     | '/pedidos-loja/$storeId/impressao'
+    | '/pedidos-loja/$storeId/entregas/areas'
+    | '/pedidos-loja/$storeId/entregas/cadastro'
+    | '/pedidos-loja/$storeId/entregas/relatorio'
   id:
     | '__root__'
     | '/'
@@ -506,6 +542,9 @@ export interface FileRouteTypes {
     | '/admin/entregas/relatorio'
     | '/admin/loja/$storeId'
     | '/pedidos-loja_/$storeId/impressao'
+    | '/pedidos-loja/$storeId/entregas/areas'
+    | '/pedidos-loja/$storeId/entregas/cadastro'
+    | '/pedidos-loja/$storeId/entregas/relatorio'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -526,7 +565,7 @@ export interface RootRouteChildren {
   SacolaRoute: typeof SacolaRoute
   CategoriaSlugRoute: typeof CategoriaSlugRoute
   LojaSlugRoute: typeof LojaSlugRoute
-  PedidosLojaStoreIdRoute: typeof PedidosLojaStoreIdRoute
+  PedidosLojaStoreIdRoute: typeof PedidosLojaStoreIdRouteWithChildren
   ProdutoIdRoute: typeof ProdutoIdRoute
   VitrineSlugRoute: typeof VitrineSlugRoute
   PedidosLojaStoreIdImpressaoRoute: typeof PedidosLojaStoreIdImpressaoRoute
@@ -814,6 +853,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAcademiaStoreIdRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/pedidos-loja/$storeId/entregas/relatorio': {
+      id: '/pedidos-loja/$storeId/entregas/relatorio'
+      path: '/entregas/relatorio'
+      fullPath: '/pedidos-loja/$storeId/entregas/relatorio'
+      preLoaderRoute: typeof PedidosLojaStoreIdEntregasRelatorioRouteImport
+      parentRoute: typeof PedidosLojaStoreIdRoute
+    }
+    '/pedidos-loja/$storeId/entregas/cadastro': {
+      id: '/pedidos-loja/$storeId/entregas/cadastro'
+      path: '/entregas/cadastro'
+      fullPath: '/pedidos-loja/$storeId/entregas/cadastro'
+      preLoaderRoute: typeof PedidosLojaStoreIdEntregasCadastroRouteImport
+      parentRoute: typeof PedidosLojaStoreIdRoute
+    }
+    '/pedidos-loja/$storeId/entregas/areas': {
+      id: '/pedidos-loja/$storeId/entregas/areas'
+      path: '/entregas/areas'
+      fullPath: '/pedidos-loja/$storeId/entregas/areas'
+      preLoaderRoute: typeof PedidosLojaStoreIdEntregasAreasRouteImport
+      parentRoute: typeof PedidosLojaStoreIdRoute
+    }
   }
 }
 
@@ -873,6 +933,23 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface PedidosLojaStoreIdRouteChildren {
+  PedidosLojaStoreIdEntregasAreasRoute: typeof PedidosLojaStoreIdEntregasAreasRoute
+  PedidosLojaStoreIdEntregasCadastroRoute: typeof PedidosLojaStoreIdEntregasCadastroRoute
+  PedidosLojaStoreIdEntregasRelatorioRoute: typeof PedidosLojaStoreIdEntregasRelatorioRoute
+}
+
+const PedidosLojaStoreIdRouteChildren: PedidosLojaStoreIdRouteChildren = {
+  PedidosLojaStoreIdEntregasAreasRoute: PedidosLojaStoreIdEntregasAreasRoute,
+  PedidosLojaStoreIdEntregasCadastroRoute:
+    PedidosLojaStoreIdEntregasCadastroRoute,
+  PedidosLojaStoreIdEntregasRelatorioRoute:
+    PedidosLojaStoreIdEntregasRelatorioRoute,
+}
+
+const PedidosLojaStoreIdRouteWithChildren =
+  PedidosLojaStoreIdRoute._addFileChildren(PedidosLojaStoreIdRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
@@ -891,7 +968,7 @@ const rootRouteChildren: RootRouteChildren = {
   SacolaRoute: SacolaRoute,
   CategoriaSlugRoute: CategoriaSlugRoute,
   LojaSlugRoute: LojaSlugRoute,
-  PedidosLojaStoreIdRoute: PedidosLojaStoreIdRoute,
+  PedidosLojaStoreIdRoute: PedidosLojaStoreIdRouteWithChildren,
   ProdutoIdRoute: ProdutoIdRoute,
   VitrineSlugRoute: VitrineSlugRoute,
   PedidosLojaStoreIdImpressaoRoute: PedidosLojaStoreIdImpressaoRoute,

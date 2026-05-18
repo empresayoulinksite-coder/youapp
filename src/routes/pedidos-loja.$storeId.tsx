@@ -396,15 +396,16 @@ function PedidosLojaPage() {
               {entregasOpen && (
                 <div className="ml-4 mt-0.5 space-y-0.5 border-l-2 border-purple-400/40 pl-3">
                   {[
-                    { to: `/admin/entregas/cadastro`, label: "Cadastro entregadores", icon: UserPlus },
-                    { to: `/admin/entregas/relatorio`, label: "Relatório entregadores", icon: FileText },
-                    { to: `/admin/entregas/areas`, label: "Áreas de entrega", icon: MapPin },
+                    { to: "/pedidos-loja/$storeId/entregas/cadastro" as const, label: "Cadastro entregadores", icon: UserPlus },
+                    { to: "/pedidos-loja/$storeId/entregas/relatorio" as const, label: "Relatório entregadores", icon: FileText },
+                    { to: "/pedidos-loja/$storeId/entregas/areas" as const, label: "Áreas de entrega", icon: MapPin },
                   ].map((sub) => {
                     const Icon = sub.icon;
                     return (
                       <Link
                         key={sub.to}
                         to={sub.to}
+                        params={{ storeId }}
                         className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-white/80 hover:bg-white/10 transition-colors"
                       >
                         <Icon className="h-3.5 w-3.5" />

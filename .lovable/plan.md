@@ -1,29 +1,44 @@
-## Objetivo
+# Entregas no painel do lojista
 
-Deixar a seção de **Áreas de entrega** dentro do painel do lojista (`/painel`) com o mesmo visual estilo Anota AI, sem mexer na lógica (que já funciona e tem RLS correta para `is_store_owner`).
+Hoje, no painel `Gestor de Pedidos` (`/pedidos-loja/$storeId`), o submenu **Entregas** abre os itens, mas eles linkam para as páginas do admin (`/admin/entregas/*`), que mostram todas as lojas. Vamos criar versões dessas páginas dentro do próprio painel da loja, já com o `storeId` da loja logada.
 
-## Mudanças
+## O que será feito
 
-### 1. `src/components/StoreDeliveryAreasEditor.tsx` — refinar visual
+### 1. Novas rotas escopadas pela loja
+Criar 3 arquivos de rota no padrão TanStack (flat dot-separated), filhas do painel da loja:
 
-- Cabeçalho com ícone de localização (`MapPin` roxo), título "Áreas de entrega" e subtítulo "Adicione pelo menos uma região de atendimento".
-- Toolbar: campo de busca com ícone à esquerda + botão "+ Bairro" alinhado à direita (estilo do print).
-- Linha "Total de N registros".
-- Tabela com cabeçalho **Status / Bairro / Valor** + colunas de ação, com linhas zebradas (cinza claro alternado), toggle azul maior (mantém o componente atual), valor à direita, ícones de editar/excluir discretos.
-- Formulário de adicionar/editar continua inline, mas com inputs e botões mais claros (mesmos componentes shadcn que já uso).
-- Estado vazio: card centralizado com ícone, frase "Nenhum bairro cadastrado ainda" e botão primário "Cadastrar primeiro bairro".
+```
+src/routes/pedidos-loja.$storeId.entregas.cadastro.tsx   -> /pedidos-loja/:storeId/entregas/cadastro
+src/routes/pedidos-loja.$storeId.entregas.relatorio.tsx  -> /pedidos-loja/:storeId/entregas/relatorio
+src/routes/pedidos-loja.$storeId.entregas.areas.tsx      -> /pedidos-loja/:storeId/entregas/areas
+```
 
-### 2. Sem outras mudanças
+Cada uma:
+- Lê `storeId` via `Route.useParams()`.
+- Valida no carregamento se o usuário é dono/staff dessa loja (mesma checagem já usada em `pedidos-loja.$storeId.tsx`). Se não for, redireciona para `/painel`.
+- Renderiza o conteúdo já escopado nessa loja — sem listagem de "todas as lojas".
 
-- Não mexo no `StoreDeliveryEditor` (só renderiza o componente).
-- Não mexo na rota `/admin/entregas/areas` — ela já reaproveita o mesmo componente, então o admin também herda o novo visual.
-- Sem migração: a tabela `store_delivery_areas` e suas policies já permitem o lojista gerenciar.
+### 2. Conteúdo de cada página
+- **Áreas de entrega**: reutiliza o `<StoreDeliveryAreasEditor storeId={storeId} />` já redesenhado no estilo Anota AI, com o header (ícone roxo, título, subtítulo) e o cabeçalho com a logo/nome da loja em cima — mesmo visual do `/admin/entregas/areas` quando uma loja está selecionada, porém pulando o passo de selecionar (já está fixo na loja do lojista).
+- **Cadastro entregadores** e **Relatório entregadores**: mantêm o mesmo conteúdo placeholder atual das versões admin (texto explicativo), porém com título contextualizado à loja. A funcionalidade interna desses dois é o conteúdo atual do admin (ainda placeholder) — quando você quiser implementar de verdade, fazemos depois.
 
-## Arquivos afetados
+### 3. Sidebar do painel do lojista
+Em `src/routes/pedidos-loja.$storeId.tsx` (linhas 398-401), trocar os 3 `to` para as novas rotas escopadas, passando `params={{ storeId }}`:
 
-- `src/components/StoreDeliveryAreasEditor.tsx`
+```
+/pedidos-loja/$storeId/entregas/cadastro
+/pedidos-loja/$storeId/entregas/relatorio
+/pedidos-loja/$storeId/entregas/areas
+```
+
+Os 3 links continuam dentro do mesmo grupo colapsável "Entregas" e mantêm os mesmos ícones (UserPlus, FileText, MapPin) e estilo atual.
+
+### 4. Admin permanece igual
+`/admin/entregas/cadastro`, `/admin/entregas/relatorio` e `/admin/entregas/areas` não são alterados — o admin segue vendo/gerenciando todas as lojas como hoje.
+
+## Banco de dados / RLS
+Nada a alterar. A tabela `store_delivery_areas` já tem política que permite ao dono da loja (`is_store_owner`) gerenciar suas áreas, então o `StoreDeliveryAreasEditor` filtrado por `storeId` do lojista funcionará sem novas migrations.
 
 ## Fora do escopo
-
-- Abas "Bairro / Raio" do Anota AI (o app só usa bairros hoje).
-- Mudar permissões — o lojista já consegue editar.
+- Implementar de fato o cadastro/relatório de entregadores (continuam como tela placeholder, igual ao admin hoje).
+- Mexer em permissões — o dono já tem acesso.
