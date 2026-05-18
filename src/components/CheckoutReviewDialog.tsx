@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { X, MapPin, CreditCard, Phone, Pencil, Check, User } from "lucide-react";
+import { X, MapPin, CreditCard, Phone, Pencil, Check, User, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { ActiveAddress } from "@/contexts/AddressContext";
+import {
+  NeighborhoodPickerSheet,
+  type DeliveryArea,
+} from "@/components/NeighborhoodPickerSheet";
 import {
   PAYMENT_METHODS,
   PAYMENT_LABEL,
