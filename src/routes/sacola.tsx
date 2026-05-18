@@ -140,37 +140,76 @@ function CartPage() {
       });
   }, [storeId]);
 
-  // Busca taxa de entrega por bairro do endereço ativo
+  // Carrega áreas de entrega da loja
   useEffect(() => {
-    if (!storeId || deliveryMode === "pickup" || deliveryMode === "mesa" || !active?.neighborhood) {
-      setDeliveryFeeValue(0);
-      setDeliveryFeeLabel(deliveryMode === "pickup" || deliveryMode === "mesa" ? "—" : "Grátis");
+    if (!storeId) {
+      setDeliveryAreas([]);
       return;
     }
-    const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
     supabase
       .from("store_delivery_areas")
-      .select("fee, is_active, neighborhood")
+      .select("id, fee, is_active, neighborhood")
       .eq("store_id", storeId)
       .then(({ data }) => {
-        if (!data || data.length === 0) {
-          setDeliveryFeeValue(0);
-          setDeliveryFeeLabel("Grátis");
-          return;
-        }
-        const match = data.find(
-          (a) => a.is_active && norm(a.neighborhood) === norm(active.neighborhood!),
-        );
-        if (match) {
-          const fee = Number(match.fee);
-          setDeliveryFeeValue(fee);
-          setDeliveryFeeLabel(fee > 0 ? `R$ ${fee.toFixed(2).replace(".", ",")}` : "Grátis");
-        } else {
-          setDeliveryFeeValue(0);
-          setDeliveryFeeLabel("Grátis");
-        }
+        const areas = (data ?? [])
+          .filter((a) => a.is_active)
+          .map((a) => ({
+            id: a.id as string,
+            neighborhood: a.neighborhood as string,
+            fee: Number(a.fee),
+          }));
+        setDeliveryAreas(areas);
       });
-  }, [storeId, deliveryMode, active?.neighborhood]);
+  }, [storeId]);
+
+  // Pré-seleciona bairro a partir do endereço ativo
+  useEffect(() => {
+    if (deliveryAreas.length === 0) {
+      setSelectedNeighborhood(null);
+      return;
+    }
+    const norm = (s: string) =>
+      s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    if (active?.neighborhood) {
+      const match = deliveryAreas.find(
+        (a) => norm(a.neighborhood) === norm(active.neighborhood!),
+      );
+      if (match) {
+        setSelectedNeighborhood(match.neighborhood);
+        return;
+      }
+    }
+    // Mantém seleção atual se ainda existir na lista
+    setSelectedNeighborhood((prev) => {
+      if (!prev) return null;
+      const stillExists = deliveryAreas.some(
+        (a) => norm(a.neighborhood) === norm(prev),
+      );
+      return stillExists ? prev : null;
+    });
+  }, [deliveryAreas, active?.neighborhood]);
+
+  // Calcula taxa de entrega com base no bairro selecionado
+  useEffect(() => {
+    if (deliveryMode === "pickup" || deliveryMode === "mesa") {
+      setDeliveryFeeValue(0);
+      setDeliveryFeeLabel("—");
+      return;
+    }
+    if (!selectedNeighborhood || deliveryAreas.length === 0) {
+      setDeliveryFeeValue(0);
+      setDeliveryFeeLabel(deliveryAreas.length === 0 ? "Grátis" : "A definir");
+      return;
+    }
+    const norm = (s: string) =>
+      s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    const match = deliveryAreas.find(
+      (a) => norm(a.neighborhood) === norm(selectedNeighborhood),
+    );
+    const fee = match ? Number(match.fee) : 0;
+    setDeliveryFeeValue(fee);
+    setDeliveryFeeLabel(fee > 0 ? `R$ ${fee.toFixed(2).replace(".", ",")}` : "Grátis");
+  }, [selectedNeighborhood, deliveryAreas, deliveryMode]);
 
   const withinHours = storeHours.length === 0 ? true : isStoreOpen(storeHours, now);
   const storeOpen = !storePaused && withinHours;
