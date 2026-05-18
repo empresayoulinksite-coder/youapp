@@ -177,6 +177,7 @@ function AutoPrintPage() {
         delivery_address: o.delivery_address,
         payment_method: o.payment_method,
         customer_notes: o.customer_notes,
+        customer_cpf: o.customer_cpf,
         total: Number(o.total) || 0,
         delivery_fee: Number(o.delivery_fee) || 0,
         discount: Number(o.discount) || 0,
