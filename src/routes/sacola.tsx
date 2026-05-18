@@ -49,6 +49,7 @@ function CartPage() {
   const [tableNumber, setTableNumber] = useState<number | null>(null);
   const [profileName, setProfileName] = useState<string | null>(null);
   const [profilePhone, setProfilePhone] = useState<string | null>(null);
+  const [profileCpf, setProfileCpf] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
   const [submitting, setSubmitting] = useState(false);
   const [deliveryFeeValue, setDeliveryFeeValue] = useState<number>(0);
