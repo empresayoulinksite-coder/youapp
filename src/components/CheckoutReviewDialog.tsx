@@ -128,6 +128,7 @@ export function CheckoutReviewDialog({
   const [complement, setComplement] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [cpf, setCpf] = useState("");
   const [neighborhoodSheetOpen, setNeighborhoodSheetOpen] = useState(false);
 
   // Sempre que o endereço ativo mudar (ou abrir), pré-preenche número/complemento
@@ -141,7 +142,8 @@ export function CheckoutReviewDialog({
     if (!open) return;
     setName(initialName ?? "");
     setPhone(initialPhone ? maskPhoneInput(initialPhone) : "");
-  }, [open, initialName, initialPhone]);
+    setCpf(initialCpf ? maskCpfInput(initialCpf) : "");
+  }, [open, initialName, initialPhone, initialCpf]);
 
   if (!open) return null;
 
@@ -158,6 +160,9 @@ export function CheckoutReviewDialog({
   const hasName = name.trim().length > 0;
   const phoneDigits = phone.replace(/\D/g, "");
   const hasPhone = phoneDigits.length >= 10;
+  const cpfDigits = cpf.replace(/\D/g, "");
+  const cpfFilled = cpfDigits.length > 0;
+  const cpfOk = !cpfFilled || isValidCpf(cpfDigits);
   const hasAreas = deliveryAreas.length > 0;
   const needsNeighborhood = !isPickup && !isMesa && hasAreas;
   const neighborhoodOk = !needsNeighborhood || !!selectedNeighborhood;
@@ -168,6 +173,7 @@ export function CheckoutReviewDialog({
     neighborhoodOk &&
     hasName &&
     hasPhone &&
+    cpfOk &&
     !submitting;
   const feeLabel =
     selectedDeliveryFee != null && selectedDeliveryFee > 0
