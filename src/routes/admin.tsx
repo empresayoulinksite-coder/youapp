@@ -34,7 +34,7 @@ const ENTREGAS_SUB = [
 ];
 
 function AdminLayout() {
-  const { isAdmin, isOwner, hasAccess, loading, user } = useAdminAccess();
+  const { isAdmin, hasAccess, loading, user } = useAdminAccess();
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
