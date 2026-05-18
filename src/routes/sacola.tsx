@@ -495,6 +495,7 @@ function CartPage() {
         acceptedPaymentMethods={storePaymentMethods}
         customerName={profileName}
         customerPhone={profilePhone}
+        customerCpf={profileCpf}
         deliveryMode={deliveryMode}
         storeAddress={storeAddress}
         tableNumber={tableNumber}
@@ -503,7 +504,7 @@ function CartPage() {
         selectedNeighborhood={selectedNeighborhood}
         selectedDeliveryFee={deliveryFeeValue}
         onSelectNeighborhood={(area) => setSelectedNeighborhood(area.neighborhood)}
-        onConfirm={async ({ paymentMethod, notes, number, complement, customerName, customerPhone }) => {
+        onConfirm={async ({ paymentMethod, notes, number, complement, customerName, customerPhone, customerCpf }) => {
           if (!authUser) {
             toast.error("Entre na sua conta para finalizar o pedido.");
             navigate({ to: "/auth" });
