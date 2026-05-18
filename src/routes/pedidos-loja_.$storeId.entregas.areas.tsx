@@ -4,7 +4,7 @@ import { ArrowLeft, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { StoreDeliveryAreasEditor } from "@/components/StoreDeliveryAreasEditor";
 
-export const Route = createFileRoute("/pedidos-loja/$storeId/entregas/areas")({
+export const Route = createFileRoute("/pedidos-loja_/$storeId/entregas/areas")({
   beforeLoad: async ({ params }) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw redirect({ to: "/auth" });
