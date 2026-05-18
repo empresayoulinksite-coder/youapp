@@ -70,11 +70,12 @@ function CartPage() {
     if (!authUser) {
       setProfileName(null);
       setProfilePhone(null);
+      setProfileCpf(null);
       return;
     }
     supabase
       .from("profiles")
-      .select("display_name, phone")
+      .select("display_name, phone, cpf")
       .eq("user_id", authUser.id)
       .maybeSingle()
       .then(({ data }) => {
@@ -86,6 +87,7 @@ function CartPage() {
             null,
         );
         setProfilePhone(data?.phone ?? null);
+        setProfileCpf(data?.cpf ?? null);
       });
   }, [authUser]);
 
