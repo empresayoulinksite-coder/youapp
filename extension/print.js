@@ -49,13 +49,23 @@ function buildHTML({ store, order, items, customer }) {
     <div class="center">${fmtTime(order.created_at)}</div>
     <div class="center">${order.table_number ? `Mesa ${order.table_number}` : pickup ? "RETIRADA" : "DELIVERY"}</div>
     <hr>
-    ${customer && (customer.display_name || customer.phone) ? `
+    ${(() => {
+      const cpf = fmtCpf(order.customer_cpf);
+      const hasBlock = customer && (customer.display_name || customer.phone || cpf);
+      if (hasBlock) {
+        return `
       <h2>Cliente</h2>
       ${customer.display_name ? `<div>${customer.display_name}</div>` : ""}
       ${customer.phone ? `<div>Tel: ${customer.phone}</div>` : ""}
+      ${cpf ? `<div>CPF: ${cpf}</div>` : ""}
       ${!pickup && order.delivery_address ? `<div>End: ${order.delivery_address}</div>` : ""}
-      <hr>
-    ` : (!pickup && order.delivery_address ? `<h2>Endereço</h2><div>${order.delivery_address}</div><hr>` : "")}
+      <hr>`;
+      }
+      if (!pickup && order.delivery_address) {
+        return `<h2>Endereço</h2><div>${order.delivery_address}</div><hr>`;
+      }
+      return "";
+    })()}
     <h2>Itens</h2>
     <table>${itemsHTML}</table>
     <hr>
