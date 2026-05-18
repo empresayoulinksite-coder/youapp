@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { requireAdminOnly } from "@/lib/admin-guards";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -33,6 +34,7 @@ import {
 } from "@/server/menu-import.functions";
 
 export const Route = createFileRoute("/admin/importar-cardapio")({
+  beforeLoad: () => requireAdminOnly(),
   component: ImportMenuPage,
 });
 

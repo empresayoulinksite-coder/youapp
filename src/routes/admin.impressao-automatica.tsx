@@ -1,4 +1,5 @@
 import { createFileRoute, redirect, Link } from "@tanstack/react-router";
+import { requireAdminOnly } from "@/lib/admin-guards";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -73,6 +74,7 @@ function DownloadBatButton({ origin, storeId, storeName }: { origin: string; sto
 }
 
 export const Route = createFileRoute("/admin/impressao-automatica")({
+  beforeLoad: () => requireAdminOnly(),
   component: ImpressaoAutomaticaPage,
   beforeLoad: async () => {
     const { data: { session } } = await supabase.auth.getSession();
