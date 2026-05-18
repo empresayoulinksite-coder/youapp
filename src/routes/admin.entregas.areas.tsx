@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { StoreDeliveryAreasEditor } from "@/components/StoreDeliveryAreasEditor";
+import { useAdminAccess } from "@/hooks/use-admin";
 
 export const Route = createFileRoute("/admin/entregas/areas")({
   component: AreasEntrega,
