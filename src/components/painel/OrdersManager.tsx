@@ -116,6 +116,7 @@ type Order = {
   delivery_address: string | null;
   delivery_type: string | null;
   customer_notes: string | null;
+  customer_cpf: string | null;
   store_id: string;
   user_id: string;
   created_at: string;
@@ -265,7 +266,7 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
         .from("orders")
         .select(
           `id, order_number, status, total, delivery_fee, discount, payment_method,
-           delivery_address, delivery_type, customer_notes, store_id, user_id, created_at,
+           delivery_address, delivery_type, customer_notes, customer_cpf, store_id, user_id, created_at,
            accepted_at, ready_at, delivered_at, cancelled_at, table_number,
            order_items(id, name, quantity, unit_price, notes, emoji, selected_size, menu_item_id,
              pizza_size_name, pizza_crust_name, pizza_flavors, pizza_addons, half_two_name)`,
@@ -706,6 +707,7 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
             delivery_address: null,
             delivery_type: "pickup",
             customer_notes: "Cupom de teste",
+            customer_cpf: null,
             store_id: storeId,
             user_id: "",
             created_at: new Date().toISOString(),

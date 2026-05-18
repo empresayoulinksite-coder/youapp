@@ -26,6 +26,7 @@ interface Props {
   acceptedPaymentMethods?: string[] | null;
   customerName?: string | null;
   customerPhone?: string | null;
+  customerCpf?: string | null;
   deliveryMode?: "delivery" | "pickup" | "mesa";
   storeAddress?: string | null;
   tableNumber?: number | null;
@@ -41,7 +42,32 @@ interface Props {
     complement: string;
     customerName: string;
     customerPhone: string;
+    customerCpf: string;
   }) => void;
+}
+
+function maskCpfInput(v: string): string {
+  return v
+    .replace(/\D/g, "")
+    .slice(0, 11)
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+}
+
+function isValidCpf(cpf: string): boolean {
+  const c = cpf.replace(/\D/g, "");
+  if (c.length !== 11 || /^(\d)\1+$/.test(c)) return false;
+  let s = 0;
+  for (let i = 0; i < 9; i++) s += parseInt(c[i]) * (10 - i);
+  let d1 = 11 - (s % 11);
+  if (d1 >= 10) d1 = 0;
+  if (d1 !== parseInt(c[9])) return false;
+  s = 0;
+  for (let i = 0; i < 10; i++) s += parseInt(c[i]) * (11 - i);
+  let d2 = 11 - (s % 11);
+  if (d2 >= 10) d2 = 0;
+  return d2 === parseInt(c[10]);
 }
 
 function maskPhoneInput(v: string): string {
@@ -83,6 +109,7 @@ export function CheckoutReviewDialog({
   acceptedPaymentMethods,
   customerName: initialName,
   customerPhone: initialPhone,
+  customerCpf: initialCpf,
   deliveryMode = "delivery",
   storeAddress,
   tableNumber,
@@ -101,6 +128,7 @@ export function CheckoutReviewDialog({
   const [complement, setComplement] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [cpf, setCpf] = useState("");
   const [neighborhoodSheetOpen, setNeighborhoodSheetOpen] = useState(false);
 
   // Sempre que o endereço ativo mudar (ou abrir), pré-preenche número/complemento
@@ -114,7 +142,8 @@ export function CheckoutReviewDialog({
     if (!open) return;
     setName(initialName ?? "");
     setPhone(initialPhone ? maskPhoneInput(initialPhone) : "");
-  }, [open, initialName, initialPhone]);
+    setCpf(initialCpf ? maskCpfInput(initialCpf) : "");
+  }, [open, initialName, initialPhone, initialCpf]);
 
   if (!open) return null;
 
@@ -131,6 +160,9 @@ export function CheckoutReviewDialog({
   const hasName = name.trim().length > 0;
   const phoneDigits = phone.replace(/\D/g, "");
   const hasPhone = phoneDigits.length >= 10;
+  const cpfDigits = cpf.replace(/\D/g, "");
+  const cpfFilled = cpfDigits.length > 0;
+  const cpfOk = !cpfFilled || isValidCpf(cpfDigits);
   const hasAreas = deliveryAreas.length > 0;
   const needsNeighborhood = !isPickup && !isMesa && hasAreas;
   const neighborhoodOk = !needsNeighborhood || !!selectedNeighborhood;
@@ -141,6 +173,7 @@ export function CheckoutReviewDialog({
     neighborhoodOk &&
     hasName &&
     hasPhone &&
+    cpfOk &&
     !submitting;
   const feeLabel =
     selectedDeliveryFee != null && selectedDeliveryFee > 0
@@ -202,6 +235,23 @@ export function CheckoutReviewDialog({
                 {!hasPhone && phone.length > 0 && (
                   <p className="text-[11px] text-destructive font-semibold mt-1">
                     Telefone inválido
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="text-[11px] font-semibold text-muted-foreground uppercase">
+                  CPF na nota (opcional)
+                </label>
+                <Input
+                  value={cpf}
+                  onChange={(e) => setCpf(maskCpfInput(e.target.value))}
+                  placeholder="000.000.000-00"
+                  className="mt-1 h-9"
+                  inputMode="numeric"
+                />
+                {cpfFilled && !cpfOk && (
+                  <p className="text-[11px] text-destructive font-semibold mt-1">
+                    CPF inválido
                   </p>
                 )}
               </div>
@@ -417,6 +467,7 @@ export function CheckoutReviewDialog({
                 complement: complement.trim(),
                 customerName: name.trim(),
                 customerPhone: phoneDigits,
+                customerCpf: cpfDigits,
               });
             }}
             disabled={!canConfirm}

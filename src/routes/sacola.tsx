@@ -49,6 +49,7 @@ function CartPage() {
   const [tableNumber, setTableNumber] = useState<number | null>(null);
   const [profileName, setProfileName] = useState<string | null>(null);
   const [profilePhone, setProfilePhone] = useState<string | null>(null);
+  const [profileCpf, setProfileCpf] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
   const [submitting, setSubmitting] = useState(false);
   const [deliveryFeeValue, setDeliveryFeeValue] = useState<number>(0);
@@ -69,11 +70,12 @@ function CartPage() {
     if (!authUser) {
       setProfileName(null);
       setProfilePhone(null);
+      setProfileCpf(null);
       return;
     }
     supabase
       .from("profiles")
-      .select("display_name, phone")
+      .select("display_name, phone, cpf")
       .eq("user_id", authUser.id)
       .maybeSingle()
       .then(({ data }) => {
@@ -85,6 +87,7 @@ function CartPage() {
             null,
         );
         setProfilePhone(data?.phone ?? null);
+        setProfileCpf(data?.cpf ?? null);
       });
   }, [authUser]);
 
@@ -492,6 +495,7 @@ function CartPage() {
         acceptedPaymentMethods={storePaymentMethods}
         customerName={profileName}
         customerPhone={profilePhone}
+        customerCpf={profileCpf}
         deliveryMode={deliveryMode}
         storeAddress={storeAddress}
         tableNumber={tableNumber}
@@ -500,7 +504,7 @@ function CartPage() {
         selectedNeighborhood={selectedNeighborhood}
         selectedDeliveryFee={deliveryFeeValue}
         onSelectNeighborhood={(area) => setSelectedNeighborhood(area.neighborhood)}
-        onConfirm={async ({ paymentMethod, notes, number, complement, customerName, customerPhone }) => {
+        onConfirm={async ({ paymentMethod, notes, number, complement, customerName, customerPhone, customerCpf }) => {
           if (!authUser) {
             toast.error("Entre na sua conta para finalizar o pedido.");
             navigate({ to: "/auth" });
@@ -562,18 +566,33 @@ function CartPage() {
                   : customerPhone;
             lines.push(`📱 Contato: ${formatted}`);
           }
+          if (customerCpf) {
+            const d = customerCpf.replace(/\D/g, "");
+            const formattedCpf =
+              d.length === 11
+                ? `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`
+                : customerCpf;
+            lines.push(`🧾 CPF: ${formattedCpf}`);
+          }
 
           // Persiste alterações no perfil para próximas compras
-          if (authUser && (customerName !== (profileName ?? "") || customerPhone !== (profilePhone ?? ""))) {
+          if (
+            authUser &&
+            (customerName !== (profileName ?? "") ||
+              customerPhone !== (profilePhone ?? "") ||
+              customerCpf !== (profileCpf ?? ""))
+          ) {
             await supabase
               .from("profiles")
               .update({
                 display_name: customerName || null,
                 phone: customerPhone || null,
+                cpf: customerCpf || null,
               })
               .eq("user_id", authUser.id);
             setProfileName(customerName || null);
             setProfilePhone(customerPhone || null);
+            setProfileCpf(customerCpf || null);
           }
           let deliveryAddress: string | null = null;
           if (deliveryMode === "mesa" && tableNumber) {
@@ -619,6 +638,7 @@ function CartPage() {
                 delivery_address: deliveryAddress,
                 payment_method: paymentMethod,
                 customer_notes: notes || null,
+                customer_cpf: customerCpf || null,
                 whatsapp_message: message,
                 status: "em_analise",
                 table_number: tableNumber ?? null,

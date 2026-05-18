@@ -11,6 +11,7 @@ export type ReceiptOrder = {
   delivery_address: string | null;
   payment_method: string | null;
   customer_notes: string | null;
+  customer_cpf?: string | null;
   total: number;
   delivery_fee: number;
   discount: number;
@@ -63,6 +64,13 @@ function isPickup(o: ReceiptOrder) {
   return t.includes("retir") || t === "pickup" || !o.delivery_address;
 }
 
+function fmtCpf(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const d = raw.replace(/\D/g, "");
+  if (d.length !== 11) return raw;
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+}
+
 function pad(left: string, right: string, width = COLS) {
   const space = Math.max(1, width - left.length - right.length);
   return left + " ".repeat(space) + right;
@@ -103,12 +111,14 @@ export function buildReceiptBytes(
   line(divider());
 
   // Customer
-  if (customer?.display_name || customer?.phone) {
+  const cpfFormatted = fmtCpf(order.customer_cpf);
+  if (customer?.display_name || customer?.phone || cpfFormatted) {
     push(ESC.boldOn);
     line("CLIENTE");
     push(ESC.boldOff);
-    if (customer.display_name) line(customer.display_name);
-    if (customer.phone) line(`Tel: ${customer.phone}`);
+    if (customer?.display_name) line(customer.display_name);
+    if (customer?.phone) line(`Tel: ${customer.phone}`);
+    if (cpfFormatted) line(`CPF: ${cpfFormatted}`);
     if (!isPickup(order) && order.delivery_address) {
       line(`End: ${order.delivery_address}`);
     }
@@ -217,6 +227,7 @@ export function buildReceiptHTML(
 
   const subtotal = order.total - (order.delivery_fee ?? 0) + (order.discount ?? 0);
   const pickup = isPickup(order);
+  const cpfFormatted = fmtCpf(order.customer_cpf);
 
   return `<!doctype html><html><head><meta charset="utf-8">
 <title>Pedido #${order.order_number ?? ""}</title>
@@ -237,10 +248,11 @@ export function buildReceiptHTML(
 <div class="center">${fmtTime(order.created_at)}</div>
 <div class="center">${order.table_number ? `Mesa ${order.table_number}` : pickup ? "RETIRADA" : "DELIVERY"}</div>
 <hr>
-${customer?.display_name || customer?.phone ? `
+${customer?.display_name || customer?.phone || cpfFormatted ? `
   <h2>Cliente</h2>
-  ${customer.display_name ? `<div>${customer.display_name}</div>` : ""}
-  ${customer.phone ? `<div>Tel: ${customer.phone}</div>` : ""}
+  ${customer?.display_name ? `<div>${customer.display_name}</div>` : ""}
+  ${customer?.phone ? `<div>Tel: ${customer.phone}</div>` : ""}
+  ${cpfFormatted ? `<div>CPF: ${cpfFormatted}</div>` : ""}
   ${!pickup && order.delivery_address ? `<div>End: ${order.delivery_address}</div>` : ""}
   <hr>
 ` : (!pickup && order.delivery_address ? `<h2>Endereço</h2><div>${order.delivery_address}</div><hr>` : "")}
