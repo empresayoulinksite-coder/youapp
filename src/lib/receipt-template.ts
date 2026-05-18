@@ -111,12 +111,14 @@ export function buildReceiptBytes(
   line(divider());
 
   // Customer
-  if (customer?.display_name || customer?.phone) {
+  const cpfFormatted = fmtCpf(order.customer_cpf);
+  if (customer?.display_name || customer?.phone || cpfFormatted) {
     push(ESC.boldOn);
     line("CLIENTE");
     push(ESC.boldOff);
-    if (customer.display_name) line(customer.display_name);
-    if (customer.phone) line(`Tel: ${customer.phone}`);
+    if (customer?.display_name) line(customer.display_name);
+    if (customer?.phone) line(`Tel: ${customer.phone}`);
+    if (cpfFormatted) line(`CPF: ${cpfFormatted}`);
     if (!isPickup(order) && order.delivery_address) {
       line(`End: ${order.delivery_address}`);
     }
