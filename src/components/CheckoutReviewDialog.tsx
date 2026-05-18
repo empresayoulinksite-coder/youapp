@@ -238,6 +238,23 @@ export function CheckoutReviewDialog({
                   </p>
                 )}
               </div>
+              <div>
+                <label className="text-[11px] font-semibold text-muted-foreground uppercase">
+                  CPF na nota (opcional)
+                </label>
+                <Input
+                  value={cpf}
+                  onChange={(e) => setCpf(maskCpfInput(e.target.value))}
+                  placeholder="000.000.000-00"
+                  className="mt-1 h-9"
+                  inputMode="numeric"
+                />
+                {cpfFilled && !cpfOk && (
+                  <p className="text-[11px] text-destructive font-semibold mt-1">
+                    CPF inválido
+                  </p>
+                )}
+              </div>
             </div>
           </section>
 
