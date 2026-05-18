@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { X, MapPin, CreditCard, Phone, Pencil, Check, User } from "lucide-react";
+import { X, MapPin, CreditCard, Phone, Pencil, Check, User, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { ActiveAddress } from "@/contexts/AddressContext";
+import {
+  NeighborhoodPickerSheet,
+  type DeliveryArea,
+} from "@/components/NeighborhoodPickerSheet";
 import {
   PAYMENT_METHODS,
   PAYMENT_LABEL,
@@ -26,6 +30,10 @@ interface Props {
   storeAddress?: string | null;
   tableNumber?: number | null;
   submitting: boolean;
+  deliveryAreas?: DeliveryArea[];
+  selectedNeighborhood?: string | null;
+  selectedDeliveryFee?: number;
+  onSelectNeighborhood?: (area: DeliveryArea) => void;
   onConfirm: (data: {
     paymentMethod: PaymentMethod;
     notes: string;
@@ -79,6 +87,10 @@ export function CheckoutReviewDialog({
   storeAddress,
   tableNumber,
   submitting,
+  deliveryAreas = [],
+  selectedNeighborhood,
+  selectedDeliveryFee,
+  onSelectNeighborhood,
   onConfirm,
 }: Props) {
   const isPickup = deliveryMode === "pickup";
@@ -89,6 +101,7 @@ export function CheckoutReviewDialog({
   const [complement, setComplement] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [neighborhoodSheetOpen, setNeighborhoodSheetOpen] = useState(false);
 
   // Sempre que o endereço ativo mudar (ou abrir), pré-preenche número/complemento
   useEffect(() => {
@@ -118,9 +131,23 @@ export function CheckoutReviewDialog({
   const hasName = name.trim().length > 0;
   const phoneDigits = phone.replace(/\D/g, "");
   const hasPhone = phoneDigits.length >= 10;
+  const hasAreas = deliveryAreas.length > 0;
+  const needsNeighborhood = !isPickup && !isMesa && hasAreas;
+  const neighborhoodOk = !needsNeighborhood || !!selectedNeighborhood;
   const addressOk = isPickup || isMesa ? true : !!addressText && hasNumber;
   const canConfirm =
-    (isMesa || !!paymentMethod) && addressOk && hasName && hasPhone && !submitting;
+    (isMesa || !!paymentMethod) &&
+    addressOk &&
+    neighborhoodOk &&
+    hasName &&
+    hasPhone &&
+    !submitting;
+  const feeLabel =
+    selectedDeliveryFee != null && selectedDeliveryFee > 0
+      ? `R$ ${selectedDeliveryFee.toFixed(2).replace(".", ",")}`
+      : selectedNeighborhood
+        ? "Grátis"
+        : "";
 
   return (
     <div
@@ -257,6 +284,35 @@ export function CheckoutReviewDialog({
                       Informe o número da casa/apartamento
                     </p>
                   )}
+                  {hasAreas && (
+                    <div>
+                      <p className="text-[11px] font-semibold text-muted-foreground uppercase mb-1.5">
+                        🛵 Bairro para entrega
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setNeighborhoodSheetOpen(true)}
+                        className={cn(
+                          "w-full flex items-center justify-between gap-2 rounded-xl border p-3 text-left transition-colors",
+                          selectedNeighborhood
+                            ? "border-brand bg-brand-soft"
+                            : "border-border bg-background hover:border-brand/50",
+                        )}
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold truncate">
+                            {selectedNeighborhood ?? "Selecione seu bairro"}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {selectedNeighborhood
+                              ? `Taxa ${feeLabel}`
+                              : "A taxa depende do bairro"}
+                          </p>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3">
@@ -376,14 +432,23 @@ export function CheckoutReviewDialog({
                      ? "Cadastre um endereço"
                      : !isPickup && !isMesa && !hasNumber
                       ? "Informe o número"
-                      : !isMesa && !paymentMethod
-                        ? "Escolha o pagamento"
-                        : isMesa
-                          ? "Confirmar pedido"
-                          : "Confirmar e enviar pelo WhatsApp"}
+                      : needsNeighborhood && !selectedNeighborhood
+                        ? "Selecione seu bairro"
+                        : !isMesa && !paymentMethod
+                          ? "Escolha o pagamento"
+                          : isMesa
+                            ? "Confirmar pedido"
+                            : "Confirmar e enviar pelo WhatsApp"}
           </button>
         </div>
       </div>
+      <NeighborhoodPickerSheet
+        open={neighborhoodSheetOpen}
+        onClose={() => setNeighborhoodSheetOpen(false)}
+        areas={deliveryAreas}
+        selectedNeighborhood={selectedNeighborhood ?? null}
+        onSelect={(area) => onSelectNeighborhood?.(area)}
+      />
     </div>
   );
 }
