@@ -5,6 +5,7 @@ import { Plus, Pencil, Trash2, UtensilsCrossed, ShoppingBag, Briefcase, Pause, P
 import { Link } from "@tanstack/react-router";
 import { isGymStore } from "@/lib/gym";
 import { toast } from "sonner";
+import { useAdminAccess } from "@/hooks/use-admin";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
