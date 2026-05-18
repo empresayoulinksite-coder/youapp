@@ -11,6 +11,7 @@ export type ReceiptOrder = {
   delivery_address: string | null;
   payment_method: string | null;
   customer_notes: string | null;
+  customer_cpf?: string | null;
   total: number;
   delivery_fee: number;
   discount: number;
