@@ -9,7 +9,14 @@ export const Route = createFileRoute("/admin")({
   component: AdminLayout,
 });
 
-const ADMIN_ONLY_NAV = [
+type NavItem = {
+  to: string;
+  label: string;
+  icon: typeof Store;
+  exact?: boolean;
+};
+
+const ADMIN_ONLY_NAV: NavItem[] = [
   { to: "/admin/donos", label: "Donos de loja", icon: Users },
   { to: "/admin/categorias-home", label: "Categorias Home", icon: LayoutGrid },
   { to: "/admin/categorias-ecommerce", label: "Categorias E-com", icon: Tags },
@@ -18,7 +25,7 @@ const ADMIN_ONLY_NAV = [
   { to: "/admin/impressao-automatica", label: "Impressão automática", icon: Printer },
 ];
 
-const STORES_NAV = { to: "/admin", label: "Lojas", icon: Store, exact: true };
+const STORES_NAV: NavItem = { to: "/admin", label: "Lojas", icon: Store, exact: true };
 
 const ENTREGAS_SUB = [
   { to: "/admin/entregas/cadastro", label: "Cadastro entregadores", icon: UserPlus },
