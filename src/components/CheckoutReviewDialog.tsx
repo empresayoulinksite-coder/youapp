@@ -109,6 +109,7 @@ export function CheckoutReviewDialog({
   acceptedPaymentMethods,
   customerName: initialName,
   customerPhone: initialPhone,
+  customerCpf: initialCpf,
   deliveryMode = "delivery",
   storeAddress,
   tableNumber,
