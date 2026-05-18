@@ -587,7 +587,7 @@ function CartPage() {
               active.street,
               finalNumber || null,
               finalComplement || null,
-              active.neighborhood,
+              selectedNeighborhood || active.neighborhood,
               active.city,
             ].filter(Boolean);
             if (addrParts.length > 0) {
