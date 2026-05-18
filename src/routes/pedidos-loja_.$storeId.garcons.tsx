@@ -96,7 +96,7 @@ function GarconsPage() {
     mutationFn: async ({ waiterId, field, value }: { waiterId: string; field: "can_edit_orders" | "can_cancel_orders" | "auto_print_orders"; value: boolean }) => {
       const { error } = await supabase
         .from("store_waiter_permissions")
-        .update({ [field]: value })
+        .update({ [field]: value } as any)
         .eq("waiter_id", waiterId);
       if (error) throw error;
     },

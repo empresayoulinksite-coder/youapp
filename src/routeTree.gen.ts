@@ -44,6 +44,7 @@ import { Route as AdminCategoriasHomeRouteImport } from './routes/admin.categori
 import { Route as AdminCategoriasEcommerceRouteImport } from './routes/admin.categorias-ecommerce'
 import { Route as AdminAgendamentosRouteImport } from './routes/admin.agendamentos'
 import { Route as PedidosLojaStoreIdImpressaoRouteImport } from './routes/pedidos-loja_.$storeId.impressao'
+import { Route as PedidosLojaStoreIdGarconsRouteImport } from './routes/pedidos-loja_.$storeId.garcons'
 import { Route as AdminLojaStoreIdRouteImport } from './routes/admin.loja.$storeId'
 import { Route as AdminEntregasRelatorioRouteImport } from './routes/admin.entregas.relatorio'
 import { Route as AdminEntregasCadastroRouteImport } from './routes/admin.entregas.cadastro'
@@ -231,6 +232,12 @@ const PedidosLojaStoreIdImpressaoRoute =
     path: '/pedidos-loja/$storeId/impressao',
     getParentRoute: () => rootRouteImport,
   } as any)
+const PedidosLojaStoreIdGarconsRoute =
+  PedidosLojaStoreIdGarconsRouteImport.update({
+    id: '/pedidos-loja_/$storeId/garcons',
+    path: '/pedidos-loja/$storeId/garcons',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AdminLojaStoreIdRoute = AdminLojaStoreIdRouteImport.update({
   id: '/loja/$storeId',
   path: '/loja/$storeId',
@@ -315,6 +322,7 @@ export interface FileRoutesByFullPath {
   '/admin/entregas/cadastro': typeof AdminEntregasCadastroRoute
   '/admin/entregas/relatorio': typeof AdminEntregasRelatorioRoute
   '/admin/loja/$storeId': typeof AdminLojaStoreIdRoute
+  '/pedidos-loja/$storeId/garcons': typeof PedidosLojaStoreIdGarconsRoute
   '/pedidos-loja/$storeId/impressao': typeof PedidosLojaStoreIdImpressaoRoute
   '/pedidos-loja/$storeId/entregas/areas': typeof PedidosLojaStoreIdEntregasAreasRoute
   '/pedidos-loja/$storeId/entregas/cadastro': typeof PedidosLojaStoreIdEntregasCadastroRoute
@@ -359,6 +367,7 @@ export interface FileRoutesByTo {
   '/admin/entregas/cadastro': typeof AdminEntregasCadastroRoute
   '/admin/entregas/relatorio': typeof AdminEntregasRelatorioRoute
   '/admin/loja/$storeId': typeof AdminLojaStoreIdRoute
+  '/pedidos-loja/$storeId/garcons': typeof PedidosLojaStoreIdGarconsRoute
   '/pedidos-loja/$storeId/impressao': typeof PedidosLojaStoreIdImpressaoRoute
   '/pedidos-loja/$storeId/entregas/areas': typeof PedidosLojaStoreIdEntregasAreasRoute
   '/pedidos-loja/$storeId/entregas/cadastro': typeof PedidosLojaStoreIdEntregasCadastroRoute
@@ -405,6 +414,7 @@ export interface FileRoutesById {
   '/admin/entregas/cadastro': typeof AdminEntregasCadastroRoute
   '/admin/entregas/relatorio': typeof AdminEntregasRelatorioRoute
   '/admin/loja/$storeId': typeof AdminLojaStoreIdRoute
+  '/pedidos-loja_/$storeId/garcons': typeof PedidosLojaStoreIdGarconsRoute
   '/pedidos-loja_/$storeId/impressao': typeof PedidosLojaStoreIdImpressaoRoute
   '/pedidos-loja_/$storeId/entregas/areas': typeof PedidosLojaStoreIdEntregasAreasRoute
   '/pedidos-loja_/$storeId/entregas/cadastro': typeof PedidosLojaStoreIdEntregasCadastroRoute
@@ -452,6 +462,7 @@ export interface FileRouteTypes {
     | '/admin/entregas/cadastro'
     | '/admin/entregas/relatorio'
     | '/admin/loja/$storeId'
+    | '/pedidos-loja/$storeId/garcons'
     | '/pedidos-loja/$storeId/impressao'
     | '/pedidos-loja/$storeId/entregas/areas'
     | '/pedidos-loja/$storeId/entregas/cadastro'
@@ -496,6 +507,7 @@ export interface FileRouteTypes {
     | '/admin/entregas/cadastro'
     | '/admin/entregas/relatorio'
     | '/admin/loja/$storeId'
+    | '/pedidos-loja/$storeId/garcons'
     | '/pedidos-loja/$storeId/impressao'
     | '/pedidos-loja/$storeId/entregas/areas'
     | '/pedidos-loja/$storeId/entregas/cadastro'
@@ -541,6 +553,7 @@ export interface FileRouteTypes {
     | '/admin/entregas/cadastro'
     | '/admin/entregas/relatorio'
     | '/admin/loja/$storeId'
+    | '/pedidos-loja_/$storeId/garcons'
     | '/pedidos-loja_/$storeId/impressao'
     | '/pedidos-loja_/$storeId/entregas/areas'
     | '/pedidos-loja_/$storeId/entregas/cadastro'
@@ -568,6 +581,7 @@ export interface RootRouteChildren {
   PedidosLojaStoreIdRoute: typeof PedidosLojaStoreIdRoute
   ProdutoIdRoute: typeof ProdutoIdRoute
   VitrineSlugRoute: typeof VitrineSlugRoute
+  PedidosLojaStoreIdGarconsRoute: typeof PedidosLojaStoreIdGarconsRoute
   PedidosLojaStoreIdImpressaoRoute: typeof PedidosLojaStoreIdImpressaoRoute
   PedidosLojaStoreIdEntregasAreasRoute: typeof PedidosLojaStoreIdEntregasAreasRoute
   PedidosLojaStoreIdEntregasCadastroRoute: typeof PedidosLojaStoreIdEntregasCadastroRoute
@@ -821,6 +835,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PedidosLojaStoreIdImpressaoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pedidos-loja_/$storeId/garcons': {
+      id: '/pedidos-loja_/$storeId/garcons'
+      path: '/pedidos-loja/$storeId/garcons'
+      fullPath: '/pedidos-loja/$storeId/garcons'
+      preLoaderRoute: typeof PedidosLojaStoreIdGarconsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/loja/$storeId': {
       id: '/admin/loja/$storeId'
       path: '/loja/$storeId'
@@ -957,6 +978,7 @@ const rootRouteChildren: RootRouteChildren = {
   PedidosLojaStoreIdRoute: PedidosLojaStoreIdRoute,
   ProdutoIdRoute: ProdutoIdRoute,
   VitrineSlugRoute: VitrineSlugRoute,
+  PedidosLojaStoreIdGarconsRoute: PedidosLojaStoreIdGarconsRoute,
   PedidosLojaStoreIdImpressaoRoute: PedidosLojaStoreIdImpressaoRoute,
   PedidosLojaStoreIdEntregasAreasRoute: PedidosLojaStoreIdEntregasAreasRoute,
   PedidosLojaStoreIdEntregasCadastroRoute:
