@@ -17,6 +17,7 @@ type OrderRow = {
   delivery_address: string | null;
   delivery_type: string | null;
   customer_notes: string | null;
+  customer_cpf: string | null;
   store_id: string;
   user_id: string;
   created_at: string;
