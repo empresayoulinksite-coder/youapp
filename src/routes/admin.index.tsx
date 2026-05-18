@@ -132,6 +132,7 @@ const empty: Partial<Store> = {
 
 function AdminStores() {
   const qc = useQueryClient();
+  const { isAdmin, ownedStoreIds, loading: accessLoading } = useAdminAccess();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<Store> | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -139,12 +140,12 @@ function AdminStores() {
   const [search, setSearch] = useState("");
 
   const { data: stores = [], isLoading } = useQuery({
-    queryKey: ["admin-stores"],
+    queryKey: ["admin-stores", isAdmin ? "all" : ownedStoreIds.slice().sort().join(",")],
+    enabled: !accessLoading && (isAdmin || ownedStoreIds.length > 0),
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("stores")
-        .select("*")
-        .order("name");
+      let q = supabase.from("stores").select("*").order("name");
+      if (!isAdmin) q = q.in("id", ownedStoreIds);
+      const { data, error } = await q;
       if (error) throw error;
       return data as Store[];
     },
