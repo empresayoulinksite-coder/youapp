@@ -76,12 +76,6 @@ function DownloadBatButton({ origin, storeId, storeName }: { origin: string; sto
 export const Route = createFileRoute("/admin/impressao-automatica")({
   beforeLoad: () => requireAdminOnly(),
   component: ImpressaoAutomaticaPage,
-  beforeLoad: async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      throw redirect({ to: "/auth" });
-    }
-  },
 });
 
 function buildShortcut(origin: string, storeId: string) {
