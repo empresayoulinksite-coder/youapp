@@ -496,6 +496,10 @@ function CartPage() {
         storeAddress={storeAddress}
         tableNumber={tableNumber}
         submitting={submitting}
+        deliveryAreas={deliveryAreas}
+        selectedNeighborhood={selectedNeighborhood}
+        selectedDeliveryFee={deliveryFeeValue}
+        onSelectNeighborhood={(area) => setSelectedNeighborhood(area.neighborhood)}
         onConfirm={async ({ paymentMethod, notes, number, complement, customerName, customerPhone }) => {
           if (!authUser) {
             toast.error("Entre na sua conta para finalizar o pedido.");
