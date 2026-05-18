@@ -162,7 +162,7 @@ export function CheckoutReviewDialog({
   const hasPhone = phoneDigits.length >= 10;
   const cpfDigits = cpf.replace(/\D/g, "");
   const cpfFilled = cpfDigits.length > 0;
-  const cpfOk = !cpfFilled || isValidCpf(cpfDigits);
+  const cpfOk = cpfFilled && isValidCpf(cpfDigits);
   const hasAreas = deliveryAreas.length > 0;
   const needsNeighborhood = !isPickup && !isMesa && hasAreas;
   const neighborhoodOk = !needsNeighborhood || !!selectedNeighborhood;
@@ -240,7 +240,7 @@ export function CheckoutReviewDialog({
               </div>
               <div>
                 <label className="text-[11px] font-semibold text-muted-foreground uppercase">
-                  CPF na nota (opcional)
+                  CPF na nota *
                 </label>
                 <Input
                   value={cpf}
