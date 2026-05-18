@@ -20,7 +20,9 @@ import {
   ChevronUp,
   BarChart3,
   PieChart,
-  CheckCircle2
+  CheckCircle2,
+  Smartphone,
+  Users,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
