@@ -638,6 +638,7 @@ function CartPage() {
                 delivery_address: deliveryAddress,
                 payment_method: paymentMethod,
                 customer_notes: notes || null,
+                customer_cpf: customerCpf || null,
                 whatsapp_message: message,
                 status: "em_analise",
                 table_number: tableNumber ?? null,
