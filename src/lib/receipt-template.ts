@@ -64,6 +64,13 @@ function isPickup(o: ReceiptOrder) {
   return t.includes("retir") || t === "pickup" || !o.delivery_address;
 }
 
+function fmtCpf(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const d = raw.replace(/\D/g, "");
+  if (d.length !== 11) return raw;
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+}
+
 function pad(left: string, right: string, width = COLS) {
   const space = Math.max(1, width - left.length - right.length);
   return left + " ".repeat(space) + right;
