@@ -363,7 +363,7 @@ export function PDVManager({ storeId, editingOrder, onClearEdit }: { storeId: st
         </div>
 
         {/* Categories Tab (Quick filter) */}
-        <div className="flex gap-2 overflow-x-auto p-2 border-b bg-white no-scrollbar">
+        <div className="flex gap-2 overflow-x-auto p-2 border-b bg-white thin-scrollbar">
           <Button 
             variant={filterCat === "all" ? "default" : "outline"} 
             size="sm" 

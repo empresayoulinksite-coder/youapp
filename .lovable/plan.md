@@ -1,27 +1,14 @@
 ## Problema
 
-Quando você fez um pedido pelo PDV, ao voltar para a aba de Pedidos a impressora soltou **todos** os pedidos que já estavam "Em produção", não só o novo.
-
-## Causa
-
-No `OrdersManager.tsx`, o auto-print compara o status atual de cada pedido com o status anterior guardado em `lastStatusRef`. O problema:
-
-- `lastStatusRef.current` é inicializado como `{}` (vazio).
-- Quando o componente monta pela primeira vez (ex.: você estava no PDV e voltou para Pedidos), o "status anterior" de **todos** os pedidos é `undefined`.
-- A condição `o.status === "em_producao" && prevStatus !== "em_producao"` passa para todos os pedidos que já estavam em produção.
-- Resultado: imprime todos de uma vez.
+Na tela do PDV, a faixa de categorias ("Todos", "Pizzas Salgadas/Doces", "Esfiha 1 Sabor"...) está rolável horizontalmente, mas a barra de rolagem está **oculta** (`no-scrollbar`). Em telas menores, você não enxerga que existem mais categorias à direita nem consegue arrastar com facilidade no desktop.
 
 ## Correção
 
-Na primeira carga dos pedidos, **semear** `lastStatusRef` e `printedRef` com o estado atual, sem disparar impressão. Só pedidos que **transicionarem** depois disso devem imprimir.
+Em `src/components/painel/PDVManager.tsx`, linha 366:
 
-### Mudanças em `src/components/painel/OrdersManager.tsx`
+- Remover a classe `no-scrollbar` do container das categorias.
+- Adicionar uma classe utilitária nova `thin-scrollbar` em `src/styles.css` que mostra uma barrinha fina e discreta (uns 6px de altura, cor `--border`, cantos arredondados) apenas no eixo horizontal.
 
-1. Adicionar um `useRef<boolean>(false)` chamado `didSeedRef`.
-2. No `useEffect` de auto-print (linha ~462):
-   - Se `didSeedRef.current === false`: preencher `lastStatusRef.current` com o status atual de cada pedido, adicionar todos os pedidos `em_producao` em `printedRef` (para nunca imprimi-los), marcar `didSeedRef.current = true` e sair sem imprimir.
-   - Nas execuções seguintes: lógica atual (imprimir só transições novas para `em_producao`).
+Resultado: aparece uma barrinha fininha embaixo das categorias que você pode arrastar para o lado para ver as demais (Esfihas Especiais etc.), sem ficar visualmente pesada.
 
-Isso garante que o auto-print só dispare para pedidos que **realmente mudaram** de status enquanto a aba está aberta — exatamente o novo pedido criado no PDV.
-
-Sem migração, sem mudança de UI, sem efeito colateral no fluxo de pedido manual (esse continua chamando `printOrder` direto via `updateStatus` + handler).
+Nenhuma outra mudança — só CSS + uma troca de classe.
