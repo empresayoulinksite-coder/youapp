@@ -432,14 +432,23 @@ export function CheckoutReviewDialog({
                      ? "Cadastre um endereço"
                      : !isPickup && !isMesa && !hasNumber
                       ? "Informe o número"
-                      : !isMesa && !paymentMethod
-                        ? "Escolha o pagamento"
-                        : isMesa
-                          ? "Confirmar pedido"
-                          : "Confirmar e enviar pelo WhatsApp"}
+                      : needsNeighborhood && !selectedNeighborhood
+                        ? "Selecione seu bairro"
+                        : !isMesa && !paymentMethod
+                          ? "Escolha o pagamento"
+                          : isMesa
+                            ? "Confirmar pedido"
+                            : "Confirmar e enviar pelo WhatsApp"}
           </button>
         </div>
       </div>
+      <NeighborhoodPickerSheet
+        open={neighborhoodSheetOpen}
+        onClose={() => setNeighborhoodSheetOpen(false)}
+        areas={deliveryAreas}
+        selectedNeighborhood={selectedNeighborhood ?? null}
+        onSelect={(area) => onSelectNeighborhood?.(area)}
+      />
     </div>
   );
 }
