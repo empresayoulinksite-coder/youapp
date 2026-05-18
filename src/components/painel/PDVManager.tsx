@@ -422,15 +422,15 @@ export function PDVManager({ storeId, editingOrder, onClearEdit }: { storeId: st
         <div className="flex p-2 bg-[#661f71] text-white gap-1">
           <Button 
             variant="ghost" 
-            className={cn("flex-1 h-9 rounded-sm text-xs font-bold hover:bg-white/20 hover:text-white", orderType === "pickup" && "bg-white/20")}
-            onClick={() => setOrderType("pickup")}
+            className={cn("flex-1 h-9 rounded-sm text-xs font-bold hover:bg-white/20 hover:text-white", orderType === "delivery" && "bg-white/20")}
+            onClick={() => setOrderType("delivery")}
           >
             [ D ] Delivery e Balcão
           </Button>
           <Button 
             variant="ghost" 
-            className={cn("flex-1 h-9 rounded-sm text-xs font-bold hover:bg-white/20 hover:text-white", orderType === "delivery" && "bg-white/20")}
-            onClick={() => setOrderType("delivery")}
+            className={cn("flex-1 h-9 rounded-sm text-xs font-bold hover:bg-white/20 hover:text-white", orderType === "pickup" && "bg-white/20")}
+            onClick={() => setOrderType("pickup")}
           >
             [ M ] Mesas e Comandas
           </Button>
