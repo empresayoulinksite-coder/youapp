@@ -1,26 +1,13 @@
-## Problema
+## Objetivo
 
-No campo **Telefone** de `/completar-cadastro`, o usuário não consegue apagar o traço final da máscara (ex.: `(13) 9916-`). Ao pressionar backspace, a função `maskPhone` reaplica o traço porque mantém o `-` mesmo quando não há dígito após ele.
+Esconder as abas **Stories** e **Cupons** na tela `/admin/loja/$storeId` para donos de loja. Apenas usuários **Admin** continuarão vendo essas duas abas.
 
-## Causa
+## Mudanças
 
-Em `src/routes/completar-cadastro.tsx` (linhas 50–54), `maskPhone` formata com `($1) $2-$3` e faz `.trim()`, mas **não remove o `-` quando o terceiro grupo está vazio**. Comparando com `maskPhoneInput` de `src/components/CheckoutReviewDialog.tsx` (que já faz `.replace(/-$/, "")`), o checkout funciona corretamente — apenas o cadastro tem o bug.
+**`src/routes/admin.loja.$storeId.tsx`**
 
-## Correção
+1. Importar o hook `useAdminAccess` de `@/hooks/use-admin` e ler `isAdmin` dentro do componente `AdminStoreManagePage`.
+2. Envolver os `<TabsTrigger value="stories">` e `<TabsTrigger value="coupons">` (linhas 211–218) em `{isAdmin && ( ... )}`.
+3. Envolver os `<TabsContent value="stories">` e `<TabsContent value="coupons">` (linhas 362–380) no mesmo `{isAdmin && ( ... )}` para que donos não consigam acessar nem via URL `?tab=stories`.
 
-Ajustar `maskPhone` em `src/routes/completar-cadastro.tsx` para remover o traço final quando não houver dígitos depois dele:
-
-```ts
-const maskPhone = (v: string) => {
-  const d = v.replace(/\D/g, "").slice(0, 11);
-  if (d.length <= 10)
-    return d.replace(/(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3").trim().replace(/-$/, "");
-  return d.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3").trim().replace(/-$/, "");
-};
-```
-
-Nenhuma outra mudança é necessária — sem alterações de schema, validação ou layout.
-
-## Arquivos afetados
-
-- `src/routes/completar-cadastro.tsx` (apenas a função `maskPhone`)
+Nenhuma outra tela é afetada. O acesso geral à página continua liberado para donos (eles só perdem essas duas abas).

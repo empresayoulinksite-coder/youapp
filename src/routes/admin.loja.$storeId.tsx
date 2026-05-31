@@ -40,6 +40,7 @@ import { AdminServicesEmbedded } from "./admin.servicos";
 import { AdminBookingsEmbedded } from "./admin.agendamentos";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAdminAccess } from "@/hooks/use-admin";
 
 export const Route = createFileRoute("/admin/loja/$storeId")({
   beforeLoad: ({ params }) => requireAdminOrStoreOwner(params.storeId),
@@ -84,6 +85,7 @@ function AdminStoreManagePage() {
   const { tab } = Route.useSearch();
   const router = useRouter();
   const qc = useQueryClient();
+  const { isAdmin } = useAdminAccess();
 
   const { data: store, isLoading } = useQuery({
     queryKey: ["admin-manage-store", storeId],
@@ -208,14 +210,18 @@ function AdminStoreManagePage() {
               <Film className="h-4 w-4" />
               YouFlow
             </TabsTrigger>
-            <TabsTrigger value="stories" className="gap-1.5">
-              <Images className="h-4 w-4" />
-              Stories
-            </TabsTrigger>
-            <TabsTrigger value="coupons" className="gap-1.5">
-              <Ticket className="h-4 w-4" />
-              Cupons
-            </TabsTrigger>
+            {isAdmin && (
+              <>
+                <TabsTrigger value="stories" className="gap-1.5">
+                  <Images className="h-4 w-4" />
+                  Stories
+                </TabsTrigger>
+                <TabsTrigger value="coupons" className="gap-1.5">
+                  <Ticket className="h-4 w-4" />
+                  Cupons
+                </TabsTrigger>
+              </>
+            )}
             {isGym && (
               <TabsTrigger value="gym" className="gap-1.5">
                 <Dumbbell className="h-4 w-4" />
@@ -359,25 +365,29 @@ function AdminStoreManagePage() {
           </Section>
         </TabsContent>
 
-        <TabsContent value="stories" className="mt-4">
-          <RedirectCard
-            title="Stories"
-            description="Crie e gerencie os stories vinculados a esta loja."
-            to="/admin/stories"
-            search={{ storeId: store.id }}
-            icon={<Images className="h-5 w-5" />}
-          />
-        </TabsContent>
+        {isAdmin && (
+          <>
+            <TabsContent value="stories" className="mt-4">
+              <RedirectCard
+                title="Stories"
+                description="Crie e gerencie os stories vinculados a esta loja."
+                to="/admin/stories"
+                search={{ storeId: store.id }}
+                icon={<Images className="h-5 w-5" />}
+              />
+            </TabsContent>
 
-        <TabsContent value="coupons" className="mt-4">
-          <RedirectCard
-            title="Cupons"
-            description="Crie cupons gerais ou específicos desta loja."
-            to="/admin/cupons"
-            search={{ storeId: store.id }}
-            icon={<Ticket className="h-5 w-5" />}
-          />
-        </TabsContent>
+            <TabsContent value="coupons" className="mt-4">
+              <RedirectCard
+                title="Cupons"
+                description="Crie cupons gerais ou específicos desta loja."
+                to="/admin/cupons"
+                search={{ storeId: store.id }}
+                icon={<Ticket className="h-5 w-5" />}
+              />
+            </TabsContent>
+          </>
+        )}
 
         {isGym && (
           <TabsContent value="gym" className="mt-4 space-y-3">
