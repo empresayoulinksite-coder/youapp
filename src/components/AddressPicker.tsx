@@ -39,9 +39,11 @@ function IconFor({ icon, className }: { icon: string; className?: string }) {
 export function AddressPicker({
   open,
   onOpenChange,
+  startCreating = false,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  startCreating?: boolean;
 }) {
   const {
     addresses,
@@ -74,8 +76,10 @@ export function AddressPicker({
       setAdjusted(null);
       setEditing(null);
       setCreating(false);
+    } else if (startCreating) {
+      setCreating(true);
     }
-  }, [open]);
+  }, [open, startCreating]);
 
   const showList = !editing && !creating && !adjusting;
   const showAdjuster = adjusting && !creating;

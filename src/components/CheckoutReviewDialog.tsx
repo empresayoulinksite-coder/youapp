@@ -9,6 +9,7 @@ import {
   NeighborhoodPickerSheet,
   type DeliveryArea,
 } from "@/components/NeighborhoodPickerSheet";
+import { AddressPicker } from "@/components/AddressPicker";
 import {
   PAYMENT_METHODS,
   PAYMENT_LABEL,
@@ -130,6 +131,7 @@ export function CheckoutReviewDialog({
   const [phone, setPhone] = useState("");
   const [cpf, setCpf] = useState("");
   const [neighborhoodSheetOpen, setNeighborhoodSheetOpen] = useState(false);
+  const [addressPickerOpen, setAddressPickerOpen] = useState(false);
 
   // Sempre que o endereço ativo mudar (ou abrir), pré-preenche número/complemento
   useEffect(() => {
@@ -277,12 +279,13 @@ export function CheckoutReviewDialog({
                   {isPickup ? "Retirada no local" : "Endereço de entrega"}
                 </h3>
                 {!isPickup && (
-                  <Link
-                    to="/perfil"
+                  <button
+                    type="button"
+                    onClick={() => setAddressPickerOpen(true)}
                     className="text-xs font-semibold text-brand flex items-center gap-1"
                   >
                     <Pencil className="h-3 w-3" /> Editar
-                  </Link>
+                  </button>
                 )}
               </div>
               {isPickup ? (
@@ -499,6 +502,11 @@ export function CheckoutReviewDialog({
         areas={deliveryAreas}
         selectedNeighborhood={selectedNeighborhood ?? null}
         onSelect={(area) => onSelectNeighborhood?.(area)}
+      />
+      <AddressPicker
+        open={addressPickerOpen}
+        onOpenChange={setAddressPickerOpen}
+        startCreating
       />
     </div>
   );
