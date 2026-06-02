@@ -31,7 +31,7 @@ import {
   importMenuFromUrl,
   type ParsedCategory,
   type ParsedItem,
-} from "@/server/menu-import.functions";
+} from "@/lib/menu-import.functions";
 
 export const Route = createFileRoute("/admin/importar-cardapio")({
   beforeLoad: () => requireAdminOnly(),
