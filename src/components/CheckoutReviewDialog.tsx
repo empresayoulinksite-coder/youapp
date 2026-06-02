@@ -502,6 +502,11 @@ export function CheckoutReviewDialog({
         selectedNeighborhood={selectedNeighborhood ?? null}
         onSelect={(area) => onSelectNeighborhood?.(area)}
       />
+      <AddressPicker
+        open={addressPickerOpen}
+        onOpenChange={setAddressPickerOpen}
+        startCreating
+      />
     </div>
   );
 }
