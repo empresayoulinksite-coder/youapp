@@ -9,6 +9,7 @@ import {
   NeighborhoodPickerSheet,
   type DeliveryArea,
 } from "@/components/NeighborhoodPickerSheet";
+import { AddressPicker } from "@/components/AddressPicker";
 import {
   PAYMENT_METHODS,
   PAYMENT_LABEL,
