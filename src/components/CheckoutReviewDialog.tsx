@@ -277,12 +277,13 @@ export function CheckoutReviewDialog({
                   {isPickup ? "Retirada no local" : "Endereço de entrega"}
                 </h3>
                 {!isPickup && (
-                  <Link
-                    to="/perfil"
+                  <button
+                    type="button"
+                    onClick={() => setAddressPickerOpen(true)}
                     className="text-xs font-semibold text-brand flex items-center gap-1"
                   >
                     <Pencil className="h-3 w-3" /> Editar
-                  </Link>
+                  </button>
                 )}
               </div>
               {isPickup ? (
