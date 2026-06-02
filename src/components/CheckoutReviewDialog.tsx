@@ -130,6 +130,7 @@ export function CheckoutReviewDialog({
   const [phone, setPhone] = useState("");
   const [cpf, setCpf] = useState("");
   const [neighborhoodSheetOpen, setNeighborhoodSheetOpen] = useState(false);
+  const [addressPickerOpen, setAddressPickerOpen] = useState(false);
 
   // Sempre que o endereço ativo mudar (ou abrir), pré-preenche número/complemento
   useEffect(() => {
