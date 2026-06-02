@@ -25,7 +25,7 @@ import {
   applyBulkEdit,
   listStoreCategories,
   type PreviewChange,
-} from "@/server/bulk-edit.functions";
+} from "@/lib/bulk-edit.functions";
 import { supabase } from "@/integrations/supabase/client";
 
 async function getAccessToken(): Promise<string> {
