@@ -127,11 +127,12 @@ function CartPage() {
       .then(({ data }) => setStoreHours((data ?? []) as StoreHour[]));
     supabase
       .from("stores")
-      .select("is_paused, whatsapp, image_url, payment_methods_list, pickup_enabled, address, neighborhood, city")
+      .select("is_paused, always_open, whatsapp, image_url, payment_methods_list, pickup_enabled, address, neighborhood, city")
       .eq("id", storeId)
       .maybeSingle()
       .then(({ data }) => {
         setStorePaused(!!data?.is_paused);
+        setStoreAlwaysOpen(!!data?.always_open);
         setStoreWhatsapp(data?.whatsapp ?? null);
         setStoreImageUrl(data?.image_url ?? null);
         setStorePaymentMethods(
