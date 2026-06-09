@@ -108,8 +108,8 @@ export function BookingDialog({
 
   const slots = useMemo(() => {
     if (totalDuration === 0) return [];
-    return generateSlots(date, storeHours, slotMinutes, totalDuration, bookings, isPaused);
-  }, [date, storeHours, slotMinutes, totalDuration, bookings, isPaused]);
+    return generateSlots(date, storeHours, slotMinutes, totalDuration, bookings);
+  }, [date, storeHours, slotMinutes, totalDuration, bookings]);
 
   // If duration changes, drop slot selection
   useEffect(() => {
