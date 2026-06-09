@@ -702,14 +702,6 @@ function StorePage() {
                     setQuoteService(s);
                     return;
                   }
-                  if (!withinHours) {
-                    toast.error(
-                      nextOpen
-                        ? `Fechada agora. ${nextOpen}.`
-                        : "Loja fechada agora.",
-                    );
-                    return;
-                  }
                   setBookingInitialId(s.id);
                   setBookingOpen(true);
                 }
