@@ -53,6 +53,7 @@ export function BookingDialog({
   storeHours,
   services,
   initialServiceId,
+  isPaused = false,
   onCreated,
 }: BookingDialogProps) {
   const { user } = useAuth();
