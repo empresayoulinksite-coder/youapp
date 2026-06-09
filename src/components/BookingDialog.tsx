@@ -317,6 +317,11 @@ export function BookingDialog({
             <label className="text-xs font-semibold text-muted-foreground">
               Horário disponível
             </label>
+            {isPaused && (
+              <p className="mt-2 text-xs bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 rounded-lg p-2.5">
+                A loja está pausada agora. Escolha um horário mais tarde ou outro dia.
+              </p>
+            )}
             {selectedServices.length === 0 ? (
               <p className="mt-3 text-sm text-muted-foreground bg-muted rounded-lg p-4 text-center">
                 Selecione pelo menos um serviço.
