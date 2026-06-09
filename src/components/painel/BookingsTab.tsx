@@ -1225,7 +1225,26 @@ function NewBookingDialog({
                       />
                       <span className="flex-1">{s.name}</span>
                       <span className="text-xs text-muted-foreground">
-                        {s.duration_minutes}min · R$ {Number(s.price).toFixed(2).replace(".", ",")}
+                        {s.duration_minutes}min ·{" "}
+                        {(() => {
+                          const eff = getEffectivePrice(
+                            { price: Number(s.price), promo_prices: s.promo_prices ?? null },
+                            date,
+                          );
+                          if (eff < Number(s.price)) {
+                            return (
+                              <>
+                                <span className="line-through opacity-60">
+                                  R$ {Number(s.price).toFixed(2).replace(".", ",")}
+                                </span>{" "}
+                                <span className="font-bold text-primary">
+                                  R$ {eff.toFixed(2).replace(".", ",")}
+                                </span>
+                              </>
+                            );
+                          }
+                          return <>R$ {Number(s.price).toFixed(2).replace(".", ",")}</>;
+                        })()}
                       </span>
                     </label>
                   );
@@ -1236,7 +1255,23 @@ function NewBookingDialog({
               <div className="mt-1.5 flex items-center gap-3 text-xs text-muted-foreground">
                 <span>Total: <strong className="text-foreground">{totalDuration}min</strong></span>
                 <span>·</span>
-                <span>R$ <strong className="text-foreground">{totalPrice.toFixed(2).replace(".", ",")}</strong></span>
+                <span>
+                  {hasPromo ? (
+                    <>
+                      <span className="line-through opacity-60">
+                        R$ {originalPrice.toFixed(2).replace(".", ",")}
+                      </span>{" "}
+                      <strong className="text-primary">
+                        R$ {totalPrice.toFixed(2).replace(".", ",")}
+                      </strong>{" "}
+                      <span className="text-[10px] font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">
+                        Promo
+                      </span>
+                    </>
+                  ) : (
+                    <>R$ <strong className="text-foreground">{totalPrice.toFixed(2).replace(".", ",")}</strong></>
+                  )}
+                </span>
                 <span>·</span>
                 <span>{selectedServices.length} serviço{selectedServices.length > 1 ? "s" : ""}</span>
               </div>
