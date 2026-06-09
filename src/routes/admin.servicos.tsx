@@ -24,6 +24,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { uploadImage, runWithConcurrency } from "@/lib/upload";
+import { WEEKDAY_LABELS, type PromoPrice } from "@/lib/service-pricing";
+import { Tag, CalendarDays } from "lucide-react";
 
 export const Route = createFileRoute("/admin/servicos")({
   validateSearch: (search: Record<string, unknown>): { storeId?: string } => ({
