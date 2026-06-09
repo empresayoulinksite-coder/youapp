@@ -26,6 +26,7 @@ export function generateSlots(
   slotMinutes: number,
   durationMinutes: number,
   bookings: BookedRange[],
+  isPaused: boolean = false,
 ): SlotOption[] {
   const weekday = day.getDay();
   const dayHours = storeHours.filter((h) => h.is_active && h.weekday === weekday);
