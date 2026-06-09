@@ -351,7 +351,7 @@ function StorePage() {
 
   const withinHours = isStoreOpen(hours, now);
   const open = !store.is_paused && withinHours;
-  const nextOpen = !open && !store.is_paused ? nextOpeningLabel(hours, now) : null;
+  const nextOpen = !withinHours ? nextOpeningLabel(hours, now) : null;
 
   const tryAdd = async (
     storeId: string,
