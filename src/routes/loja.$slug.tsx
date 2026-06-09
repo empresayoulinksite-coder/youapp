@@ -50,6 +50,7 @@ interface Store {
   payment_methods_list: string[] | null;
   min_order: number;
   is_paused: boolean;
+  always_open?: boolean;
   store_type: "food" | "ecommerce" | "service";
   slot_minutes: number;
   whatsapp: string | null;
