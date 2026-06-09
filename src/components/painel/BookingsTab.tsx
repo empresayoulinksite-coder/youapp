@@ -1058,6 +1058,8 @@ function NewBookingDialog({
   const [hours, setHours] = useState<StoreHour[]>([]);
   const [bookedRanges, setBookedRanges] = useState<BookedRange[]>([]);
   const [saving, setSaving] = useState(false);
+  const [manualMode, setManualMode] = useState(false);
+  const [manualTime, setManualTime] = useState("");
 
   const selectedServices = services.filter((s) => selectedIds.includes(s.id));
   const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration_minutes, 0) || 30;
