@@ -678,14 +678,6 @@ function StorePage() {
                   setQuoteService(svc);
                   return;
                 }
-                if (!withinHours) {
-                  toast.error(
-                    nextOpen
-                      ? `Fechada agora. ${nextOpen}.`
-                      : "Loja fechada agora.",
-                  );
-                  return;
-                }
                 setBookingInitialId(serviceId);
                 setBookingOpen(true);
               }}
@@ -708,14 +700,6 @@ function StorePage() {
                   }
                   if (store.booking_mode === "quote") {
                     setQuoteService(s);
-                    return;
-                  }
-                  if (!withinHours) {
-                    toast.error(
-                      nextOpen
-                        ? `Fechada agora. ${nextOpen}.`
-                        : "Loja fechada agora.",
-                    );
                     return;
                   }
                   setBookingInitialId(s.id);
@@ -1395,7 +1379,7 @@ function StorePage() {
         slotMinutes={store.slot_minutes || 30}
         storeHours={hours}
         services={services}
-        isPaused={store.is_paused}
+        
         initialServiceId={bookingInitialId}
         onCreated={() => router.invalidate()}
       />
