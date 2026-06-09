@@ -1078,12 +1078,15 @@ function NewBookingDialog({
   useEffect(() => {
     supabase
       .from("services")
-      .select("id, name, duration_minutes, price")
+      .select("id, name, duration_minutes, price, promo_prices")
       .eq("store_id", store.id)
       .eq("is_active", true)
       .order("position")
       .then(({ data }) => {
-        const list = (data ?? []) as ServiceLite[];
+        const list = (data ?? []).map((s: any) => ({
+          ...s,
+          promo_prices: Array.isArray(s.promo_prices) ? (s.promo_prices as PromoPrice[]) : [],
+        })) as ServiceLite[];
         setServices(list);
       });
     supabase
