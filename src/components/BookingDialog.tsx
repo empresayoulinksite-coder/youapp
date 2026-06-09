@@ -253,7 +253,19 @@ export function BookingDialog({
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm truncate">{s.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {s.duration_minutes} min · {formatBRL(s.price)}
+                        {s.duration_minutes} min ·{" "}
+                        {(() => {
+                          const eff = getEffectivePrice(s, date);
+                          if (eff < s.price) {
+                            return (
+                              <>
+                                <span className="line-through opacity-60">{formatBRL(s.price)}</span>{" "}
+                                <span className="font-bold text-brand">{formatBRL(eff)}</span>
+                              </>
+                            );
+                          }
+                          return formatBRL(s.price);
+                        })()}
                       </p>
                     </div>
                   </button>
