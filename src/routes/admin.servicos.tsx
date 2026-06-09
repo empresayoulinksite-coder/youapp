@@ -118,7 +118,7 @@ function AdminServices({ presetStoreId, embedded = false }: { presetStoreId?: st
       return (data as unknown as Service[]).map((s) => ({
         ...s,
         price: Number(s.price),
-        promo_prices: Array.isArray(s.promo_prices) ? s.promo_prices : [],
+        promo_prices: Array.isArray(s.promo_prices) ? (s.promo_prices as any) : [],
       }));
     },
   });
