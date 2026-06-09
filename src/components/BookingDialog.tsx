@@ -13,6 +13,7 @@ import type { StoreHour } from "@/lib/store-hours";
 import { generateSlots, formatSlotLabel, type BookedRange } from "@/lib/booking-slots";
 import { useAuth } from "@/contexts/AuthContext";
 import { openWhatsapp } from "@/lib/whatsapp";
+import { getEffectivePrice, type PromoPrice } from "@/lib/service-pricing";
 
 export interface ServiceLite {
   id: string;
@@ -23,6 +24,7 @@ export interface ServiceLite {
   image_url: string | null;
   show_price?: boolean;
   show_duration?: boolean;
+  promo_prices?: PromoPrice[];
 }
 
 interface BookingDialogProps {
