@@ -1061,7 +1061,12 @@ function NewBookingDialog({
 
   const selectedServices = services.filter((s) => selectedIds.includes(s.id));
   const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration_minutes, 0) || 30;
-  const totalPrice = selectedServices.reduce((sum, s) => sum + Number(s.price), 0);
+  const totalPrice = selectedServices.reduce(
+    (sum, s) => sum + getEffectivePrice({ price: Number(s.price), promo_prices: s.promo_prices ?? null }, date),
+    0,
+  );
+  const originalPrice = selectedServices.reduce((sum, s) => sum + Number(s.price), 0);
+  const hasPromo = totalPrice < originalPrice;
 
   const toggleService = (id: string) => {
     setSelectedIds((prev) =>
