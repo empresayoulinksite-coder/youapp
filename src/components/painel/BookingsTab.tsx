@@ -1157,7 +1157,7 @@ function NewBookingDialog({
       user_id: user.id,
       starts_at: new Date(slot).toISOString(),
       ends_at: cursor.toISOString(),
-      total_price: totalPrice,
+      total_price: totalPriceToSave,
       status: "confirmed",
       customer_notes: noteStr,
       booked_services: bookedServices,
