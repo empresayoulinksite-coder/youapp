@@ -45,12 +45,14 @@ import { generateSlots, formatSlotLabel, type BookedRange } from "@/lib/booking-
 import type { StoreHour } from "@/lib/store-hours";
 import { cn } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/lib/payment-methods";
+import { getEffectivePrice, type PromoPrice } from "@/lib/service-pricing";
 
 type ServiceLite = {
   id: string;
   name: string;
   duration_minutes: number;
   price: number;
+  promo_prices?: PromoPrice[] | null;
 };
 
 export type BookedServiceItem = {
