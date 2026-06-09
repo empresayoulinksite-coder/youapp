@@ -156,7 +156,7 @@ export function BookingDialog({
         service_id: s.id,
         name: s.name,
         duration_minutes: s.duration_minutes,
-        price: s.price,
+        price: getEffectivePrice(s, selectedSlot),
         starts_at: start.toISOString(),
         ends_at: end.toISOString(),
       };
