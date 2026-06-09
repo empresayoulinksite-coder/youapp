@@ -52,8 +52,7 @@ export function generateSlots(
       const end = new Date(cursor.getTime() + durationMinutes * 60_000);
       if (end > closeDate) break;
 
-      const pauseCutoff = isPaused ? now.getTime() + slotMinutes * 60_000 : now.getTime();
-      const inPast = isToday && cursor.getTime() <= pauseCutoff;
+      const inPast = isToday && cursor.getTime() <= now.getTime();
       const overlaps = bookings.some((b) => {
         const bs = new Date(b.starts_at).getTime();
         const be = new Date(b.ends_at).getTime();
