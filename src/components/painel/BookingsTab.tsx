@@ -1135,17 +1135,21 @@ function NewBookingDialog({
       const start = new Date(cursor);
       const end = new Date(start.getTime() + svc.duration_minutes * 60_000);
       cursor = end;
+      const effPrice = getEffectivePrice(
+        { price: Number(svc.price), promo_prices: svc.promo_prices ?? null },
+        slot,
+      );
       return {
         service_id: svc.id,
         name: svc.name,
         duration_minutes: svc.duration_minutes,
-        price: svc.price,
+        price: effPrice,
         starts_at: start.toISOString(),
         ends_at: end.toISOString(),
       };
     });
 
-    const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
+    const totalPriceToSave = bookedServices.reduce((sum, s) => sum + s.price, 0);
 
     const { error } = await supabase.from("bookings").insert({
       store_id: store.id,
