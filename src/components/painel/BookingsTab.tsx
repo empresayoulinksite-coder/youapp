@@ -292,15 +292,26 @@ export function BookingsTab({
   });
 
   const filtered = useMemo(
-    () =>
-      bookings
+    () => {
+      const now = Date.now();
+      return bookings
         .filter((b) => (tab === "all" ? true : b.status === tab))
         .sort((a, b) => {
           if (tab === "completed" || tab === "cancelled") {
             return new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime();
           }
-          return new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime();
-        }),
+          // Próximo atendimento primeiro: futuros em ordem crescente (mais próximo no topo),
+          // passados (atrasados) abaixo em ordem decrescente.
+          const aTime = new Date(a.starts_at).getTime();
+          const bTime = new Date(b.starts_at).getTime();
+          const aFuture = aTime >= now;
+          const bFuture = bTime >= now;
+          if (aFuture && !bFuture) return -1;
+          if (!aFuture && bFuture) return 1;
+          if (aFuture && bFuture) return aTime - bTime;
+          return bTime - aTime;
+        });
+    },
     [bookings, tab],
   );
 
