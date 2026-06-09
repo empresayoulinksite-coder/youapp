@@ -759,12 +759,49 @@ function StorePage() {
                         </p>
                       )}
                       {(s.show_price !== false || s.show_duration !== false) && (
-                        <div className="flex items-center gap-2 mt-2">
-                          {s.show_price !== false && (
-                            <span className="font-bold text-sm">
-                              R$ {s.price.toFixed(2).replace(".", ",")}
-                            </span>
-                          )}
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                          {s.show_price !== false &&
+                            (() => {
+                              const today = new Date();
+                              const promo = (s.promo_prices ?? []).length
+                                ? (() => {
+                                    const y = today.getFullYear();
+                                    const m = String(today.getMonth() + 1).padStart(2, "0");
+                                    const d = String(today.getDate()).padStart(2, "0");
+                                    const iso = `${y}-${m}-${d}`;
+                                    const wd = today.getDay();
+                                    return (
+                                      s.promo_prices!.find(
+                                        (p) => p.type === "date" && p.date === iso,
+                                      ) ??
+                                      s.promo_prices!.find(
+                                        (p) => p.type === "weekday" && p.weekday === wd,
+                                      ) ??
+                                      null
+                                    );
+                                  })()
+                                : null;
+                              if (promo && Number(promo.price) < s.price) {
+                                return (
+                                  <span className="flex items-center gap-1.5">
+                                    <span className="text-xs line-through text-muted-foreground">
+                                      R$ {s.price.toFixed(2).replace(".", ",")}
+                                    </span>
+                                    <span className="font-bold text-sm text-brand">
+                                      R$ {Number(promo.price).toFixed(2).replace(".", ",")}
+                                    </span>
+                                    <span className="text-[10px] font-bold bg-brand-soft text-brand px-1.5 py-0.5 rounded-full">
+                                      Promo de hoje
+                                    </span>
+                                  </span>
+                                );
+                              }
+                              return (
+                                <span className="font-bold text-sm">
+                                  R$ {s.price.toFixed(2).replace(".", ",")}
+                                </span>
+                              );
+                            })()}
                           {s.show_duration !== false && (
                             <span className="text-xs text-muted-foreground flex items-center gap-1">
                               <Clock className="h-3 w-3" /> {s.duration_minutes} min
