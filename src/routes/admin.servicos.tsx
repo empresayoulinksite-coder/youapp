@@ -115,8 +115,11 @@ function AdminServices({ presetStoreId, embedded = false }: { presetStoreId?: st
         .eq("store_id", storeId)
         .order("position");
       if (error) throw error;
-      return (data as Service[]).map((s) => ({ ...s, price: Number(s.price) }));
-    },
+      return (data as unknown as Service[]).map((s) => ({
+        ...s,
+        price: Number(s.price),
+        promo_prices: Array.isArray(s.promo_prices) ? s.promo_prices : [],
+      }));
   });
 
   const { data: feedCategories = [] } = useQuery({
