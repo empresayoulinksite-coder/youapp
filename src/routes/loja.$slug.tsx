@@ -678,14 +678,6 @@ function StorePage() {
                   setQuoteService(svc);
                   return;
                 }
-                if (!withinHours) {
-                  toast.error(
-                    nextOpen
-                      ? `Fechada agora. ${nextOpen}.`
-                      : "Loja fechada agora.",
-                  );
-                  return;
-                }
                 setBookingInitialId(serviceId);
                 setBookingOpen(true);
               }}
