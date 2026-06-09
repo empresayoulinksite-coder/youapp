@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Trash2, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,8 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { WEEKDAYS, formatTime, type StoreHour } from "@/lib/store-hours";
 
-const ALWAYS_OPEN_OPEN = "00:00";
-const ALWAYS_OPEN_CLOSE = "23:59";
 
 interface DraftInterval {
   id?: string;
@@ -22,6 +20,7 @@ type DraftMap = Record<number, DraftInterval[]>;
 
 export function StoreHoursEditor({ storeId }: { storeId: string }) {
   const [draft, setDraft] = useState<DraftMap>({ 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] });
+  const [alwaysOpen, setAlwaysOpenState] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -29,19 +28,26 @@ export function StoreHoursEditor({ storeId }: { storeId: string }) {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("store_hours")
-        .select("*")
-        .eq("store_id", storeId)
-        .order("opens_at");
+      const [hoursRes, storeRes] = await Promise.all([
+        supabase
+          .from("store_hours")
+          .select("*")
+          .eq("store_id", storeId)
+          .order("opens_at"),
+        supabase
+          .from("stores")
+          .select("always_open")
+          .eq("id", storeId)
+          .maybeSingle(),
+      ]);
       if (cancelled) return;
-      if (error) {
-        toast.error(error.message);
+      if (hoursRes.error) {
+        toast.error(hoursRes.error.message);
         setLoading(false);
         return;
       }
       const next: DraftMap = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
-      (data as StoreHour[]).forEach((h) => {
+      (hoursRes.data as StoreHour[]).forEach((h) => {
         next[h.weekday].push({
           id: h.id,
           opens_at: formatTime(h.opens_at),
@@ -50,12 +56,14 @@ export function StoreHoursEditor({ storeId }: { storeId: string }) {
         });
       });
       setDraft(next);
+      setAlwaysOpenState(Boolean(storeRes.data?.always_open));
       setLoading(false);
     })();
     return () => {
       cancelled = true;
     };
   }, [storeId]);
+
 
   const addInterval = (day: number) => {
     setDraft((d) => ({
@@ -137,28 +145,18 @@ export function StoreHoursEditor({ storeId }: { storeId: string }) {
     }
   };
 
-  const isAlwaysOpen = useMemo(() => {
-    for (let day = 0; day < 7; day++) {
-      const ivs = draft[day];
-      if (ivs.length !== 1) return false;
-      const iv = ivs[0];
-      if (!iv.is_active) return false;
-      if (formatTime(iv.opens_at) !== ALWAYS_OPEN_OPEN) return false;
-      if (formatTime(iv.closes_at) !== ALWAYS_OPEN_CLOSE) return false;
+  const setAlwaysOpen = async (v: boolean) => {
+    setAlwaysOpenState(v);
+    const { error } = await supabase
+      .from("stores")
+      .update({ always_open: v })
+      .eq("id", storeId);
+    if (error) {
+      setAlwaysOpenState(!v);
+      toast.error(error.message);
+      return;
     }
-    return true;
-  }, [draft]);
-
-  const setAlwaysOpen = (v: boolean) => {
-    if (v) {
-      const next: DraftMap = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
-      for (let day = 0; day < 7; day++) {
-        next[day] = [{ opens_at: ALWAYS_OPEN_OPEN, closes_at: ALWAYS_OPEN_CLOSE, is_active: true }];
-      }
-      setDraft(next);
-    } else {
-      setDraft({ 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] });
-    }
+    toast.success(v ? "Loja marcada como sempre aberta" : "Modo sempre aberta desativado");
   };
 
   if (loading) return <p className="text-sm text-muted-foreground">Carregando horários...</p>;
@@ -171,12 +169,12 @@ export function StoreHoursEditor({ storeId }: { storeId: string }) {
             Loja sempre aberta
           </Label>
           <p className="text-[11px] text-muted-foreground">
-            Ative para manter a loja aberta 24h em todos os dias.
+            Quando ativa, a loja fica sempre aberta para os clientes. Os intervalos abaixo continuam valendo apenas para o agendamento.
           </p>
         </div>
         <Switch
           id={`always-open-${storeId}`}
-          checked={isAlwaysOpen}
+          checked={alwaysOpen}
           onCheckedChange={setAlwaysOpen}
         />
       </div>

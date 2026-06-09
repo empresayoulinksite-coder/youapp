@@ -1841,6 +1841,7 @@ export type Database = {
         Row: {
           about: string | null
           address: string | null
+          always_open: boolean
           auto_accept_orders: boolean
           benefit_delivery_enabled: boolean
           benefit_delivery_subtitle: string
@@ -1903,6 +1904,7 @@ export type Database = {
         Insert: {
           about?: string | null
           address?: string | null
+          always_open?: boolean
           auto_accept_orders?: boolean
           benefit_delivery_enabled?: boolean
           benefit_delivery_subtitle?: string
@@ -1965,6 +1967,7 @@ export type Database = {
         Update: {
           about?: string | null
           address?: string | null
+          always_open?: boolean
           auto_accept_orders?: boolean
           benefit_delivery_enabled?: boolean
           benefit_delivery_subtitle?: string

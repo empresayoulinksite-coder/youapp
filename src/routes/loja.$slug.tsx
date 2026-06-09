@@ -50,6 +50,7 @@ interface Store {
   payment_methods_list: string[] | null;
   min_order: number;
   is_paused: boolean;
+  always_open?: boolean;
   store_type: "food" | "ecommerce" | "service";
   slot_minutes: number;
   whatsapp: string | null;
@@ -349,7 +350,7 @@ function StorePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedItem?.id, categorySizes.length]);
 
-  const withinHours = isStoreOpen(hours, now);
+  const withinHours = isStoreOpen(hours, now, store.always_open);
   const open = !store.is_paused && withinHours;
   const nextOpen = !withinHours ? nextOpeningLabel(hours, now) : null;
 

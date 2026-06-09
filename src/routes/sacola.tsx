@@ -40,6 +40,7 @@ function CartPage() {
 
   const [storeHours, setStoreHours] = useState<StoreHour[]>([]);
   const [storePaused, setStorePaused] = useState(false);
+  const [storeAlwaysOpen, setStoreAlwaysOpen] = useState(false);
   const [storeWhatsapp, setStoreWhatsapp] = useState<string | null>(null);
   const [storeImageUrl, setStoreImageUrl] = useState<string | null>(null);
   const [storePaymentMethods, setStorePaymentMethods] = useState<string[] | null>(null);
@@ -127,11 +128,12 @@ function CartPage() {
       .then(({ data }) => setStoreHours((data ?? []) as StoreHour[]));
     supabase
       .from("stores")
-      .select("is_paused, whatsapp, image_url, payment_methods_list, pickup_enabled, address, neighborhood, city")
+      .select("is_paused, always_open, whatsapp, image_url, payment_methods_list, pickup_enabled, address, neighborhood, city")
       .eq("id", storeId)
       .maybeSingle()
       .then(({ data }) => {
         setStorePaused(!!data?.is_paused);
+        setStoreAlwaysOpen(!!data?.always_open);
         setStoreWhatsapp(data?.whatsapp ?? null);
         setStoreImageUrl(data?.image_url ?? null);
         setStorePaymentMethods(
@@ -214,7 +216,7 @@ function CartPage() {
     setDeliveryFeeLabel(fee > 0 ? `R$ ${fee.toFixed(2).replace(".", ",")}` : "Grátis");
   }, [selectedNeighborhood, deliveryAreas, deliveryMode]);
 
-  const withinHours = storeHours.length === 0 ? true : isStoreOpen(storeHours, now);
+  const withinHours = storeHours.length === 0 ? true : isStoreOpen(storeHours, now, storeAlwaysOpen);
   const storeOpen = !storePaused && withinHours;
   const nextOpen = !storeOpen && !storePaused ? nextOpeningLabel(storeHours, now) : null;
 
