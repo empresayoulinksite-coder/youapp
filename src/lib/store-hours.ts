@@ -37,16 +37,22 @@ export function isStoreAvailable(
   hours: StoreHour[],
   isPaused: boolean,
   now: Date = new Date(),
+  alwaysOpen: boolean = false,
 ): boolean {
   if (isPaused) return false;
-  return isStoreOpen(hours, now);
+  return isStoreOpen(hours, now, alwaysOpen);
 }
 
 /**
  * Returns true if the store is currently open based on its hours.
  * Handles intervals that cross midnight (e.g. 18:00 → 02:00).
  */
-export function isStoreOpen(hours: StoreHour[], now: Date = new Date()): boolean {
+export function isStoreOpen(
+  hours: StoreHour[],
+  now: Date = new Date(),
+  alwaysOpen: boolean = false,
+): boolean {
+  if (alwaysOpen) return true;
   if (!hours || hours.length === 0) return false;
   const today = now.getDay();
   const yesterday = (today + 6) % 7;
