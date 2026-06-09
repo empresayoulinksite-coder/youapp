@@ -152,6 +152,7 @@ function AdminServices({ presetStoreId, embedded = false }: { presetStoreId?: st
         gallery_urls: s.gallery_urls ?? [],
         show_price: s.show_price ?? true,
         show_duration: s.show_duration ?? true,
+        promo_prices: (s.promo_prices ?? []) as unknown as object,
       };
       if (s.id) {
         const { error } = await supabase.from("services").update(payload).eq("id", s.id);
