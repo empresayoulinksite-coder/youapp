@@ -211,6 +211,10 @@ function AdminStoreManagePage() {
               <Film className="h-4 w-4" />
               YouFlow
             </TabsTrigger>
+            <TabsTrigger value="gestao" className="gap-1.5">
+              <LayoutDashboard className="h-4 w-4" />
+              Gestão
+            </TabsTrigger>
             {isAdmin && (
               <>
                 <TabsTrigger value="stories" className="gap-1.5">
