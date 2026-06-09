@@ -351,7 +351,7 @@ function StorePage() {
 
   const withinHours = isStoreOpen(hours, now);
   const open = !store.is_paused && withinHours;
-  const nextOpen = !open && !store.is_paused ? nextOpeningLabel(hours, now) : null;
+  const nextOpen = !withinHours ? nextOpeningLabel(hours, now) : null;
 
   const tryAdd = async (
     storeId: string,
@@ -678,13 +678,11 @@ function StorePage() {
                   setQuoteService(svc);
                   return;
                 }
-                if (!open) {
+                if (!withinHours) {
                   toast.error(
-                    store.is_paused
-                      ? "Loja fechada pelo lojista."
-                      : nextOpen
-                        ? `Fechada agora. ${nextOpen}.`
-                        : "Loja fechada agora.",
+                    nextOpen
+                      ? `Fechada agora. ${nextOpen}.`
+                      : "Loja fechada agora.",
                   );
                   return;
                 }
@@ -712,13 +710,11 @@ function StorePage() {
                     setQuoteService(s);
                     return;
                   }
-                  if (!open) {
+                  if (!withinHours) {
                     toast.error(
-                      store.is_paused
-                        ? "Loja fechada pelo lojista."
-                        : nextOpen
-                          ? `Fechada agora. ${nextOpen}.`
-                          : "Loja fechada agora.",
+                      nextOpen
+                        ? `Fechada agora. ${nextOpen}.`
+                        : "Loja fechada agora.",
                     );
                     return;
                   }
@@ -1399,6 +1395,7 @@ function StorePage() {
         slotMinutes={store.slot_minutes || 30}
         storeHours={hours}
         services={services}
+        isPaused={store.is_paused}
         initialServiceId={bookingInitialId}
         onCreated={() => router.invalidate()}
       />
