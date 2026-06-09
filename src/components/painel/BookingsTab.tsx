@@ -1408,7 +1408,7 @@ function NewBookingDialog({
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button onClick={save} disabled={!slot || selectedServices.length === 0 || saving}>
+          <Button onClick={save} disabled={selectedServices.length === 0 || saving || (manualMode ? !manualTime : !slot)}>
             {saving ? "Salvando..." : "Criar agendamento"}
           </Button>
         </DialogFooter>
