@@ -1,32 +1,25 @@
-## Objetivo
+## Encaixar cliente no agendamento manual
 
-Transformar o toggle "Loja sempre aberta" em uma **flag persistente** no banco (`stores.always_open`). Quando ativa, a loja é considerada aberta 24h **mesmo que existam intervalos cadastrados** — os intervalos continuam servindo para definir os horários de agendamento (com os gaps funcionando como pausas), mas o status geral da loja fica sempre "Aberta".
+No dialog "Novo agendamento" do painel (aba Agendamentos), adicionar um botão/toggle **"Encaixar cliente"** ao lado do título da seção **Horário**.
 
-Hoje o toggle só reescreve os intervalos para `00:00–23:59`, o que apaga a configuração de agendamento. Isso vai mudar.
+### Comportamento
 
-## Mudanças
+- **Toggle desligado (padrão):** mostra a grade de horários disponíveis como hoje (respeita intervalos da loja, pausa, agendamentos existentes).
+- **Toggle ligado (encaixe):** esconde a grade e mostra um campo `<input type="time">` para o atendente digitar qualquer horário (ex: 12:40, mesmo durante a pausa ou fora dos slots). Mostra um aviso curto: "Encaixe ignora a grade de horários e pode sobrepor outros agendamentos."
 
-### 1. Migração no banco
-- Adicionar coluna `always_open boolean NOT NULL DEFAULT false` em `public.stores`.
+### Onde mexer
 
-### 2. `src/components/StoreHoursEditor.tsx`
-- Carregar `always_open` da `stores` junto com os horários.
-- Trocar `isAlwaysOpen` (computado dos intervalos) por um state real ligado à coluna.
-- `setAlwaysOpen(v)` apenas atualiza `stores.always_open = v` — **não mexe nos intervalos**.
-- Atualizar o texto auxiliar para deixar claro: "Quando ativa, a loja fica sempre aberta para os clientes. Os intervalos abaixo continuam valendo apenas para o agendamento."
+Apenas em `src/components/painel/BookingsTab.tsx` (dialog `NewBookingDialog`, linhas ~1176–1373):
 
-### 3. `src/lib/store-hours.ts`
-- `isStoreOpen(hours, now, alwaysOpen?)` → retorna `true` imediatamente se `alwaysOpen`.
-- `isStoreAvailable(hours, isPaused, now, alwaysOpen?)` → mesma coisa, respeitando ainda `isPaused`.
+1. Adicionar estado `manualMode: boolean` e `manualTime: string` (HH:MM).
+2. Na seção "Horário" (linha 1315), adicionar um botão pequeno "Encaixar cliente" no header do label. Quando ativo:
+   - renderizar `<Input type="time">` no lugar da grade
+   - ao salvar, montar `startsAt` a partir de `date` + `manualTime` e `endsAt = startsAt + totalDuration`
+3. Ajustar `save()` (linha ~1154) para usar `startsAt`/`endsAt` calculados manualmente quando `manualMode` estiver ligado, em vez de `slot` e `cursor`.
+4. Ajustar o `disabled` do botão "Criar agendamento" (linha 1367): no modo encaixe, exige `manualTime` válido em vez de `slot`.
 
-### 4. Callers
-- `src/routes/loja.$slug.tsx`: buscar `always_open` no select de `stores`, passar para `isStoreOpen` (linha ~352).
-- `src/routes/sacola.tsx`: idem se aplicável.
-- `src/routes/painel.tsx`: incluir `always_open` no select para não quebrar o type.
+### Não-objetivos
 
-### 5. Geração de slots (não muda)
-- `generateSlots` continua respeitando os intervalos como hoje — agendamento permanece restrito aos horários cadastrados, mesmo com `always_open=true`.
-
-## Resultado
-- Toggle ON + intervalos 09:20–11:20 e 13:20–19:20 → loja aparece como "Aberta agora" 24h; agendamento só permite slots dentro de 09:20–11:20 e 13:20–19:20.
-- Toggle OFF → comportamento atual (status de aberto/fechado segue os intervalos).
+- Não alterar a lógica de geração de slots (`booking-slots.ts`) nem a configuração de horários da loja.
+- Não alterar o fluxo do cliente final (apenas painel do dono).
+- Não mudar schema do banco — o agendamento de encaixe é salvo como qualquer outro `booking` com status `confirmed`.

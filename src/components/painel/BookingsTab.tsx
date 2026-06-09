@@ -1058,6 +1058,8 @@ function NewBookingDialog({
   const [hours, setHours] = useState<StoreHour[]>([]);
   const [bookedRanges, setBookedRanges] = useState<BookedRange[]>([]);
   const [saving, setSaving] = useState(false);
+  const [manualMode, setManualMode] = useState(false);
+  const [manualTime, setManualTime] = useState("");
 
   const selectedServices = services.filter((s) => selectedIds.includes(s.id));
   const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration_minutes, 0) || 30;
@@ -1117,27 +1119,41 @@ function NewBookingDialog({
   );
 
   const save = async () => {
-    if (!slot || selectedServices.length === 0 || !user) return;
+    if (selectedServices.length === 0 || !user) return;
+    let startsAt: Date | null = null;
+    if (manualMode) {
+      if (!/^\d{2}:\d{2}$/.test(manualTime)) {
+        toast.error("Informe um horário válido");
+        return;
+      }
+      const [h, m] = manualTime.split(":").map(Number);
+      const d = new Date(date);
+      d.setHours(h, m, 0, 0);
+      startsAt = d;
+    } else {
+      if (!slot) return;
+      startsAt = slot;
+    }
     if (!customerName.trim()) {
       toast.error("Informe o nome do cliente");
       return;
     }
     setSaving(true);
     const noteParts = [
-      `[Manual] ${customerName.trim()}`,
+      `[Manual${manualMode ? " · Encaixe" : ""}] ${customerName.trim()}`,
       customerPhone.trim() ? `Tel: ${customerPhone.trim()}` : "",
       notes.trim(),
     ].filter(Boolean);
     const noteStr = noteParts.join(" · ");
 
-    let cursor = new Date(slot);
+    let cursor = new Date(startsAt);
     const bookedServices = selectedServices.map((svc) => {
       const start = new Date(cursor);
       const end = new Date(start.getTime() + svc.duration_minutes * 60_000);
       cursor = end;
       const effPrice = getEffectivePrice(
         { price: Number(svc.price), promo_prices: svc.promo_prices ?? null },
-        slot,
+        startsAt,
       );
       return {
         service_id: svc.id,
@@ -1155,7 +1171,7 @@ function NewBookingDialog({
       store_id: store.id,
       service_id: selectedServices[0].id,
       user_id: user.id,
-      starts_at: new Date(slot).toISOString(),
+      starts_at: startsAt.toISOString(),
       ends_at: cursor.toISOString(),
       total_price: totalPriceToSave,
       status: "confirmed",
@@ -1313,8 +1329,36 @@ function NewBookingDialog({
           </div>
 
           <div>
-            <Label className="text-xs">Horário</Label>
-            {selectedServices.length === 0 ? (
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-xs">Horário</Label>
+              <button
+                type="button"
+                onClick={() => {
+                  setManualMode((v) => !v);
+                  setSlot(null);
+                }}
+                className={cn(
+                  "text-[11px] font-semibold rounded-full px-2.5 py-1 border transition-colors",
+                  manualMode
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "border-border hover:border-primary",
+                )}
+              >
+                {manualMode ? "✓ Encaixe" : "Encaixar cliente"}
+              </button>
+            </div>
+            {manualMode ? (
+              <div className="mt-2 space-y-2">
+                <Input
+                  type="time"
+                  value={manualTime}
+                  onChange={(e) => setManualTime(e.target.value)}
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Encaixe ignora a grade de horários e pode sobrepor outros agendamentos.
+                </p>
+              </div>
+            ) : selectedServices.length === 0 ? (
               <p className="mt-2 rounded-md bg-muted p-3 text-center text-sm text-muted-foreground">
                 Escolha um serviço primeiro.
               </p>
@@ -1364,7 +1408,7 @@ function NewBookingDialog({
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button onClick={save} disabled={!slot || selectedServices.length === 0 || saving}>
+          <Button onClick={save} disabled={selectedServices.length === 0 || saving || (manualMode ? !manualTime : !slot)}>
             {saving ? "Salvando..." : "Criar agendamento"}
           </Button>
         </DialogFooter>
