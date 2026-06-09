@@ -98,7 +98,12 @@ export function BookingDialog({
   );
 
   const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration_minutes, 0);
-  const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
+  const totalPrice = selectedServices.reduce(
+    (sum, s) => sum + getEffectivePrice(s, date),
+    0,
+  );
+  const originalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
+  const hasPromo = totalPrice < originalPrice;
 
   const slots = useMemo(() => {
     if (totalDuration === 0) return [];
