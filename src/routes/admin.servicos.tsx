@@ -657,6 +657,132 @@ function AdminServices({ presetStoreId, embedded = false }: { presetStoreId?: st
                   />
                 </label>
               </div>
+
+              <div className="rounded-md border p-3 space-y-3 bg-muted/30">
+                <div>
+                  <p className="text-sm font-semibold flex items-center gap-1.5">
+                    <Tag className="h-4 w-4" /> Preços promocionais
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Defina valores diferentes para dias da semana ou datas específicas (promoções).
+                    O preço promocional aparece para o cliente no dia do agendamento.
+                  </p>
+                </div>
+
+                {(editing.promo_prices ?? []).length > 0 && (
+                  <div className="space-y-2">
+                    {(editing.promo_prices ?? []).map((p, i) => {
+                      const updatePromo = (patch: Partial<PromoPrice>) => {
+                        const next = [...(editing.promo_prices ?? [])];
+                        next[i] = { ...next[i], ...patch } as PromoPrice;
+                        setEditing({ ...editing, promo_prices: next });
+                      };
+                      const removePromo = () => {
+                        const next = (editing.promo_prices ?? []).filter((_, idx) => idx !== i);
+                        setEditing({ ...editing, promo_prices: next });
+                      };
+                      return (
+                        <div
+                          key={i}
+                          className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end rounded-md bg-background p-2 border"
+                        >
+                          {p.type === "weekday" ? (
+                            <div>
+                              <Label className="text-xs">Dia da semana</Label>
+                              <Select
+                                value={String(p.weekday)}
+                                onValueChange={(v) => updatePromo({ weekday: Number(v) })}
+                              >
+                                <SelectTrigger className="h-9">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {WEEKDAY_LABELS.map((label, idx) => (
+                                    <SelectItem key={idx} value={String(idx)}>
+                                      {label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          ) : (
+                            <div>
+                              <Label className="text-xs">Data</Label>
+                              <Input
+                                type="date"
+                                value={p.date}
+                                onChange={(e) => updatePromo({ date: e.target.value })}
+                                className="h-9"
+                              />
+                            </div>
+                          )}
+                          <div>
+                            <Label className="text-xs">Preço (R$)</Label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={p.price}
+                              onChange={(e) => updatePromo({ price: Number(e.target.value) })}
+                              className="h-9"
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={removePromo}
+                            className="h-9 w-9 p-0"
+                            aria-label="Remover"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() =>
+                      setEditing({
+                        ...editing,
+                        promo_prices: [
+                          ...(editing.promo_prices ?? []),
+                          { type: "weekday", weekday: 1, price: Number(editing.price) || 0 } as PromoPrice,
+                        ],
+                      })
+                    }
+                  >
+                    <Plus className="h-3 w-3" /> Dia da semana
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      const today = new Date();
+                      const iso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+                      setEditing({
+                        ...editing,
+                        promo_prices: [
+                          ...(editing.promo_prices ?? []),
+                          { type: "date", date: iso, price: Number(editing.price) || 0 } as PromoPrice,
+                        ],
+                      });
+                    }}
+                  >
+                    <CalendarDays className="h-3 w-3" /> Data específica
+                  </Button>
+                </div>
+              </div>
+
               <div className="flex items-center gap-3 pt-1">
                 <Switch
                   checked={editing.is_active ?? true}
