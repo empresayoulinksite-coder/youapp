@@ -45,12 +45,14 @@ import { generateSlots, formatSlotLabel, type BookedRange } from "@/lib/booking-
 import type { StoreHour } from "@/lib/store-hours";
 import { cn } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/lib/payment-methods";
+import { getEffectivePrice, type PromoPrice } from "@/lib/service-pricing";
 
 type ServiceLite = {
   id: string;
   name: string;
   duration_minutes: number;
   price: number;
+  promo_prices?: PromoPrice[] | null;
 };
 
 export type BookedServiceItem = {
@@ -1059,7 +1061,12 @@ function NewBookingDialog({
 
   const selectedServices = services.filter((s) => selectedIds.includes(s.id));
   const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration_minutes, 0) || 30;
-  const totalPrice = selectedServices.reduce((sum, s) => sum + Number(s.price), 0);
+  const totalPrice = selectedServices.reduce(
+    (sum, s) => sum + getEffectivePrice({ price: Number(s.price), promo_prices: s.promo_prices ?? null }, date),
+    0,
+  );
+  const originalPrice = selectedServices.reduce((sum, s) => sum + Number(s.price), 0);
+  const hasPromo = totalPrice < originalPrice;
 
   const toggleService = (id: string) => {
     setSelectedIds((prev) =>
@@ -1071,12 +1078,15 @@ function NewBookingDialog({
   useEffect(() => {
     supabase
       .from("services")
-      .select("id, name, duration_minutes, price")
+      .select("id, name, duration_minutes, price, promo_prices")
       .eq("store_id", store.id)
       .eq("is_active", true)
       .order("position")
       .then(({ data }) => {
-        const list = (data ?? []) as ServiceLite[];
+        const list = (data ?? []).map((s: any) => ({
+          ...s,
+          promo_prices: Array.isArray(s.promo_prices) ? (s.promo_prices as PromoPrice[]) : [],
+        })) as ServiceLite[];
         setServices(list);
       });
     supabase
@@ -1125,17 +1135,21 @@ function NewBookingDialog({
       const start = new Date(cursor);
       const end = new Date(start.getTime() + svc.duration_minutes * 60_000);
       cursor = end;
+      const effPrice = getEffectivePrice(
+        { price: Number(svc.price), promo_prices: svc.promo_prices ?? null },
+        slot,
+      );
       return {
         service_id: svc.id,
         name: svc.name,
         duration_minutes: svc.duration_minutes,
-        price: svc.price,
+        price: effPrice,
         starts_at: start.toISOString(),
         ends_at: end.toISOString(),
       };
     });
 
-    const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
+    const totalPriceToSave = bookedServices.reduce((sum, s) => sum + s.price, 0);
 
     const { error } = await supabase.from("bookings").insert({
       store_id: store.id,
@@ -1143,7 +1157,7 @@ function NewBookingDialog({
       user_id: user.id,
       starts_at: new Date(slot).toISOString(),
       ends_at: cursor.toISOString(),
-      total_price: totalPrice,
+      total_price: totalPriceToSave,
       status: "confirmed",
       customer_notes: noteStr,
       booked_services: bookedServices,
@@ -1211,7 +1225,26 @@ function NewBookingDialog({
                       />
                       <span className="flex-1">{s.name}</span>
                       <span className="text-xs text-muted-foreground">
-                        {s.duration_minutes}min · R$ {Number(s.price).toFixed(2).replace(".", ",")}
+                        {s.duration_minutes}min ·{" "}
+                        {(() => {
+                          const eff = getEffectivePrice(
+                            { price: Number(s.price), promo_prices: s.promo_prices ?? null },
+                            date,
+                          );
+                          if (eff < Number(s.price)) {
+                            return (
+                              <>
+                                <span className="line-through opacity-60">
+                                  R$ {Number(s.price).toFixed(2).replace(".", ",")}
+                                </span>{" "}
+                                <span className="font-bold text-primary">
+                                  R$ {eff.toFixed(2).replace(".", ",")}
+                                </span>
+                              </>
+                            );
+                          }
+                          return <>R$ {Number(s.price).toFixed(2).replace(".", ",")}</>;
+                        })()}
                       </span>
                     </label>
                   );
@@ -1222,7 +1255,23 @@ function NewBookingDialog({
               <div className="mt-1.5 flex items-center gap-3 text-xs text-muted-foreground">
                 <span>Total: <strong className="text-foreground">{totalDuration}min</strong></span>
                 <span>·</span>
-                <span>R$ <strong className="text-foreground">{totalPrice.toFixed(2).replace(".", ",")}</strong></span>
+                <span>
+                  {hasPromo ? (
+                    <>
+                      <span className="line-through opacity-60">
+                        R$ {originalPrice.toFixed(2).replace(".", ",")}
+                      </span>{" "}
+                      <strong className="text-primary">
+                        R$ {totalPrice.toFixed(2).replace(".", ",")}
+                      </strong>{" "}
+                      <span className="text-[10px] font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">
+                        Promo
+                      </span>
+                    </>
+                  ) : (
+                    <>R$ <strong className="text-foreground">{totalPrice.toFixed(2).replace(".", ",")}</strong></>
+                  )}
+                </span>
                 <span>·</span>
                 <span>{selectedServices.length} serviço{selectedServices.length > 1 ? "s" : ""}</span>
               </div>
