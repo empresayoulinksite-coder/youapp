@@ -21,6 +21,7 @@ import {
   Dumbbell,
   ListOrdered,
   Maximize2,
+  LayoutDashboard,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { OrdersManager } from "@/components/painel/OrdersManager";
