@@ -57,6 +57,7 @@ type Service = {
   gallery_urls: string[];
   show_price: boolean;
   show_duration: boolean;
+  promo_prices: PromoPrice[];
 };
 
 type ServiceStore = {
@@ -79,6 +80,7 @@ const empty: Partial<Service> = {
   gallery_urls: [],
   show_price: true,
   show_duration: true,
+  promo_prices: [],
 };
 
 function AdminServices({ presetStoreId, embedded = false }: { presetStoreId?: string; embedded?: boolean }) {
