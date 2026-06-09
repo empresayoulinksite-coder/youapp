@@ -1220,6 +1220,7 @@ export type Database = {
           name: string
           position: number
           price: number
+          promo_prices: Json
           show_duration: boolean
           show_price: boolean
           store_id: string
@@ -1237,6 +1238,7 @@ export type Database = {
           name: string
           position?: number
           price?: number
+          promo_prices?: Json
           show_duration?: boolean
           show_price?: boolean
           store_id: string
@@ -1254,6 +1256,7 @@ export type Database = {
           name?: string
           position?: number
           price?: number
+          promo_prices?: Json
           show_duration?: boolean
           show_price?: boolean
           store_id?: string

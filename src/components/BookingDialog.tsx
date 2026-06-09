@@ -13,6 +13,7 @@ import type { StoreHour } from "@/lib/store-hours";
 import { generateSlots, formatSlotLabel, type BookedRange } from "@/lib/booking-slots";
 import { useAuth } from "@/contexts/AuthContext";
 import { openWhatsapp } from "@/lib/whatsapp";
+import { getEffectivePrice, type PromoPrice } from "@/lib/service-pricing";
 
 export interface ServiceLite {
   id: string;
@@ -23,6 +24,7 @@ export interface ServiceLite {
   image_url: string | null;
   show_price?: boolean;
   show_duration?: boolean;
+  promo_prices?: PromoPrice[];
 }
 
 interface BookingDialogProps {
@@ -96,7 +98,12 @@ export function BookingDialog({
   );
 
   const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration_minutes, 0);
-  const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
+  const totalPrice = selectedServices.reduce(
+    (sum, s) => sum + getEffectivePrice(s, date),
+    0,
+  );
+  const originalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
+  const hasPromo = totalPrice < originalPrice;
 
   const slots = useMemo(() => {
     if (totalDuration === 0) return [];
@@ -118,12 +125,12 @@ export function BookingDialog({
       `Olá, ${storeName}! Gostaria de agendar:`,
       "",
       ...selectedServices.map(
-        (s) => `• ${s.name} (${s.duration_minutes} min) — ${formatBRL(s.price)}`,
+        (s) => `• ${s.name} (${s.duration_minutes} min) — ${formatBRL(getEffectivePrice(s, slot))}`,
       ),
       "",
       `📅 ${format(slot, "EEEE, dd 'de' MMMM", { locale: ptBR })}`,
       `🕐 ${formatSlotLabel(slot)} às ${formatSlotLabel(end)}`,
-      `💰 Total: ${formatBRL(totalPrice)}`,
+      `💰 Total: ${formatBRL(totalPrice)}${hasPromo ? " (promo)" : ""}`,
     ];
     if (notes.trim()) {
       lines.push("", `📝 Obs: ${notes.trim()}`);
@@ -149,7 +156,7 @@ export function BookingDialog({
         service_id: s.id,
         name: s.name,
         duration_minutes: s.duration_minutes,
-        price: s.price,
+        price: getEffectivePrice(s, selectedSlot),
         starts_at: start.toISOString(),
         ends_at: end.toISOString(),
       };
@@ -200,7 +207,14 @@ export function BookingDialog({
               <p className="text-xs text-muted-foreground mt-0.5">
                 {selectedServices.length}{" "}
                 {selectedServices.length === 1 ? "serviço" : "serviços"} · {totalDuration} min ·{" "}
-                {formatBRL(totalPrice)}
+                {hasPromo ? (
+                  <>
+                    <span className="line-through opacity-60">{formatBRL(originalPrice)}</span>{" "}
+                    <span className="font-bold text-brand">{formatBRL(totalPrice)}</span>
+                  </>
+                ) : (
+                  formatBRL(totalPrice)
+                )}
               </p>
             )}
           </div>
@@ -239,7 +253,19 @@ export function BookingDialog({
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm truncate">{s.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {s.duration_minutes} min · {formatBRL(s.price)}
+                        {s.duration_minutes} min ·{" "}
+                        {(() => {
+                          const eff = getEffectivePrice(s, date);
+                          if (eff < s.price) {
+                            return (
+                              <>
+                                <span className="line-through opacity-60">{formatBRL(s.price)}</span>{" "}
+                                <span className="font-bold text-brand">{formatBRL(eff)}</span>
+                              </>
+                            );
+                          }
+                          return formatBRL(s.price);
+                        })()}
                       </p>
                     </div>
                   </button>
