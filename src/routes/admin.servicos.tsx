@@ -120,6 +120,7 @@ function AdminServices({ presetStoreId, embedded = false }: { presetStoreId?: st
         price: Number(s.price),
         promo_prices: Array.isArray(s.promo_prices) ? s.promo_prices : [],
       }));
+    },
   });
 
   const { data: feedCategories = [] } = useQuery({
