@@ -131,6 +131,7 @@ export const Route = createFileRoute("/loja/$slug")({
         image_url: s.image_url as string | null,
         show_price: s.show_price ?? true,
         show_duration: s.show_duration ?? true,
+        promo_prices: Array.isArray(s.promo_prices) ? s.promo_prices : [],
       })),
     };
   },
