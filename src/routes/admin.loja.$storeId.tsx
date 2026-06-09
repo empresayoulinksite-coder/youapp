@@ -370,6 +370,26 @@ function AdminStoreManagePage() {
           </Section>
         </TabsContent>
 
+        <TabsContent value="gestao" className="mt-4">
+          <div className="rounded-lg border bg-card p-6 text-center">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <LayoutDashboard className="h-5 w-5" />
+            </div>
+            <h2 className="text-base font-semibold">Painel de gestão da loja</h2>
+            <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+              Abra e feche o caixa, registre suprimentos e sangrias, veja seus clientes,
+              acompanhe agendamentos e gere relatórios do mês.
+            </p>
+            <Button asChild className="mt-4">
+              <Link to="/painel">
+                Abrir painel de gestão
+                <ExternalLink className="h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          </div>
+        </TabsContent>
+
+
         {isAdmin && (
           <>
             <TabsContent value="stories" className="mt-4">
