@@ -179,7 +179,7 @@ export function StoreFeedEditor({
     }
     setUploadingId(post.id);
     try {
-      const url = await uploadImage("store-feed" as any, file);
+      const url = await uploadImage("store-feed" as any, file, storeId);
       const next = [...post.image_urls, url];
       await update.mutateAsync({ id: post.id, image_urls: next });
     } catch (e: any) {
