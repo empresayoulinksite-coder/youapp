@@ -145,28 +145,18 @@ export function StoreHoursEditor({ storeId }: { storeId: string }) {
     }
   };
 
-  const isAlwaysOpen = useMemo(() => {
-    for (let day = 0; day < 7; day++) {
-      const ivs = draft[day];
-      if (ivs.length !== 1) return false;
-      const iv = ivs[0];
-      if (!iv.is_active) return false;
-      if (formatTime(iv.opens_at) !== ALWAYS_OPEN_OPEN) return false;
-      if (formatTime(iv.closes_at) !== ALWAYS_OPEN_CLOSE) return false;
+  const setAlwaysOpen = async (v: boolean) => {
+    setAlwaysOpenState(v);
+    const { error } = await supabase
+      .from("stores")
+      .update({ always_open: v })
+      .eq("id", storeId);
+    if (error) {
+      setAlwaysOpenState(!v);
+      toast.error(error.message);
+      return;
     }
-    return true;
-  }, [draft]);
-
-  const setAlwaysOpen = (v: boolean) => {
-    if (v) {
-      const next: DraftMap = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
-      for (let day = 0; day < 7; day++) {
-        next[day] = [{ opens_at: ALWAYS_OPEN_OPEN, closes_at: ALWAYS_OPEN_CLOSE, is_active: true }];
-      }
-      setDraft(next);
-    } else {
-      setDraft({ 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] });
-    }
+    toast.success(v ? "Loja marcada como sempre aberta" : "Modo sempre aberta desativado");
   };
 
   if (loading) return <p className="text-sm text-muted-foreground">Carregando horários...</p>;
@@ -179,12 +169,12 @@ export function StoreHoursEditor({ storeId }: { storeId: string }) {
             Loja sempre aberta
           </Label>
           <p className="text-[11px] text-muted-foreground">
-            Ative para manter a loja aberta 24h em todos os dias.
+            Quando ativa, a loja fica sempre aberta para os clientes. Os intervalos abaixo continuam valendo apenas para o agendamento.
           </p>
         </div>
         <Switch
           id={`always-open-${storeId}`}
-          checked={isAlwaysOpen}
+          checked={alwaysOpen}
           onCheckedChange={setAlwaysOpen}
         />
       </div>
