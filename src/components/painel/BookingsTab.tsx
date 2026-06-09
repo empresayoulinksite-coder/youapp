@@ -1329,8 +1329,36 @@ function NewBookingDialog({
           </div>
 
           <div>
-            <Label className="text-xs">Horário</Label>
-            {selectedServices.length === 0 ? (
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-xs">Horário</Label>
+              <button
+                type="button"
+                onClick={() => {
+                  setManualMode((v) => !v);
+                  setSlot(null);
+                }}
+                className={cn(
+                  "text-[11px] font-semibold rounded-full px-2.5 py-1 border transition-colors",
+                  manualMode
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "border-border hover:border-primary",
+                )}
+              >
+                {manualMode ? "✓ Encaixe" : "Encaixar cliente"}
+              </button>
+            </div>
+            {manualMode ? (
+              <div className="mt-2 space-y-2">
+                <Input
+                  type="time"
+                  value={manualTime}
+                  onChange={(e) => setManualTime(e.target.value)}
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Encaixe ignora a grade de horários e pode sobrepor outros agendamentos.
+                </p>
+              </div>
+            ) : selectedServices.length === 0 ? (
               <p className="mt-2 rounded-md bg-muted p-3 text-center text-sm text-muted-foreground">
                 Escolha um serviço primeiro.
               </p>
