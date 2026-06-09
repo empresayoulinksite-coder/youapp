@@ -678,13 +678,11 @@ function StorePage() {
                   setQuoteService(svc);
                   return;
                 }
-                if (!open) {
+                if (!withinHours) {
                   toast.error(
-                    store.is_paused
-                      ? "Loja fechada pelo lojista."
-                      : nextOpen
-                        ? `Fechada agora. ${nextOpen}.`
-                        : "Loja fechada agora.",
+                    nextOpen
+                      ? `Fechada agora. ${nextOpen}.`
+                      : "Loja fechada agora.",
                   );
                   return;
                 }
