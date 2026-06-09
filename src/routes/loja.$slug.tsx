@@ -1395,6 +1395,7 @@ function StorePage() {
         slotMinutes={store.slot_minutes || 30}
         storeHours={hours}
         services={services}
+        isPaused={store.is_paused}
         initialServiceId={bookingInitialId}
         onCreated={() => router.invalidate()}
       />
