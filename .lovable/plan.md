@@ -1,20 +1,25 @@
 ## Objetivo
 
-Adicionar uma aba **"Gestão"** na barra de abas do `/admin/loja/$storeId` (junto a Informações, Horários, Serviços, Agendamentos, Feed, YouFlow) que abre o painel completo de gestão da loja (`/painel`) — onde o dono abre/fecha caixa, faz sangria/suprimento, vê clientes e relatórios.
-
-O painel `/painel` (arquivo `src/routes/painel.tsx`) já existe e já tem tudo: caixa, Visão geral, Agendamentos, Serviços, Cupons, Clientes, Academia. Só falta o atalho visível.
+Hoje, quando o barbeiro pausa a loja, o cliente não consegue abrir o agendamento. Vamos mudar para: mesmo pausada, o cliente pode agendar normalmente — só o horário do "agora" some da lista. Horários futuros (mais tarde no mesmo dia ou em outros dias) continuam disponíveis.
 
 ## Mudanças
 
-**Arquivo único:** `src/routes/admin.loja.$storeId.tsx`
+### 1. `src/routes/loja.$slug.tsx`
+- Criar um flag `canBook = withinHours` (ignora `is_paused`) ao lado do `open` atual.
+- Nos dois pontos que bloqueiam o `BookingDialog` (linhas ~681 e ~715), trocar `if (!open)` por `if (!canBook)`. Assim, loja pausada porém dentro do horário → abre o agendamento normalmente. Loja fora do horário → continua bloqueando como hoje.
+- Manter o banner "Loja fechada pelo lojista" (linha ~508) — só informativo.
 
-1. Importar o ícone `LayoutDashboard` do `lucide-react`.
-2. Adicionar uma nova `<TabsTrigger value="gestao">` com o ícone, no final da lista de abas (depois de YouFlow, antes do bloco Admin Stories/Cupons).
-3. Adicionar o `<TabsContent value="gestao">` correspondente, renderizando um card de destaque com botão grande "Abrir painel de gestão" que navega para `/painel` (a rota detecta automaticamente as lojas do dono).
-4. Aba visível para todos os tipos de loja (food, ecommerce, service) já que `/painel` atende todos.
+### 2. `src/lib/booking-slots.ts`
+- Adicionar parâmetro opcional `isPaused: boolean` em `generateSlots`.
+- Quando `isPaused && isToday`, marcar como indisponíveis (ou filtrar) todos os slots cujo `start <= now`. Hoje já filtramos slots no passado; vamos estender para esconder também o slot "corrente" enquanto pausado.
 
-## Fora de escopo
+### 3. `src/components/BookingDialog.tsx`
+- Aceitar nova prop `isPaused: boolean` e passar para `generateSlots`.
+- Mostrar um aviso discreto no topo do diálogo quando `isPaused` ("A loja está pausada agora. Escolha um horário futuro.").
 
-- Mudar o painel em si.
-- Mudar permissões (a rota `/painel` já valida via `useAuth` + `store_owners`).
-- Embed do painel inteiro como aba (manteríamos rota separada porque ele tem layout próprio com seleção de loja, caixa no topo, etc.).
+### 4. Caller do `BookingDialog`
+- Em `loja.$slug.tsx`, passar `isPaused={store.is_paused}` ao `BookingDialog`.
+
+## Fora do escopo
+- Agendamento manual no painel (BookingsTab) — pausa não afeta cadastro manual do dono.
+- Janela de pausa com horário definido (das X às Y) — não foi pedido.
