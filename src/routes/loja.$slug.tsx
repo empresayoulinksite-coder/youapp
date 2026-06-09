@@ -350,7 +350,7 @@ function StorePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedItem?.id, categorySizes.length]);
 
-  const withinHours = isStoreOpen(hours, now);
+  const withinHours = isStoreOpen(hours, now, store.always_open);
   const open = !store.is_paused && withinHours;
   const nextOpen = !withinHours ? nextOpeningLabel(hours, now) : null;
 
