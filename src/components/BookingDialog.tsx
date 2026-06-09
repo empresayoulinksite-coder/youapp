@@ -37,6 +37,7 @@ interface BookingDialogProps {
   storeHours: StoreHour[];
   services: ServiceLite[];
   initialServiceId?: string | null;
+  isPaused?: boolean;
   onCreated?: () => void;
 }
 
