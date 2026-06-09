@@ -1,0 +1,1 @@
+ALTER TABLE public.stores ADD COLUMN IF NOT EXISTS always_open boolean NOT NULL DEFAULT false;
