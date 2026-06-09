@@ -1153,7 +1153,7 @@ function NewBookingDialog({
       cursor = end;
       const effPrice = getEffectivePrice(
         { price: Number(svc.price), promo_prices: svc.promo_prices ?? null },
-        slot,
+        startsAt,
       );
       return {
         service_id: svc.id,
