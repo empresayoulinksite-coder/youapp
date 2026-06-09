@@ -125,12 +125,12 @@ export function BookingDialog({
       `Olá, ${storeName}! Gostaria de agendar:`,
       "",
       ...selectedServices.map(
-        (s) => `• ${s.name} (${s.duration_minutes} min) — ${formatBRL(s.price)}`,
+        (s) => `• ${s.name} (${s.duration_minutes} min) — ${formatBRL(getEffectivePrice(s, slot))}`,
       ),
       "",
       `📅 ${format(slot, "EEEE, dd 'de' MMMM", { locale: ptBR })}`,
       `🕐 ${formatSlotLabel(slot)} às ${formatSlotLabel(end)}`,
-      `💰 Total: ${formatBRL(totalPrice)}`,
+      `💰 Total: ${formatBRL(totalPrice)}${hasPromo ? " (promo)" : ""}`,
     ];
     if (notes.trim()) {
       lines.push("", `📝 Obs: ${notes.trim()}`);
