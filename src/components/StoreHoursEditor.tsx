@@ -20,6 +20,7 @@ type DraftMap = Record<number, DraftInterval[]>;
 
 export function StoreHoursEditor({ storeId }: { storeId: string }) {
   const [draft, setDraft] = useState<DraftMap>({ 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] });
+  const [alwaysOpen, setAlwaysOpenState] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -27,19 +28,26 @@ export function StoreHoursEditor({ storeId }: { storeId: string }) {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("store_hours")
-        .select("*")
-        .eq("store_id", storeId)
-        .order("opens_at");
+      const [hoursRes, storeRes] = await Promise.all([
+        supabase
+          .from("store_hours")
+          .select("*")
+          .eq("store_id", storeId)
+          .order("opens_at"),
+        supabase
+          .from("stores")
+          .select("always_open")
+          .eq("id", storeId)
+          .maybeSingle(),
+      ]);
       if (cancelled) return;
-      if (error) {
-        toast.error(error.message);
+      if (hoursRes.error) {
+        toast.error(hoursRes.error.message);
         setLoading(false);
         return;
       }
       const next: DraftMap = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
-      (data as StoreHour[]).forEach((h) => {
+      (hoursRes.data as StoreHour[]).forEach((h) => {
         next[h.weekday].push({
           id: h.id,
           opens_at: formatTime(h.opens_at),
@@ -48,12 +56,14 @@ export function StoreHoursEditor({ storeId }: { storeId: string }) {
         });
       });
       setDraft(next);
+      setAlwaysOpenState(Boolean(storeRes.data?.always_open));
       setLoading(false);
     })();
     return () => {
       cancelled = true;
     };
   }, [storeId]);
+
 
   const addInterval = (day: number) => {
     setDraft((d) => ({
