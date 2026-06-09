@@ -207,7 +207,14 @@ export function BookingDialog({
               <p className="text-xs text-muted-foreground mt-0.5">
                 {selectedServices.length}{" "}
                 {selectedServices.length === 1 ? "serviço" : "serviços"} · {totalDuration} min ·{" "}
-                {formatBRL(totalPrice)}
+                {hasPromo ? (
+                  <>
+                    <span className="line-through opacity-60">{formatBRL(originalPrice)}</span>{" "}
+                    <span className="font-bold text-brand">{formatBRL(totalPrice)}</span>
+                  </>
+                ) : (
+                  formatBRL(totalPrice)
+                )}
               </p>
             )}
           </div>
