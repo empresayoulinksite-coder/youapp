@@ -216,7 +216,7 @@ function CartPage() {
     setDeliveryFeeLabel(fee > 0 ? `R$ ${fee.toFixed(2).replace(".", ",")}` : "Grátis");
   }, [selectedNeighborhood, deliveryAreas, deliveryMode]);
 
-  const withinHours = storeHours.length === 0 ? true : isStoreOpen(storeHours, now);
+  const withinHours = storeHours.length === 0 ? true : isStoreOpen(storeHours, now, storeAlwaysOpen);
   const storeOpen = !storePaused && withinHours;
   const nextOpen = !storeOpen && !storePaused ? nextOpeningLabel(storeHours, now) : null;
 
