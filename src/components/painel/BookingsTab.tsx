@@ -1119,20 +1119,34 @@ function NewBookingDialog({
   );
 
   const save = async () => {
-    if (!slot || selectedServices.length === 0 || !user) return;
+    if (selectedServices.length === 0 || !user) return;
+    let startsAt: Date | null = null;
+    if (manualMode) {
+      if (!/^\d{2}:\d{2}$/.test(manualTime)) {
+        toast.error("Informe um horário válido");
+        return;
+      }
+      const [h, m] = manualTime.split(":").map(Number);
+      const d = new Date(date);
+      d.setHours(h, m, 0, 0);
+      startsAt = d;
+    } else {
+      if (!slot) return;
+      startsAt = slot;
+    }
     if (!customerName.trim()) {
       toast.error("Informe o nome do cliente");
       return;
     }
     setSaving(true);
     const noteParts = [
-      `[Manual] ${customerName.trim()}`,
+      `[Manual${manualMode ? " · Encaixe" : ""}] ${customerName.trim()}`,
       customerPhone.trim() ? `Tel: ${customerPhone.trim()}` : "",
       notes.trim(),
     ].filter(Boolean);
     const noteStr = noteParts.join(" · ");
 
-    let cursor = new Date(slot);
+    let cursor = new Date(startsAt);
     const bookedServices = selectedServices.map((svc) => {
       const start = new Date(cursor);
       const end = new Date(start.getTime() + svc.duration_minutes * 60_000);
