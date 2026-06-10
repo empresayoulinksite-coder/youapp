@@ -1,26 +1,28 @@
-## Objetivo
+## Problema
 
-Garantir que os horários de agendamento apareçam na sequência completa que a loja configurou, começando no horário de abertura, andando de acordo com a grade (`slotMinutes`) e incluindo todos os horários até (e incluindo) o horário de fechamento — mesmo quando o serviço terminaria depois do fim do expediente.
+Ao concluir um agendamento pago em dinheiro com troco, o caixa fica **R$ 10 a menos** do que deveria (no exemplo: mostra R$ 80 em vez de R$ 90).
 
-Exemplo (loja 09:20–11:20 e 13:20–19:20, grade 40min):
-- Manhã: 09:20, 10:00, 10:40, 11:20
-- Tarde: 13:20, 14:00, 14:40, 15:20, 16:00, 16:40, 17:20, 18:00, 18:40, 19:20
+## Causa
 
-## Mudanças
+Em `src/components/painel/BookingsTab.tsx` (linhas 247-268), após registrar a venda pelo `total_price` (que já é o valor líquido do serviço), o código **também** insere uma `cash_transactions` do tipo `withdrawal` com o valor do troco. Resultado: o troco é descontado duas vezes do caixa.
 
-### `src/lib/booking-slots.ts` — `generateSlots`
+```text
+Fundo:           +R$ 50
+Venda (líquida): +R$ 40   ← já é o valor do serviço, não o recebido
+Sangria troco:   -R$ 10   ← erro: subtrai de novo
+Total:            R$ 80   ← deveria ser R$ 90
+```
 
-1. Trocar o critério de parada: hoje quebra quando `cursor + duração > fechamento`. Passar a quebrar quando `cursor > fechamento` (ou seja, o início do slot ainda pode ser igual ao horário de fechamento).
-2. Manter a re-ancoragem após agendamentos existentes (cursor pula para o `ends_at` do booking que sobrepõe) — esse comportamento continua igual.
-3. Manter o passo entre slots = `slotMinutes` (grade da loja), não `durationMinutes`.
-4. Manter o tratamento de slots passados (riscados) no dia de hoje.
+O troco não é uma sangria/retirada de caixa — é parte natural da operação de venda. O que entra fisicamente na gaveta já equivale ao `total_price`.
 
-Resultado:
-- Slots no fim do expediente passam a aparecer (ex.: 11:20, 19:20), respeitando o pedido.
-- O passo continua sendo o `slotMinutes` que a loja já configura em `admin.servicos`.
+## Correção
 
-## Fora do escopo
+Remover o bloco que insere a `cash_transactions` de `withdrawal` para troco no `onSuccess` da mutation de atualização de status do agendamento (linhas 247-268 de `src/components/painel/BookingsTab.tsx`).
 
-- Sem mudanças no banco, RLS, server functions ou painel admin.
-- Sem mudanças no `BookingDialog` — ele já passa `slotMinutes` e `totalDuration` corretamente.
-- Sem alteração na duração do serviço nem na grade configurada.
+O campo `change_amount` continua sendo salvo na `bookings` (útil para histórico/recibo), só não é mais lançado como sangria.
+
+## Verificação
+
+- Refazer o cenário: abrir caixa R$ 50 → concluir agendamento R$ 40 em dinheiro com troco R$ 10 → resumo deve mostrar R$ 90.
+- Sangrias manuais reais (botão "Retirada") continuam funcionando normalmente.
+- Agendamentos sem troco continuam corretos (já estavam).
