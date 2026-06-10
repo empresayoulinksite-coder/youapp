@@ -50,6 +50,7 @@ type Subscription = {
   customer_user_id: string | null;
   customer_name: string;
   customer_phone: string | null;
+  customer_email: string | null;
   services_total: number;
   services_used: number;
   started_at: string;
@@ -515,6 +516,9 @@ function SubscribersList({ storeId }: { storeId: string }) {
                     {s.customer_phone && (
                       <p className="text-sm text-muted-foreground">{s.customer_phone}</p>
                     )}
+                    {s.customer_email && (
+                      <p className="text-sm text-muted-foreground">{s.customer_email}</p>
+                    )}
                     <p className="text-sm">
                       <span className="text-muted-foreground">Plano:</span>{" "}
                       {s.subscription_plans?.name ?? "—"}
@@ -602,6 +606,7 @@ function SubscriptionDialog({
   const qc = useQueryClient();
   const [customerName, setCustomerName] = useState(renewFrom?.customer_name ?? "");
   const [customerPhone, setCustomerPhone] = useState(renewFrom?.customer_phone ?? "");
+  const [customerEmail, setCustomerEmail] = useState(renewFrom?.customer_email ?? "");
   const [planId, setPlanId] = useState<string>(renewFrom?.plan_id ?? "");
   const [notes, setNotes] = useState("");
   const [paid, setPaid] = useState(true);
@@ -631,8 +636,17 @@ function SubscriptionDialog({
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + selectedPlan.validity_days);
 
-      // Try to find user_id by phone (optional)
+      // Try to find user_id by email or phone (optional)
       let customer_user_id: string | null = renewFrom?.customer_user_id ?? null;
+      const normalizedEmail = customerEmail.trim().toLowerCase();
+      if (!customer_user_id && normalizedEmail) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("user_id")
+          .ilike("email", normalizedEmail)
+          .limit(1);
+        if (prof && prof.length > 0) customer_user_id = prof[0].user_id;
+      }
       if (!customer_user_id && customerPhone.trim()) {
         const normalized = customerPhone.replace(/\D/g, "");
         if (normalized) {
@@ -654,6 +668,7 @@ function SubscriptionDialog({
         customer_user_id,
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim() || null,
+        customer_email: normalizedEmail || null,
         services_total: selectedPlan.total_services,
         services_used: 0,
         expires_at: expiresAt.toISOString(),
@@ -699,8 +714,18 @@ function SubscriptionDialog({
               onChange={(e) => setCustomerPhone(e.target.value)}
               placeholder="(11) 99999-9999"
             />
+          </div>
+          <div>
+            <Label htmlFor="sub-email">Email</Label>
+            <Input
+              id="sub-email"
+              type="email"
+              value={customerEmail}
+              onChange={(e) => setCustomerEmail(e.target.value)}
+              placeholder="cliente@email.com"
+            />
             <p className="mt-1 text-xs text-muted-foreground">
-              O telefone vincula a assinatura aos agendamentos do cliente.
+              Email ou telefone vinculam a assinatura ao cliente — ele verá os serviços restantes em "Meus agendamentos".
             </p>
           </div>
           <div>
