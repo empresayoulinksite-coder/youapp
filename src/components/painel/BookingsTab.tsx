@@ -34,6 +34,7 @@ import {
   TabsTrigger,
   TabsContent,
 } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -94,6 +95,7 @@ export type StoreLite = {
   feed_enabled?: boolean;
   booking_mode?: "booking" | "quote";
   category?: string;
+  auto_accept_bookings?: boolean;
 };
 
 const STATUS_LABEL: Record<BookingRow["status"], string> = {
@@ -360,6 +362,35 @@ export function BookingsTab({
           <TabsTrigger value="cancelled">Cancelados</TabsTrigger>
           <TabsTrigger value="all">Todos</TabsTrigger>
         </TabsList>
+
+        <div className="mt-3 flex items-start justify-between gap-3 rounded-lg border bg-card p-3">
+          <div className="min-w-0">
+            <Label htmlFor="auto-accept-bookings" className="text-sm font-medium">
+              Aceitar automaticamente
+            </Label>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Novos agendamentos serão confirmados sem precisar de aprovação.
+            </p>
+          </div>
+          <Switch
+            id="auto-accept-bookings"
+            checked={!!store.auto_accept_bookings}
+            onCheckedChange={async (v) => {
+              const { error } = await supabase
+                .from("stores")
+                .update({ auto_accept_bookings: v })
+                .eq("id", store.id);
+              if (error) {
+                toast.error(error.message);
+                return;
+              }
+              toast.success(v ? "Aceite automático ativado" : "Aceite automático desativado");
+              qc.invalidateQueries({ queryKey: ["painel", "stores"] });
+            }}
+          />
+        </div>
+
+
 
         <TabsContent value={tab} className="mt-4">
           {loading ? (
