@@ -884,6 +884,12 @@ function BookingCard({
                 {subscriptionInfo.remaining}/{subscriptionInfo.total}
               </Badge>
             )}
+            {isFromSubscription && (
+              <Badge className="bg-brand text-brand-foreground hover:bg-brand/90">
+                <Sparkles className="h-3 w-3 mr-1" />
+                Assinatura{planName ? ` — ${planName}` : ""}
+              </Badge>
+            )}
           </div>
           <div className="flex items-center gap-2 text-sm">
             <Clock className="h-3.5 w-3.5 text-muted-foreground" />
