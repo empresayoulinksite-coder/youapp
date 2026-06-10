@@ -28,7 +28,7 @@ import {
   Bike,
   Pizza,
 } from "lucide-react";
-import youlinkLogo from "@/assets/youlink-logo.png";
+import youlinkLogo from "@/assets/tesouro-logo.png.asset.json";
 import { norm as normalize, isEcommerceStoreCategory } from "@/lib/categories";
 import { getCategoryIcon } from "@/lib/category-icons";
 
@@ -274,7 +274,7 @@ function Index() {
       <header className="sticky top-0 z-30 bg-card border-b border-border">
         <div className="mx-auto max-w-5xl px-4 py-3 flex items-center gap-3">
           <img
-            src={youlinkLogo}
+            src={youlinkLogo.url}
             alt="Youapp"
             className="h-14 w-auto shrink-0 object-contain"
           />
