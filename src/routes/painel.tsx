@@ -29,7 +29,9 @@ import { StoreDeliveryEditor } from "@/components/StoreDeliveryEditor";
 import { StoreBenefitsEditor } from "@/components/StoreBenefitsEditor";
 import { StoreFeedEditor } from "@/components/StoreFeedEditor";
 import { GymTab } from "@/components/painel/GymTab";
+import { SubscriptionsTab } from "@/components/painel/SubscriptionsTab";
 import { isGymStore } from "@/lib/gym";
+import { isBarbershopStore } from "@/lib/barbershop";
 
 
 export const Route = createFileRoute("/painel")({
