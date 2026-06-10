@@ -124,29 +124,55 @@ export function OverviewTab({ bookings }: { bookings: BookingRow[] }) {
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count);
 
-    // Payment method ranking (month)
-    const paymentCount = new Map<string, number>();
+    // Payment method ranking (month) — count + amount
+    const paymentAgg = new Map<string, { count: number; amount: number }>();
+    const addPayment = (label: string, amount: number) => {
+      const cur = paymentAgg.get(label) ?? { count: 0, amount: 0 };
+      cur.count += 1;
+      cur.amount += amount;
+      paymentAgg.set(label, cur);
+    };
     for (const b of completedMonth) {
-      if (b.payment_method) {
-        const label = isPaymentKey(b.payment_method) ? PAYMENT_LABEL[b.payment_method] : b.payment_method;
-        paymentCount.set(label, (paymentCount.get(label) ?? 0) + 1);
+      if (!b.payment_method) continue;
+      const total = Number(b.total_price) || 0;
+      const hasSplit = !!b.payment_method_2;
+      const amt1 = hasSplit ? Number(b.payment_amount_1) || 0 : total;
+      const label1 = isPaymentKey(b.payment_method) ? PAYMENT_LABEL[b.payment_method] : b.payment_method;
+      addPayment(label1, amt1);
+      if (hasSplit && b.payment_method_2) {
+        const amt2 = Number(b.payment_amount_2) || 0;
+        const label2 = isPaymentKey(b.payment_method_2) ? PAYMENT_LABEL[b.payment_method_2] : b.payment_method_2;
+        addPayment(label2, amt2);
       }
     }
-    const topPayments = Array.from(paymentCount.entries())
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count);
+    const topPayments = Array.from(paymentAgg.entries())
+      .map(([name, v]) => ({ name, count: v.count, amount: v.amount }))
+      .sort((a, b) => b.amount - a.amount);
 
     // Daily payment method ranking
-    const dailyPaymentCount = new Map<string, number>();
+    const dailyPaymentAgg = new Map<string, { count: number; amount: number }>();
+    const addDaily = (label: string, amount: number) => {
+      const cur = dailyPaymentAgg.get(label) ?? { count: 0, amount: 0 };
+      cur.count += 1;
+      cur.amount += amount;
+      dailyPaymentAgg.set(label, cur);
+    };
     for (const b of completedDay) {
-      if (b.payment_method) {
-        const label = isPaymentKey(b.payment_method) ? PAYMENT_LABEL[b.payment_method] : b.payment_method;
-        dailyPaymentCount.set(label, (dailyPaymentCount.get(label) ?? 0) + 1);
+      if (!b.payment_method) continue;
+      const total = Number(b.total_price) || 0;
+      const hasSplit = !!b.payment_method_2;
+      const amt1 = hasSplit ? Number(b.payment_amount_1) || 0 : total;
+      const label1 = isPaymentKey(b.payment_method) ? PAYMENT_LABEL[b.payment_method] : b.payment_method;
+      addDaily(label1, amt1);
+      if (hasSplit && b.payment_method_2) {
+        const amt2 = Number(b.payment_amount_2) || 0;
+        const label2 = isPaymentKey(b.payment_method_2) ? PAYMENT_LABEL[b.payment_method_2] : b.payment_method_2;
+        addDaily(label2, amt2);
       }
     }
-    const dailyTopPayments = Array.from(dailyPaymentCount.entries())
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count);
+    const dailyTopPayments = Array.from(dailyPaymentAgg.entries())
+      .map(([name, v]) => ({ name, count: v.count, amount: v.amount }))
+      .sort((a, b) => b.amount - a.amount);
 
     return {
       revenueDay,
