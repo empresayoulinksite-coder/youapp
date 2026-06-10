@@ -295,6 +295,32 @@ export function BookingsTab({
     onError: (e: Error) => toast.error(e.message),
   });
 
+  // Active subscriptions for booking customers (barbershop feature)
+  const bookingUserIds = useMemo(
+    () => Array.from(new Set(bookings.map((b) => b.user_id).filter(Boolean))),
+    [bookings],
+  );
+  const { data: subsByUser = {} } = useQuery({
+    queryKey: ["bookings-subs", store.id, bookingUserIds.join(",")],
+    enabled: bookingUserIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_active_subscriptions_for_users", {
+        _store_id: store.id,
+        _user_ids: bookingUserIds,
+      });
+      if (error) throw error;
+      const map: Record<string, { remaining: number; total: number; planName: string }> = {};
+      (data ?? []).forEach((r: { user_id: string; services_remaining: number; services_total: number; plan_name: string }) => {
+        map[r.user_id] = {
+          remaining: r.services_remaining,
+          total: r.services_total,
+          planName: r.plan_name,
+        };
+      });
+      return map;
+    },
+  });
+
   const filtered = useMemo(
     () => {
       const now = Date.now();
