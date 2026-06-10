@@ -1842,6 +1842,7 @@ export type Database = {
           about: string | null
           address: string | null
           always_open: boolean
+          auto_accept_bookings: boolean
           auto_accept_orders: boolean
           benefit_delivery_enabled: boolean
           benefit_delivery_subtitle: string
@@ -1905,6 +1906,7 @@ export type Database = {
           about?: string | null
           address?: string | null
           always_open?: boolean
+          auto_accept_bookings?: boolean
           auto_accept_orders?: boolean
           benefit_delivery_enabled?: boolean
           benefit_delivery_subtitle?: string
@@ -1968,6 +1970,7 @@ export type Database = {
           about?: string | null
           address?: string | null
           always_open?: boolean
+          auto_accept_bookings?: boolean
           auto_accept_orders?: boolean
           benefit_delivery_enabled?: boolean
           benefit_delivery_subtitle?: string
