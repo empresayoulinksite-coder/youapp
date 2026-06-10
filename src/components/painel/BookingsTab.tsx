@@ -18,6 +18,7 @@ import {
   Pencil,
   Trash2,
   Sparkles,
+  FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
