@@ -18,6 +18,7 @@ import {
   Pencil,
   Trash2,
   Sparkles,
+  FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -48,6 +49,7 @@ import type { StoreHour } from "@/lib/store-hours";
 import { cn } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/lib/payment-methods";
 import { getEffectivePrice, type PromoPrice } from "@/lib/service-pricing";
+import { CashReportTab } from "@/components/painel/CashReportTab";
 
 type ServiceLite = {
   id: string;
@@ -204,6 +206,7 @@ export function BookingsTab({
   const [tab, setTab] = useState("pending");
   const [reschedFor, setReschedFor] = useState<BookingRow | null>(null);
   const [newOpen, setNewOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const [completeTarget, setCompleteTarget] = useState<BookingRow | null>(null);
   const [completePayment, setCompletePayment] = useState("");
   const [splitEnabled, setSplitEnabled] = useState(false);
@@ -397,6 +400,9 @@ export function BookingsTab({
               <Banknote className="h-4 w-4" /> Abrir caixa
             </Button>
           ) : null}
+          <Button size="sm" variant="outline" onClick={() => setReportOpen(true)}>
+            <FileText className="h-4 w-4" /> Relatório do caixa
+          </Button>
         </div>
         <Button size="sm" onClick={() => setNewOpen(true)}>
           <Plus className="h-4 w-4" /> Novo agendamento
@@ -517,6 +523,15 @@ export function BookingsTab({
           }}
         />
       )}
+
+      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+        <DialogContent className="max-w-5xl p-0 max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="px-6 pt-6">
+            <DialogTitle>Relatório do caixa</DialogTitle>
+          </DialogHeader>
+          <CashReportTab storeId={store.id} />
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!completeTarget} onOpenChange={(o) => { if (!o) setCompleteTarget(null); }}>
         <DialogContent className="max-w-sm">
