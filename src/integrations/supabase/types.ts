@@ -266,6 +266,7 @@ export type Database = {
       client_subscriptions: {
         Row: {
           created_at: string
+          customer_email: string | null
           customer_name: string
           customer_phone: string | null
           customer_user_id: string | null
@@ -282,6 +283,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          customer_email?: string | null
           customer_name: string
           customer_phone?: string | null
           customer_user_id?: string | null
@@ -298,6 +300,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          customer_email?: string | null
           customer_name?: string
           customer_phone?: string | null
           customer_user_id?: string | null
@@ -2418,6 +2421,23 @@ export type Database = {
           display_name: string
           phone: string
           user_id: string
+        }[]
+      }
+      get_my_subscriptions: {
+        Args: never
+        Returns: {
+          expires_at: string
+          plan_name: string
+          services_remaining: number
+          services_total: number
+          services_used: number
+          status: string
+          store_emoji: string
+          store_id: string
+          store_image_url: string
+          store_name: string
+          store_slug: string
+          subscription_id: string
         }[]
       }
       has_role: {
