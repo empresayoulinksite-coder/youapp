@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -233,6 +233,8 @@ export function BookingsTab({
     onSuccess: async (_d, vars) => {
       toast.success(`Agendamento ${STATUS_LABEL[vars.status].toLowerCase()}`);
       qc.invalidateQueries({ queryKey: ["painel", "bookings"] });
+      qc.invalidateQueries({ queryKey: ["bookings-subs", store.id] });
+      qc.invalidateQueries({ queryKey: ["client-subscriptions", store.id] });
 
       // Registrar troco como saída no caixa se estiver aberto
       if (
@@ -293,6 +295,32 @@ export function BookingsTab({
       setEditTarget(null);
     },
     onError: (e: Error) => toast.error(e.message),
+  });
+
+  // Active subscriptions for booking customers (barbershop feature)
+  const bookingUserIds = useMemo(
+    () => Array.from(new Set(bookings.map((b) => b.user_id).filter(Boolean))),
+    [bookings],
+  );
+  const { data: subsByUser = {} } = useQuery({
+    queryKey: ["bookings-subs", store.id, bookingUserIds.join(",")],
+    enabled: bookingUserIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_active_subscriptions_for_users", {
+        _store_id: store.id,
+        _user_ids: bookingUserIds,
+      });
+      if (error) throw error;
+      const map: Record<string, { remaining: number; total: number; planName: string }> = {};
+      (data ?? []).forEach((r: { user_id: string; services_remaining: number; services_total: number; plan_name: string }) => {
+        map[r.user_id] = {
+          remaining: r.services_remaining,
+          total: r.services_total,
+          planName: r.plan_name,
+        };
+      });
+      return map;
+    },
   });
 
   const filtered = useMemo(
@@ -429,6 +457,7 @@ export function BookingsTab({
                     setEditPrice(String(b.total_price ?? 0));
                   }}
                   pending={updateStatus.isPending}
+                  subscriptionInfo={subsByUser[b.user_id] ?? null}
                 />
               ))}
             </div>
@@ -768,12 +797,14 @@ function BookingCard({
   onReschedule,
   onEdit,
   pending,
+  subscriptionInfo,
 }: {
   booking: BookingRow;
   onUpdate: (status: BookingRow["status"]) => void;
   onReschedule: () => void;
   onEdit: () => void;
   pending: boolean;
+  subscriptionInfo?: { remaining: number; total: number; planName: string } | null;
 }) {
   const start = new Date(booking.starts_at);
   const end = new Date(booking.ends_at);
@@ -786,9 +817,15 @@ function BookingCard({
 
   const phone = booking.profiles?.phone?.replace(/\D/g, "") ?? "";
   const waPhone = phone ? (phone.startsWith("55") ? phone : `55${phone}`) : "";
+  const lowBalance = !!subscriptionInfo && subscriptionInfo.remaining <= 1;
 
   return (
-    <div className="rounded-lg border bg-card p-4">
+    <div
+      className={cn(
+        "rounded-lg border bg-card p-4",
+        lowBalance && "border-amber-500 bg-amber-50/40 dark:bg-amber-950/20",
+      )}
+    >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -796,6 +833,18 @@ function BookingCard({
             <Badge variant={STATUS_VARIANT[booking.status]}>
               {STATUS_LABEL[booking.status]}
             </Badge>
+            {subscriptionInfo && (
+              <Badge
+                className={cn(
+                  lowBalance
+                    ? "bg-amber-500 text-white hover:bg-amber-600"
+                    : "bg-emerald-600 text-white hover:bg-emerald-700",
+                )}
+              >
+                {lowBalance ? "Renovar em breve · " : "Assinante · "}
+                {subscriptionInfo.remaining}/{subscriptionInfo.total}
+              </Badge>
+            )}
           </div>
           <div className="flex items-center gap-2 text-sm">
             <Clock className="h-3.5 w-3.5 text-muted-foreground" />
