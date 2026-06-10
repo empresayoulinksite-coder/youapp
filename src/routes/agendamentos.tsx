@@ -164,12 +164,10 @@ function BookingsPage() {
                 const low = isActive && remaining <= 1;
                 const ended = !isActive;
                 return (
-                  <Link
+                  <article
                     key={s.subscription_id}
-                    to="/loja/$slug"
-                    params={{ slug: s.store_slug }}
                     className={cn(
-                      "block bg-card rounded-2xl p-4 shadow-[var(--shadow-card)] border border-transparent",
+                      "bg-card rounded-2xl p-4 shadow-[var(--shadow-card)] border border-transparent",
                       low && "border-amber-500 bg-amber-50/50 dark:bg-amber-950/20",
                       ended && "opacity-80",
                     )}
@@ -229,11 +227,50 @@ function BookingsPage() {
                         Assinatura encerrada — procure {s.store_name} para renovar.
                       </p>
                     )}
-                  </Link>
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        type="button"
+                        disabled={ended}
+                        onClick={() => setActiveSub(s)}
+                        className={cn(
+                          "flex-1 inline-flex items-center justify-center gap-1.5 rounded-full font-bold text-xs py-2.5 transition-colors",
+                          ended
+                            ? "bg-muted text-muted-foreground cursor-not-allowed"
+                            : "bg-brand text-brand-foreground hover:bg-brand/90",
+                        )}
+                      >
+                        <CalendarPlus className="h-3.5 w-3.5" />
+                        Agendar pela assinatura
+                      </button>
+                      <Link
+                        to="/loja/$slug"
+                        params={{ slug: s.store_slug }}
+                        className="inline-flex items-center justify-center rounded-full font-semibold text-xs py-2.5 px-4 border border-border text-foreground hover:bg-muted"
+                      >
+                        Ver loja
+                      </Link>
+                    </div>
+                  </article>
                 );
               })}
             </div>
           </section>
+        )}
+
+        {activeSub && (
+          <SubscriptionBookingDialog
+            open={!!activeSub}
+            onClose={() => setActiveSub(null)}
+            subscriptionId={activeSub.subscription_id}
+            storeId={activeSub.store_id}
+            planId={activeSub.plan_id}
+            planName={activeSub.plan_name}
+            storeName={activeSub.store_name}
+            onCreated={() => {
+              qc.invalidateQueries({ queryKey: ["my-bookings"] });
+              qc.invalidateQueries({ queryKey: ["my-subscriptions"] });
+            }}
+          />
         )}
 
         {isLoading ? (
