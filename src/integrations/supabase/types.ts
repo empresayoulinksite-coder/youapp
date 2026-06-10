@@ -2243,6 +2243,14 @@ export type Database = {
         Args: { _store_id: string; _user_id: string }
         Returns: boolean
       }
+      get_booking_customers: {
+        Args: { _store_id: string }
+        Returns: {
+          display_name: string
+          phone: string
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

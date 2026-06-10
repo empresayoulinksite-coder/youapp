@@ -99,7 +99,7 @@ export function StoreReelsEditor({
     }
     setUploadingId(reel.id);
     try {
-      const url = await uploadImage("store-reels", file);
+      const url = await uploadImage("store-reels", file, storeId);
       await update.mutateAsync({ id: reel.id, video_url: url });
       toast.success("Vídeo enviado");
     } catch (e: any) {
@@ -112,7 +112,7 @@ export function StoreReelsEditor({
   const handleUploadThumb = async (reel: Reel, file: File) => {
     setUploadingId(reel.id + ":thumb");
     try {
-      const url = await uploadImage("store-reels", file);
+      const url = await uploadImage("store-reels", file, storeId);
       await update.mutateAsync({ id: reel.id, thumbnail_url: url });
     } catch (e: any) {
       toast.error(e.message ?? "Falha no upload");
