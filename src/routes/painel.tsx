@@ -627,6 +627,12 @@ function PainelPage() {
             </TabsContent>
           )}
 
+          {isBarbershopStore(currentStore?.category) && storeId && (
+            <TabsContent value="subscriptions" className="mt-4">
+              <SubscriptionsTab storeId={storeId} />
+            </TabsContent>
+          )}
+
           {isGymStore(currentStore?.category) && storeId && (
             <TabsContent value="gym" className="mt-4">
               <GymTab storeId={storeId} />
