@@ -524,6 +524,15 @@ export function BookingsTab({
         />
       )}
 
+      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+        <DialogContent className="max-w-5xl p-0 max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="px-6 pt-6">
+            <DialogTitle>Relatório do caixa</DialogTitle>
+          </DialogHeader>
+          <CashReportTab storeId={store.id} />
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!completeTarget} onOpenChange={(o) => { if (!o) setCompleteTarget(null); }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
