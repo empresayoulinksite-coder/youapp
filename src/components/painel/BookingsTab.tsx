@@ -1269,6 +1269,31 @@ function NewBookingDialog({
       .then(({ data }) => setBookedRanges((data ?? []) as BookedRange[]));
   }, [store.id, date]);
 
+  useEffect(() => {
+    supabase
+      .from("client_subscriptions")
+      .select("id, customer_name, customer_phone, services_total, services_used, expires_at, plan:subscription_plans(name)")
+      .eq("store_id", store.id)
+      .eq("status", "active")
+      .gt("expires_at", new Date().toISOString())
+      .order("customer_name", { ascending: true })
+      .then(({ data }) => {
+        const rows = (data ?? [])
+          .map((r: any) => ({
+            id: r.id,
+            customer_name: r.customer_name,
+            customer_phone: r.customer_phone,
+            services_total: r.services_total,
+            services_used: r.services_used,
+            expires_at: r.expires_at,
+            plan_name: r.plan?.name ?? null,
+          }))
+          .filter((r) => r.services_used < r.services_total);
+        setSubscriptions(rows);
+      });
+  }, [store.id]);
+
+
   const slots = useMemo(
     () => generateSlots(date, hours, store.slot_minutes || 30, totalDuration, bookedRanges),
     [date, hours, store.slot_minutes, totalDuration, bookedRanges],
