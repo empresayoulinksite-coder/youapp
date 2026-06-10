@@ -318,7 +318,7 @@ function AdminServices({ presetStoreId, embedded = false }: { presetStoreId?: st
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {[15, 20, 30, 45, 60].map((n) => (
+                {[15, 20, 30, 40, 45, 60].map((n) => (
                   <SelectItem key={n} value={String(n)}>
                     {n} min
                   </SelectItem>
