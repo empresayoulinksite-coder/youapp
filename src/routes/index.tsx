@@ -28,7 +28,7 @@ import {
   Bike,
   Pizza,
 } from "lucide-react";
-import youlinkLogo from "@/assets/youlink-logo.png";
+import youlinkLogo from "@/assets/tesouro-logo.png.asset.json";
 import { norm as normalize, isEcommerceStoreCategory } from "@/lib/categories";
 import { getCategoryIcon } from "@/lib/category-icons";
 
