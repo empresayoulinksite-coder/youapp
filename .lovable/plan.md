@@ -1,25 +1,31 @@
-## Encaixar cliente no agendamento manual
+## Aceitar agendamentos automaticamente
 
-No dialog "Novo agendamento" do painel (aba Agendamentos), adicionar um botão/toggle **"Encaixar cliente"** ao lado do título da seção **Horário**.
+Adicionar um toggle **"Aceitar automaticamente"** logo abaixo da linha de abas (onde fica o botão "Pendentes") no painel de Agendamentos. Quando ligado, todo novo agendamento criado pelo cliente entra direto como **Confirmado**, sem passar por Pendentes.
 
 ### Comportamento
 
-- **Toggle desligado (padrão):** mostra a grade de horários disponíveis como hoje (respeita intervalos da loja, pausa, agendamentos existentes).
-- **Toggle ligado (encaixe):** esconde a grade e mostra um campo `<input type="time">` para o atendente digitar qualquer horário (ex: 12:40, mesmo durante a pausa ou fora dos slots). Mostra um aviso curto: "Encaixe ignora a grade de horários e pode sobrepor outros agendamentos."
+- Toggle persistente por loja (salvo no banco em `stores.auto_accept_bookings`).
+- Ligado: novos agendamentos do cliente já entram como `confirmed`. O dono não precisa aceitar manualmente.
+- Desligado (padrão): fluxo atual — novos agendamentos chegam como `pending` e precisam ser aceitos.
+- Agendamentos já existentes não são alterados.
+- Não afeta agendamentos manuais criados pelo próprio painel (esses já são criados como confirmados).
 
-### Onde mexer
+### Mudanças
 
-Apenas em `src/components/painel/BookingsTab.tsx` (dialog `NewBookingDialog`, linhas ~1176–1373):
+**1. Migração** — adicionar coluna e trigger:
+- `ALTER TABLE stores ADD COLUMN auto_accept_bookings boolean NOT NULL DEFAULT false`
+- Função `apply_auto_accept_on_booking()` (espelha `apply_auto_accept_on_order`): no BEFORE INSERT, se `NEW.status = 'pending'` e a loja tem `auto_accept_bookings = true`, muda para `'confirmed'`.
+- Trigger BEFORE INSERT em `public.bookings`.
 
-1. Adicionar estado `manualMode: boolean` e `manualTime: string` (HH:MM).
-2. Na seção "Horário" (linha 1315), adicionar um botão pequeno "Encaixar cliente" no header do label. Quando ativo:
-   - renderizar `<Input type="time">` no lugar da grade
-   - ao salvar, montar `startsAt` a partir de `date` + `manualTime` e `endsAt = startsAt + totalDuration`
-3. Ajustar `save()` (linha ~1154) para usar `startsAt`/`endsAt` calculados manualmente quando `manualMode` estiver ligado, em vez de `slot` e `cursor`.
-4. Ajustar o `disabled` do botão "Criar agendamento" (linha 1367): no modo encaixe, exige `manualTime` válido em vez de `slot`.
+**2. `src/routes/painel.tsx`** — incluir `auto_accept_bookings` no SELECT de stores (linha 66).
+
+**3. `src/components/painel/BookingsTab.tsx`**:
+- Adicionar `auto_accept_bookings?: boolean` em `StoreLite`.
+- Logo abaixo do `<TabsList>` (linha ~362), renderizar uma faixa com `<Switch>` + label "Aceitar agendamentos automaticamente" + uma linha curta de ajuda ("Novos agendamentos serão confirmados sem precisar de aprovação.").
+- O switch atualiza `stores.auto_accept_bookings` via `supabase.from('stores').update(...)` e invalida a query da store.
 
 ### Não-objetivos
 
-- Não alterar a lógica de geração de slots (`booking-slots.ts`) nem a configuração de horários da loja.
-- Não alterar o fluxo do cliente final (apenas painel do dono).
-- Não mudar schema do banco — o agendamento de encaixe é salvo como qualquer outro `booking` com status `confirmed`.
+- Não muda nada para o cliente final além do status inicial do agendamento dele.
+- Não mexe na lógica de slots, encaixe manual ou pagamento.
+- Não cria notificação diferente — segue o fluxo atual.
