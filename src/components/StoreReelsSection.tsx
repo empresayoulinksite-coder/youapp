@@ -25,7 +25,7 @@ export function StoreReelsSection({ storeId }: { storeId: string }) {
 
   return (
     <section className="space-y-2">
-      <h3 className="font-bold text-base px-1">YouFlow</h3>
+      <h3 className="font-bold text-base px-1">TesouroFlow</h3>
       <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
         {reels.map((r) => (
           <button
