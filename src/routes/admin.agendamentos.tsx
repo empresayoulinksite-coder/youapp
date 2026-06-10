@@ -99,20 +99,25 @@ function AdminBookings({ presetStoreId, embedded = false }: { presetStoreId?: st
       const { data, error } = await q;
       if (error) throw error;
 
-      // Buscar profiles dos clientes
-      const userIds = [...new Set((data ?? []).map((b) => b.user_id))];
-      if (userIds.length) {
-        const { data: profs } = await supabase
-          .from("profiles")
-          .select("user_id, display_name, phone")
-          .in("user_id", userIds);
-        const map = new Map((profs ?? []).map((p) => [p.user_id, p]));
-        return (data ?? []).map((b) => ({
+      // Buscar profiles dos clientes via RPC seguro (apenas display_name/phone)
+      const rows = data ?? [];
+      if (rows.length) {
+        const storeIds = [...new Set(rows.map((b) => b.store_id))];
+        const profMap = new Map<string, { display_name: string | null; phone: string | null }>();
+        for (const sid of storeIds) {
+          const { data: profs } = await supabase.rpc("get_booking_customers", {
+            _store_id: sid,
+          });
+          for (const p of (profs ?? []) as any[]) {
+            profMap.set(p.user_id, { display_name: p.display_name, phone: p.phone });
+          }
+        }
+        return rows.map((b) => ({
           ...b,
-          profiles: map.get(b.user_id) ?? null,
+          profiles: profMap.get(b.user_id) ?? null,
         })) as BookingRow[];
       }
-      return (data ?? []) as BookingRow[];
+      return rows as BookingRow[];
     },
   });
 
