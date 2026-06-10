@@ -1201,6 +1201,21 @@ function NewBookingDialog({
   const [saving, setSaving] = useState(false);
   const [manualMode, setManualMode] = useState(false);
   const [manualTime, setManualTime] = useState("");
+  const [clientMode, setClientMode] = useState<"common" | "subscription">("common");
+  const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
+  const [subSearch, setSubSearch] = useState("");
+  const [subscriptions, setSubscriptions] = useState<
+    Array<{
+      id: string;
+      customer_name: string;
+      customer_phone: string | null;
+      services_total: number;
+      services_used: number;
+      expires_at: string;
+      plan_name: string | null;
+    }>
+  >([]);
+
 
   const selectedServices = services.filter((s) => selectedIds.includes(s.id));
   const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration_minutes, 0) || 30;
@@ -1254,6 +1269,31 @@ function NewBookingDialog({
       .then(({ data }) => setBookedRanges((data ?? []) as BookedRange[]));
   }, [store.id, date]);
 
+  useEffect(() => {
+    supabase
+      .from("client_subscriptions")
+      .select("id, customer_name, customer_phone, services_total, services_used, expires_at, plan:subscription_plans(name)")
+      .eq("store_id", store.id)
+      .eq("status", "active")
+      .gt("expires_at", new Date().toISOString())
+      .order("customer_name", { ascending: true })
+      .then(({ data }) => {
+        const rows = (data ?? [])
+          .map((r: any) => ({
+            id: r.id,
+            customer_name: r.customer_name,
+            customer_phone: r.customer_phone,
+            services_total: r.services_total,
+            services_used: r.services_used,
+            expires_at: r.expires_at,
+            plan_name: r.plan?.name ?? null,
+          }))
+          .filter((r) => r.services_used < r.services_total);
+        setSubscriptions(rows);
+      });
+  }, [store.id]);
+
+
   const slots = useMemo(
     () => generateSlots(date, hours, store.slot_minutes || 30, totalDuration, bookedRanges),
     [date, hours, store.slot_minutes, totalDuration, bookedRanges],
@@ -1279,16 +1319,24 @@ function NewBookingDialog({
       toast.error("Informe o nome do cliente");
       return;
     }
+    if (clientMode === "subscription" && !subscriptionId) {
+      toast.error("Selecione um cliente da assinatura");
+      return;
+    }
     setSaving(true);
+    const subInfo = clientMode === "subscription"
+      ? subscriptions.find((s) => s.id === subscriptionId)
+      : null;
     const noteParts = [
-      `[Manual${manualMode ? " · Encaixe" : ""}] ${customerName.trim()}`,
+      `[Manual${manualMode ? " · Encaixe" : ""}${subInfo ? " · Assinatura" : ""}] ${customerName.trim()}`,
       customerPhone.trim() ? `Tel: ${customerPhone.trim()}` : "",
+      subInfo ? `Assinatura: ${subInfo.plan_name ?? "Plano"}` : "",
       notes.trim(),
     ].filter(Boolean);
     const noteStr = noteParts.join(" · ");
 
     let cursor = new Date(startsAt);
-    const bookedServices = selectedServices.map((svc) => {
+    const bookedServices = selectedServices.map((svc, idx) => {
       const start = new Date(cursor);
       const end = new Date(start.getTime() + svc.duration_minutes * 60_000);
       cursor = end;
@@ -1296,13 +1344,17 @@ function NewBookingDialog({
         { price: Number(svc.price), promo_prices: svc.promo_prices ?? null },
         startsAt,
       );
+      // Primeiro serviço é coberto pela assinatura (preço zerado);
+      // serviços extras seguem o preço normal.
+      const isSubItem = !!subInfo && idx === 0;
       return {
         service_id: svc.id,
         name: svc.name,
         duration_minutes: svc.duration_minutes,
-        price: effPrice,
+        price: isSubItem ? 0 : effPrice,
         starts_at: start.toISOString(),
         ends_at: end.toISOString(),
+        ...(isSubItem ? { is_subscription: true } : {}),
       };
     });
 
@@ -1318,7 +1370,9 @@ function NewBookingDialog({
       status: "confirmed",
       customer_notes: noteStr,
       booked_services: bookedServices,
+      ...(subscriptionId ? { subscription_id: subscriptionId } : {}),
     });
+
     const hasError = !!error;
     if (error) {
       toast.error(error.message);
@@ -1337,26 +1391,137 @@ function NewBookingDialog({
           <DialogTitle>Novo agendamento</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <Label className="text-xs">Cliente *</Label>
-              <Input
-                className="mt-1.5"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                placeholder="Nome do cliente"
-              />
-            </div>
-            <div>
-              <Label className="text-xs">Telefone</Label>
-              <Input
-                className="mt-1.5"
-                value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
-                placeholder="(11) 99999-9999"
-              />
-            </div>
-          </div>
+          <Tabs
+            value={clientMode}
+            onValueChange={(v) => {
+              const next = v as "common" | "subscription";
+              setClientMode(next);
+              if (next === "common") {
+                setSubscriptionId(null);
+              }
+            }}
+          >
+            <TabsList className="grid grid-cols-2 w-full">
+              <TabsTrigger value="common">Cliente comum</TabsTrigger>
+              <TabsTrigger value="subscription">
+                <Sparkles className="h-3.5 w-3.5 mr-1" /> Assinatura
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="common" className="mt-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <Label className="text-xs">Cliente *</Label>
+                  <Input
+                    className="mt-1.5"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="Nome do cliente"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Telefone</Label>
+                  <Input
+                    className="mt-1.5"
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    placeholder="(11) 99999-9999"
+                  />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="subscription" className="mt-3">
+              {subscriptionId ? (
+                (() => {
+                  const sub = subscriptions.find((s) => s.id === subscriptionId);
+                  if (!sub) return null;
+                  const remaining = sub.services_total - sub.services_used;
+                  return (
+                    <div className="rounded-md border border-primary/40 bg-primary/5 p-3 flex items-start gap-3">
+                      <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm truncate">{sub.customer_name}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {sub.plan_name ?? "Plano"} · {remaining} de {sub.services_total} restantes
+                          {sub.customer_phone ? ` · ${sub.customer_phone}` : ""}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          Vence em {format(new Date(sub.expires_at), "dd/MM/yyyy", { locale: ptBR })}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setSubscriptionId(null);
+                          setCustomerName("");
+                          setCustomerPhone("");
+                        }}
+                      >
+                        Trocar
+                      </Button>
+                    </div>
+                  );
+                })()
+              ) : (
+                <div className="space-y-2">
+                  <Input
+                    placeholder="Buscar cliente por nome ou telefone..."
+                    value={subSearch}
+                    onChange={(e) => setSubSearch(e.target.value)}
+                  />
+                  <div className="max-h-56 overflow-y-auto rounded-md border divide-y">
+                    {subscriptions.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-6">
+                        Nenhuma assinatura ativa.
+                      </p>
+                    ) : (
+                      subscriptions
+                        .filter((s) => {
+                          const q = subSearch.trim().toLowerCase();
+                          if (!q) return true;
+                          return (
+                            s.customer_name.toLowerCase().includes(q) ||
+                            (s.customer_phone ?? "").toLowerCase().includes(q)
+                          );
+                        })
+                        .map((s) => {
+                          const remaining = s.services_total - s.services_used;
+                          return (
+                            <button
+                              key={s.id}
+                              type="button"
+                              onClick={() => {
+                                setSubscriptionId(s.id);
+                                setCustomerName(s.customer_name);
+                                setCustomerPhone(s.customer_phone ?? "");
+                              }}
+                              className="w-full text-left px-3 py-2 hover:bg-muted transition-colors"
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="font-medium text-sm truncate">{s.customer_name}</span>
+                                <Badge variant="secondary" className="shrink-0 text-[10px]">
+                                  {remaining}/{s.services_total}
+                                </Badge>
+                              </div>
+                              <p className="text-[11px] text-muted-foreground truncate">
+                                {s.plan_name ?? "Plano"}
+                                {s.customer_phone ? ` · ${s.customer_phone}` : ""}
+                              </p>
+                            </button>
+                          );
+                        })
+                    )}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    O primeiro serviço será debitado da assinatura ao concluir o agendamento.
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+
 
           <div>
             <Label className="text-xs">Serviços * <span className="font-normal text-muted-foreground">(selecione um ou mais)</span></Label>
