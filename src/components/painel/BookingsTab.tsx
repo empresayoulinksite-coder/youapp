@@ -481,6 +481,12 @@ export function BookingsTab({
                   }}
                   pending={updateStatus.isPending}
                   subscriptionInfo={subsByUser[b.user_id] ?? null}
+                  onRemoveExtra={() => {
+                    if (confirm("Remover o serviço adicional deste agendamento?")) {
+                      removeExtra.mutate(b);
+                    }
+                  }}
+                  removingExtra={removeExtra.isPending}
                 />
               ))}
             </div>
