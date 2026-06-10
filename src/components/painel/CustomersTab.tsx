@@ -83,12 +83,9 @@ export function CustomersTab({
     queryKey: ["painel", "customers-profiles", storeId, userIds.sort().join(",")],
     enabled: userIds.length > 0,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("user_id,display_name,phone,email,avatar_url")
-        .in("user_id", userIds);
+      const { data, error } = await supabase.rpc("get_order_customers_basic", { p_user_ids: userIds });
       if (error) throw error;
-      return (data ?? []) as ProfileRow[];
+      return ((data ?? []) as any[]) as ProfileRow[];
     },
   });
 
