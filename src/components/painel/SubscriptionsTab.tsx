@@ -418,6 +418,8 @@ function SubscribersList({ storeId }: { storeId: string }) {
   const qc = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [renewTarget, setRenewTarget] = useState<Subscription | null>(null);
+  const [editTarget, setEditTarget] = useState<Subscription | null>(null);
+
 
   const { data: subs = [], isLoading } = useQuery({
     queryKey: ["client-subscriptions", storeId],
