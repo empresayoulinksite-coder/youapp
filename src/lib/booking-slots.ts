@@ -55,8 +55,8 @@ export function generateSlots(
     let cursor = new Date(openDate);
     let safety = 0;
     while (safety++ < 1000) {
+      if (cursor.getTime() > closeDate.getTime()) break;
       const end = new Date(cursor.getTime() + durationMinutes * 60_000);
-      if (end > closeDate) break;
 
       // Find any booking that overlaps [cursor, end)
       const overlap = sortedBookings.find(
