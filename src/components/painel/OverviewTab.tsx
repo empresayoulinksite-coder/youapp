@@ -273,7 +273,7 @@ export function OverviewTab({ bookings }: { bookings: BookingRow[] }) {
               <div className="flex flex-wrap gap-2">
                 {stats.dailyTopPayments.map((p) => (
                   <Badge key={p.name} variant="secondary" className="text-xs">
-                    {p.name} · {p.count}x
+                    {p.name} · {brl(p.amount)} ({p.count}x)
                   </Badge>
                 ))}
               </div>
