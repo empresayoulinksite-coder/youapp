@@ -1201,6 +1201,21 @@ function NewBookingDialog({
   const [saving, setSaving] = useState(false);
   const [manualMode, setManualMode] = useState(false);
   const [manualTime, setManualTime] = useState("");
+  const [clientMode, setClientMode] = useState<"common" | "subscription">("common");
+  const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
+  const [subSearch, setSubSearch] = useState("");
+  const [subscriptions, setSubscriptions] = useState<
+    Array<{
+      id: string;
+      customer_name: string;
+      customer_phone: string | null;
+      services_total: number;
+      services_used: number;
+      expires_at: string;
+      plan_name: string | null;
+    }>
+  >([]);
+
 
   const selectedServices = services.filter((s) => selectedIds.includes(s.id));
   const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration_minutes, 0) || 30;
