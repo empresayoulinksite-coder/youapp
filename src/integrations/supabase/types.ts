@@ -2441,6 +2441,16 @@ export type Database = {
           subscription_id: string
         }[]
       }
+      get_order_customers_basic: {
+        Args: { p_user_ids: string[] }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          email: string
+          phone: string
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

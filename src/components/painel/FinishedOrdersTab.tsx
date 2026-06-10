@@ -131,11 +131,8 @@ export function FinishedOrdersTab({ storeId }: { storeId: string }) {
       const userIds = Array.from(new Set((data ?? []).map((o: any) => o.user_id).filter(Boolean)));
       let profilesMap: Record<string, { display_name: string | null; phone: string | null }> = {};
       if (userIds.length) {
-        const { data: profs } = await supabase
-          .from("profiles")
-          .select("user_id, display_name, phone")
-          .in("user_id", userIds);
-        (profs ?? []).forEach((p: any) => {
+        const { data: profs } = await supabase.rpc("get_order_customers_basic", { p_user_ids: userIds as string[] });
+        ((profs ?? []) as any[]).forEach((p: any) => {
           profilesMap[p.user_id] = { display_name: p.display_name, phone: p.phone };
         });
       }

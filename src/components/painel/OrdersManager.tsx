@@ -291,13 +291,10 @@ export function OrdersManager({ storeId, fullScreen = false, onEditOrder }: { st
     queryKey: ["orders-manager-profiles", storeId, userIds.join(",")],
     enabled: userIds.length > 0,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("user_id, display_name, phone")
-        .in("user_id", userIds);
+      const { data, error } = await supabase.rpc("get_order_customers_basic", { p_user_ids: userIds });
       if (error) throw error;
       const map: Record<string, { display_name: string | null; phone: string | null }> = {};
-      for (const p of data ?? []) map[p.user_id] = { display_name: p.display_name, phone: p.phone };
+      for (const p of (data ?? []) as any[]) map[p.user_id] = { display_name: p.display_name, phone: p.phone };
       return map;
     },
   });

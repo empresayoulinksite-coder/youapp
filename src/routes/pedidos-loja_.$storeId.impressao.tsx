@@ -162,11 +162,8 @@ function AutoPrintPage() {
       setBusy(false);
       throw new Error(`Itens do pedido ${orderId} ainda não chegaram`);
     }
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("display_name, phone")
-      .eq("user_id", o.user_id)
-      .maybeSingle();
+    const { data: profileRows } = await supabase.rpc("get_order_customers_basic", { p_user_ids: [o.user_id] });
+    const profile = ((profileRows ?? []) as any[])[0] ?? null;
 
     const html = buildReceiptHTML(
       { name: storeName || "Pedido", whatsapp: storeWhatsapp },
