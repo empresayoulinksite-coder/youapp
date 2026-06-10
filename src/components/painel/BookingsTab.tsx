@@ -233,6 +233,8 @@ export function BookingsTab({
     onSuccess: async (_d, vars) => {
       toast.success(`Agendamento ${STATUS_LABEL[vars.status].toLowerCase()}`);
       qc.invalidateQueries({ queryKey: ["painel", "bookings"] });
+      qc.invalidateQueries({ queryKey: ["bookings-subs", store.id] });
+      qc.invalidateQueries({ queryKey: ["client-subscriptions", store.id] });
 
       // Registrar troco como saída no caixa se estiver aberto
       if (
