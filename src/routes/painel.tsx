@@ -168,14 +168,13 @@ function PainelPage() {
 
       const userIds = [...new Set((data ?? []).map((b) => b.user_id))];
       if (userIds.length) {
-        const { data: profs } = await supabase
-          .from("profiles")
-          .select("user_id, display_name, phone")
-          .in("user_id", userIds);
-        const map = new Map((profs ?? []).map((p) => [p.user_id, p]));
+        const { data: profs } = await supabase.rpc("get_booking_customers", {
+          _store_id: storeId!,
+        });
+        const map = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
         return (data ?? []).map((b) => ({
           ...b,
-          profiles: map.get(b.user_id) ?? null,
+          profiles: (map.get(b.user_id) as any) ?? null,
         })) as BookingRow[];
       }
       return (data ?? []) as BookingRow[];
