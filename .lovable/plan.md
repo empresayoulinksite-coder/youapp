@@ -1,62 +1,49 @@
-# Clientes recorrentes para barbearias
+## Objetivo
 
-Criar um sistema de assinatura por loja onde o cliente compra um pacote com X serviços inclusos, e cada agendamento concluído desconta 1 do saldo. Quando sobra apenas 1 serviço, o cliente fica destacado no painel para o dono saber que precisa renovar.
+Adicionar **"Agendar pela assinatura"** no card de assinatura do cliente em `/agendamentos`, com opção de incluir um serviço adicional (pago no balcão). No painel da barbearia, destacar o agendamento como vindo da assinatura, mostrar o adicional cobrado e permitir remover o adicional antes de concluir.
 
-## Escopo
+## Fluxo do cliente (/agendamentos)
 
-- Disponível apenas para lojas da categoria **Barbearia** (e similares — usaremos um helper `isBarbershopStore`).
-- Pagamento **manual**: dono marca como pago ao criar/renovar a assinatura. Sem cobrança automática.
-- Baixa **ao concluir o agendamento** (status `completed`).
-- Alerta de cor quando restar **1 serviço**.
+1. Em cada card de **Minhas assinaturas** ativas (com `services_remaining > 0`), botão **Agendar pela assinatura**.
+2. Modal `SubscriptionBookingDialog` abre com:
+   - **Serviço do combo**: lista os serviços de `subscription_plan_services` para o `plan_id`. Se houver mais de um, cliente escolhe 1. Preço exibido como "Incluso na assinatura".
+   - **Data e horário**: usa `store_hours` + `bookings` ocupados do dia (reaproveita `generateSlots`/`formatSlotLabel`).
+   - **Adicionar serviço extra? (opcional)**: toggle. Quando ativo, lista os serviços ativos da loja (filtra os que já estão no combo). Cliente escolhe 1; preço somado e mostrado como "A pagar no balcão".
+   - **Observações** livre.
+3. Confirmar cria 1 `bookings` com:
+   - `service_id` = serviço do combo (principal)
+   - `subscription_id` = id da assinatura
+   - `booked_services` (jsonb) com 2 itens quando houver extra:
+     `[{ service_id, name, price: 0, is_subscription: true, ... }, { service_id, name, price: X, extra: true, ... }]`
+   - `total_price` = preço do extra (0 quando sem extra)
+   - `customer_notes` prefixado com "Agendado pela assinatura — {plano}"
 
-## Mudanças no banco
+## Fluxo da barbearia (BookingsTab)
 
-**1. `subscription_plans`** — planos que cada barbearia oferece
-- `store_id`, `name`, `description`, `price`, `total_services` (quantos serviços inclusos), `validity_days` (validade em dias, ex: 30), `is_active`, `position`
-- Tabela `subscription_plan_services` (N:N): quais `services.id` são cobertos pelo plano. Se vazio, vale para qualquer serviço da loja.
-
-**2. `client_subscriptions`** — assinaturas ativas dos clientes
-- `store_id`, `customer_user_id` (opcional, se cliente tiver conta), `customer_name`, `customer_phone`, `plan_id`, `services_total`, `services_used` (default 0), `started_at`, `expires_at`, `status` (`active` | `expired` | `cancelled`), `notes`
-- Coluna gerada/calculada `services_remaining = services_total - services_used`.
-
-**3. `bookings`** — adicionar `subscription_id uuid NULL` (referência à assinatura usada).
-
-**4. Trigger `apply_subscription_on_booking_complete`**
-- BEFORE UPDATE em `bookings`: quando `status` muda para `completed` e existe uma `client_subscriptions` ativa do mesmo `user_id`/`phone` na loja que cubra o serviço e ainda tenha saldo:
-  - Marca `NEW.subscription_id`
-  - Incrementa `services_used` na assinatura
-  - Se atingir o total, marca `status = 'expired'`
-- Outro trigger reverte o uso se um agendamento `completed` for revertido/cancelado.
-
-**5. RLS + GRANTS** em todas as novas tabelas (donos/staff gerenciam; clientes leem só as próprias).
-
-## Mudanças no frontend
-
-**1. `src/lib/barbershop.ts`** (novo) — helper `isBarbershopStore(category)` espelhando `isGymStore`.
-
-**2. Nova aba "Assinaturas" no painel da barbearia** (`src/components/painel/BookingsTab.tsx` ganha sub-link ou nova tab em `painel.tsx`):
-- Lista de planos: criar/editar/desativar (nome, preço, qtd serviços, validade, serviços inclusos).
-- Lista de clientes assinantes: nome, telefone, plano, **saldo restante (X/Y)**, validade, status.
-- Botão "Nova assinatura": escolhe cliente (busca por nome/telefone, opcionalmente vincula `user_id`), escolhe plano, marca como pago → cria `client_subscriptions`.
-- Botão "Renovar" em cada assinatura: cria nova ou reseta saldo.
-
-**3. Indicação visual em `BookingsTab.tsx`**:
-- Em cada card de agendamento, se o cliente tem assinatura ativa, mostrar badge "Assinante · X/Y restantes".
-- Se `services_remaining <= 1`, badge em cor de alerta (amber/destructive) com texto "Renovar em breve".
-
-**4. Após concluir um agendamento** (linha 590, status=completed):
-- Invalidar query de assinaturas para refletir o novo saldo.
-- Toast extra se a assinatura zerou: "Assinatura do cliente acabou — hora de renovar".
-
-## Não-objetivos
-
-- Não implementa cobrança recorrente automática (Stripe/Paddle).
-- Cliente final **não** vê/compra a assinatura pelo app nesta versão — fluxo todo gerenciado pelo dono.
-- Não muda nada para academias ou outros tipos de loja.
-- Não altera o preço do agendamento na finalização (a baixa é só do contador; pagamento da assinatura é separado).
+- Quando `booking.subscription_id` não é nulo:
+  - Badge **"Assinatura — {plano}"**.
+  - Se `booked_services` tem item `extra: true`: bloco destacado **"Serviço adicional: {nome} — R$ X,XX (pago no balcão)"** com botão **Remover adicional**.
+  - **Remover adicional**: atualiza `booked_services` (mantém só o item do combo) e `total_price = 0`. Útil quando o cliente desistiu do extra.
+- Ao marcar como **Concluído**, o trigger `apply_subscription_on_booking_complete` já existente baixa 1 crédito automaticamente (1 booking = 1 baixa, independente do extra).
 
 ## Detalhes técnicos
 
-- Matching cliente↔assinatura no trigger: tenta `customer_user_id = bookings.user_id` primeiro; se não tiver user_id, casa pelo telefone normalizado.
-- Assinaturas expiram automaticamente quando `expires_at < now()` (verificado via função `is_subscription_active` usada no trigger e nas queries do painel).
-- Filtro de serviço coberto: se `subscription_plan_services` estiver vazio para o plano, qualquer serviço da loja conta; senão precisa estar na lista.
+- **Novo arquivo:** `src/components/SubscriptionBookingDialog.tsx`
+  - Props: `{ open, onClose, subscriptionId, storeId, planId, planName, storeName, storeWhatsapp?, onCreated }`
+  - Internamente busca: `subscription_plan_services` (com join em `services`), `services` ativos da loja (para o extra), `store_hours`, `stores.slot_minutes`.
+  - Reaproveita `generateSlots`/`formatSlotLabel` de `@/lib/booking-slots`.
+- **`src/routes/agendamentos.tsx`**:
+  - Converter o `<Link>` de cada card em `<article>` com dois CTAs: **Agendar pela assinatura** (primário, abre modal; desabilitado quando `ended` ou `remaining <= 0`) e **Ver loja** (link secundário).
+  - Estado local `activeSub` para controlar abertura do modal.
+- **`src/components/painel/BookingsTab.tsx`**:
+  - Incluir `subscription_id` e join opcional em `client_subscriptions(subscription_plans(name))` no select de bookings.
+  - Renderizar badge "Assinatura — {plano}" e bloco de adicional baseado em `booked_services` (item com `extra: true`).
+  - Botão **Remover adicional**: `update bookings set booked_services = <só combo>, total_price = 0 where id = ?`.
+- **Sem migration nova.** Toda a estrutura já existe (`subscription_id`, `booked_services` jsonb, trigger de baixa na conclusão). As marcações `is_subscription` / `extra` são apenas convenções dentro do jsonb.
+- **Tipos**: estender o tipo `BookedServiceItem` em `agendamentos.tsx` e em `BookingsTab.tsx` com `is_subscription?: boolean` e `extra?: boolean`.
+
+## Decisões já confirmadas
+
+1. Baixa do crédito segue automática ao **concluir o serviço** (trigger existente).
+2. Pagamento do adicional é no **balcão** — sem fluxo de pagamento online.
+3. Loja pode **remover o adicional** antes de concluir, caso o cliente desista.
