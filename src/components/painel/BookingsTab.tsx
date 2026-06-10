@@ -388,6 +388,9 @@ export function BookingsTab({
               qc.invalidateQueries({ queryKey: ["painel", "stores"] });
             }}
           />
+        </div>
+
+
 
         <TabsContent value={tab} className="mt-4">
           {loading ? (
