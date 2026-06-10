@@ -301,6 +301,25 @@ export function BookingsTab({
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const removeExtra = useMutation({
+    mutationFn: async (b: BookingRow) => {
+      const filtered = (b.booked_services ?? []).filter((s) => !s.extra);
+      const { error } = await supabase
+        .from("bookings")
+        .update({
+          booked_services: filtered as never,
+          total_price: 0,
+        })
+        .eq("id", b.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Adicional removido");
+      qc.invalidateQueries({ queryKey: ["painel", "bookings"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   // Active subscriptions for booking customers (barbershop feature)
   const bookingUserIds = useMemo(
     () => Array.from(new Set(bookings.map((b) => b.user_id).filter(Boolean))),
