@@ -455,6 +455,7 @@ export function BookingsTab({
                     setEditPrice(String(b.total_price ?? 0));
                   }}
                   pending={updateStatus.isPending}
+                  subscriptionInfo={subsByUser[b.user_id] ?? null}
                 />
               ))}
             </div>
