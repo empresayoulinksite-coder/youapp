@@ -17,6 +17,7 @@ import {
   ChevronUp,
   Pencil,
   Trash2,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -63,6 +64,8 @@ export type BookedServiceItem = {
   price: number;
   starts_at: string;
   ends_at: string;
+  is_subscription?: boolean;
+  extra?: boolean;
 };
 
 export type BookingRow = {
@@ -80,6 +83,8 @@ export type BookingRow = {
   payment_amount_1: number | null;
   payment_amount_2: number | null;
   booked_services: BookedServiceItem[] | null;
+  subscription_id?: string | null;
+  client_subscriptions?: { plan_id: string | null; subscription_plans: { name: string } | null } | null;
   services: { name: string; duration_minutes: number } | null;
   profiles?: { display_name: string | null; phone: string | null } | null;
 };
@@ -297,6 +302,25 @@ export function BookingsTab({
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const removeExtra = useMutation({
+    mutationFn: async (b: BookingRow) => {
+      const filtered = (b.booked_services ?? []).filter((s) => !s.extra);
+      const { error } = await supabase
+        .from("bookings")
+        .update({
+          booked_services: filtered as never,
+          total_price: 0,
+        })
+        .eq("id", b.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Adicional removido");
+      qc.invalidateQueries({ queryKey: ["painel", "bookings"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   // Active subscriptions for booking customers (barbershop feature)
   const bookingUserIds = useMemo(
     () => Array.from(new Set(bookings.map((b) => b.user_id).filter(Boolean))),
@@ -458,6 +482,12 @@ export function BookingsTab({
                   }}
                   pending={updateStatus.isPending}
                   subscriptionInfo={subsByUser[b.user_id] ?? null}
+                  onRemoveExtra={() => {
+                    if (confirm("Remover o serviço adicional deste agendamento?")) {
+                      removeExtra.mutate(b);
+                    }
+                  }}
+                  removingExtra={removeExtra.isPending}
                 />
               ))}
             </div>
@@ -798,6 +828,8 @@ function BookingCard({
   onEdit,
   pending,
   subscriptionInfo,
+  onRemoveExtra,
+  removingExtra,
 }: {
   booking: BookingRow;
   onUpdate: (status: BookingRow["status"]) => void;
@@ -805,6 +837,8 @@ function BookingCard({
   onEdit: () => void;
   pending: boolean;
   subscriptionInfo?: { remaining: number; total: number; planName: string } | null;
+  onRemoveExtra?: () => void;
+  removingExtra?: boolean;
 }) {
   const start = new Date(booking.starts_at);
   const end = new Date(booking.ends_at);
@@ -818,6 +852,12 @@ function BookingCard({
   const phone = booking.profiles?.phone?.replace(/\D/g, "") ?? "";
   const waPhone = phone ? (phone.startsWith("55") ? phone : `55${phone}`) : "";
   const lowBalance = !!subscriptionInfo && subscriptionInfo.remaining <= 1;
+
+  const isFromSubscription = !!booking.subscription_id;
+  const planName = booking.client_subscriptions?.subscription_plans?.name ?? null;
+  const extraItem = (booking.booked_services ?? []).find((s) => s.extra);
+  const canRemoveExtra =
+    !!extraItem && (booking.status === "pending" || booking.status === "confirmed");
 
   return (
     <div
@@ -843,6 +883,12 @@ function BookingCard({
               >
                 {lowBalance ? "Renovar em breve · " : "Assinante · "}
                 {subscriptionInfo.remaining}/{subscriptionInfo.total}
+              </Badge>
+            )}
+            {isFromSubscription && (
+              <Badge className="bg-brand text-brand-foreground hover:bg-brand/90">
+                <Sparkles className="h-3 w-3 mr-1" />
+                Assinatura{planName ? ` — ${planName}` : ""}
               </Badge>
             )}
           </div>
@@ -889,6 +935,25 @@ function BookingCard({
           )}
           {booking.customer_notes && (
             <p className="text-sm text-muted-foreground">Obs: {booking.customer_notes}</p>
+          )}
+          {extraItem && (
+            <div className="mt-1 rounded-lg border border-amber-400 bg-amber-50 dark:bg-amber-950/30 p-2 text-xs">
+              <p className="font-semibold text-amber-800 dark:text-amber-300">
+                + Serviço adicional: {extraItem.name} — R${" "}
+                {Number(extraItem.price).toFixed(2).replace(".", ",")}
+              </p>
+              <p className="text-amber-700/80 dark:text-amber-400/80">Pago no balcão</p>
+              {canRemoveExtra && onRemoveExtra && (
+                <button
+                  type="button"
+                  onClick={onRemoveExtra}
+                  disabled={removingExtra}
+                  className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-destructive hover:underline disabled:opacity-50"
+                >
+                  <X className="h-3 w-3" /> Remover adicional
+                </button>
+              )}
+            </div>
           )}
           <p className="text-sm font-medium">
             R$ {Number(booking.total_price).toFixed(2).replace(".", ",")}
