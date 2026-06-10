@@ -365,12 +365,15 @@ export function OverviewTab({ bookings }: { bookings: BookingRow[] }) {
           ) : (
             <ul className="divide-y">
               {stats.topPayments.map((p, i) => (
-                <li key={p.name} className="flex items-center justify-between px-4 py-2.5">
-                  <span className="text-sm">
+                <li key={p.name} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                  <span className="text-sm min-w-0 truncate">
                     <span className="font-medium text-muted-foreground mr-2">{i + 1}.</span>
                     {p.name}
                   </span>
-                  <Badge variant="secondary" className="text-xs">{p.count}x</Badge>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-sm font-semibold text-success">{brl(p.amount)}</span>
+                    <Badge variant="secondary" className="text-xs">{p.count}x</Badge>
+                  </div>
                 </li>
               ))}
             </ul>
