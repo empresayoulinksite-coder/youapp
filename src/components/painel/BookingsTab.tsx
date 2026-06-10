@@ -795,12 +795,14 @@ function BookingCard({
   onReschedule,
   onEdit,
   pending,
+  subscriptionInfo,
 }: {
   booking: BookingRow;
   onUpdate: (status: BookingRow["status"]) => void;
   onReschedule: () => void;
   onEdit: () => void;
   pending: boolean;
+  subscriptionInfo?: { remaining: number; total: number; planName: string } | null;
 }) {
   const start = new Date(booking.starts_at);
   const end = new Date(booking.ends_at);
@@ -813,9 +815,15 @@ function BookingCard({
 
   const phone = booking.profiles?.phone?.replace(/\D/g, "") ?? "";
   const waPhone = phone ? (phone.startsWith("55") ? phone : `55${phone}`) : "";
+  const lowBalance = !!subscriptionInfo && subscriptionInfo.remaining <= 1;
 
   return (
-    <div className="rounded-lg border bg-card p-4">
+    <div
+      className={cn(
+        "rounded-lg border bg-card p-4",
+        lowBalance && "border-amber-500 bg-amber-50/40 dark:bg-amber-950/20",
+      )}
+    >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -823,6 +831,18 @@ function BookingCard({
             <Badge variant={STATUS_VARIANT[booking.status]}>
               {STATUS_LABEL[booking.status]}
             </Badge>
+            {subscriptionInfo && (
+              <Badge
+                className={cn(
+                  lowBalance
+                    ? "bg-amber-500 text-white hover:bg-amber-600"
+                    : "bg-emerald-600 text-white hover:bg-emerald-700",
+                )}
+              >
+                {lowBalance ? "Renovar em breve · " : "Assinante · "}
+                {subscriptionInfo.remaining}/{subscriptionInfo.total}
+              </Badge>
+            )}
           </div>
           <div className="flex items-center gap-2 text-sm">
             <Clock className="h-3.5 w-3.5 text-muted-foreground" />
