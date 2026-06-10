@@ -2427,6 +2427,7 @@ export type Database = {
         Args: never
         Returns: {
           expires_at: string
+          plan_id: string
           plan_name: string
           services_remaining: number
           services_total: number
