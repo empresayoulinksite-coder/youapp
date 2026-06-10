@@ -475,9 +475,10 @@ function PainelPage() {
           {(() => {
             const isService = currentStore?.store_type === "service";
             const isGym = isGymStore(currentStore?.category);
+            const isBarber = isBarbershopStore(currentStore?.category);
             const isFoodOrEcom = currentStore?.store_type === "food" || currentStore?.store_type === "ecommerce";
-            const cols = 6 + (isService ? 1 : 0) + (isGym ? 1 : 0) + (isFoodOrEcom ? 1 : 0);
-            const colsClass: Record<number, string> = { 6: "grid-cols-6", 7: "grid-cols-7", 8: "grid-cols-8", 9: "grid-cols-9" };
+            const cols = 6 + (isService ? 1 : 0) + (isGym ? 1 : 0) + (isBarber ? 1 : 0) + (isFoodOrEcom ? 1 : 0);
+            const colsClass: Record<number, string> = { 6: "grid-cols-6", 7: "grid-cols-7", 8: "grid-cols-8", 9: "grid-cols-9", 10: "grid-cols-10" };
             return (
               <TabsList className={`grid w-full ${colsClass[cols] ?? "grid-cols-6"}`}>
                 {isFoodOrEcom && (
@@ -514,6 +515,12 @@ function PainelPage() {
                   <TabsTrigger value="feed" className="gap-1.5">
                     <Images className="h-4 w-4" />
                     <span className="hidden sm:inline">Feed</span>
+                  </TabsTrigger>
+                )}
+                {isBarber && (
+                  <TabsTrigger value="subscriptions" className="gap-1.5">
+                    <BadgeCheck className="h-4 w-4" />
+                    <span className="hidden sm:inline">Assinaturas</span>
                   </TabsTrigger>
                 )}
                 {isGym && (
