@@ -63,6 +63,8 @@ export type BookedServiceItem = {
   price: number;
   starts_at: string;
   ends_at: string;
+  is_subscription?: boolean;
+  extra?: boolean;
 };
 
 export type BookingRow = {
@@ -80,6 +82,8 @@ export type BookingRow = {
   payment_amount_1: number | null;
   payment_amount_2: number | null;
   booked_services: BookedServiceItem[] | null;
+  subscription_id?: string | null;
+  client_subscriptions?: { plan_id: string | null; subscription_plans: { name: string } | null } | null;
   services: { name: string; duration_minutes: number } | null;
   profiles?: { display_name: string | null; phone: string | null } | null;
 };
