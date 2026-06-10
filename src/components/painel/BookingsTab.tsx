@@ -17,6 +17,7 @@ import {
   ChevronUp,
   Pencil,
   Trash2,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
