@@ -795,3 +795,161 @@ function SubscriptionDialog({
     </Dialog>
   );
 }
+
+function EditSubscriptionDialog({
+  storeId,
+  subscription,
+  onClose,
+}: {
+  storeId: string;
+  subscription: Subscription;
+  onClose: () => void;
+}) {
+  const qc = useQueryClient();
+  const [customerName, setCustomerName] = useState(subscription.customer_name);
+  const [customerPhone, setCustomerPhone] = useState(subscription.customer_phone ?? "");
+  const [customerEmail, setCustomerEmail] = useState(subscription.customer_email ?? "");
+  const [notes, setNotes] = useState(subscription.notes ?? "");
+  const [servicesUsed, setServicesUsed] = useState(String(subscription.services_used));
+  const [servicesTotal, setServicesTotal] = useState(String(subscription.services_total));
+  const [expiresAt, setExpiresAt] = useState(
+    new Date(subscription.expires_at).toISOString().slice(0, 10),
+  );
+  const [status, setStatus] = useState<Subscription["status"]>(subscription.status);
+
+  const save = useMutation({
+    mutationFn: async () => {
+      if (!customerName.trim()) throw new Error("Informe o nome do cliente");
+      const total = Number(servicesTotal) || 0;
+      const used = Number(servicesUsed) || 0;
+      if (total < 1) throw new Error("Total de serviços deve ser ≥ 1");
+      if (used < 0 || used > total) throw new Error("Serviços usados inválidos");
+      if (!expiresAt) throw new Error("Informe a data de validade");
+
+      const { error } = await supabase
+        .from("client_subscriptions")
+        .update({
+          customer_name: customerName.trim(),
+          customer_phone: customerPhone.trim() || null,
+          customer_email: customerEmail.trim().toLowerCase() || null,
+          notes: notes.trim() || null,
+          services_total: total,
+          services_used: used,
+          expires_at: new Date(`${expiresAt}T23:59:59`).toISOString(),
+          status,
+        })
+        .eq("id", subscription.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Assinatura atualizada");
+      qc.invalidateQueries({ queryKey: ["client-subscriptions", storeId] });
+      onClose();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Editar assinatura</DialogTitle>
+          <DialogDescription>
+            Atualize os dados do cliente, saldo e data de validade.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label htmlFor="edit-name">Nome do cliente</Label>
+            <Input
+              id="edit-name"
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="edit-phone">Telefone</Label>
+            <Input
+              id="edit-phone"
+              value={customerPhone}
+              onChange={(e) => setCustomerPhone(e.target.value)}
+              placeholder="(11) 99999-9999"
+            />
+          </div>
+          <div>
+            <Label htmlFor="edit-email">Email</Label>
+            <Input
+              id="edit-email"
+              type="email"
+              value={customerEmail}
+              onChange={(e) => setCustomerEmail(e.target.value)}
+              placeholder="cliente@email.com"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="edit-used">Serviços usados</Label>
+              <Input
+                id="edit-used"
+                type="number"
+                min="0"
+                value={servicesUsed}
+                onChange={(e) => setServicesUsed(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-total">Total de serviços</Label>
+              <Input
+                id="edit-total"
+                type="number"
+                min="1"
+                value={servicesTotal}
+                onChange={(e) => setServicesTotal(e.target.value)}
+              />
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="edit-expires">Válida até</Label>
+            <Input
+              id="edit-expires"
+              type="date"
+              value={expiresAt}
+              onChange={(e) => setExpiresAt(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="edit-status">Status</Label>
+            <Select value={status} onValueChange={(v) => setStatus(v as Subscription["status"])}>
+              <SelectTrigger id="edit-status">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Ativa</SelectItem>
+                <SelectItem value="expired">Expirada</SelectItem>
+                <SelectItem value="cancelled">Cancelada</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="edit-notes">Observações</Label>
+            <Textarea
+              id="edit-notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button onClick={() => save.mutate()} disabled={save.isPending}>
+            {save.isPending ? "Salvando..." : "Salvar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
