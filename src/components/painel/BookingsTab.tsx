@@ -400,6 +400,9 @@ export function BookingsTab({
               <Banknote className="h-4 w-4" /> Abrir caixa
             </Button>
           ) : null}
+          <Button size="sm" variant="outline" onClick={() => setReportOpen(true)}>
+            <FileText className="h-4 w-4" /> Relatório do caixa
+          </Button>
         </div>
         <Button size="sm" onClick={() => setNewOpen(true)}>
           <Plus className="h-4 w-4" /> Novo agendamento
