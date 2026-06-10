@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -11,12 +11,15 @@ import {
   Receipt,
   ShoppingBag,
   X,
+  AlertTriangle,
+  Sparkles,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/agendamentos")({
   head: () => ({
@@ -86,6 +89,31 @@ function BookingsPage() {
     },
   });
 
+  type MySub = {
+    subscription_id: string;
+    store_id: string;
+    store_name: string;
+    store_slug: string;
+    store_emoji: string | null;
+    store_image_url: string | null;
+    plan_name: string;
+    services_total: number;
+    services_used: number;
+    services_remaining: number;
+    expires_at: string;
+    status: string;
+  };
+
+  const { data: mySubs = [] } = useQuery({
+    queryKey: ["my-subscriptions", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_my_subscriptions");
+      if (error) throw error;
+      return (data ?? []) as MySub[];
+    },
+  });
+
   const cancel = async (id: string) => {
     if (!confirm("Cancelar este agendamento?")) return;
     const { error } = await supabase
@@ -117,6 +145,92 @@ function BookingsPage() {
       </header>
 
       <main className="px-4 py-5 max-w-md mx-auto space-y-6">
+        {mySubs.length > 0 && (
+          <section>
+            <h2 className="text-xs font-bold uppercase text-muted-foreground mb-2 px-1">
+              Minhas assinaturas
+            </h2>
+            <div className="space-y-2">
+              {mySubs.map((s) => {
+                const remaining = s.services_remaining;
+                const total = s.services_total;
+                const pct = total > 0 ? Math.min(100, (s.services_used / total) * 100) : 0;
+                const isActive = s.status === "active" && remaining > 0;
+                const low = isActive && remaining <= 1;
+                const ended = !isActive;
+                return (
+                  <Link
+                    key={s.subscription_id}
+                    to="/loja/$slug"
+                    params={{ slug: s.store_slug }}
+                    className={cn(
+                      "block bg-card rounded-2xl p-4 shadow-[var(--shadow-card)] border border-transparent",
+                      low && "border-amber-500 bg-amber-50/50 dark:bg-amber-950/20",
+                      ended && "opacity-80",
+                    )}
+                  >
+                    <div className="flex items-start gap-3">
+                      {s.store_image_url ? (
+                        <img
+                          src={s.store_image_url}
+                          alt={s.store_name}
+                          className="h-12 w-12 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <div className="h-12 w-12 rounded-lg bg-brand-soft flex items-center justify-center text-2xl">
+                          {s.store_emoji ?? "💈"}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-muted-foreground truncate">{s.store_name}</p>
+                        <h3 className="font-semibold truncate flex items-center gap-1.5">
+                          <Sparkles className="h-3.5 w-3.5 text-brand" />
+                          {s.plan_name}
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Válida até {new Date(s.expires_at).toLocaleDateString("pt-BR")}
+                        </p>
+                      </div>
+                      <span
+                        className={cn(
+                          "shrink-0 text-[11px] font-bold px-2 py-1 rounded-full",
+                          ended
+                            ? "bg-muted text-muted-foreground"
+                            : low
+                            ? "bg-amber-500 text-white"
+                            : "bg-success/15 text-success",
+                        )}
+                      >
+                        {remaining}/{total}
+                      </span>
+                    </div>
+                    <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className={cn(
+                          "h-full rounded-full transition-all",
+                          ended ? "bg-muted-foreground/40" : low ? "bg-amber-500" : "bg-brand",
+                        )}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    {low && (
+                      <p className="mt-2 text-xs font-medium text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        Está acabando! Renove no estabelecimento.
+                      </p>
+                    )}
+                    {ended && (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Assinatura encerrada — procure {s.store_name} para renovar.
+                      </p>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         {isLoading ? (
           <p className="text-sm text-muted-foreground text-center py-12">Carregando...</p>
         ) : bookings.length === 0 ? (
