@@ -49,6 +49,7 @@ import type { StoreHour } from "@/lib/store-hours";
 import { cn } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/lib/payment-methods";
 import { getEffectivePrice, type PromoPrice } from "@/lib/service-pricing";
+import { CashReportTab } from "@/components/painel/CashReportTab";
 
 type ServiceLite = {
   id: string;
