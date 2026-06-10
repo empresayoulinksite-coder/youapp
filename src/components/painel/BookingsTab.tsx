@@ -363,6 +363,32 @@ export function BookingsTab({
           <TabsTrigger value="all">Todos</TabsTrigger>
         </TabsList>
 
+        <div className="mt-3 flex items-start justify-between gap-3 rounded-lg border bg-card p-3">
+          <div className="min-w-0">
+            <Label htmlFor="auto-accept-bookings" className="text-sm font-medium">
+              Aceitar automaticamente
+            </Label>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Novos agendamentos serão confirmados sem precisar de aprovação.
+            </p>
+          </div>
+          <Switch
+            id="auto-accept-bookings"
+            checked={!!store.auto_accept_bookings}
+            onCheckedChange={async (v) => {
+              const { error } = await supabase
+                .from("stores")
+                .update({ auto_accept_bookings: v })
+                .eq("id", store.id);
+              if (error) {
+                toast.error(error.message);
+                return;
+              }
+              toast.success(v ? "Aceite automático ativado" : "Aceite automático desativado");
+              qc.invalidateQueries({ queryKey: ["painel", "stores"] });
+            }}
+          />
+
         <TabsContent value={tab} className="mt-4">
           {loading ? (
             <p className="py-8 text-center text-sm text-muted-foreground">Carregando...</p>
