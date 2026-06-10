@@ -209,7 +209,7 @@ function AdminStoreManagePage() {
             </TabsTrigger>
             <TabsTrigger value="youflow" className="gap-1.5">
               <Film className="h-4 w-4" />
-              YouFlow
+              TesouroFlow
             </TabsTrigger>
             <TabsTrigger value="gestao" className="gap-1.5">
               <LayoutDashboard className="h-4 w-4" />
@@ -351,7 +351,7 @@ function AdminStoreManagePage() {
         </TabsContent>
 
         <TabsContent value="youflow" className="mt-4">
-          <Section title="YouFlow (vídeos curtos)" icon={<Film className="h-4 w-4" />}>
+          <Section title="TesouroFlow (vídeos curtos)" icon={<Film className="h-4 w-4" />}>
             <StoreReelsEditor
               storeId={store.id}
               reelsEnabled={!!store.reels_enabled}
@@ -362,7 +362,7 @@ function AdminStoreManagePage() {
                   .eq("id", store.id);
                 if (error) toast.error(error.message);
                 else {
-                  toast.success(v ? "YouFlow ativado" : "YouFlow desativado");
+                  toast.success(v ? "TesouroFlow ativado" : "TesouroFlow desativado");
                   qc.invalidateQueries({ queryKey: ["admin-manage-store", store.id] });
                 }
               }}
