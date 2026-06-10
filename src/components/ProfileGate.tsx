@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import youlinkLogo from "@/assets/youlink-splash.png";
+import youlinkLogo from "@/assets/tesouro-splash.png.asset.json";
 
 // Rotas onde NÃO devemos forçar o redirect
 const ALLOWED_INCOMPLETE = ["/completar-cadastro", "/auth"];
@@ -72,7 +72,7 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
           <div className="relative flex h-32 w-32 items-center justify-center">
             <div className="absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#F5B72A]/50 blur-2xl animate-pulse" />
             <img
-              src={youlinkLogo}
+              src={youlinkLogo.url}
               alt="Youlink"
               className="relative h-full w-full object-contain"
             />
