@@ -61,21 +61,22 @@ export function CashSummaryDialog({
       // 2. Fetch cash transactions
       const { data: transactions } = await supabase
         .from("cash_transactions")
-        .select("type, amount")
-        .eq("cash_register_id", cashRegisterId!);
+        .select("type, amount, reason, created_at")
+        .eq("cash_register_id", cashRegisterId!)
+        .order("created_at", { ascending: true });
 
-      const depositsTotal = (transactions || [])
-        .filter(t => t.type === "deposit")
-        .reduce((sum, t) => sum + Number(t.amount), 0);
+      const deposits = (transactions || []).filter(t => t.type === "deposit");
+      const withdrawals = (transactions || []).filter(t => t.type === "withdrawal");
 
-      const withdrawalsTotal = (transactions || [])
-        .filter(t => t.type === "withdrawal")
-        .reduce((sum, t) => sum + Number(t.amount), 0);
+      const depositsTotal = deposits.reduce((sum, t) => sum + Number(t.amount), 0);
+      const withdrawalsTotal = withdrawals.reduce((sum, t) => sum + Number(t.amount), 0);
 
       return {
         ordersTotal,
         depositsTotal,
         withdrawalsTotal,
+        deposits,
+        withdrawals,
         finalBalance: openingBalance + ordersTotal + depositsTotal - withdrawalsTotal
       };
     }
