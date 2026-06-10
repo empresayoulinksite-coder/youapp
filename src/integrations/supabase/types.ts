@@ -30,6 +30,7 @@ export type Database = {
           starts_at: string
           status: Database["public"]["Enums"]["booking_status"]
           store_id: string
+          subscription_id: string | null
           total_price: number
           updated_at: string
           user_id: string
@@ -49,6 +50,7 @@ export type Database = {
           starts_at: string
           status?: Database["public"]["Enums"]["booking_status"]
           store_id: string
+          subscription_id?: string | null
           total_price?: number
           updated_at?: string
           user_id: string
@@ -68,6 +70,7 @@ export type Database = {
           starts_at?: string
           status?: Database["public"]["Enums"]["booking_status"]
           store_id?: string
+          subscription_id?: string | null
           total_price?: number
           updated_at?: string
           user_id?: string
@@ -85,6 +88,13 @@ export type Database = {
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "client_subscriptions"
             referencedColumns: ["id"]
           },
         ]
@@ -249,6 +259,72 @@ export type Database = {
             columns: ["cash_register_id"]
             isOneToOne: false
             referencedRelation: "cash_registers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_subscriptions: {
+        Row: {
+          created_at: string
+          customer_name: string
+          customer_phone: string | null
+          customer_user_id: string | null
+          expires_at: string
+          id: string
+          notes: string | null
+          plan_id: string | null
+          services_total: number
+          services_used: number
+          started_at: string
+          status: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_name: string
+          customer_phone?: string | null
+          customer_user_id?: string | null
+          expires_at: string
+          id?: string
+          notes?: string | null
+          plan_id?: string | null
+          services_total: number
+          services_used?: number
+          started_at?: string
+          status?: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_name?: string
+          customer_phone?: string | null
+          customer_user_id?: string | null
+          expires_at?: string
+          id?: string
+          notes?: string | null
+          plan_id?: string | null
+          services_total?: number
+          services_used?: number
+          started_at?: string
+          status?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_subscriptions_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
         ]
@@ -2085,6 +2161,86 @@ export type Database = {
           },
         ]
       }
+      subscription_plan_services: {
+        Row: {
+          plan_id: string
+          service_id: string
+        }
+        Insert: {
+          plan_id: string
+          service_id: string
+        }
+        Update: {
+          plan_id?: string
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_plan_services_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_plan_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          position: number
+          price: number
+          store_id: string
+          total_services: number
+          updated_at: string
+          validity_days: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          position?: number
+          price?: number
+          store_id: string
+          total_services: number
+          updated_at?: string
+          validity_days?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          position?: number
+          price?: number
+          store_id?: string
+          total_services?: number
+          updated_at?: string
+          validity_days?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_plans_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_addresses: {
         Row: {
           cep: string | null
@@ -2243,6 +2399,19 @@ export type Database = {
         Args: { _store_id: string; _user_id: string }
         Returns: boolean
       }
+      get_active_subscriptions_for_users: {
+        Args: { _store_id: string; _user_ids: string[] }
+        Returns: {
+          expires_at: string
+          plan_name: string
+          services_remaining: number
+          services_total: number
+          services_used: number
+          status: string
+          subscription_id: string
+          user_id: string
+        }[]
+      }
       get_booking_customers: {
         Args: { _store_id: string }
         Returns: {
@@ -2266,6 +2435,7 @@ export type Database = {
         Args: { _store_id: string; _user_id: string }
         Returns: boolean
       }
+      normalize_phone: { Args: { _phone: string }; Returns: string }
       verify_waiter_pin: {
         Args: { _full_name: string; _pin: string; _store_id: string }
         Returns: {
