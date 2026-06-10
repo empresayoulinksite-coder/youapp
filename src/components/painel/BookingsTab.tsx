@@ -1319,16 +1319,24 @@ function NewBookingDialog({
       toast.error("Informe o nome do cliente");
       return;
     }
+    if (clientMode === "subscription" && !subscriptionId) {
+      toast.error("Selecione um cliente da assinatura");
+      return;
+    }
     setSaving(true);
+    const subInfo = clientMode === "subscription"
+      ? subscriptions.find((s) => s.id === subscriptionId)
+      : null;
     const noteParts = [
-      `[Manual${manualMode ? " · Encaixe" : ""}] ${customerName.trim()}`,
+      `[Manual${manualMode ? " · Encaixe" : ""}${subInfo ? " · Assinatura" : ""}] ${customerName.trim()}`,
       customerPhone.trim() ? `Tel: ${customerPhone.trim()}` : "",
+      subInfo ? `Assinatura: ${subInfo.plan_name ?? "Plano"}` : "",
       notes.trim(),
     ].filter(Boolean);
     const noteStr = noteParts.join(" · ");
 
     let cursor = new Date(startsAt);
-    const bookedServices = selectedServices.map((svc) => {
+    const bookedServices = selectedServices.map((svc, idx) => {
       const start = new Date(cursor);
       const end = new Date(start.getTime() + svc.duration_minutes * 60_000);
       cursor = end;
@@ -1336,13 +1344,17 @@ function NewBookingDialog({
         { price: Number(svc.price), promo_prices: svc.promo_prices ?? null },
         startsAt,
       );
+      // Primeiro serviço é coberto pela assinatura (preço zerado);
+      // serviços extras seguem o preço normal.
+      const isSubItem = !!subInfo && idx === 0;
       return {
         service_id: svc.id,
         name: svc.name,
         duration_minutes: svc.duration_minutes,
-        price: effPrice,
+        price: isSubItem ? 0 : effPrice,
         starts_at: start.toISOString(),
         ends_at: end.toISOString(),
+        ...(isSubItem ? { is_subscription: true } : {}),
       };
     });
 
@@ -1358,7 +1370,9 @@ function NewBookingDialog({
       status: "confirmed",
       customer_notes: noteStr,
       booked_services: bookedServices,
+      ...(subscriptionId ? { subscription_id: subscriptionId } : {}),
     });
+
     const hasError = !!error;
     if (error) {
       toast.error(error.message);
