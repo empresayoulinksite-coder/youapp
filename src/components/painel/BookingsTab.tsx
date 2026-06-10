@@ -857,16 +857,6 @@ function BookingCard({
   const extraItem = (booking.booked_services ?? []).find((s) => s.extra);
   const canRemoveExtra =
     !!extraItem && (booking.status === "pending" || booking.status === "confirmed");
-  const dateLabel = start.toLocaleDateString("pt-BR", {
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
-  });
-  const timeLabel = `${start.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })} - ${end.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
-
-  const phone = booking.profiles?.phone?.replace(/\D/g, "") ?? "";
-  const waPhone = phone ? (phone.startsWith("55") ? phone : `55${phone}`) : "";
-  const lowBalance = !!subscriptionInfo && subscriptionInfo.remaining <= 1;
 
   return (
     <div
