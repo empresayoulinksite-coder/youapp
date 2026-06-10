@@ -98,6 +98,7 @@ function BookingsPage() {
     store_slug: string;
     store_emoji: string | null;
     store_image_url: string | null;
+    plan_id: string | null;
     plan_name: string;
     services_total: number;
     services_used: number;
@@ -105,6 +106,8 @@ function BookingsPage() {
     expires_at: string;
     status: string;
   };
+
+  const [activeSub, setActiveSub] = useState<MySub | null>(null);
 
   const { data: mySubs = [] } = useQuery({
     queryKey: ["my-subscriptions", user?.id],
