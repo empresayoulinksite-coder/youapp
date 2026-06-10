@@ -244,28 +244,9 @@ export function BookingsTab({
       qc.invalidateQueries({ queryKey: ["bookings-subs", store.id] });
       qc.invalidateQueries({ queryKey: ["client-subscriptions", store.id] });
 
-      // Registrar troco como saída no caixa se estiver aberto
-      if (
-        vars.status === "completed" &&
-        (vars.change_amount ?? 0) > 0 &&
-        isCashOpen &&
-        cashRegister?.id &&
-        authUser?.id
-      ) {
-        const { error: txErr } = await supabase.from("cash_transactions").insert({
-          cash_register_id: cashRegister.id,
-          type: "withdrawal",
-          amount: vars.change_amount!,
-          reason: "Troco - Agendamento",
-          user_id: authUser.id,
-        });
-        if (txErr) {
-          toast.error("Erro ao registrar troco no caixa");
-        } else {
-          toast.info("Troco registrado no caixa");
-          qc.invalidateQueries({ queryKey: ["painel", "cash"] });
-        }
-      }
+      // Troco NÃO é lançado como sangria — o total_price já é o valor líquido
+      // que entra na gaveta (recebido - troco devolvido).
+
     },
     onError: (e: Error) => toast.error(e.message),
   });
