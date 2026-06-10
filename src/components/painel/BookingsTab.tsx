@@ -206,6 +206,7 @@ export function BookingsTab({
   const [tab, setTab] = useState("pending");
   const [reschedFor, setReschedFor] = useState<BookingRow | null>(null);
   const [newOpen, setNewOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const [completeTarget, setCompleteTarget] = useState<BookingRow | null>(null);
   const [completePayment, setCompletePayment] = useState("");
   const [splitEnabled, setSplitEnabled] = useState(false);
