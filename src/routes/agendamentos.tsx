@@ -89,6 +89,31 @@ function BookingsPage() {
     },
   });
 
+  type MySub = {
+    subscription_id: string;
+    store_id: string;
+    store_name: string;
+    store_slug: string;
+    store_emoji: string | null;
+    store_image_url: string | null;
+    plan_name: string;
+    services_total: number;
+    services_used: number;
+    services_remaining: number;
+    expires_at: string;
+    status: string;
+  };
+
+  const { data: mySubs = [] } = useQuery({
+    queryKey: ["my-subscriptions", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_my_subscriptions");
+      if (error) throw error;
+      return (data ?? []) as MySub[];
+    },
+  });
+
   const cancel = async (id: string) => {
     if (!confirm("Cancelar este agendamento?")) return;
     const { error } = await supabase
