@@ -827,6 +827,8 @@ function BookingCard({
   onEdit,
   pending,
   subscriptionInfo,
+  onRemoveExtra,
+  removingExtra,
 }: {
   booking: BookingRow;
   onUpdate: (status: BookingRow["status"]) => void;
@@ -834,9 +836,27 @@ function BookingCard({
   onEdit: () => void;
   pending: boolean;
   subscriptionInfo?: { remaining: number; total: number; planName: string } | null;
+  onRemoveExtra?: () => void;
+  removingExtra?: boolean;
 }) {
   const start = new Date(booking.starts_at);
   const end = new Date(booking.ends_at);
+  const dateLabel = start.toLocaleDateString("pt-BR", {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+  });
+  const timeLabel = `${start.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })} - ${end.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+
+  const phone = booking.profiles?.phone?.replace(/\D/g, "") ?? "";
+  const waPhone = phone ? (phone.startsWith("55") ? phone : `55${phone}`) : "";
+  const lowBalance = !!subscriptionInfo && subscriptionInfo.remaining <= 1;
+
+  const isFromSubscription = !!booking.subscription_id;
+  const planName = booking.client_subscriptions?.subscription_plans?.name ?? null;
+  const extraItem = (booking.booked_services ?? []).find((s) => s.extra);
+  const canRemoveExtra =
+    !!extraItem && (booking.status === "pending" || booking.status === "confirmed");
   const dateLabel = start.toLocaleDateString("pt-BR", {
     weekday: "short",
     day: "2-digit",
