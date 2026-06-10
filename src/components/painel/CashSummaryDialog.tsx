@@ -124,21 +124,50 @@ export function CashSummaryDialog({
                 <span className="font-semibold text-emerald-600">+{formatCurrency(summary.ordersTotal)}</span>
               </div>
 
-              <div className="flex items-center justify-between pb-3 border-b border-dashed">
-                <div className="flex items-center gap-2 text-emerald-600">
-                  <ArrowDownToLine className="h-4 w-4" />
-                  <span className="font-medium">Suprimentos (Entradas)</span>
+              <div className="pb-3 border-b border-dashed space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-emerald-600">
+                    <ArrowDownToLine className="h-4 w-4" />
+                    <span className="font-medium">Suprimentos (Entradas)</span>
+                  </div>
+                  <span className="font-semibold text-emerald-600">+{formatCurrency(summary.depositsTotal)}</span>
                 </div>
-                <span className="font-semibold text-emerald-600">+{formatCurrency(summary.depositsTotal)}</span>
+                {summary.deposits.length > 0 && (
+                  <ul className="pl-6 space-y-1">
+                    {summary.deposits.map((t, i) => (
+                      <li key={i} className="flex items-start justify-between gap-3 text-xs text-slate-600">
+                        <span className="flex-1">
+                          {t.reason?.trim() ? t.reason : <span className="italic text-slate-400">Sem observação</span>}
+                        </span>
+                        <span className="font-medium text-emerald-700 whitespace-nowrap">+{formatCurrency(Number(t.amount))}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
 
-              <div className="flex items-center justify-between pb-3 border-b border-dashed">
-                <div className="flex items-center gap-2 text-red-600">
-                  <ArrowUpFromLine className="h-4 w-4" />
-                  <span className="font-medium">Retiradas (Sangrias)</span>
+              <div className="pb-3 border-b border-dashed space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-red-600">
+                    <ArrowUpFromLine className="h-4 w-4" />
+                    <span className="font-medium">Retiradas (Sangrias)</span>
+                  </div>
+                  <span className="font-semibold text-red-600">-{formatCurrency(summary.withdrawalsTotal)}</span>
                 </div>
-                <span className="font-semibold text-red-600">-{formatCurrency(summary.withdrawalsTotal)}</span>
+                {summary.withdrawals.length > 0 && (
+                  <ul className="pl-6 space-y-1">
+                    {summary.withdrawals.map((t, i) => (
+                      <li key={i} className="flex items-start justify-between gap-3 text-xs text-slate-600">
+                        <span className="flex-1">
+                          {t.reason?.trim() ? t.reason : <span className="italic text-slate-400">Sem observação</span>}
+                        </span>
+                        <span className="font-medium text-red-700 whitespace-nowrap">-{formatCurrency(Number(t.amount))}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
+
 
               <div className="flex items-center justify-between pt-2">
                 <div className="flex items-center gap-2 text-[#4c1554]">
