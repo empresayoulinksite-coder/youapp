@@ -94,6 +94,7 @@ export type StoreLite = {
   feed_enabled?: boolean;
   booking_mode?: "booking" | "quote";
   category?: string;
+  auto_accept_bookings?: boolean;
 };
 
 const STATUS_LABEL: Record<BookingRow["status"], string> = {
