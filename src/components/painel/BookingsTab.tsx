@@ -936,6 +936,25 @@ function BookingCard({
           {booking.customer_notes && (
             <p className="text-sm text-muted-foreground">Obs: {booking.customer_notes}</p>
           )}
+          {extraItem && (
+            <div className="mt-1 rounded-lg border border-amber-400 bg-amber-50 dark:bg-amber-950/30 p-2 text-xs">
+              <p className="font-semibold text-amber-800 dark:text-amber-300">
+                + Serviço adicional: {extraItem.name} — R${" "}
+                {Number(extraItem.price).toFixed(2).replace(".", ",")}
+              </p>
+              <p className="text-amber-700/80 dark:text-amber-400/80">Pago no balcão</p>
+              {canRemoveExtra && onRemoveExtra && (
+                <button
+                  type="button"
+                  onClick={onRemoveExtra}
+                  disabled={removingExtra}
+                  className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-destructive hover:underline disabled:opacity-50"
+                >
+                  <X className="h-3 w-3" /> Remover adicional
+                </button>
+              )}
+            </div>
+          )}
           <p className="text-sm font-medium">
             R$ {Number(booking.total_price).toFixed(2).replace(".", ",")}
           </p>
