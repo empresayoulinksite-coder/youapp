@@ -600,9 +600,17 @@ function SubscribersList({ storeId }: { storeId: string }) {
           onClose={() => setRenewTarget(null)}
         />
       )}
+      {editTarget && (
+        <EditSubscriptionDialog
+          storeId={storeId}
+          subscription={editTarget}
+          onClose={() => setEditTarget(null)}
+        />
+      )}
     </div>
   );
 }
+
 
 function SubscriptionDialog({
   storeId,
