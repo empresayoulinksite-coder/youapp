@@ -547,10 +547,18 @@ function SubscribersList({ storeId }: { storeId: string }) {
                     <Button
                       size="sm"
                       variant="outline"
+                      onClick={() => setEditTarget(s)}
+                    >
+                      <Pencil className="h-4 w-4" /> Editar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
                       onClick={() => setRenewTarget(s)}
                     >
                       <RefreshCw className="h-4 w-4" /> Renovar
                     </Button>
+
                     {s.status === "active" && (
                       <Button
                         size="sm"
