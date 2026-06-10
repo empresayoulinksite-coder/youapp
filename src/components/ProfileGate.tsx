@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import youlinkLogo from "@/assets/youlink-splash.png";
+import youlinkLogo from "@/assets/tesouro-splash.png.asset.json";
 
 // Rotas onde NÃO devemos forçar o redirect
 const ALLOWED_INCOMPLETE = ["/completar-cadastro", "/auth"];
