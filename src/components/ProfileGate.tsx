@@ -72,7 +72,7 @@ export function ProfileGate({ children }: { children: React.ReactNode }) {
           <div className="relative flex h-32 w-32 items-center justify-center">
             <div className="absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#F5B72A]/50 blur-2xl animate-pulse" />
             <img
-              src={youlinkLogo}
+              src={youlinkLogo.url}
               alt="Youlink"
               className="relative h-full w-full object-contain"
             />
