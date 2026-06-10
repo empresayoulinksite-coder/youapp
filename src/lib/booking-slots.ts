@@ -35,6 +35,11 @@ export function generateSlots(
   const now = new Date();
   const isToday = day.toDateString() === now.toDateString();
 
+  // Sort bookings by start time once
+  const sortedBookings = [...bookings]
+    .map((b) => ({ start: new Date(b.starts_at).getTime(), end: new Date(b.ends_at).getTime() }))
+    .sort((a, b) => a.start - b.start);
+
   for (const range of dayHours) {
     const [openH, openM] = range.opens_at.split(":").map(Number);
     const [closeH, closeM] = range.closes_at.split(":").map(Number);
@@ -48,21 +53,29 @@ export function generateSlots(
     if (closeDate <= openDate) closeDate.setDate(closeDate.getDate() + 1);
 
     let cursor = new Date(openDate);
-    while (true) {
+    let safety = 0;
+    while (safety++ < 1000) {
       const end = new Date(cursor.getTime() + durationMinutes * 60_000);
       if (end > closeDate) break;
 
-      const inPast = isToday && cursor.getTime() <= now.getTime();
-      const overlaps = bookings.some((b) => {
-        const bs = new Date(b.starts_at).getTime();
-        const be = new Date(b.ends_at).getTime();
-        return cursor.getTime() < be && end.getTime() > bs;
-      });
+      // Find any booking that overlaps [cursor, end)
+      const overlap = sortedBookings.find(
+        (b) => cursor.getTime() < b.end && end.getTime() > b.start,
+      );
 
+      if (overlap) {
+        // Re-anchor the grid: jump cursor to the end of this booking and continue
+        const nextCursor = new Date(overlap.end);
+        if (nextCursor.getTime() <= cursor.getTime()) break;
+        cursor = nextCursor;
+        continue;
+      }
+
+      const inPast = isToday && cursor.getTime() <= now.getTime();
       slots.push({
         start: new Date(cursor),
         end,
-        available: !inPast && !overlaps,
+        available: !inPast,
       });
 
       cursor = new Date(cursor.getTime() + slotMinutes * 60_000);
