@@ -29,13 +29,34 @@ export function CashSummaryDialog({
         .gte("created_at", openedAt)
         .neq("status", "cancelled");
 
-      // Filter only cash orders
-      // In the system, payment_method label for cash is usually "Dinheiro" or "Dinheiro / Balcão"
-      const cashOrders = (orders || []).filter(o => 
+      const cashOrders = (orders || []).filter(o =>
         o.payment_method?.toLowerCase().includes("dinheiro")
       );
-      
-      const ordersTotal = cashOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+      const ordersCashTotal = cashOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+
+      // 1b. Fetch completed bookings since openedAt and sum the cash portion
+      const { data: bookings } = await supabase
+        .from("bookings")
+        .select("total_price, payment_method, payment_method_2, payment_amount_1, payment_amount_2, status")
+        .eq("store_id", storeId)
+        .eq("status", "completed")
+        .gte("updated_at", openedAt);
+
+      const bookingsCashTotal = (bookings || []).reduce((sum, b) => {
+        const m1 = (b.payment_method ?? "").toLowerCase();
+        const m2 = (b.payment_method_2 ?? "").toLowerCase();
+        const hasSplit = !!b.payment_method_2;
+        let cash = 0;
+        if (m1.includes("dinheiro")) {
+          cash += hasSplit ? Number(b.payment_amount_1) || 0 : Number(b.total_price) || 0;
+        }
+        if (m2.includes("dinheiro")) {
+          cash += Number(b.payment_amount_2) || 0;
+        }
+        return sum + cash;
+      }, 0);
+
+      const ordersTotal = ordersCashTotal + bookingsCashTotal;
 
       // 2. Fetch cash transactions
       const { data: transactions } = await supabase
