@@ -1212,18 +1212,37 @@ function NewBookingDialog({
       services_total: number;
       services_used: number;
       expires_at: string;
+      plan_id: string | null;
       plan_name: string | null;
     }>
   >([]);
+  const [comboServiceId, setComboServiceId] = useState<string | null>(null);
+  const [planServiceIds, setPlanServiceIds] = useState<string[]>([]);
 
 
-  const selectedServices = services.filter((s) => selectedIds.includes(s.id));
+  const isSubMode = clientMode === "subscription" && !!subscriptionId;
+  const comboService = isSubMode
+    ? services.find((s) => s.id === comboServiceId) ?? null
+    : null;
+  const extraServices = isSubMode
+    ? services.filter((s) => selectedIds.includes(s.id) && !planServiceIds.includes(s.id))
+    : [];
+  const selectedServices = isSubMode
+    ? (comboService ? [comboService, ...extraServices] : [])
+    : services.filter((s) => selectedIds.includes(s.id));
   const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration_minutes, 0) || 30;
-  const totalPrice = selectedServices.reduce(
-    (sum, s) => sum + getEffectivePrice({ price: Number(s.price), promo_prices: s.promo_prices ?? null }, date),
-    0,
-  );
-  const originalPrice = selectedServices.reduce((sum, s) => sum + Number(s.price), 0);
+  const totalPrice = isSubMode
+    ? extraServices.reduce(
+        (sum, s) => sum + getEffectivePrice({ price: Number(s.price), promo_prices: s.promo_prices ?? null }, date),
+        0,
+      )
+    : selectedServices.reduce(
+        (sum, s) => sum + getEffectivePrice({ price: Number(s.price), promo_prices: s.promo_prices ?? null }, date),
+        0,
+      );
+  const originalPrice = isSubMode
+    ? extraServices.reduce((sum, s) => sum + Number(s.price), 0)
+    : selectedServices.reduce((sum, s) => sum + Number(s.price), 0);
   const hasPromo = totalPrice < originalPrice;
 
   const toggleService = (id: string) => {
@@ -1272,7 +1291,7 @@ function NewBookingDialog({
   useEffect(() => {
     supabase
       .from("client_subscriptions")
-      .select("id, customer_name, customer_phone, services_total, services_used, expires_at, plan:subscription_plans(name)")
+      .select("id, customer_name, customer_phone, services_total, services_used, expires_at, plan_id, plan:subscription_plans(name)")
       .eq("store_id", store.id)
       .eq("status", "active")
       .gt("expires_at", new Date().toISOString())
@@ -1280,20 +1299,45 @@ function NewBookingDialog({
       .then(({ data }) => {
         const rows = (data ?? [])
           .map((r: any) => ({
-            id: r.id,
-            customer_name: r.customer_name,
-            customer_phone: r.customer_phone,
-            services_total: r.services_total,
-            services_used: r.services_used,
-            expires_at: r.expires_at,
-            plan_name: r.plan?.name ?? null,
+            id: r.id as string,
+            customer_name: r.customer_name as string,
+            customer_phone: r.customer_phone as string | null,
+            services_total: r.services_total as number,
+            services_used: r.services_used as number,
+            expires_at: r.expires_at as string,
+            plan_id: (r.plan_id as string | null) ?? null,
+            plan_name: (r.plan?.name as string | null) ?? null,
           }))
           .filter((r) => r.services_used < r.services_total);
         setSubscriptions(rows);
       });
   }, [store.id]);
 
-
+  // Fetch plan services when subscription/mode changes
+  useEffect(() => {
+    if (clientMode !== "subscription" || !subscriptionId) {
+      setPlanServiceIds([]);
+      setComboServiceId(null);
+      return;
+    }
+    const sub = subscriptions.find((s) => s.id === subscriptionId);
+    if (!sub?.plan_id) {
+      setPlanServiceIds([]);
+      setComboServiceId(null);
+      return;
+    }
+    supabase
+      .from("subscription_plan_services")
+      .select("service_id")
+      .eq("plan_id", sub.plan_id)
+      .then(({ data }) => {
+        const ids = (data ?? []).map((r: any) => r.service_id as string);
+        setPlanServiceIds(ids);
+        setComboServiceId(ids.length === 1 ? ids[0] : null);
+        setSelectedIds([]);
+        setSlot(null);
+      });
+  }, [clientMode, subscriptionId, subscriptions]);
   const slots = useMemo(
     () => generateSlots(date, hours, store.slot_minutes || 30, totalDuration, bookedRanges),
     [date, hours, store.slot_minutes, totalDuration, bookedRanges],
@@ -1344,9 +1388,10 @@ function NewBookingDialog({
         { price: Number(svc.price), promo_prices: svc.promo_prices ?? null },
         startsAt,
       );
-      // Primeiro serviço é coberto pela assinatura (preço zerado);
-      // serviços extras seguem o preço normal.
+      // Em modo assinatura: o serviço da assinatura (idx 0) é grátis (incluso);
+      // os demais são adicionais cobrados normalmente.
       const isSubItem = !!subInfo && idx === 0;
+      const isExtra = !!subInfo && idx > 0;
       return {
         service_id: svc.id,
         name: svc.name,
@@ -1355,6 +1400,7 @@ function NewBookingDialog({
         starts_at: start.toISOString(),
         ends_at: end.toISOString(),
         ...(isSubItem ? { is_subscription: true } : {}),
+        ...(isExtra ? { extra: true } : {}),
       };
     });
 
@@ -1523,6 +1569,102 @@ function NewBookingDialog({
           </Tabs>
 
 
+          {isSubMode ? (
+            <>
+              <div>
+                <Label className="text-xs">Serviço da assinatura *</Label>
+                <div className="mt-1.5 rounded-md border p-2 space-y-1">
+                  {planServiceIds.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-2">
+                      Plano sem serviços vinculados.
+                    </p>
+                  ) : (
+                    services
+                      .filter((s) => planServiceIds.includes(s.id))
+                      .map((s) => {
+                        const checked = comboServiceId === s.id;
+                        return (
+                          <label
+                            key={s.id}
+                            className={cn(
+                              "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors",
+                              checked ? "bg-primary/10 font-medium" : "hover:bg-muted",
+                            )}
+                          >
+                            <input
+                              type="radio"
+                              name="combo-service"
+                              checked={checked}
+                              onChange={() => {
+                                setComboServiceId(s.id);
+                                setSlot(null);
+                              }}
+                              className="accent-[var(--primary)] h-4 w-4"
+                            />
+                            <span className="flex-1">{s.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {s.duration_minutes}min ·{" "}
+                              <span className="text-success font-semibold">Incluso</span>
+                            </span>
+                          </label>
+                        );
+                      })
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-xs">
+                  Serviços adicionais <span className="font-normal text-muted-foreground">(cobrados à parte)</span>
+                </Label>
+                <div className="mt-1.5 max-h-40 overflow-y-auto rounded-md border p-2 space-y-1">
+                  {services.filter((s) => !planServiceIds.includes(s.id)).length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-2">
+                      Nenhum serviço adicional disponível.
+                    </p>
+                  ) : (
+                    services
+                      .filter((s) => !planServiceIds.includes(s.id))
+                      .map((s) => {
+                        const checked = selectedIds.includes(s.id);
+                        return (
+                          <label
+                            key={s.id}
+                            className={cn(
+                              "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors",
+                              checked ? "bg-primary/10 font-medium" : "hover:bg-muted",
+                            )}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleService(s.id)}
+                              className="accent-[var(--primary)] h-4 w-4 rounded"
+                            />
+                            <span className="flex-1">{s.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {s.duration_minutes}min · R$ {Number(s.price).toFixed(2).replace(".", ",")}
+                            </span>
+                          </label>
+                        );
+                      })
+                  )}
+                </div>
+                {selectedServices.length > 0 && (
+                  <div className="mt-1.5 flex items-center gap-3 text-xs text-muted-foreground">
+                    <span>Total: <strong className="text-foreground">{totalDuration}min</strong></span>
+                    <span>·</span>
+                    <span>
+                      Adicional:{" "}
+                      <strong className="text-foreground">
+                        R$ {totalPrice.toFixed(2).replace(".", ",")}
+                      </strong>
+                    </span>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
           <div>
             <Label className="text-xs">Serviços * <span className="font-normal text-muted-foreground">(selecione um ou mais)</span></Label>
             <div className="mt-1.5 max-h-40 overflow-y-auto rounded-md border p-2 space-y-1">
@@ -1599,6 +1741,7 @@ function NewBookingDialog({
               </div>
             )}
           </div>
+          )}
 
           <div>
             <Label className="text-xs">Dia</Label>
