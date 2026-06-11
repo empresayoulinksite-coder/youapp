@@ -1569,6 +1569,102 @@ function NewBookingDialog({
           </Tabs>
 
 
+          {isSubMode ? (
+            <>
+              <div>
+                <Label className="text-xs">Serviço da assinatura *</Label>
+                <div className="mt-1.5 rounded-md border p-2 space-y-1">
+                  {planServiceIds.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-2">
+                      Plano sem serviços vinculados.
+                    </p>
+                  ) : (
+                    services
+                      .filter((s) => planServiceIds.includes(s.id))
+                      .map((s) => {
+                        const checked = comboServiceId === s.id;
+                        return (
+                          <label
+                            key={s.id}
+                            className={cn(
+                              "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors",
+                              checked ? "bg-primary/10 font-medium" : "hover:bg-muted",
+                            )}
+                          >
+                            <input
+                              type="radio"
+                              name="combo-service"
+                              checked={checked}
+                              onChange={() => {
+                                setComboServiceId(s.id);
+                                setSlot(null);
+                              }}
+                              className="accent-[var(--primary)] h-4 w-4"
+                            />
+                            <span className="flex-1">{s.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {s.duration_minutes}min ·{" "}
+                              <span className="text-success font-semibold">Incluso</span>
+                            </span>
+                          </label>
+                        );
+                      })
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-xs">
+                  Serviços adicionais <span className="font-normal text-muted-foreground">(cobrados à parte)</span>
+                </Label>
+                <div className="mt-1.5 max-h-40 overflow-y-auto rounded-md border p-2 space-y-1">
+                  {services.filter((s) => !planServiceIds.includes(s.id)).length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-2">
+                      Nenhum serviço adicional disponível.
+                    </p>
+                  ) : (
+                    services
+                      .filter((s) => !planServiceIds.includes(s.id))
+                      .map((s) => {
+                        const checked = selectedIds.includes(s.id);
+                        return (
+                          <label
+                            key={s.id}
+                            className={cn(
+                              "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors",
+                              checked ? "bg-primary/10 font-medium" : "hover:bg-muted",
+                            )}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleService(s.id)}
+                              className="accent-[var(--primary)] h-4 w-4 rounded"
+                            />
+                            <span className="flex-1">{s.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {s.duration_minutes}min · R$ {Number(s.price).toFixed(2).replace(".", ",")}
+                            </span>
+                          </label>
+                        );
+                      })
+                  )}
+                </div>
+                {selectedServices.length > 0 && (
+                  <div className="mt-1.5 flex items-center gap-3 text-xs text-muted-foreground">
+                    <span>Total: <strong className="text-foreground">{totalDuration}min</strong></span>
+                    <span>·</span>
+                    <span>
+                      Adicional:{" "}
+                      <strong className="text-foreground">
+                        R$ {totalPrice.toFixed(2).replace(".", ",")}
+                      </strong>
+                    </span>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
           <div>
             <Label className="text-xs">Serviços * <span className="font-normal text-muted-foreground">(selecione um ou mais)</span></Label>
             <div className="mt-1.5 max-h-40 overflow-y-auto rounded-md border p-2 space-y-1">
@@ -1645,6 +1741,7 @@ function NewBookingDialog({
               </div>
             )}
           </div>
+          )}
 
           <div>
             <Label className="text-xs">Dia</Label>
