@@ -1275,7 +1275,7 @@ function NewBookingDialog({
   useEffect(() => {
     supabase
       .from("client_subscriptions")
-      .select("id, customer_name, customer_phone, services_total, services_used, expires_at, plan:subscription_plans(name)")
+      .select("id, customer_name, customer_phone, services_total, services_used, expires_at, plan_id, plan:subscription_plans(name)")
       .eq("store_id", store.id)
       .eq("status", "active")
       .gt("expires_at", new Date().toISOString())
@@ -1283,21 +1283,45 @@ function NewBookingDialog({
       .then(({ data }) => {
         const rows = (data ?? [])
           .map((r: any) => ({
-            id: r.id,
-            customer_name: r.customer_name,
-            customer_phone: r.customer_phone,
-            services_total: r.services_total,
-            services_used: r.services_used,
-            expires_at: r.expires_at,
-            plan_name: r.plan?.name ?? null,
+            id: r.id as string,
+            customer_name: r.customer_name as string,
+            customer_phone: r.customer_phone as string | null,
+            services_total: r.services_total as number,
+            services_used: r.services_used as number,
+            expires_at: r.expires_at as string,
+            plan_id: (r.plan_id as string | null) ?? null,
+            plan_name: (r.plan?.name as string | null) ?? null,
           }))
           .filter((r) => r.services_used < r.services_total);
         setSubscriptions(rows);
       });
   }, [store.id]);
 
-
-  const slots = useMemo(
+  // Fetch plan services when subscription/mode changes
+  useEffect(() => {
+    if (clientMode !== "subscription" || !subscriptionId) {
+      setPlanServiceIds([]);
+      setComboServiceId(null);
+      return;
+    }
+    const sub = subscriptions.find((s) => s.id === subscriptionId);
+    if (!sub?.plan_id) {
+      setPlanServiceIds([]);
+      setComboServiceId(null);
+      return;
+    }
+    supabase
+      .from("subscription_plan_services")
+      .select("service_id")
+      .eq("plan_id", sub.plan_id)
+      .then(({ data }) => {
+        const ids = (data ?? []).map((r: any) => r.service_id as string);
+        setPlanServiceIds(ids);
+        setComboServiceId(ids.length === 1 ? ids[0] : null);
+        setSelectedIds([]);
+        setSlot(null);
+      });
+  }, [clientMode, subscriptionId, subscriptions]);
     () => generateSlots(date, hours, store.slot_minutes || 30, totalDuration, bookedRanges),
     [date, hours, store.slot_minutes, totalDuration, bookedRanges],
   );
