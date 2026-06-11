@@ -1388,9 +1388,10 @@ function NewBookingDialog({
         { price: Number(svc.price), promo_prices: svc.promo_prices ?? null },
         startsAt,
       );
-      // Primeiro serviço é coberto pela assinatura (preço zerado);
-      // serviços extras seguem o preço normal.
+      // Em modo assinatura: o serviço da assinatura (idx 0) é grátis (incluso);
+      // os demais são adicionais cobrados normalmente.
       const isSubItem = !!subInfo && idx === 0;
+      const isExtra = !!subInfo && idx > 0;
       return {
         service_id: svc.id,
         name: svc.name,
@@ -1399,6 +1400,7 @@ function NewBookingDialog({
         starts_at: start.toISOString(),
         ends_at: end.toISOString(),
         ...(isSubItem ? { is_subscription: true } : {}),
+        ...(isExtra ? { extra: true } : {}),
       };
     });
 
