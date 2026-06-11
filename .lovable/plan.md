@@ -1,28 +1,41 @@
+
 ## Problema
 
-Ao concluir um agendamento pago em dinheiro com troco, o caixa fica **R$ 10 a menos** do que deveria (no exemplo: mostra R$ 80 em vez de R$ 90).
+No diálogo "Novo agendamento" do painel, aba **Assinatura**:
+1. Os horários não aparecem (a lista de serviços não tem `is_subscription`/`extra`, então a duração não é calculada como no fluxo do cliente).
+2. Todos os serviços aparecem como cobráveis — deveria mostrar os **serviços do plano** como "Incluso na assinatura" e os demais como **adicional** (cobrado à parte).
 
-## Causa
+## Objetivo
 
-Em `src/components/painel/BookingsTab.tsx` (linhas 247-268), após registrar a venda pelo `total_price` (que já é o valor líquido do serviço), o código **também** insere uma `cash_transactions` do tipo `withdrawal` com o valor do troco. Resultado: o troco é descontado duas vezes do caixa.
+Replicar a UX do `SubscriptionBookingDialog.tsx` (usado pelo cliente) dentro da aba **Assinatura** do `BookingsTab.tsx` quando o barbeiro faz o agendamento manual.
 
-```text
-Fundo:           +R$ 50
-Venda (líquida): +R$ 40   ← já é o valor do serviço, não o recebido
-Sangria troco:   -R$ 10   ← erro: subtrai de novo
-Total:            R$ 80   ← deveria ser R$ 90
-```
+## Mudanças (apenas `src/components/painel/BookingsTab.tsx`)
 
-O troco não é uma sangria/retirada de caixa — é parte natural da operação de venda. O que entra fisicamente na gaveta já equivale ao `total_price`.
+Dentro do `NewBookingDialog` (ou componente do diálogo "Novo agendamento"), quando `clientMode === "subscription"` e uma assinatura está selecionada:
 
-## Correção
+1. **Buscar serviços do plano** da assinatura selecionada via `subscription_plan_services` join `services(id, name, duration_minutes, price)` usando o `plan_id` da assinatura (precisa incluir `plan_id` no fetch atual de assinaturas).
 
-Remover o bloco que insere a `cash_transactions` de `withdrawal` para troco no `onSuccess` da mutation de atualização de status do agendamento (linhas 247-268 de `src/components/painel/BookingsTab.tsx`).
+2. **UI dos serviços** (substitui a lista atual quando em modo assinatura):
+   - **Serviço da assinatura** (rádio): lista apenas os serviços do plano, marcados como "Incluso na assinatura" (preço 0, sem cobrança). Auto-seleciona se houver apenas um.
+   - **Adicionar serviço extra** (switch + rádio): lista os demais serviços ativos da loja, exibindo `duração · R$ preço`. Cobrado à parte.
 
-O campo `change_amount` continua sendo salvo na `bookings` (útil para histórico/recibo), só não é mais lançado como sangria.
+3. **Cálculo de duração e horários**:
+   - `totalDuration = comboService.duration_minutes + (extraService?.duration_minutes ?? 0)`
+   - Passar essa duração para `generateSlots(...)` — assim os horários voltam a aparecer.
 
-## Verificação
+4. **Salvar no insert de `bookings`**:
+   - `service_id = comboService.id`
+   - `booked_services`: combo com `price: 0, is_subscription: true` + (se houver) extra com `price, extra: true`, cada um com `starts_at`/`ends_at` sequenciais.
+   - `total_price = extraService?.price ?? 0`
+   - `subscription_id = subscriptionId`
+   - `customer_notes`: prefixar com `"Agendado pela assinatura — <plano>"` igual ao fluxo do cliente.
 
-- Refazer o cenário: abrir caixa R$ 50 → concluir agendamento R$ 40 em dinheiro com troco R$ 10 → resumo deve mostrar R$ 90.
-- Sangrias manuais reais (botão "Retirada") continuam funcionando normalmente.
-- Agendamentos sem troco continuam corretos (já estavam).
+5. Manter o cabeçalho atual da assinatura (cartão "Samuka · Combo venus · X de Y restantes · vence em…") com botão **Trocar**.
+
+6. Quando o modo é **Cliente comum**, comportamento atual permanece inalterado.
+
+## Fora do escopo
+
+- Nenhuma migração de banco; backend não muda.
+- Nenhuma alteração no `SubscriptionBookingDialog` do cliente.
+- Sem alterações em outras abas.
