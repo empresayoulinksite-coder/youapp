@@ -1212,9 +1212,12 @@ function NewBookingDialog({
       services_total: number;
       services_used: number;
       expires_at: string;
+      plan_id: string | null;
       plan_name: string | null;
     }>
   >([]);
+  const [comboServiceId, setComboServiceId] = useState<string | null>(null);
+  const [planServiceIds, setPlanServiceIds] = useState<string[]>([]);
 
 
   const selectedServices = services.filter((s) => selectedIds.includes(s.id));
