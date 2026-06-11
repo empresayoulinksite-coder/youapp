@@ -1322,6 +1322,7 @@ function NewBookingDialog({
         setSlot(null);
       });
   }, [clientMode, subscriptionId, subscriptions]);
+  const slots = useMemo(
     () => generateSlots(date, hours, store.slot_minutes || 30, totalDuration, bookedRanges),
     [date, hours, store.slot_minutes, totalDuration, bookedRanges],
   );
