@@ -1220,13 +1220,29 @@ function NewBookingDialog({
   const [planServiceIds, setPlanServiceIds] = useState<string[]>([]);
 
 
-  const selectedServices = services.filter((s) => selectedIds.includes(s.id));
+  const isSubMode = clientMode === "subscription" && !!subscriptionId;
+  const comboService = isSubMode
+    ? services.find((s) => s.id === comboServiceId) ?? null
+    : null;
+  const extraServices = isSubMode
+    ? services.filter((s) => selectedIds.includes(s.id) && !planServiceIds.includes(s.id))
+    : [];
+  const selectedServices = isSubMode
+    ? (comboService ? [comboService, ...extraServices] : [])
+    : services.filter((s) => selectedIds.includes(s.id));
   const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration_minutes, 0) || 30;
-  const totalPrice = selectedServices.reduce(
-    (sum, s) => sum + getEffectivePrice({ price: Number(s.price), promo_prices: s.promo_prices ?? null }, date),
-    0,
-  );
-  const originalPrice = selectedServices.reduce((sum, s) => sum + Number(s.price), 0);
+  const totalPrice = isSubMode
+    ? extraServices.reduce(
+        (sum, s) => sum + getEffectivePrice({ price: Number(s.price), promo_prices: s.promo_prices ?? null }, date),
+        0,
+      )
+    : selectedServices.reduce(
+        (sum, s) => sum + getEffectivePrice({ price: Number(s.price), promo_prices: s.promo_prices ?? null }, date),
+        0,
+      );
+  const originalPrice = isSubMode
+    ? extraServices.reduce((sum, s) => sum + Number(s.price), 0)
+    : selectedServices.reduce((sum, s) => sum + Number(s.price), 0);
   const hasPromo = totalPrice < originalPrice;
 
   const toggleService = (id: string) => {
