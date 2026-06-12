@@ -686,6 +686,51 @@ export type Database = {
         }
         Relationships: []
       }
+      home_promo_cards: {
+        Row: {
+          badge: string
+          bg_style: string
+          created_at: string
+          cta_label: string
+          emoji: string | null
+          id: string
+          is_active: boolean
+          link_url: string
+          sort_order: number
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          badge: string
+          bg_style?: string
+          created_at?: string
+          cta_label: string
+          emoji?: string | null
+          id?: string
+          is_active?: boolean
+          link_url: string
+          sort_order?: number
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          badge?: string
+          bg_style?: string
+          created_at?: string
+          cta_label?: string
+          emoji?: string | null
+          id?: string
+          is_active?: boolean
+          link_url?: string
+          sort_order?: number
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       menu_categories: {
         Row: {
           available_days: number[]
