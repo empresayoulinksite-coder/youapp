@@ -359,37 +359,7 @@ function Index() {
         </section>
 
         {/* Promo banners */}
-        <section className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 snap-x snap-mandatory">
-          <Link
-            to="/clube"
-            className="shrink-0 w-[85%] sm:w-[420px] snap-start rounded-2xl p-5 text-brand-foreground relative overflow-hidden shadow-[var(--shadow-card)] block"
-            style={{ backgroundImage: "var(--gradient-promo)" }}
-          >
-            <span className="text-[11px] font-bold uppercase tracking-wide bg-white/20 px-2 py-0.5 rounded-full">
-              Clube Youapp
-            </span>
-            <h3 className="mt-3 text-2xl font-extrabold leading-tight">Entrega grátis ilimitada</h3>
-            <p className="text-sm opacity-90 mt-1">Em milhares de restaurantes perto de você</p>
-            <span className="mt-4 inline-block bg-white text-brand text-sm font-bold px-4 py-2 rounded-full">
-              Assinar agora
-            </span>
-            <div className="absolute -right-4 -bottom-4 text-7xl opacity-30 select-none">🛵</div>
-          </Link>
-          <Link
-            to="/cupons"
-            className="shrink-0 w-[85%] sm:w-[420px] snap-start rounded-2xl p-5 bg-accent text-foreground relative overflow-hidden shadow-[var(--shadow-card)] block"
-          >
-            <span className="text-[11px] font-bold uppercase tracking-wide bg-brand/10 text-brand px-2 py-0.5 rounded-full">
-              Cupons
-            </span>
-            <h3 className="mt-3 text-2xl font-extrabold leading-tight">Até 50% OFF</h3>
-            <p className="text-sm text-muted-foreground mt-1">Em pedidos selecionados hoje</p>
-            <span className="mt-4 inline-block bg-brand text-brand-foreground text-sm font-bold px-4 py-2 rounded-full">
-              Ver cupons
-            </span>
-            <div className="absolute -right-2 -bottom-2 text-7xl opacity-30 select-none">🎟️</div>
-          </Link>
-        </section>
+        <PromoCards />
 
         {/* Featured stores */}
         {featured.length > 0 && (
@@ -944,5 +914,65 @@ function StoreWithItemsCard({
         </div>
       )}
     </article>
+  );
+}
+
+type PromoCard = {
+  id: string;
+  badge: string;
+  title: string;
+  subtitle: string | null;
+  cta_label: string;
+  link_url: string;
+  bg_style: string;
+  emoji: string | null;
+};
+
+function PromoCards() {
+  const { data: cards = [] } = useQuery({
+    queryKey: ["home-promo-cards"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("home_promo_cards")
+        .select("id,badge,title,subtitle,cta_label,link_url,bg_style,emoji")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as PromoCard[];
+    },
+  });
+
+  if (cards.length === 0) return null;
+
+  return (
+    <section className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 snap-x snap-mandatory">
+      {cards.map((c) => {
+        const isGradient = c.bg_style === "gradient";
+        const containerClass = isGradient
+          ? "shrink-0 w-[85%] sm:w-[420px] snap-start rounded-2xl p-5 text-brand-foreground relative overflow-hidden shadow-[var(--shadow-card)] block"
+          : "shrink-0 w-[85%] sm:w-[420px] snap-start rounded-2xl p-5 bg-accent text-foreground relative overflow-hidden shadow-[var(--shadow-card)] block";
+        const style = isGradient ? { backgroundImage: "var(--gradient-promo)" } : undefined;
+        const badgeClass = isGradient
+          ? "text-[11px] font-bold uppercase tracking-wide bg-white/20 px-2 py-0.5 rounded-full"
+          : "text-[11px] font-bold uppercase tracking-wide bg-brand/10 text-brand px-2 py-0.5 rounded-full";
+        const subtitleClass = isGradient
+          ? "text-sm opacity-90 mt-1"
+          : "text-sm text-muted-foreground mt-1";
+        const ctaClass = isGradient
+          ? "mt-4 inline-block bg-white text-brand text-sm font-bold px-4 py-2 rounded-full"
+          : "mt-4 inline-block bg-brand text-brand-foreground text-sm font-bold px-4 py-2 rounded-full";
+        return (
+          <a key={c.id} href={c.link_url} className={containerClass} style={style}>
+            <span className={badgeClass}>{c.badge}</span>
+            <h3 className="mt-3 text-2xl font-extrabold leading-tight">{c.title}</h3>
+            {c.subtitle && <p className={subtitleClass}>{c.subtitle}</p>}
+            <span className={ctaClass}>{c.cta_label}</span>
+            {c.emoji && (
+              <div className="absolute -right-4 -bottom-4 text-7xl opacity-30 select-none">{c.emoji}</div>
+            )}
+          </a>
+        );
+      })}
+    </section>
   );
 }
