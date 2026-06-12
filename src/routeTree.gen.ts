@@ -42,6 +42,7 @@ import { Route as AdminDonosRouteImport } from './routes/admin.donos'
 import { Route as AdminCuponsRouteImport } from './routes/admin.cupons'
 import { Route as AdminCategoriasHomeRouteImport } from './routes/admin.categorias-home'
 import { Route as AdminCategoriasEcommerceRouteImport } from './routes/admin.categorias-ecommerce'
+import { Route as AdminCardsHomeRouteImport } from './routes/admin.cards-home'
 import { Route as AdminAgendamentosRouteImport } from './routes/admin.agendamentos'
 import { Route as PedidosLojaStoreIdImpressaoRouteImport } from './routes/pedidos-loja_.$storeId.impressao'
 import { Route as PedidosLojaStoreIdGarconsRouteImport } from './routes/pedidos-loja_.$storeId.garcons'
@@ -221,6 +222,11 @@ const AdminCategoriasEcommerceRoute =
     path: '/categorias-ecommerce',
     getParentRoute: () => AdminRoute,
   } as any)
+const AdminCardsHomeRoute = AdminCardsHomeRouteImport.update({
+  id: '/cards-home',
+  path: '/cards-home',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminAgendamentosRoute = AdminAgendamentosRouteImport.update({
   id: '/agendamentos',
   path: '/agendamentos',
@@ -299,6 +305,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/sacola': typeof SacolaRoute
   '/admin/agendamentos': typeof AdminAgendamentosRoute
+  '/admin/cards-home': typeof AdminCardsHomeRoute
   '/admin/categorias-ecommerce': typeof AdminCategoriasEcommerceRoute
   '/admin/categorias-home': typeof AdminCategoriasHomeRoute
   '/admin/cupons': typeof AdminCuponsRoute
@@ -344,6 +351,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/sacola': typeof SacolaRoute
   '/admin/agendamentos': typeof AdminAgendamentosRoute
+  '/admin/cards-home': typeof AdminCardsHomeRoute
   '/admin/categorias-ecommerce': typeof AdminCategoriasEcommerceRoute
   '/admin/categorias-home': typeof AdminCategoriasHomeRoute
   '/admin/cupons': typeof AdminCuponsRoute
@@ -391,6 +399,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/sacola': typeof SacolaRoute
   '/admin/agendamentos': typeof AdminAgendamentosRoute
+  '/admin/cards-home': typeof AdminCardsHomeRoute
   '/admin/categorias-ecommerce': typeof AdminCategoriasEcommerceRoute
   '/admin/categorias-home': typeof AdminCategoriasHomeRoute
   '/admin/cupons': typeof AdminCuponsRoute
@@ -439,6 +448,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sacola'
     | '/admin/agendamentos'
+    | '/admin/cards-home'
     | '/admin/categorias-ecommerce'
     | '/admin/categorias-home'
     | '/admin/cupons'
@@ -484,6 +494,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sacola'
     | '/admin/agendamentos'
+    | '/admin/cards-home'
     | '/admin/categorias-ecommerce'
     | '/admin/categorias-home'
     | '/admin/cupons'
@@ -530,6 +541,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sacola'
     | '/admin/agendamentos'
+    | '/admin/cards-home'
     | '/admin/categorias-ecommerce'
     | '/admin/categorias-home'
     | '/admin/cupons'
@@ -821,6 +833,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCategoriasEcommerceRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/cards-home': {
+      id: '/admin/cards-home'
+      path: '/cards-home'
+      fullPath: '/admin/cards-home'
+      preLoaderRoute: typeof AdminCardsHomeRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/agendamentos': {
       id: '/admin/agendamentos'
       path: '/agendamentos'
@@ -919,6 +938,7 @@ const AdminEntregasRouteWithChildren = AdminEntregasRoute._addFileChildren(
 
 interface AdminRouteChildren {
   AdminAgendamentosRoute: typeof AdminAgendamentosRoute
+  AdminCardsHomeRoute: typeof AdminCardsHomeRoute
   AdminCategoriasEcommerceRoute: typeof AdminCategoriasEcommerceRoute
   AdminCategoriasHomeRoute: typeof AdminCategoriasHomeRoute
   AdminCuponsRoute: typeof AdminCuponsRoute
@@ -938,6 +958,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAgendamentosRoute: AdminAgendamentosRoute,
+  AdminCardsHomeRoute: AdminCardsHomeRoute,
   AdminCategoriasEcommerceRoute: AdminCategoriasEcommerceRoute,
   AdminCategoriasHomeRoute: AdminCategoriasHomeRoute,
   AdminCuponsRoute: AdminCuponsRoute,

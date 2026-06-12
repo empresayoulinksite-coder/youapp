@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Store, LogOut, Home, Tags, LayoutGrid, Users, Upload, Sparkles, Truck, ChevronDown, UserPlus, FileText, MapPin, Printer } from "lucide-react";
+import { Store, LogOut, Home, Tags, LayoutGrid, Users, Upload, Sparkles, Truck, ChevronDown, UserPlus, FileText, MapPin, Printer, Ticket, Image as ImageIcon } from "lucide-react";
 import { useAdminAccess } from "@/hooks/use-admin";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,8 @@ const ADMIN_ONLY_NAV: NavItem[] = [
   { to: "/admin/donos", label: "Donos de loja", icon: Users },
   { to: "/admin/categorias-home", label: "Categorias Home", icon: LayoutGrid },
   { to: "/admin/categorias-ecommerce", label: "Categorias E-com", icon: Tags },
+  { to: "/admin/cupons", label: "Cupons", icon: Ticket },
+  { to: "/admin/cards-home", label: "Cards da Home", icon: ImageIcon },
   { to: "/admin/importar-cardapio", label: "Importar cardápio", icon: Upload },
   { to: "/admin/modal-boas-vindas", label: "Modal boas-vindas", icon: Sparkles },
   { to: "/admin/impressao-automatica", label: "Impressão automática", icon: Printer },
